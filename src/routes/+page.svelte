@@ -34,7 +34,7 @@
   <p>{greetMsg}</p>
 
   <!-- hello world -->
-  <p>hello world</p>
+  <a href="/about">About my site</a>
 </main>
 
 <style>
