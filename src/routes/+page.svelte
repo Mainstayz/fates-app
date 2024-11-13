@@ -150,27 +150,27 @@
             const newItemId = maxItemId + 1;
 
             // 添加新组
-            timelineComponent.addGroup({
-                id: newGroupId,
-                content: "新组 C",
-            });
+            // timelineComponent.addGroup({
+            //     id: newGroupId,
+            //     content: "新组 C",
+            // });
 
             // 添加新事件到新组
-            timelineComponent.addItem({
-                id: newItemId,
-                content: "新事件",
-                start: new Date(),
-                end: new Date(new Date().getTime() + 1000 * 60 * 60),
-                group: newGroupId,
-            });
+            // timelineComponent.addItem({
+            //     id: newItemId,
+            //     content: "新事件",
+            //     start: new Date(),
+            //     end: new Date(new Date().getTime() + 1000 * 60 * 60),
+            //     group: newGroupId,
+            // });
 
             // 5 秒后更新组名
-            setTimeout(() => {
-                timelineComponent.updateGroup({
-                    id: newGroupId,
-                    content: "更新后的组 C",
-                });
-            }, 2000);
+            // setTimeout(() => {
+            //     timelineComponent.updateGroup({
+            //         id: newGroupId,
+            //         content: "更新后的组 C",
+            //     });
+            // }, 2000);
         }, 3000);
     });
 
@@ -206,15 +206,16 @@
         <button on:click={loadTimelineData}>加载时间线</button>
         <button on:click={handleExport}>导出数据</button>
     </div>
+
+    <!-- onAdd={handleAdd}
+    onUpdate={handleUpdate}
+    onRemove={handleRemove}
+    onMove={handleMove}
+    onMoving={handleMoving} -->
     <Timeline
         bind:this={timelineComponent}
         {items}
         {groups}
-        onAdd={handleAdd}
-        onUpdate={handleUpdate}
-        onRemove={handleRemove}
-        onMove={handleMove}
-        onMoving={handleMoving}
     />
 </main>
 

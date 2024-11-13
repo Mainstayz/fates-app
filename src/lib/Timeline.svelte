@@ -37,10 +37,12 @@
     const DEFAULT_ZOOM_MIN = 1000 * 60 * 1; // 15 分钟
     const DEFAULT_ZOOM_MAX = 1000 * 60 * 60 * 24 * 1.5; // 1.5 天
 
-    // DEFAULT_START 为今天 0 点
-    const DEFAULT_START = new Date(new Date().setHours(0, 0, 0, 0));
-    // DEFAULT_END 为明天 0 点
-    const DEFAULT_END = new Date(new Date().setHours(24, 0, 0, 0));
+    // const DEFAULT_START = new Date(new Date().setHours(0, 0, 0, 0));
+    // DEFAULT_START 为当前时间剪去 3 小时
+    const DEFAULT_START = new Date(new Date().setHours(new Date().getHours() - 3));
+
+    // DEFAULT_END 为当前时间加上 3 小时
+    const DEFAULT_END = new Date(new Date().setHours(new Date().getHours() + 3));
 
     let timeline: Timeline;
     let container: HTMLElement;
