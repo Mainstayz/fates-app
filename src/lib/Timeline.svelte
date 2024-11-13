@@ -26,6 +26,11 @@
         end?: Date;
         items?: TimelineItem[];
         groups?: TimelineGroup[];
+        onAdd?: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void;
+        onMove?: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void;
+        onMoving?: (item: TimelineItem, callback: (item: TimelineItem) => void) => void;
+        onUpdate?: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void;
+        onRemove?: (item: TimelineItem, callback: (item: TimelineItem | null) => void) => void;
     }>();
 
     // 默认值
@@ -80,6 +85,11 @@
             start: props.start ?? DEFAULT_START,
             end: props.end ?? DEFAULT_END,
             showCurrentTime: true,
+            onAdd: props.onAdd,
+            onMove: props.onMove,
+            onMoving: props.onMoving,
+            onUpdate: props.onUpdate,
+            onRemove: props.onRemove,
             format: {
                 minorLabels: {
                     minute: "HH:mm",
