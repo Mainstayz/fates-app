@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import { Timeline, DataSet } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
 
@@ -19,6 +19,7 @@
     const DEFAULT_START = new Date(Date.now() - (12 + 6) * 60 * 60 * 1000); // 当前时间前 18 小时
     const DEFAULT_END = new Date(Date.now() + (12 + 6) * 60 * 60 * 1000); // 当前时间后 18 小时
 
+    let timeline: Timeline;
     let container: HTMLElement;
 
     onMount(() => {
@@ -37,6 +38,7 @@
             zoomMax: props.zoomMax ?? DEFAULT_ZOOM_MAX,
             start: props.start ?? DEFAULT_START,
             end: props.end ?? DEFAULT_END,
+            showCurrentTime: true,
             format: {
                 minorLabels: {
                     minute: "HH:mm",
@@ -56,7 +58,35 @@
         };
 
         // 初始化时间线
-        new Timeline(container, items, options);
+        timeline = new Timeline(container, items, options);
+
+        // 添加 rangechanged 事件监听
+        timeline.on('rangechanged', (event) => {
+            const window = timeline.getWindow();
+            const currentTime = new Date();
+
+            // 检查当前时间是否在可见范围内
+            if (currentTime < window.start || currentTime > window.end) {
+                // 重置为初始状态
+                timeline.setWindow(
+                    DEFAULT_START,
+                    DEFAULT_END,
+                    {
+                        animation: {
+                            duration: 500,
+                            easingFunction: 'easeInOutQuad'
+                        }
+                    }
+                );
+            }
+        });
+    });
+
+    // 组件销毁时清理事件监听
+    onDestroy(() => {
+        if (timeline) {
+            timeline.destroy();
+        }
     });
 </script>
 
