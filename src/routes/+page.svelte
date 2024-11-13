@@ -2,32 +2,20 @@
     import Timeline from "$lib/Timeline.svelte";
     import type { TimelineGroup, TimelineItem } from "$lib/types";
     import { onMount } from "svelte";
-    import { invoke } from '@tauri-apps/api/core';
-    import { confirm, ask ,message} from '@tauri-apps/plugin-dialog';
+    import { invoke } from "@tauri-apps/api/core";
+    import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
 
     let timelineComponent: Timeline;
 
-    // 初始组
-    const initialGroups = [
-        { id: 1, content: "组 A" },
-        { id: 2, content: "组 B" }
-    ];
-
-    // 初始数据
-    const initialItems = [
-        { id: 1, content: "事件 1", start: "2024-03-01", group: 1 },
-        { id: 2, content: "事件 2", start: "2024-03-03", group: 2 }
-    ];
-
     // 使用响应式声明存储时间线数据
-    let groups: TimelineGroup[] = [...initialGroups];
-    let items: TimelineItem[] = [...initialItems];
+    let groups: TimelineGroup[] = [];
+    let items: TimelineItem[] = [];
 
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         const confirmed = await ask(`确认添加事件：${item.content}?`, {
-            title: '添加确认',
-            kind: 'warning',
+            title: "添加确认",
+            kind: "warning",
         });
 
         if (confirmed) {
@@ -41,8 +29,8 @@
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
         const title = `是否要移动事件到:\n开始：${item.start}\n结束：${item.end}?`;
         const confirmed = await ask(title, {
-            title: '移动确认',
-            kind: 'warning',
+            title: "移动确认",
+            kind: "warning",
         });
 
         if (confirmed) {
@@ -67,8 +55,8 @@
     // 处理删除事件
     const handleRemove = async (item: any, callback: (item: any | null) => void) => {
         const confirmed = await confirm(`确定要删除事件 ${item.content}?`, {
-            title: '删除确认',
-            kind: 'warning'
+            title: "删除确认",
+            kind: "warning",
         });
 
         if (confirmed) {
@@ -83,21 +71,21 @@
     async function saveTimelineData() {
         const timelineData = {
             groups: timelineComponent.getAllGroups(),
-            items: timelineComponent.getAllItems()
+            items: timelineComponent.getAllItems(),
         };
 
         try {
-            await invoke('save_timeline_data', { data: timelineData });
-            console.log('Timeline data saved successfully');
+            await invoke("save_timeline_data", { data: timelineData });
+            console.log("Timeline data saved successfully");
         } catch (error) {
-            console.error('Failed to save timeline data:', error);
+            console.error("Failed to save timeline data:", error);
         }
     }
 
     // 加载时间线数据
     async function loadTimelineData() {
         try {
-            const result = await invoke<{ groups: any[], items: any[] } | null>('load_timeline_data');
+            const result = await invoke<{ groups: any[]; items: any[] } | null>("load_timeline_data");
             if (result) {
                 // 直接更新响应式变量
                 groups = result.groups;
@@ -107,27 +95,27 @@
                 if (timelineComponent) {
                     // 清除所有现有数据
                     const existingItems = timelineComponent.getAllItems();
-                    existingItems.forEach(item => {
+                    existingItems.forEach((item) => {
                         timelineComponent.removeItem(item.id);
                     });
 
                     const existingGroups = timelineComponent.getAllGroups();
-                    existingGroups.forEach(group => {
+                    existingGroups.forEach((group) => {
                         timelineComponent.removeGroup(group.id);
                     });
 
                     // 添加新数据（先添加组，再添加项目）
-                    result.groups.forEach(group => {
+                    result.groups.forEach((group) => {
                         timelineComponent.addGroup(group);
                     });
 
-                    result.items.forEach(item => {
+                    result.items.forEach((item) => {
                         timelineComponent.addItem(item);
                     });
                 }
             }
         } catch (error) {
-            console.error('Failed to load timeline data:', error);
+            console.error("Failed to load timeline data:", error);
         }
     }
 
@@ -154,8 +142,8 @@
             // 获取当前最大ID
             const existingGroups = timelineComponent.getAllGroups();
             const existingItems = timelineComponent.getAllItems();
-            const maxGroupId = Math.max(0, ...existingGroups.map(g => Number(g.id)));
-            const maxItemId = Math.max(0, ...existingItems.map(i => Number(i.id)));
+            const maxGroupId = Math.max(0, ...existingGroups.map((g) => Number(g.id)));
+            const maxItemId = Math.max(0, ...existingItems.map((i) => Number(i.id)));
 
             // 使用新的ID添加数据
             const newGroupId = maxGroupId + 1;
@@ -164,7 +152,7 @@
             // 添加新组
             timelineComponent.addGroup({
                 id: newGroupId,
-                content: "新组 C"
+                content: "新组 C",
             });
 
             // 添加新事件到新组
@@ -173,14 +161,14 @@
                 content: "新事件",
                 start: new Date(),
                 end: new Date(new Date().getTime() + 1000 * 60 * 60),
-                group: newGroupId
+                group: newGroupId,
             });
 
             // 5 秒后更新组名
             setTimeout(() => {
                 timelineComponent.updateGroup({
                     id: newGroupId,
-                    content: "更新后的组 C"
+                    content: "更新后的组 C",
                 });
             }, 2000);
         }, 3000);
@@ -191,21 +179,21 @@
         const allItems = timelineComponent.getAllItems();
         const allGroups = timelineComponent.getAllGroups();
 
-        console.log('所有事件：', allItems);
-        console.log('所有分组：', allGroups);
+        console.log("所有事件：", allItems);
+        console.log("所有分组：", allGroups);
 
         // 可以将数据转换为 JSON 字符串
         const exportData = {
             items: allItems,
-            groups: allGroups
+            groups: allGroups,
         };
 
         // 示例：下载为 JSON 文件
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = 'timeline-export.json';
+        a.download = "timeline-export.json";
         a.click();
         URL.revokeObjectURL(url);
     };
