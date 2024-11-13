@@ -3,6 +3,22 @@
     import { Timeline, DataSet } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
 
+    // 使用 $props() 获取属性，并设置默认值
+    const props = $props<{
+        zoomMin?: number;
+        zoomMax?: number;
+        start?: Date;
+        end?: Date;
+    }>();
+
+    console.log(props);
+
+    // 默认值
+    const DEFAULT_ZOOM_MIN = 1000 * 60 * 60 * 1; // 1 小时
+    const DEFAULT_ZOOM_MAX = 1000 * 60 * 60 * 24 * 1.5; // 1.5 天
+    const DEFAULT_START = new Date(Date.now() - (12 + 6) * 60 * 60 * 1000); // 当前时间前 18 小时
+    const DEFAULT_END = new Date(Date.now() + (12 + 6) * 60 * 60 * 1000); // 当前时间后 18 小时
+
     let container: HTMLElement;
 
     onMount(() => {
@@ -15,18 +31,18 @@
 
         // 配置选项
         const options = {
-            locale: "zh_CN",
             height: "400px",
             editable: true,
-            // zoomable: false,
-            zoomMin: 1000 * 60 * 60 * 1,
-            zoomMax: 1000 * 60 * 60 * 24 * 1.5,
-            start: new Date(Date.now() - (12 + 6) * 60 * 60 * 1000),
-            end: new Date(Date.now() + (12 + 6) * 60 * 60 * 1000),
+            zoomMin: props.zoomMin ?? DEFAULT_ZOOM_MIN,
+            zoomMax: props.zoomMax ?? DEFAULT_ZOOM_MAX,
+            start: props.start ?? DEFAULT_START,
+            end: props.end ?? DEFAULT_END,
             format: {
                 minorLabels: {
                     minute: "HH:mm",
                     hour: "HH",
+                    weekday: "MM/DD",
+                    day: "MM/DD",
                 },
                 majorLabels: {
                     hour: "MM 月 DD 日",
