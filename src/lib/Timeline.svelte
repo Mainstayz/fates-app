@@ -3,12 +3,18 @@
     import { Timeline, DataSet } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
 
-    // 使用 $props() 获取属性，并设置默认值
+    // 扩展 props 类型定义，添加 items 属性
     const props = $props<{
         zoomMin?: number;
         zoomMax?: number;
         start?: Date;
         end?: Date;
+        items?: Array<{
+            id: number | string;
+            content: string;
+            start: Date | string;
+            end?: Date | string;
+        }>;
     }>();
 
     console.log(props);
@@ -25,6 +31,7 @@
     let timeline: Timeline;
     let container: HTMLElement;
     let resetTimeout: number | undefined;
+    let dataSet: DataSet<any>; // 存储 DataSet 实例
 
     // 检查并重置时间线的函数
     const checkAndResetTimeline = () => {
@@ -46,12 +53,8 @@
     };
 
     onMount(() => {
-        // 创建示例数据
-        const items = new DataSet([
-            { id: 1, content: "事件 1", start: "2024-03-01" },
-            { id: 2, content: "事件 2", start: "2024-03-03" },
-            { id: 3, content: "事件 3", start: "2024-03-05", end: "2024-03-08" },
-        ]);
+        // 创建数据集
+        dataSet = new DataSet(props.items || []);
 
         // 配置选项
         const options = {
@@ -81,7 +84,7 @@
         };
 
         // 初始化时间线
-        timeline = new Timeline(container, items, options);
+        timeline = new Timeline(container, dataSet, options);
 
         // 添加带防抖效果的 rangechanged 事件监听
         timeline.on('rangechanged', (event) => {
@@ -96,6 +99,62 @@
             }, 3000);
         });
     });
+
+    // 监听外部 items 变化
+    $effect(() => {
+        if (dataSet && props.items) {
+            // 获取当前数据集中的所有 ID
+            const currentIds = new Set(dataSet.getIds());
+
+            // 更新或添加新项目
+            props.items.forEach(item => {
+                if (currentIds.has(item.id)) {
+                    // 更新已存在的项目
+                    dataSet.update(item);
+                } else {
+                    // 添加新项目
+                    dataSet.add(item);
+                }
+                currentIds.delete(item.id);
+            });
+
+            // 删除不再存在的项目
+            currentIds.forEach(id => {
+                dataSet.remove(id);
+            });
+        }
+    });
+
+    // 暴露添加单个项目的方法
+    export function addItem(item: {
+        id: number | string;
+        content: string;
+        start: Date | string;
+        end?: Date | string;
+    }) {
+        if (dataSet) {
+            dataSet.add(item);
+        }
+    }
+
+    // 暴露删除项目的方法
+    export function removeItem(id: number | string) {
+        if (dataSet) {
+            dataSet.remove(id);
+        }
+    }
+
+    // 暴露更新项目的方法
+    export function updateItem(item: {
+        id: number | string;
+        content?: string;
+        start?: Date | string;
+        end?: Date | string;
+    }) {
+        if (dataSet) {
+            dataSet.update(item);
+        }
+    }
 
     // 组件销毁时清理事件监听和定时器
     onDestroy(() => {
