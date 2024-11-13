@@ -34,7 +34,7 @@
     }>();
 
     // 默认值
-    const DEFAULT_ZOOM_MIN = 1000 * 60 * 60 * 1; // 1 小时
+    const DEFAULT_ZOOM_MIN = 1000 * 60 * 1; // 15 分钟
     const DEFAULT_ZOOM_MAX = 1000 * 60 * 60 * 24 * 1.5; // 1.5 天
 
     // DEFAULT_START 为今天 0 点
@@ -54,16 +54,12 @@
         const currentTime = new Date();
 
         if (currentTime < window.start || currentTime > window.end) {
-            timeline.setWindow(
-                DEFAULT_START,
-                DEFAULT_END,
-                {
-                    animation: {
-                        duration: 500,
-                        easingFunction: 'easeOutQuad'
-                    }
-                }
-            );
+            timeline.setWindow(DEFAULT_START, DEFAULT_END, {
+                animation: {
+                    duration: 500,
+                    easingFunction: "easeOutQuad",
+                },
+            });
         }
     };
 
@@ -76,7 +72,8 @@
         const options = {
             height: "400px",
             editable: true,
-            itemsAlwaysDraggable:{
+            tooltipOnItemUpdateTime: true,
+            itemsAlwaysDraggable: {
                 item: true,
                 range: true,
             },
@@ -98,7 +95,9 @@
                     day: "MM/DD",
                 },
                 majorLabels: {
-                    hour: "MM 月 DD 日",
+                    second: "HH:mm:ss",
+                    minute: "HH:mm",
+                    hour: "MM/DD",
                     weekday: "YYYY",
                     day: "YYYY",
                     week: "YYYY",
@@ -106,18 +105,17 @@
                     year: "",
                 },
             },
+            rollingMode: {
+                follow: true,
+                offset: 0.5,
+            },
         };
 
         // 初始化时间线，传入 groups
-        timeline = new Timeline(
-            container,
-            itemsDataSet,
-            groupsDataSet,
-            options
-        );
+        timeline = new Timeline(container, itemsDataSet, groupsDataSet, options);
 
         // 添加带防抖效果的 rangechanged 事件监听
-        timeline.on('rangechanged', (event) => {
+        timeline.on("rangechanged", (event) => {
             // 清除之前的定时器
             if (resetTimeout) {
                 window.clearTimeout(resetTimeout);
@@ -144,7 +142,7 @@
                 currentIds.delete(item.id);
             });
 
-            currentIds.forEach(id => {
+            currentIds.forEach((id) => {
                 itemsDataSet.remove(id);
             });
         }
@@ -164,7 +162,7 @@
                 currentIds.delete(group.id);
             });
 
-            currentIds.forEach(id => {
+            currentIds.forEach((id) => {
                 groupsDataSet.remove(id);
             });
         }
@@ -202,7 +200,7 @@
     export function getAllItems(): TimelineItem[] {
         if (itemsDataSet) {
             return itemsDataSet.get({
-                fields: ['id', 'content', 'start', 'end', 'group']  // 指定要获取的字段
+                fields: ["id", "content", "start", "end", "group"], // 指定要获取的字段
             });
         }
         return [];
@@ -212,7 +210,7 @@
     export function getAllGroups(): TimelineGroup[] {
         if (groupsDataSet) {
             return groupsDataSet.get({
-                fields: ['id', 'content', 'visible', 'style']  // 指定要获取的字段
+                fields: ["id", "content", "visible", "style"], // 指定要获取的字段
             });
         }
         return [];
