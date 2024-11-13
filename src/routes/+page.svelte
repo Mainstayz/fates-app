@@ -92,10 +92,35 @@
             });
         }, 5000);
     });
+
+    // 导出所有数据的示例
+    const handleExport = () => {
+        const allItems = timelineComponent.getAllItems();
+        const allGroups = timelineComponent.getAllGroups();
+
+        console.log('所有事件：', allItems);
+        console.log('所有分组：', allGroups);
+
+        // 可以将数据转换为 JSON 字符串
+        const exportData = {
+            items: allItems,
+            groups: allGroups
+        };
+
+        // 示例：下载为 JSON 文件
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'timeline-export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
 </script>
 
 <main>
     <h1>时间线演示</h1>
+    <button on:click={handleExport}>导出数据</button>
     <Timeline
         bind:this={timelineComponent}
         items={initialItems}

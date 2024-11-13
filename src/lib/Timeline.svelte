@@ -198,6 +198,26 @@
         }
     }
 
+    // 暴露获取所有 items 的方法
+    export function getAllItems(): TimelineItem[] {
+        if (itemsDataSet) {
+            return itemsDataSet.get({
+                fields: ['id', 'content', 'start', 'end', 'group']  // 指定要获取的字段
+            });
+        }
+        return [];
+    }
+
+    // 暴露获取所有 groups 的方法
+    export function getAllGroups(): TimelineGroup[] {
+        if (groupsDataSet) {
+            return groupsDataSet.get({
+                fields: ['id', 'content', 'visible', 'style']  // 指定要获取的字段
+            });
+        }
+        return [];
+    }
+
     // 组件销毁时清理事件监听和定时器
     onDestroy(() => {
         if (resetTimeout) {
