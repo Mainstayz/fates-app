@@ -28,8 +28,6 @@
         groups?: TimelineGroup[];
     }>();
 
-    console.log(props);
-
     // 默认值
     const DEFAULT_ZOOM_MIN = 1000 * 60 * 60 * 1; // 1 小时
     const DEFAULT_ZOOM_MAX = 1000 * 60 * 60 * 24 * 1.5; // 1.5 天
@@ -73,6 +71,10 @@
         const options = {
             height: "400px",
             editable: true,
+            itemsAlwaysDraggable:{
+                item: true,
+                range: true,
+            },
             zoomMin: props.zoomMin ?? DEFAULT_ZOOM_MIN,
             zoomMax: props.zoomMax ?? DEFAULT_ZOOM_MAX,
             start: props.start ?? DEFAULT_START,
