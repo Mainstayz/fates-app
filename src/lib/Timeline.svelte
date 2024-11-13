@@ -3,18 +3,29 @@
     import { Timeline, DataSet } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
 
-    // 扩展 props 类型定义，添加 items 属性
+    // 扩展 props 类型定义
+    type TimelineItem = {
+        id: number | string;
+        content: string;
+        start: Date | string;
+        end?: Date | string;
+        group?: number | string;
+    };
+
+    type TimelineGroup = {
+        id: number | string;
+        content: string;
+        visible?: boolean;
+        style?: string;
+    };
+
     const props = $props<{
         zoomMin?: number;
         zoomMax?: number;
         start?: Date;
         end?: Date;
-        items?: Array<{
-            id: number | string;
-            content: string;
-            start: Date | string;
-            end?: Date | string;
-        }>;
+        items?: TimelineItem[];
+        groups?: TimelineGroup[];
     }>();
 
     console.log(props);
@@ -31,7 +42,8 @@
     let timeline: Timeline;
     let container: HTMLElement;
     let resetTimeout: number | undefined;
-    let dataSet: DataSet<any>; // 存储 DataSet 实例
+    let itemsDataSet: DataSet<TimelineItem>;
+    let groupsDataSet: DataSet<TimelineGroup>;
 
     // 检查并重置时间线的函数
     const checkAndResetTimeline = () => {
@@ -54,7 +66,8 @@
 
     onMount(() => {
         // 创建数据集
-        dataSet = new DataSet(props.items || []);
+        itemsDataSet = new DataSet(props.items || []);
+        groupsDataSet = new DataSet(props.groups || []);
 
         // 配置选项
         const options = {
@@ -83,8 +96,13 @@
             },
         };
 
-        // 初始化时间线
-        timeline = new Timeline(container, dataSet, options);
+        // 初始化时间线，传入 groups
+        timeline = new Timeline(
+            container,
+            itemsDataSet,
+            groupsDataSet,
+            options
+        );
 
         // 添加带防抖效果的 rangechanged 事件监听
         timeline.on('rangechanged', (event) => {
@@ -102,57 +120,69 @@
 
     // 监听外部 items 变化
     $effect(() => {
-        if (dataSet && props.items) {
-            // 获取当前数据集中的所有 ID
-            const currentIds = new Set(dataSet.getIds());
+        if (itemsDataSet && props.items) {
+            const currentIds = new Set(itemsDataSet.getIds());
 
-            // 更新或添加新项目
-            props.items.forEach(item => {
+            props.items.forEach((item: TimelineItem) => {
                 if (currentIds.has(item.id)) {
-                    // 更新已存在的项目
-                    dataSet.update(item);
+                    itemsDataSet.update(item);
                 } else {
-                    // 添加新项目
-                    dataSet.add(item);
+                    itemsDataSet.add(item);
                 }
                 currentIds.delete(item.id);
             });
 
-            // 删除不再存在的项目
             currentIds.forEach(id => {
-                dataSet.remove(id);
+                itemsDataSet.remove(id);
+            });
+        }
+    });
+
+    // 监听外部 groups 变化
+    $effect(() => {
+        if (groupsDataSet && props.groups) {
+            const currentIds = new Set(groupsDataSet.getIds());
+
+            props.groups.forEach((group: TimelineGroup) => {
+                if (currentIds.has(group.id)) {
+                    groupsDataSet.update(group);
+                } else {
+                    groupsDataSet.add(group);
+                }
+                currentIds.delete(group.id);
+            });
+
+            currentIds.forEach(id => {
+                groupsDataSet.remove(id);
             });
         }
     });
 
     // 暴露添加单个项目的方法
-    export function addItem(item: {
-        id: number | string;
-        content: string;
-        start: Date | string;
-        end?: Date | string;
-    }) {
-        if (dataSet) {
-            dataSet.add(item);
+    export function addItem(item: TimelineItem) {
+        if (itemsDataSet) {
+            itemsDataSet.add(item);
         }
     }
 
-    // 暴露删除项目的方法
-    export function removeItem(id: number | string) {
-        if (dataSet) {
-            dataSet.remove(id);
+    // 暴露添加组的方法
+    export function addGroup(group: TimelineGroup) {
+        if (groupsDataSet) {
+            groupsDataSet.add(group);
         }
     }
 
-    // 暴露更新项目的方法
-    export function updateItem(item: {
-        id: number | string;
-        content?: string;
-        start?: Date | string;
-        end?: Date | string;
-    }) {
-        if (dataSet) {
-            dataSet.update(item);
+    // 暴露删除组的方法
+    export function removeGroup(id: number | string) {
+        if (groupsDataSet) {
+            groupsDataSet.remove(id);
+        }
+    }
+
+    // 暴露更新组的方法
+    export function updateGroup(group: Partial<TimelineGroup> & { id: number | string }) {
+        if (groupsDataSet) {
+            groupsDataSet.update(group);
         }
     }
 
