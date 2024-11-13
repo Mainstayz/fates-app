@@ -14,7 +14,9 @@
   "license": "MIT",
   "dependencies": {
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-shell": "^2"
+    "@tauri-apps/plugin-shell": "^2",
+    "vis-timeline": "^7.7.3",
+    "vis-data": "^7.1.9"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.5",
