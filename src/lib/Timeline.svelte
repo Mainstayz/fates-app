@@ -16,11 +16,34 @@
     // 默认值
     const DEFAULT_ZOOM_MIN = 1000 * 60 * 60 * 1; // 1 小时
     const DEFAULT_ZOOM_MAX = 1000 * 60 * 60 * 24 * 1.5; // 1.5 天
-    const DEFAULT_START = new Date(Date.now() - (12 + 6) * 60 * 60 * 1000); // 当前时间前 18 小时
-    const DEFAULT_END = new Date(Date.now() + (12 + 6) * 60 * 60 * 1000); // 当前时间后 18 小时
+
+    // DEFAULT_START 为今天 0 点
+    const DEFAULT_START = new Date(new Date().setHours(0, 0, 0, 0));
+    // DEFAULT_END 为明天 0 点
+    const DEFAULT_END = new Date(new Date().setHours(24, 0, 0, 0));
 
     let timeline: Timeline;
     let container: HTMLElement;
+    let resetTimeout: number | undefined;
+
+    // 检查并重置时间线的函数
+    const checkAndResetTimeline = () => {
+        const window = timeline.getWindow();
+        const currentTime = new Date();
+
+        if (currentTime < window.start || currentTime > window.end) {
+            timeline.setWindow(
+                DEFAULT_START,
+                DEFAULT_END,
+                {
+                    animation: {
+                        duration: 500,
+                        easingFunction: 'easeOutQuad'
+                    }
+                }
+            );
+        }
+    };
 
     onMount(() => {
         // 创建示例数据
@@ -60,30 +83,25 @@
         // 初始化时间线
         timeline = new Timeline(container, items, options);
 
-        // 添加 rangechanged 事件监听
+        // 添加带防抖效果的 rangechanged 事件监听
         timeline.on('rangechanged', (event) => {
-            const window = timeline.getWindow();
-            const currentTime = new Date();
-
-            // 检查当前时间是否在可见范围内
-            if (currentTime < window.start || currentTime > window.end) {
-                // 重置为初始状态
-                timeline.setWindow(
-                    DEFAULT_START,
-                    DEFAULT_END,
-                    {
-                        animation: {
-                            duration: 500,
-                            easingFunction: 'easeInOutQuad'
-                        }
-                    }
-                );
+            // 清除之前的定时器
+            if (resetTimeout) {
+                window.clearTimeout(resetTimeout);
             }
+
+            // 设置新的定时器，3 秒后执行重置检查
+            resetTimeout = window.setTimeout(() => {
+                checkAndResetTimeline();
+            }, 3000);
         });
     });
 
-    // 组件销毁时清理事件监听
+    // 组件销毁时清理事件监听和定时器
     onDestroy(() => {
+        if (resetTimeout) {
+            window.clearTimeout(resetTimeout);
+        }
         if (timeline) {
             timeline.destroy();
         }
@@ -130,8 +148,8 @@
     :global(.vis-timeline .vis-labelset .vis-label) {
         display: flex;
         align-items: center;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        /* padding-left: 1rem;
+        padding-right: 1rem; */
         border-bottom: none;
         font-size: 1.25rem;
         font-weight: 500;
