@@ -175,6 +175,14 @@
         }
     }
 
+    // removeItem
+    export function removeItem(id: number | string) {
+        if (itemsDataSet) {
+            itemsDataSet.remove(id);
+        }
+    }
+
+
     // 暴露添加组的方法
     export function addGroup(group: TimelineGroup) {
         if (groupsDataSet) {
