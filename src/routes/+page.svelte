@@ -5,6 +5,9 @@
     import { invoke } from "@tauri-apps/api/core";
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
     import { Button } from "$lib/components/ui/button";
+    import { Card } from "$lib/components/ui/card";
+    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
+    import { Settings } from "lucide-svelte";
 
     let timelineComponent: Timeline;
 
@@ -14,14 +17,14 @@
 
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
-      console.log("handleAdd", item);
-      callback(item); // 确认添加
+        console.log("handleAdd", item);
+        callback(item); // 确认添加
     };
 
     // 处理移动事件
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
         console.log("handleMove", item);
-      callback(item); // 确认移动
+        callback(item); // 确认移动
     };
 
     // 处理正在移动
@@ -181,47 +184,55 @@
         a.click();
         URL.revokeObjectURL(url);
     };
+
+    // 添加一个变量来跟踪当前选中的标签页
+    let currentTab = "timeline";
 </script>
 
-<main>
-    <h1>时间线演示</h1>
-    <div class="timeline-controls">
-        <Button on:click={saveTimelineData}>保存时间线</Button>
-        <Button on:click={loadTimelineData}>加载时间线</Button>
-        <Button on:click={handleExport}>导出数据</Button>
+<main class="container mx-auto p-4 space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold">时间追踪管理</h1>
     </div>
 
-    <!-- onAdd={handleAdd}
-    onUpdate={handleUpdate}
-    onRemove={handleRemove}
-    onMove={handleMove}
-    onMoving={handleMoving} -->
-    <Timeline
-        bind:this={timelineComponent}
-        {items}
-        {groups}
-        onAdd={handleAdd}
-        onUpdate={handleUpdate}
-        onRemove={handleRemove}
-        onMove={handleMove}
-        onMoving={handleMoving}
-    />
+    <div class="flex items-center justify-between">
+        <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
+            <TabsList>
+                <TabsTrigger value="timeline">时间线</TabsTrigger>
+                <TabsTrigger value="statistics">统计</TabsTrigger>
+            </TabsList>
+        </Tabs>
+
+        <Button variant="outline" size="icon">
+            <Settings class="h-4 w-4" />
+        </Button>
+    </div>
+
+    <div class="h-px bg-border" />
+
+    <Tabs value={currentTab}>
+        <TabsContent value="timeline">
+            <!-- 设置水平方向 p-6 ，垂直方向 p-4 -->
+            <Timeline
+                    bind:this={timelineComponent}
+                    {items}
+                    {groups}
+                    onAdd={handleAdd}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    onMove={handleMove}
+                    onMoving={handleMoving}
+                />
+        </TabsContent>
+
+        <TabsContent value="statistics">
+            <Card class="p-6">
+                <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
+                <p>这里将显示统计信息...</p>
+            </Card>
+        </TabsContent>
+    </Tabs>
 </main>
 
 <style>
-    main {
-        padding: 20px;
-    }
-
-    .timeline-controls {
-        margin: 10px 0;
-        padding: 10px 0;
-        border-bottom: 1px solid #ccc;
-    }
-
-    button {
-        margin-right: 10px;
-        padding: 5px 10px;
-        cursor: pointer;
-    }
+    /* 可以删除之前的样式，因为现在使用 Tailwind CSS */
 </style>
