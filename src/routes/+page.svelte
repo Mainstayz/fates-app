@@ -4,11 +4,12 @@
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
-    import { Button } from "$lib/components/ui/button";
+    import { Button, buttonVariants } from "$lib/components/ui/button";
     import { Card } from "$lib/components/ui/card";
     import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
-    import { Settings } from "lucide-svelte";
-
+    import { Settings, Moon, Sun } from "lucide-svelte";
+    import { resetMode, setMode, ModeWatcher } from "mode-watcher";
+    import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     let timelineComponent: Timeline;
 
     // 使用响应式声明存储时间线数据
@@ -187,6 +188,8 @@
 
     // 添加一个变量来跟踪当前选中的标签页
     let currentTab = "timeline";
+
+    // $: isDarkMode = getMode() === 'dark';
 </script>
 
 <main class="container mx-auto p-4 space-y-4">
@@ -202,26 +205,60 @@
             </TabsList>
         </Tabs>
 
-        <Button variant="outline" size="icon">
-            <Settings class="h-4 w-4" />
-        </Button>
+        <div class="flex items-center gap-2">
+            <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
+                {#if isDarkMode}
+                    <Sun class="h-4 w-4" />
+                {:else}
+                    <Moon class="h-4 w-4" />
+                {/if}
+            </Button> -->
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger
+                class={buttonVariants({ variant: "outline", size: "icon" })}
+              >
+                <Sun
+                  class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                />
+                <Moon
+                  class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                />
+                <span class="sr-only">Toggle theme</span>
+              </DropdownMenu.Trigger>
+                <DropdownMenu.Content align="end">
+                    <DropdownMenu.Item onclick={() => setMode("light")}>Light</DropdownMenu.Item>
+                    <DropdownMenu.Item onclick={() => setMode("dark")}>Dark</DropdownMenu.Item>
+                    <DropdownMenu.Item onclick={() => resetMode()}>System</DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+            <Button variant="outline" size="icon">
+                <Settings class="h-4 w-4" />
+            </Button>
+        </div>
     </div>
 
-    <div class="h-px bg-border" />
+    <div class="h-px bg-border" ></div>
 
     <Tabs value={currentTab}>
         <TabsContent value="timeline">
-            <!-- 设置水平方向 p-6 ，垂直方向 p-4 -->
-            <Timeline
-                    bind:this={timelineComponent}
-                    {items}
-                    {groups}
-                    onAdd={handleAdd}
-                    onUpdate={handleUpdate}
-                    onRemove={handleRemove}
-                    onMove={handleMove}
-                    onMoving={handleMoving}
-                />
+            <Card class="p-6">
+                <div class="space-y-4">
+                    <div class="flex gap-2">
+                        <Button variant="outline">添加组</Button>
+                        <Button variant="outline">添加事件</Button>
+                    </div>
+                    <Timeline
+                        bind:this={timelineComponent}
+                        {items}
+                        {groups}
+                        onAdd={handleAdd}
+                        onUpdate={handleUpdate}
+                        onRemove={handleRemove}
+                        onMove={handleMove}
+                        onMoving={handleMoving}
+                    />
+                </div>
+            </Card>
         </TabsContent>
 
         <TabsContent value="statistics">
