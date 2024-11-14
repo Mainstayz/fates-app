@@ -14,6 +14,17 @@ pnpm install
 
 pnpm tauri dev
 
-```
 
+
+<!-- 添加 shadcn 组件库 -->
+```
+<!-- 添加 tailwindcss 支持 -->
+npx sv add tailwindcss
+
+<!-- 初始化 shadcn 组件库 -->
+npx shadcn-svelte@next init
+
+<!-- 安装 shadcn 组件库 -->
+npx shadcn-svelte@next add button
+```
 

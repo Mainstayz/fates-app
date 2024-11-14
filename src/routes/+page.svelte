@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
+    import { Button } from "$lib/components/ui/button";
 
     let timelineComponent: Timeline;
 
@@ -126,7 +127,7 @@
         // 加载保存的数据
         loadTimelineData();
 
-        // 设置自动保存（每5分钟）
+        // 设置自动保存（每 5 分钟）
         autoSaveInterval = setInterval(saveTimelineData, 5 * 60 * 1000);
 
         return () => {
@@ -139,13 +140,13 @@
     onMount(() => {
         // 3 秒后添加新组和事件
         setTimeout(() => {
-            // 获取当前最大ID
+            // 获取当前最大 ID
             const existingGroups = timelineComponent.getAllGroups();
             const existingItems = timelineComponent.getAllItems();
             const maxGroupId = Math.max(0, ...existingGroups.map((g) => Number(g.id)));
             const maxItemId = Math.max(0, ...existingItems.map((i) => Number(i.id)));
 
-            // 使用新的ID添加数据
+            // 使用新的 ID 添加数据
             const newGroupId = maxGroupId + 1;
             const newItemId = maxItemId + 1;
 
@@ -202,9 +203,9 @@
 <main>
     <h1>时间线演示</h1>
     <div class="timeline-controls">
-        <button on:click={saveTimelineData}>保存时间线</button>
-        <button on:click={loadTimelineData}>加载时间线</button>
-        <button on:click={handleExport}>导出数据</button>
+        <Button on:click={saveTimelineData}>保存时间线</Button>
+        <Button on:click={loadTimelineData}>加载时间线</Button>
+        <Button on:click={handleExport}>导出数据</Button>
     </div>
 
     <!-- onAdd={handleAdd}
