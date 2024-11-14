@@ -1,12 +1,12 @@
 export interface TimelineGroup {
-    id: number;
+    id: string;
     content: string;
 }
 
 export interface TimelineItem {
-    id: number;
-    group: number;
+    id: string;
+    group?: string;
     content: string;
-    start: string | Date;
-    end?: string | Date;
+    start: string;
+    end?: string;
 }

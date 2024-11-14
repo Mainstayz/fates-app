@@ -2,22 +2,7 @@
     import { onMount, onDestroy } from "svelte";
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
-
-    // 扩展 props 类型定义
-    type TimelineItem = {
-        id: number | string;
-        content: string;
-        start: Date | string;
-        end?: Date | string;
-        group?: number | string;
-    };
-
-    type TimelineGroup = {
-        id: number | string;
-        content: string;
-        visible?: boolean;
-        style?: string;
-    };
+    import type { TimelineItem, TimelineGroup } from "$lib/types";
 
     const props = $props<{
         zoomMin?: number;
@@ -134,7 +119,8 @@
         timeline = new Timeline(
             container,
             itemsDataSet,
-            groupsDataSet || undefined,  // 当 groupsDataSet 为空时传入 undefined
+            // @ts-ignore
+            groupsDataSet,
             options
         );
 
@@ -179,15 +165,15 @@
 
             props.groups.forEach((group: TimelineGroup) => {
                 if (currentIds.has(group.id)) {
-                    groupsDataSet.update(group);
+                    groupsDataSet?.update(group);
                 } else {
-                    groupsDataSet.add(group);
+                    groupsDataSet?.add(group);
                 }
                 currentIds.delete(group.id);
             });
 
             currentIds.forEach((id) => {
-                groupsDataSet.remove(id);
+                groupsDataSet?.remove(id);
             });
         }
     });
@@ -242,7 +228,7 @@
     export function getAllGroups(): TimelineGroup[] {
         if (groupsDataSet) {
             return groupsDataSet.get({
-                fields: ["id", "content", "visible", "style"], // 指定要获取的字段
+                fields: ["id", "content"], // 指定要获取的字段
             });
         }
         return [];
@@ -363,8 +349,17 @@
     }
 
     :global(.vis-timeline .vis-current-time) {
-        background-color: var(--bs-success);
-        width: 1px;
+        background-color: transparent !important;
+        width: 200px !important;
+        position: relative !important;
+        left: -200px !important;
+        background: linear-gradient(
+            to right,
+            rgba(23, 198, 83, 0) 0%,
+            rgba(23, 198, 83, 0.1) 45%,
+            rgba(23, 198, 83, 0.2) 99%,
+            var(--bs-success) 100%
+        ) !important;
     }
 
     /* :global(

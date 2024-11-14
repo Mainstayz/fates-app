@@ -18,14 +18,15 @@ pub struct TimelineData {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TimelineGroup {
-    id: i32,
+    id: String,
     content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TimelineItem {
-    id: i32,
-    group: i32,
+    id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    group: Option<String>,
     content: String,
     start: String,
     #[serde(skip_serializing_if = "Option::is_none")]

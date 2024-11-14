@@ -57,7 +57,7 @@
             groups: timelineComponent.getAllGroups(),
             items: timelineComponent.getAllItems(),
         };
-
+        console.log("Timeline data:", timelineData);
         try {
             await invoke("save_timeline_data", { data: timelineData });
             console.log("Timeline data saved successfully");
