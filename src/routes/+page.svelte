@@ -14,31 +14,14 @@
 
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
-        const confirmed = await ask(`确认添加事件：${item.content}?`, {
-            title: "添加确认",
-            kind: "warning",
-        });
-
-        if (confirmed) {
-            callback(item); // 确认添加
-        } else {
-            callback(null); // 取消添加
-        }
+      console.log("handleAdd", item);
+      callback(item); // 确认添加
     };
 
     // 处理移动事件
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
-        const title = `是否要移动事件到:\n开始：${item.start}\n结束：${item.end}?`;
-        const confirmed = await ask(title, {
-            title: "移动确认",
-            kind: "warning",
-        });
-
-        if (confirmed) {
-            callback(item); // 确认移动
-        } else {
-            callback(null); // 取消移动
-        }
+        console.log("handleMove", item);
+      callback(item); // 确认移动
     };
 
     // 处理正在移动
@@ -217,6 +200,11 @@
         bind:this={timelineComponent}
         {items}
         {groups}
+        onAdd={handleAdd}
+        onUpdate={handleUpdate}
+        onRemove={handleRemove}
+        onMove={handleMove}
+        onMoving={handleMoving}
     />
 </main>
 

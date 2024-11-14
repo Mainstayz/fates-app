@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { Timeline, DataSet } from "vis-timeline/standalone";
+    import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
 
     // 扩展 props 类型定义
@@ -48,7 +48,7 @@
     let container: HTMLElement;
     let resetTimeout: number | undefined;
     let itemsDataSet: DataSet<TimelineItem>;
-    let groupsDataSet: DataSet<TimelineGroup>;
+    let groupsDataSet: DataSet<TimelineGroup> | undefined;
 
     // 检查并重置时间线的函数
     const checkAndResetTimeline = () => {
@@ -68,13 +68,18 @@
     onMount(() => {
         // 创建数据集
         itemsDataSet = new DataSet(props.items || []);
-        groupsDataSet = new DataSet(props.groups || []);
+
+        // 只在有 groups 数据时才创建和使用 groupsDataSet
+        const groups = props.groups || [];
+        groupsDataSet = groups.length > 0 ? new DataSet(groups) : undefined;
 
         // 配置选项
-        const options = {
+        const options: TimelineOptions = {
             height: "400px",
+            groupEditable: true,
             editable: true,
-            tooltipOnItemUpdateTime: true,
+            selectable: true,
+            multiselect: true,
             itemsAlwaysDraggable: {
                 item: true,
                 range: true,
@@ -84,11 +89,6 @@
             start: props.start ?? DEFAULT_START,
             end: props.end ?? DEFAULT_END,
             showCurrentTime: true,
-            onAdd: props.onAdd,
-            onMove: props.onMove,
-            onMoving: props.onMoving,
-            onUpdate: props.onUpdate,
-            onRemove: props.onRemove,
             format: {
                 minorLabels: {
                     minute: "HH:mm",
@@ -113,8 +113,30 @@
             },
         };
 
-        // 初始化时间线，传入 groups
-        timeline = new Timeline(container, itemsDataSet, groupsDataSet, options);
+        // 判断并设置回调函数
+        if (props.onAdd) {
+            options.onAdd = props.onAdd;
+        }
+        if (props.onMove) {
+            options.onMove = props.onMove;
+        }
+        if (props.onMoving) {
+            options.onMoving = props.onMoving;
+        }
+        if (props.onUpdate) {
+            options.onUpdate = props.onUpdate;
+        }
+        if (props.onRemove) {
+            options.onRemove = props.onRemove;
+        }
+
+        // 初始化时间线，只在有 groups 时传入 groupsDataSet
+        timeline = new Timeline(
+            container,
+            itemsDataSet,
+            groupsDataSet || undefined,  // 当 groupsDataSet 为空时传入 undefined
+            options
+        );
 
         // 添加带防抖效果的 rangechanged 事件监听
         timeline.on("rangechanged", (event) => {
