@@ -53,31 +53,9 @@
         endTime = updateDateTime(endDateInput, endTimeInput);
     }
 
-    // 如果 endTime 在 startTime 之前，自动调整 endTime
-    $: {
-        if (endTime < startTime) {
-            // 显示错误提示而不是自动调整
-            dispatch('error', {
-                message: "结束时间不能早于开始时间"
-            });
-            // 重置结束时间为开始时间后2小时
-            endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
-            endDateInput = formatDateForInput(endTime);
-            endTimeInput = formatTimeForInput(endTime);
-        }
-    }
-
     const dispatch = createEventDispatcher();
 
     function handleSubmit() {
-        // 验证结束时间是否晚于开始时间
-        if (endTime < startTime) {
-            dispatch('error', {
-                message: "结束时间不能早于开始时间"
-            });
-            return;
-        }
-
         const eventData = {
             title,
             tags: tags.split(",").map((tag) => tag.trim()),

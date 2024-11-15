@@ -19,6 +19,7 @@
         tags?: string;
         startDate?: string;
         endDate?: string;
+        timeRange?: string;
     } = {};
 
     const colors = [
@@ -43,9 +44,29 @@
         endTime: z.string().min(1, "请选择结束时间"),
     });
 
+    // 添加时间转换函数
+    function toDateTime(dateStr: string, timeStr: string): Date {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        const [hours, minutes] = timeStr.split(":").map(Number);
+        return new Date(year, month - 1, day, hours, minutes);
+    }
+
+    // 验证时间范围
+    function validateTimeRange(): boolean {
+        const startDateTime = toDateTime(startDateInput, startTimeInput);
+        const endDateTime = toDateTime(endDateInput, endTimeInput);
+
+        if (endDateTime <= startDateTime) {
+            errors.timeRange = "结束时间必须晚于开始时间";
+            return false;
+        }
+        return true;
+    }
+
     function validateForm() {
         errors = {};
         try {
+            // 首先验证基本字段
             formSchema.parse({
                 title,
                 tags,
@@ -55,6 +76,12 @@
                 endDate: endDateInput,
                 endTime: endTimeInput,
             });
+
+            // 然后验证时间范围
+            if (!validateTimeRange()) {
+                return false;
+            }
+
             return true;
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -66,6 +93,11 @@
             }
             return false;
         }
+    }
+
+    // 实时验证时间范围
+    $: if (startDateInput && startTimeInput && endDateInput && endTimeInput) {
+        validateTimeRange();
     }
 
     function handleSubmit() {
@@ -100,13 +132,13 @@
                 type="date"
                 id="startDate"
                 bind:value={startDateInput}
-                class={errors.startDate ? "border-red-500" : ""}
+                class={errors.startDate || errors.timeRange ? "border-red-500" : ""}
             />
             <Input
                 type="time"
                 id="startTime"
                 bind:value={startTimeInput}
-                class={errors.startDate ? "border-red-500" : ""}
+                class={errors.startDate || errors.timeRange ? "border-red-500" : ""}
             />
         </div>
         {#if errors.startDate}
@@ -121,13 +153,13 @@
                 type="date"
                 id="endDate"
                 bind:value={endDateInput}
-                class={errors.endDate ? "border-red-500" : ""}
+                class={errors.endDate || errors.timeRange ? "border-red-500" : ""}
             />
             <Input
                 type="time"
                 id="endTime"
                 bind:value={endTimeInput}
-                class={errors.endDate ? "border-red-500" : ""}
+                class={errors.endDate || errors.timeRange ? "border-red-500" : ""}
             />
         </div>
         {#if errors.endDate}
@@ -163,6 +195,12 @@
             </Select.Content>
         </Select.Root>
     </div>
+
+    {#if errors.timeRange}
+        <div class="text-sm text-red-500">
+            {errors.timeRange}
+        </div>
+    {/if}
 
     <Button type="submit" class="w-full">提交</Button>
 </form>
