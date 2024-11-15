@@ -188,22 +188,22 @@
 
     // 添加一个变量来跟踪当前选中的标签页
     let currentTab = "timeline";
-
-    // $: isDarkMode = getMode() === 'dark';
+    // 应该持久化
+    // let isDarkMode = getMode() === 'dark';
 </script>
 
 <main class="container mx-auto p-4 space-y-4">
     <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-destructive">时间追踪管理</h1>
+        <h1 class="text-3xl font-bold">Time Tracking</h1>
     </div>
 
-    <div class="flex items-center justify-between">
-        <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
+    <div class="flex items-center justify-end">
+        <!-- <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
             <TabsList>
                 <TabsTrigger value="timeline">时间线</TabsTrigger>
                 <TabsTrigger value="statistics">统计</TabsTrigger>
             </TabsList>
-        </Tabs>
+        </Tabs> -->
 
         <div class="flex items-center gap-2">
             <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
@@ -213,7 +213,7 @@
                     <Moon class="h-4 w-4" />
                 {/if}
             </Button> -->
-            <DropdownMenu.Root>
+            <!-- <DropdownMenu.Root>
               <DropdownMenu.Trigger
                 class={buttonVariants({ variant: "outline", size: "icon" })}
               >
@@ -230,22 +230,21 @@
                     <DropdownMenu.Item onclick={() => setMode("dark")}>Dark</DropdownMenu.Item>
                     <DropdownMenu.Item onclick={() => resetMode()}>System</DropdownMenu.Item>
               </DropdownMenu.Content>
-            </DropdownMenu.Root>
+            </DropdownMenu.Root> -->
             <Button variant="outline" size="icon">
                 <Settings class="h-4 w-4" />
             </Button>
         </div>
     </div>
 
-    <div class="h-px bg-border" ></div>
+    <!-- <div class="h-px bg-border" ></div> -->
 
     <Tabs value={currentTab}>
         <TabsContent value="timeline">
             <Card class="p-6">
                 <div class="space-y-4">
-                    <div class="flex gap-2">
-                        <Button variant="outline">添加组</Button>
-                        <Button variant="outline">添加事件</Button>
+                    <div class="flex gap-2 justify-end">
+                        <Button variant="ghost">Add</Button>
                     </div>
                     <Timeline
                         bind:this={timelineComponent}
@@ -261,6 +260,7 @@
             </Card>
         </TabsContent>
 
+        <!-- TODO -->
         <TabsContent value="statistics">
             <Card class="p-6">
                 <h2 class="text-2xl font-semibold mb-4">统计信息</h2>

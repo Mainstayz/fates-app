@@ -192,7 +192,6 @@
         }
     }
 
-
     // 暴露添加组的方法
     export function addGroup(group: TimelineGroup) {
         if (groupsDataSet) {
@@ -251,7 +250,6 @@
     /* https://visjs.github.io/vis-timeline/examples/timeline/styling/customCss.html */
     /* https://github.com/A-Safdar/socs-theme-playground/blob/106a8b4af3b9411d3aabdc7246ec617ca4ff64df/src/SchoolsSports.Theme/wwwroot/themes/schools-sports/plugins/global/plugins.bundle.css#L736 */
 
-
     div {
         width: 100%;
         height: 400px;
@@ -282,7 +280,7 @@
 
     /* 时间线容器样式 */
     :global(.vis-timeline) {
-        border: 1px solid var(--bs-border-color) !important;
+        border: 1px solid var(--border) !important;
         border-radius: 0.475rem !important;
     }
 
@@ -290,8 +288,8 @@
     :global(.vis-timeline .vis-labelset .vis-label) {
         display: flex;
         align-items: center;
-        /* padding-left: 1rem;
-        padding-right: 1rem; */
+        /* padding-left: 1rem; */
+        /* padding-right: 1rem; */
         border-bottom: none;
         font-size: 1.25rem;
         font-weight: 500;
@@ -407,6 +405,6 @@
 
     /* 今天日期背景颜色 */
     :global(.vis-time-axis .vis-grid.vis-today) {
-        background: #f5f5f5;
+        /* background: var(--destructive); */
     }
 </style>

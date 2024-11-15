@@ -3,73 +3,86 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: #FFFFFF;
-    --foreground: #09090B;
-    --muted: #F4F4F5;
-    --muted-foreground: #71717A;
-    --popover: #FFFFFF;
-    --popover-foreground: #09090B;
-    --card: #FFFFFF;
-    --card-foreground: #09090B;
-    --border: #E4E4E7;
-    --input: #E4E4E7;
-    --primary: #18181B;
-    --primary-foreground: #FAFAFA;
-    --secondary: #F4F4F5;
-    --secondary-foreground: #18181B;
-    --accent: #F4F4F5;
-    --accent-foreground: #18181B;
-    --destructive: #EF4444;
-    --destructive-foreground: #FAFAFA;
-    --ring: #18181B;
-    --radius: 0.5rem;
-    --sidebar-background: #FAFAFA;
-    --sidebar-foreground: #3F3F46;
-    --sidebar-primary: #18181B;
-    --sidebar-primary-foreground: #FAFAFA;
-    --sidebar-accent: #F4F4F5;
-    --sidebar-accent-foreground: #18181B;
-    --sidebar-border: #E4E4E7;
-    --sidebar-ring: #3B82F6;
-  }
+    :root {
+        --background: #ffffff;
+        --foreground: #020817;
+        --card: #ffffff;
+        --card-foreground: #020817;
+        --primary: #0f172a;
+        --primary-foreground: #f8fafc;
+        --secondary: #f1f5f9;
+        --secondary-foreground: #0f172a;
+        --muted: #f1f5f9;
+        --muted-foreground: #64748b;
+        --accent: #f1f5f9;
+        --accent-foreground: #0f172a;
+        --popover: #ffffff;
+        --popover-foreground: #020817;
+        --destructive: #ef4444;
+        --destructive-foreground: #f8fafc;
+        --border: #e2e8f0;
+        --input: #e2e8f0;
+        --ring: #020817;
+        --chart-1: #e76e50;
+        --chart-2: #2a9d90;
+        --chart-3: #274754;
+        --chart-4: #e8c468;
+        --chart-5: #f4a462;
 
-  .dark {
-    --background: #09090B;
-    --foreground: #FAFAFA;
-    --muted: #27272A;
-    --muted-foreground: #A1A1AA;
-    --popover: #09090B;
-    --popover-foreground: #FAFAFA;
-    --card: #09090B;
-    --card-foreground: #FAFAFA;
-    --border: #27272A;
-    --input: #27272A;
-    --primary: #FAFAFA;
-    --primary-foreground: #18181B;
-    --secondary: #27272A;
-    --secondary-foreground: #FAFAFA;
-    --accent: #27272A;
-    --accent-foreground: #FAFAFA;
-    --destructive: #7F1D1D;
-    --destructive-foreground: #FAFAFA;
-    --ring: #D4D4D8;
-    --sidebar-background: #18181B;
-    --sidebar-foreground: #F4F4F5;
-    --sidebar-primary: #3B82F6;
-    --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #27272A;
-    --sidebar-accent-foreground: #F4F4F5;
-    --sidebar-border: #27272A;
-    --sidebar-ring: #3B82F6;
-  }
+        --radius: 0.3rem;
+        --sidebar-background: #fafafa;
+        --sidebar-foreground: #3f3f46;
+        --sidebar-primary: #18181b;
+        --sidebar-primary-foreground: #fafafa;
+        --sidebar-accent: #f4f4f5;
+        --sidebar-accent-foreground: #18181b;
+        --sidebar-border: #e4e4e7;
+        --sidebar-ring: #3b82f6;
+
+    }
+
+    .dark {
+        --background: #ffffff;
+        --foreground: #020817;
+        --card: #ffffff;
+        --card-foreground: #020817;
+        --primary: #0f172a;
+        --primary-foreground: #f8fafc;
+        --secondary: #f1f5f9;
+        --secondary-foreground: #0f172a;
+        --muted: #f1f5f9;
+        --muted-foreground: #64748b;
+        --accent: #f1f5f9;
+        --accent-foreground: #0f172a;
+        --popover: #ffffff;
+        --popover-foreground: #020817;
+        --destructive: #ef4444;
+        --destructive-foreground: #f8fafc;
+        --border: #e2e8f0;
+        --input: #e2e8f0;
+        --ring: #020817;
+        --chart-1: #e76e50;
+        --chart-2: #2a9d90;
+        --chart-3: #274754;
+        --chart-4: #e8c468;
+        --chart-5: #f4a462;
+
+        --sidebar-background: #18181b;
+        --sidebar-foreground: #f4f4f5;
+        --sidebar-primary: #3b82f6;
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: #27272a;
+        --sidebar-accent-foreground: #f4f4f5;
+        --sidebar-border: #27272a;
+        --sidebar-ring: #3b82f6;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
 }
