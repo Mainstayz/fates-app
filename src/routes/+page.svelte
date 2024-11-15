@@ -7,7 +7,7 @@
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import { Card } from "$lib/components/ui/card";
     import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
-    import { Settings, Moon, Sun } from "lucide-svelte";
+    import { Settings, Moon, Sun, Plus } from "lucide-svelte";
     import { resetMode, setMode, ModeWatcher } from "mode-watcher";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     let timelineComponent: Timeline;
@@ -193,27 +193,27 @@
 </script>
 
 <main class="container mx-auto p-4 space-y-4">
-    <div class="flex items-center justify-between">
+    <!-- <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold">Time Tracking</h1>
-    </div>
+    </div> -->
 
-    <div class="flex items-center justify-end">
-        <!-- <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
+    <!-- <div class="flex items-center justify-end"> -->
+    <!-- <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
             <TabsList>
                 <TabsTrigger value="timeline">时间线</TabsTrigger>
                 <TabsTrigger value="statistics">统计</TabsTrigger>
             </TabsList>
         </Tabs> -->
 
-        <div class="flex items-center gap-2">
-            <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
+    <!-- <div class="flex items-center gap-2"> -->
+    <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
                 {#if isDarkMode}
                     <Sun class="h-4 w-4" />
                 {:else}
                     <Moon class="h-4 w-4" />
                 {/if}
             </Button> -->
-            <!-- <DropdownMenu.Root>
+    <!-- <DropdownMenu.Root>
               <DropdownMenu.Trigger
                 class={buttonVariants({ variant: "outline", size: "icon" })}
               >
@@ -231,33 +231,56 @@
                     <DropdownMenu.Item onclick={() => resetMode()}>System</DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root> -->
-            <Button variant="outline" size="icon">
+    <!-- <Button variant="outline" size="icon">
                 <Settings class="h-4 w-4" />
-            </Button>
-        </div>
-    </div>
+            </Button> -->
+    <!-- </div> -->
+    <!-- </div> -->
 
     <!-- <div class="h-px bg-border" ></div> -->
 
     <Tabs value={currentTab}>
         <TabsContent value="timeline">
-            <Card class="p-6">
-                <div class="space-y-4">
-                    <div class="flex gap-2 justify-end">
-                        <Button variant="ghost">Add</Button>
-                    </div>
-                    <Timeline
-                        bind:this={timelineComponent}
-                        {items}
-                        {groups}
-                        onAdd={handleAdd}
-                        onUpdate={handleUpdate}
-                        onRemove={handleRemove}
-                        onMove={handleMove}
-                        onMoving={handleMoving}
-                    />
+            <!-- <Card class="p-6"> -->
+            <div class="px-4 pt-6">
+                <div class="flex gap-2 justify-end">
+                    <Button
+                        variant="outline"
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 3 * 60 * 60 * 1000),
+                                new Date(Date.now() + 3 * 60 * 60 * 1000)
+                            )}
+                        >Nearby 6 Hours</Button
+                    >
+                    <Button
+                        variant="outline"
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                            )}
+                        >Nearby 3 Days</Button
+                    >
+                    <Button variant="outline">
+                        <Plus class="h-4 w-4 mr-2" />
+                        Add
+                    </Button>
                 </div>
-            </Card>
+                <Timeline
+                    bind:this={timelineComponent}
+                    zoomMin={1000 * 60 * 5}
+                    zoomMax={1000 * 60 * 60 * 24 * 3}
+                    {items}
+                    {groups}
+                    onAdd={handleAdd}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    onMove={handleMove}
+                    onMoving={handleMoving}
+                />
+            </div>
+            <!-- </Card> -->
         </TabsContent>
 
         <!-- TODO -->

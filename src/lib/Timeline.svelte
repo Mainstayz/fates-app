@@ -178,6 +178,11 @@
         }
     });
 
+    // 暴露设置时间窗口的方法
+    export function setWindow(start: Date, end: Date) {
+        timeline.setWindow(start, end);
+    }
+
     // 暴露添加单个项目的方法
     export function addItem(item: TimelineItem) {
         if (itemsDataSet) {
@@ -256,32 +261,10 @@
         margin: 20px 0;
     }
 
-    /* 定义全局变量 */
-    :root {
-        --bs-border-color: #f1f1f4;
-        --bs-primary: #1b84ff;
-        --bs-secondary: #f1f1f4;
-        --bs-success: #17c653;
-        --bs-info: #7239ea;
-        --bs-warning: #f6c000;
-        --bs-danger: #f8285a;
-        --bs-border-dashed-color: #dbdfe9;
-        --bs-gray-100: #f9f9f9;
-        --bs-gray-200: #f1f1f4;
-        --bs-gray-300: #dbdfe9;
-        --bs-gray-400: #c4cada;
-        --bs-gray-500: #99a1b7;
-        --bs-gray-600: #78829d;
-        --bs-gray-700: #4b5675;
-        --bs-gray-800: #252f4a;
-        --bs-gray-900: #071437;
-        --bs-warning-light: #fff8dd;
-    }
-
     /* 时间线容器样式 */
     :global(.vis-timeline) {
         border: 1px solid var(--border) !important;
-        border-radius: 0.475rem !important;
+        border-radius: var(--radius) !important;
     }
 
     /* 标签集中的标签样式 */
@@ -293,7 +276,6 @@
         border-bottom: none;
         font-size: 1.25rem;
         font-weight: 500;
-        color: var(--bs-gray-900);
     }
 
     /* 前景中组的边框样式 */
@@ -304,18 +286,14 @@
     /* 时间线项目的基本样式 */
     :global(.vis-timeline .vis-item) {
         position: absolute;
-        color: var(--bs-gray-700);
-        border-color: var(--bs-primary);
         border-width: 1px;
-        background-color: var(--bs-gray-100);
-        border-radius: 0.475rem !important;
+        border-radius: var(--radius) !important;
+        @apply bg-blue-200 text-foreground border-blue-300;
     }
 
     /* 选中状态的时间线项目样式 */
     :global(.vis-timeline .vis-item.vis-selected) {
-        background-color: var(--bs-warning-light);
-        color: var(--bs-gray-700);
-        border-color: var(--bs-warning);
+        @apply bg-orange-100 text-foreground bg-orange-200;
     }
 
     /* 时间线项目内容样式 */
@@ -334,12 +312,12 @@
 
     /* 时间轴文本样式 */
     :global(.vis-timeline .vis-time-axis .vis-text) {
-        color: var(--bs-gray-400);
+        @apply text-muted-foreground;
     }
 
     /* 时间轴次要网格线样式 */
     :global(.vis-timeline .vis-time-axis .vis-grid.vis-minor) {
-        border-left-color: var(--bs-border-dashed-color) !important;
+        @apply border-gray-300;
     }
 
     /* 时间轴垂直网格线样式 */
@@ -360,7 +338,7 @@
             .vis-timeline .vis-panel.vis-right,
             .vis-timeline .vis-panel.vis-top
         ) {
-        border-color: var(--bs-border-color) !important;
+        border-color: var(--border) !important;
     }
 
     /* 当前时间指示器样式 */
@@ -406,6 +384,10 @@
     /* 今天日期背景颜色 */
     :global(.vis-time-axis .vis-grid.vis-today) {
         /* background: var(--destructive); */
-        /* @apply bg-tahiti; */
+        @apply bg-gray-100;
+    }
+    /* .vis-rolling-mode-btn */
+    :global(.vis-rolling-mode-btn) {
+        @apply bg-blue-300;
     }
 </style>
