@@ -194,7 +194,7 @@
 
 <main class="container mx-auto p-4 space-y-4">
     <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold">时间追踪管理</h1>
+        <h1 class="text-3xl font-bold text-destructive">时间追踪管理</h1>
     </div>
 
     <div class="flex items-center justify-between">
