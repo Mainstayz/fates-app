@@ -2,10 +2,8 @@
     import * as Popover from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
     import { Plus } from "lucide-svelte";
-    import * as Select from "$lib/components/ui/select";
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Calendar } from "$lib/components/ui/calendar";
+    import EventFormFields from "./EventFormFields.svelte";
+    import { createEventDispatcher } from "svelte";
 
     export let onSubmit:
         | ((event: { title: string; tags: string[]; color: string; startTime: Date; endTime: Date }) => void)
@@ -47,16 +45,10 @@
     }
 
     // 监听日期和时间变化
-    // $ 是 Svelte 的响应式声明语法
-    // 当 $ 后面大括号中使用的变量发生变化时,大括号内的代码会自动重新执行
-    // 相当于设置了一个自动触发的 watch/effect
-
-    // 当 startDateInput 或 startTimeInput 变化时,这段代码会自动执行
     $: {
         startTime = updateDateTime(startDateInput, startTimeInput);
     }
 
-    // 当 endDateInput 或 endTimeInput 变化时,这段代码会自动执行
     $: {
         endTime = updateDateTime(endDateInput, endTimeInput);
     }
@@ -64,20 +56,28 @@
     // 如果 endTime 在 startTime 之前，自动调整 endTime
     $: {
         if (endTime < startTime) {
+            // 显示错误提示而不是自动调整
+            dispatch('error', {
+                message: "结束时间不能早于开始时间"
+            });
+            // 重置结束时间为开始时间后2小时
             endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
             endDateInput = formatDateForInput(endTime);
             endTimeInput = formatTimeForInput(endTime);
         }
     }
 
-    const colors = [
-        { value: "blue", label: "蓝色" },
-        { value: "green", label: "绿色" },
-        { value: "red", label: "红色" },
-        { value: "yellow", label: "黄色" },
-    ];
+    const dispatch = createEventDispatcher();
 
     function handleSubmit() {
+        // 验证结束时间是否晚于开始时间
+        if (endTime < startTime) {
+            dispatch('error', {
+                message: "结束时间不能早于开始时间"
+            });
+            return;
+        }
+
         const eventData = {
             title,
             tags: tags.split(",").map((tag) => tag.trim()),
@@ -94,33 +94,18 @@
             onSubmit(eventData);
         }
 
+        // 重置表单
         title = "";
         tags = "";
         color = "blue";
         startTime = new Date();
         endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+        startDateInput = formatDateForInput(startTime);
+        startTimeInput = formatTimeForInput(startTime);
+        endDateInput = formatDateForInput(endTime);
+        endTimeInput = formatTimeForInput(endTime);
         popoverOpen = false;
     }
-
-    function formatDateTime(date: Date): string {
-        return date.toLocaleString("zh-CN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    }
-
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
-
-    function getColorLabel(value: string) {
-        return colors.find((c) => c.value === value)?.label ?? "选择颜色";
-    }
-
-    // 添加日期类型
-    type DateValue = Date | undefined;
 </script>
 
 <Popover.Root bind:open={popoverOpen}>
@@ -131,50 +116,15 @@
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-80">
-        <form class="grid gap-4" on:submit|preventDefault={handleSubmit}>
-            <div class="grid gap-2">
-                <Label for="title">标题</Label>
-                <Input id="title" bind:value={title} placeholder="输入事件标题" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="startTime">开始时间</Label>
-                <div class="grid grid-cols-2 gap-2">
-                    <Input type="date" id="startDate" bind:value={startDateInput} />
-                    <Input type="time" id="startTime" bind:value={startTimeInput} />
-                </div>
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="endTime">结束时间</Label>
-                <div class="grid grid-cols-2 gap-2">
-                    <Input type="date" id="endDate" bind:value={endDateInput} />
-                    <Input type="time" id="endTime" bind:value={endTimeInput} />
-                </div>
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="tags">标签</Label>
-                <Input id="tags" bind:value={tags} placeholder="输入标签，用逗号分隔" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="color">颜色</Label>
-                <Select.Root type="single" bind:value={color}>
-                    <Select.Trigger class="w-full">
-                        {getColorLabel(color)}
-                    </Select.Trigger>
-                    <Select.Content>
-                        {#each colors as colorOption}
-                            <Select.Item value={colorOption.value}>
-                                {colorOption.label}
-                            </Select.Item>
-                        {/each}
-                    </Select.Content>
-                </Select.Root>
-            </div>
-
-            <Button type="submit" class="w-full">提交</Button>
-        </form>
+        <EventFormFields
+            bind:title
+            bind:tags
+            bind:color
+            bind:startDateInput
+            bind:startTimeInput
+            bind:endDateInput
+            bind:endTimeInput
+            on:submit={handleSubmit}
+        />
     </Popover.Content>
 </Popover.Root>
