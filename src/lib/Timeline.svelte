@@ -374,7 +374,7 @@
             rgba(23, 198, 83, 0) 0%,
             rgba(23, 198, 83, 0.1) 45%,
             rgba(23, 198, 83, 0.2) 99%,
-            var(--bs-success) 100%
+            rgba(23, 198, 83, 1) 100%
         ) !important;
     }
 
@@ -406,5 +406,6 @@
     /* 今天日期背景颜色 */
     :global(.vis-time-axis .vis-grid.vis-today) {
         /* background: var(--destructive); */
+        /* @apply bg-tahiti; */
     }
 </style>
