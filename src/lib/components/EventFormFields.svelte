@@ -3,6 +3,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
+    import * as Form from "$lib/components/ui/form";
     import { z } from "zod";
 
     export let title = "";
@@ -103,7 +104,7 @@
     function handleSubmit() {
         if (validateForm()) {
             // 只有验证通过才触发submit事件
-            dispatch('submit');
+            dispatch("submit");
         }
     }
 
@@ -114,12 +115,7 @@
 <form class="grid gap-4" on:submit|preventDefault={handleSubmit}>
     <div class="grid gap-2">
         <Label for="title">标题</Label>
-        <Input
-            id="title"
-            bind:value={title}
-            placeholder="输入事件标题"
-            class={errors.title ? "border-red-500" : ""}
-        />
+        <Input id="title" bind:value={title} placeholder="输入事件标题" />
         {#if errors.title}
             <span class="text-sm text-red-500">{errors.title}</span>
         {/if}
@@ -128,18 +124,8 @@
     <div class="grid gap-2">
         <Label for="startTime">开始时间</Label>
         <div class="grid grid-cols-2 gap-2">
-            <Input
-                type="date"
-                id="startDate"
-                bind:value={startDateInput}
-                class={errors.startDate || errors.timeRange ? "border-red-500" : ""}
-            />
-            <Input
-                type="time"
-                id="startTime"
-                bind:value={startTimeInput}
-                class={errors.startDate || errors.timeRange ? "border-red-500" : ""}
-            />
+            <Input type="date" id="startDate" bind:value={startDateInput} />
+            <Input type="time" id="startTime" bind:value={startTimeInput} />
         </div>
         {#if errors.startDate}
             <span class="text-sm text-red-500">{errors.startDate}</span>
@@ -149,32 +135,23 @@
     <div class="grid gap-2">
         <Label for="endTime">结束时间</Label>
         <div class="grid grid-cols-2 gap-2">
-            <Input
-                type="date"
-                id="endDate"
-                bind:value={endDateInput}
-                class={errors.endDate || errors.timeRange ? "border-red-500" : ""}
-            />
-            <Input
-                type="time"
-                id="endTime"
-                bind:value={endTimeInput}
-                class={errors.endDate || errors.timeRange ? "border-red-500" : ""}
-            />
+            <Input type="date" id="endDate" bind:value={endDateInput} />
+            <Input type="time" id="endTime" bind:value={endTimeInput} />
         </div>
         {#if errors.endDate}
             <span class="text-sm text-red-500">{errors.endDate}</span>
         {/if}
     </div>
 
+    {#if errors.timeRange}
+        <div class="text-sm text-red-500">
+            {errors.timeRange}
+        </div>
+    {/if}
+
     <div class="grid gap-2">
         <Label for="tags">标签</Label>
-        <Input
-            id="tags"
-            bind:value={tags}
-            placeholder="输入标签，用逗号分隔"
-            class={errors.tags ? "border-red-500" : ""}
-        />
+        <Input id="tags" bind:value={tags} placeholder="输入标签，用逗号分隔" />
         {#if errors.tags}
             <span class="text-sm text-red-500">{errors.tags}</span>
         {/if}
@@ -195,12 +172,6 @@
             </Select.Content>
         </Select.Root>
     </div>
-
-    {#if errors.timeRange}
-        <div class="text-sm text-red-500">
-            {errors.timeRange}
-        </div>
-    {/if}
 
     <Button type="submit" class="w-full">提交</Button>
 </form>
