@@ -23,7 +23,7 @@
         startTime: new Date(),
         endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
         tags: [] as string[],
-        color: "blue"
+        color: ["blue"]
     };
 
     // 当前输入的标签
@@ -59,7 +59,7 @@
             startTime: new Date(),
             endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
             tags: [],
-            color: "blue"
+            color: ["blue"]
         };
     }
 </script>
@@ -142,7 +142,7 @@
                     </Select.Root>
                 </div>
 
-                <Button class="w-full" on:click={handleSubmit}>
+                <Button class="w-full" onclick={handleSubmit}>
                     Create Event
                 </Button>
             </div>

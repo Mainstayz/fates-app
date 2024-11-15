@@ -200,13 +200,12 @@
         color: string;
     }>) {
         const formData = event.detail;
-        const newItem = {
+        const newItem: TimelineItem = {
             id: Date.now().toString(),
             content: formData.title,
-            start: formData.startTime,
-            end: formData.endTime,
-            className: formData.color,
-            tags: formData.tags
+            start: formData.startTime.toISOString(),
+            end: formData.endTime.toISOString(),
+            // tags: formData.tags
         };
 
         timelineComponent.addItem(newItem);
@@ -267,14 +266,14 @@
                 <div class="flex gap-2 justify-end">
                     <Button
                         variant="outline"
-                        on:click={() => timelineComponent.setWindow(
+                        onclick={() => timelineComponent.setWindow(
                             new Date(Date.now() - 3 * 60 * 60 * 1000),
                             new Date(Date.now() + 3 * 60 * 60 * 1000)
                         )}>Nearby 6 Hours</Button
                     >
                     <Button
                         variant="outline"
-                        on:click={() => timelineComponent.setWindow(
+                        onclick={() => timelineComponent.setWindow(
                             new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
                             new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
                         )}>Nearby 3 Days</Button
