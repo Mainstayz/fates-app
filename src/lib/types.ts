@@ -9,4 +9,6 @@ export interface TimelineItem {
     content: string;
     start: string;
     end?: string;
+    tags?: string[];
+    color?: string;
 }

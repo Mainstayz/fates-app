@@ -26,7 +26,7 @@
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tauri-apps/cli": "^2",
     "autoprefixer": "^10.4.20",
-    "bits-ui": "1.0.0-next.54",
+    "bits-ui": "1.0.0-next.57",
     "clsx": "^2.1.1",
     "lucide-svelte": "^0.456.0",
     "mode-watcher": "^0.4.1",

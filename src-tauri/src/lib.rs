@@ -31,6 +31,10 @@ pub struct TimelineItem {
     start: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     end: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    color: Option<String>,
 }
 
 #[tauri::command]
