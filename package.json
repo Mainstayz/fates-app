@@ -20,6 +20,7 @@
     "vis-timeline": "^7.7.3"
   },
   "devDependencies": {
+    "@internationalized/date": "^3.5.6",
     "@sveltejs/adapter-static": "^3.0.5",
     "@sveltejs/kit": "^2.7.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",

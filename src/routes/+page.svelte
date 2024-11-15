@@ -10,6 +10,7 @@
     import { Settings, Moon, Sun, Plus } from "lucide-svelte";
     import { resetMode, setMode, ModeWatcher } from "mode-watcher";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+    import AddEventForm from "$lib/components/AddEventForm.svelte";
     let timelineComponent: Timeline;
 
     // 使用响应式声明存储时间线数据
@@ -190,6 +191,26 @@
     let currentTab = "timeline";
     // 应该持久化
     // let isDarkMode = getMode() === 'dark';
+
+    function handleEventSubmit(event: CustomEvent<{
+        title: string;
+        startTime: Date;
+        endTime: Date;
+        tags: string[];
+        color: string;
+    }>) {
+        const formData = event.detail;
+        const newItem = {
+            id: Date.now().toString(),
+            content: formData.title,
+            start: formData.startTime,
+            end: formData.endTime,
+            className: formData.color,
+            tags: formData.tags
+        };
+
+        timelineComponent.addItem(newItem);
+    }
 </script>
 
 <main class="container mx-auto p-4 space-y-4">
@@ -246,26 +267,19 @@
                 <div class="flex gap-2 justify-end">
                     <Button
                         variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 3 * 60 * 60 * 1000),
-                                new Date(Date.now() + 3 * 60 * 60 * 1000)
-                            )}
-                        >Nearby 6 Hours</Button
+                        on:click={() => timelineComponent.setWindow(
+                            new Date(Date.now() - 3 * 60 * 60 * 1000),
+                            new Date(Date.now() + 3 * 60 * 60 * 1000)
+                        )}>Nearby 6 Hours</Button
                     >
                     <Button
                         variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
-                            )}
-                        >Nearby 3 Days</Button
+                        on:click={() => timelineComponent.setWindow(
+                            new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                            new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                        )}>Nearby 3 Days</Button
                     >
-                    <Button variant="outline">
-                        <Plus class="h-4 w-4 mr-2" />
-                        Add
-                    </Button>
+                    <AddEventForm on:submit={handleEventSubmit} />
                 </div>
                 <Timeline
                     bind:this={timelineComponent}
