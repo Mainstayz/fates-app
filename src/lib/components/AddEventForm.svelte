@@ -47,10 +47,16 @@
     }
 
     // 监听日期和时间变化
+    // $ 是 Svelte 的响应式声明语法
+    // 当 $ 后面大括号中使用的变量发生变化时,大括号内的代码会自动重新执行
+    // 相当于设置了一个自动触发的 watch/effect
+
+    // 当 startDateInput 或 startTimeInput 变化时,这段代码会自动执行
     $: {
         startTime = updateDateTime(startDateInput, startTimeInput);
     }
 
+    // 当 endDateInput 或 endTimeInput 变化时,这段代码会自动执行
     $: {
         endTime = updateDateTime(endDateInput, endTimeInput);
     }
