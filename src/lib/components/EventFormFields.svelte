@@ -6,7 +6,16 @@
     import { z } from "zod";
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
 
-    const props = $props<{
+    // 使用 $bindable() 使属性可绑定
+    let {
+        title = $bindable(""),
+        tags = $bindable(""),
+        color = $bindable("blue" as const),
+        startDateInput = $bindable(formatDateForInput(new Date())),
+        startTimeInput = $bindable(formatTimeForInput(new Date())),
+        endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
+        endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000)))
+    } = $props<{
         title?: string;
         tags?: string;
         color?: "blue" | "green" | "red" | "yellow";
@@ -15,18 +24,6 @@
         endDateInput?: string;
         endTimeInput?: string;
     }>();
-
-    // 设置默认值
-    const now = new Date();
-    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-
-    let title = props.title ?? "";
-    let tags = props.tags ?? "";
-    let color = props.color ?? "blue";
-    let startDateInput = props.startDateInput ?? formatDateForInput(now);
-    let startTimeInput = props.startTimeInput ?? formatTimeForInput(now);
-    let endDateInput = props.endDateInput ?? formatDateForInput(twoHoursLater);
-    let endTimeInput = props.endTimeInput ?? formatTimeForInput(twoHoursLater);
 
     // 表单错误状态
     let errors: {
