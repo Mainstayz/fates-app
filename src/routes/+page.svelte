@@ -216,7 +216,7 @@
             content: formData.title,
             start: formData.startTime.toISOString(),
             end: formData.endTime.toISOString(),
-            color: formData.color,
+            className: formData.color,
             tags: formData.tags,
         };
 
@@ -241,7 +241,7 @@
             content: formData.title,
             start: formData.startTime.toISOString(),
             end: formData.endTime.toISOString(),
-            color: formData.color,
+            className: formData.color,
             tags: formData.tags,
         };
 
@@ -385,27 +385,14 @@
                 <EventFormFields
                     title={editingItem.content}
                     tags={editingItem.tags?.join(", ")}
-                    color={editingItem.color as "blue" | "green" | "red" | "yellow"}
+                    color={editingItem.className as "blue" | "green" | "red" | "yellow"}
                     startDateInput={formatDateForInput(new Date(editingItem.start))}
                     startTimeInput={formatTimeForInput(new Date(editingItem.start))}
                     endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
                     endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
                     onSubmit={(formData) => {
                         if (!editingItem) return;
-
-                        const updatedItem: TimelineItem = {
-                            ...editingItem,
-                            content: formData.title,
-                            start: formData.startTime.toISOString(),
-                            end: formData.endTime.toISOString(),
-                            color: formData.color,
-                            tags: formData.tags,
-                        };
-
-                        timelineComponent.updateItem(updatedItem);
-                        editingItem = null;
-                        editDialogOpen = false;
-                        saveTimelineData();
+                        handleEditSubmit(new CustomEvent('submit', { detail: formData }));
                     }}
                 />
             {/if}

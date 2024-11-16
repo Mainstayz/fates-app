@@ -304,6 +304,14 @@
         @apply bg-orange-100 text-foreground bg-orange-200;
     }
 
+    /* yelloW */
+    :global(.vis-item.yellow) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-yellow-400  text-foreground bg-yellow-500;
+    }
+
     /* 时间线项目内容样式 */
     :global(.vis-timeline .vis-item .vis-item-content) {
         padding: 0.75rem 1rem;

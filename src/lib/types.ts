@@ -10,5 +10,5 @@ export interface TimelineItem {
     start: string;
     end?: string;
     tags?: string[];
-    color?: string;
+    className?: string;
 }
