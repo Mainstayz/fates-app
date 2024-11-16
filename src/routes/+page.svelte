@@ -312,26 +312,26 @@
                 <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
                     <AddEventForm on:submit={handleEventSubmit} />
-                    <AlertDialog.Root>
+                    <AlertDialog.Root bind:open={alertClearAll}>
                         <AlertDialog.Trigger class={buttonVariants({ variant: "outline" })}>
                             Clear All
-                          </AlertDialog.Trigger>
-                          <AlertDialog.Content>
+                        </AlertDialog.Trigger>
+                        <AlertDialog.Content>
                             <AlertDialog.Header>
-                              <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                              <AlertDialog.Description>
-                                This action cannot be undone. This will permanently delete your all records.
-                              </AlertDialog.Description>
+                                <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                                <AlertDialog.Description>
+                                    This action cannot be undone. This will permanently delete your all records.
+                                </AlertDialog.Description>
                             </AlertDialog.Header>
                             <AlertDialog.Footer>
-                              <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                              <AlertDialog.Action onclick={() => {
+                                <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                                <AlertDialog.Action onclick={() => {
                                     timelineComponent.clearAll();
                                     saveTimelineData();
                                     alertClearAll = false;
                                 }}>Confirm</AlertDialog.Action>
                             </AlertDialog.Footer>
-                          </AlertDialog.Content>
+                        </AlertDialog.Content>
                     </AlertDialog.Root>
                     <Button
                         variant="outline"
