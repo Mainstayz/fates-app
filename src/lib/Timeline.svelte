@@ -239,6 +239,13 @@
         return [];
     }
 
+    // 添加更新项目的方法
+    export function updateItem(item: TimelineItem) {
+        if (itemsDataSet) {
+            itemsDataSet.update(item);
+        }
+    }
+
     // 组件销毁时清理事件监听和定时器
     onDestroy(() => {
         if (resetTimeout) {

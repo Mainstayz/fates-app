@@ -237,7 +237,7 @@
         if (!editingItem) return;
 
         const formData = event.detail;
-        const updatedItem = {
+        const updatedItem: TimelineItem = {
             ...editingItem,
             content: formData.title,
             start: formData.startTime.toISOString(),
@@ -246,7 +246,8 @@
             tags: formData.tags,
         };
 
-        timelineComponent.addItem(updatedItem);
+        // 使用 updateItem 而不是 addItem
+        timelineComponent.updateItem(updatedItem);
         editingItem = null;
         editDialogOpen = false;
         saveTimelineData();
@@ -366,7 +367,7 @@
                     on:submit={handleEditSubmit}
                     title={editingItem.content}
                     tags={editingItem.tags?.join(", ")}
-                    color={editingItem.color}
+                    color={editingItem.color as "blue" | "green" | "red" | "yellow"}
                     startDateInput={formatDateForInput(new Date(editingItem.start))}
                     startTimeInput={formatTimeForInput(new Date(editingItem.start))}
                     endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
