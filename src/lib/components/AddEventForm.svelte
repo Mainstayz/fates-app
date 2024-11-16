@@ -25,23 +25,32 @@
 
     // 格式化日期为 YYYY-MM-DD 格式
     function formatDateForInput(date: Date): string {
-        return date.toISOString().split("T")[0];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // 格式化时间为 HH:mm 格式
     function formatTimeForInput(date: Date): string {
-        return date.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     }
 
     // 更新完整的日期时间
-    function updateDateTime(dateStr: string, timeStr: string) {
+    function updateDateTime(dateStr: string, timeStr: string): Date {
         const [year, month, day] = dateStr.split("-").map(Number);
         const [hours, minutes] = timeStr.split(":").map(Number);
-        return new Date(year, month - 1, day, hours, minutes);
+        const date = new Date();
+        date.setFullYear(year);
+        date.setMonth(month - 1);
+        date.setDate(day);
+        date.setHours(hours);
+        date.setMinutes(minutes);
+        date.setSeconds(0);
+        date.setMilliseconds(0);
+        return date;
     }
 
     // 监听日期和时间变化
@@ -76,8 +85,9 @@
         title = "";
         tags = "";
         color = "blue";
-        startTime = new Date();
-        endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+        const now = new Date();
+        startTime = now;
+        endTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
         startDateInput = formatDateForInput(startTime);
         startTimeInput = formatTimeForInput(startTime);
         endDateInput = formatDateForInput(endTime);
