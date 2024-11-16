@@ -6,32 +6,29 @@
     import { createEventDispatcher } from "svelte";
     import { formatDateForInput, formatTimeForInput, updateDateTime } from "$lib/utils";
 
-    let popoverOpen = false;
+    // 使用 $state 来确保状态更新是响应式的
+    let popoverOpen = $state(false);
     const dispatch = createEventDispatcher();
 
+    $inspect(popoverOpen);
+
     // 表单数据
-    let title = "";
-    let tags = "";
-    let color = "blue" as const;
-    let startDateInput = formatDateForInput(new Date());
-    let endDateInput = formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000));
-    let startTimeInput = formatTimeForInput(new Date());
-    let endTimeInput = formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000));
+    let title = $state("");
+    let tags = $state("");
+    let color = $state("blue" as const);
+    let startDateInput = $state(formatDateForInput(new Date()));
+    let endDateInput = $state(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000)));
+    let startTimeInput = $state(formatTimeForInput(new Date()));
+    let endTimeInput = $state(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000)));
 
-    function handleSubmit() {
-        const startDateTime = updateDateTime(startDateInput, startTimeInput);
-        const endDateTime = updateDateTime(endDateInput, endTimeInput);
-
-        const eventData = {
-            title,
-            tags: tags.split(",").map((tag) => tag.trim()),
-            color,
-            startTime: startDateTime,
-            endTime: endDateTime,
-        };
-
-        console.log(eventData);
-        dispatch("submit", eventData);
+    function handleSubmit(formData: {
+        title: string;
+        tags: string[];
+        color: "blue" | "green" | "red" | "yellow";
+        startTime: Date;
+        endTime: Date;
+    }) {
+        dispatch("submit", formData);
         resetForm();
     }
 
@@ -57,14 +54,14 @@
     </Popover.Trigger>
     <Popover.Content class="w-80">
         <EventFormFields
-            bind:title
-            bind:tags
-            bind:color
-            bind:startDateInput
-            bind:startTimeInput
-            bind:endDateInput
-            bind:endTimeInput
-            on:submit={handleSubmit}
+            {title}
+            {tags}
+            {color}
+            {startDateInput}
+            {startTimeInput}
+            {endDateInput}
+            {endTimeInput}
+            onSubmit={handleSubmit}
         />
     </Popover.Content>
 </Popover.Root>
