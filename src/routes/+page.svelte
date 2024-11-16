@@ -5,6 +5,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
     import { Button, buttonVariants } from "$lib/components/ui/button";
+    import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Card } from "$lib/components/ui/card";
     import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
     import { Settings, Moon, Sun, Plus } from "lucide-svelte";
@@ -17,13 +18,11 @@
     let timelineComponent: Timeline;
 
     // 使用响应式声明存储时间线数据
-    let groups: TimelineGroup[] = [];
-    let items: TimelineItem[] = [];
-
-    let editingItem: TimelineItem | null = null;
-
-    let editDialogOpen = false;
-
+    let groups: TimelineGroup[] = $state([]);
+    let items: TimelineItem[] = $state([]);
+    let editingItem: TimelineItem | null = $state(null);
+    let editDialogOpen = $state(false);
+    let alertClearAll = $state(false);
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         console.log("handleAdd", item);
@@ -313,7 +312,27 @@
                 <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
                     <AddEventForm on:submit={handleEventSubmit} />
-                    <Button variant="outline" onclick={() => timelineComponent.clearAll()}>Clear All</Button>
+                    <AlertDialog.Root>
+                        <AlertDialog.Trigger class={buttonVariants({ variant: "outline" })}>
+                            Clear All
+                          </AlertDialog.Trigger>
+                          <AlertDialog.Content>
+                            <AlertDialog.Header>
+                              <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                              <AlertDialog.Description>
+                                This action cannot be undone. This will permanently delete your all records.
+                              </AlertDialog.Description>
+                            </AlertDialog.Header>
+                            <AlertDialog.Footer>
+                              <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                              <AlertDialog.Action onclick={() => {
+                                    timelineComponent.clearAll();
+                                    saveTimelineData();
+                                    alertClearAll = false;
+                                }}>Confirm</AlertDialog.Action>
+                            </AlertDialog.Footer>
+                          </AlertDialog.Content>
+                    </AlertDialog.Root>
                     <Button
                         variant="outline"
                         onclick={() =>
