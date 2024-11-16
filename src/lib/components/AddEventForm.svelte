@@ -98,7 +98,7 @@
 
 <Popover.Root bind:open={popoverOpen}>
     <Popover.Trigger>
-        <Button variant="outline">
+        <Button>
             <Plus class="h-4 w-4 mr-2" />
             Add
         </Button>

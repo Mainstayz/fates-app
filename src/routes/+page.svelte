@@ -116,7 +116,7 @@
         loadTimelineData();
 
         // 设置自动保存（每 5 分钟）
-        autoSaveInterval = setInterval(saveTimelineData, 5 * 60 * 1000);
+        autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
 
         return () => {
             clearInterval(autoSaveInterval);
@@ -199,13 +199,15 @@
         tags: string[];
         color: string;
     }>) {
+
         const formData = event.detail;
         const newItem: TimelineItem = {
             id: Date.now().toString(),
             content: formData.title,
             start: formData.startTime.toISOString(),
             end: formData.endTime.toISOString(),
-            // tags: formData.tags
+            color:formData.color,
+            tags:formData.tags,
         };
 
         timelineComponent.addItem(newItem);
@@ -263,14 +265,12 @@
         <TabsContent value="timeline">
             <!-- <Card class="p-6"> -->
             <div class="px-4 pt-6">
+                <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
-                    <Button
-                        variant="outline"
-                        onclick={() => timelineComponent.setWindow(
-                            new Date(Date.now() - 3 * 60 * 60 * 1000),
-                            new Date(Date.now() + 3 * 60 * 60 * 1000)
-                        )}>Nearby 6 Hours</Button
-                    >
+                    <AddEventForm on:submit={handleEventSubmit} />
+                    <Button variant="outline" onclick={() => timelineComponent.clearAll()}>
+                        Clear All
+                    </Button>
                     <Button
                         variant="outline"
                         onclick={() => timelineComponent.setWindow(
@@ -278,7 +278,13 @@
                             new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
                         )}>Nearby 3 Days</Button
                     >
-                    <AddEventForm on:submit={handleEventSubmit} />
+                    <Button
+                        variant="outline"
+                        onclick={() => timelineComponent.setWindow(
+                            new Date(Date.now() - 3 * 60 * 60 * 1000),
+                            new Date(Date.now() + 3 * 60 * 60 * 1000)
+                        )}>Nearby 6 Hours</Button
+                    >
                 </div>
                 <Timeline
                     bind:this={timelineComponent}

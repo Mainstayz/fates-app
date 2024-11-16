@@ -183,6 +183,11 @@
         timeline.setWindow(start, end);
     }
 
+    export function clearAll() {
+        itemsDataSet.clear();
+        groupsDataSet?.clear();
+    }
+
     // 暴露添加单个项目的方法
     export function addItem(item: TimelineItem) {
         if (itemsDataSet) {
@@ -221,9 +226,7 @@
     // 暴露获取所有 items 的方法
     export function getAllItems(): TimelineItem[] {
         if (itemsDataSet) {
-            return itemsDataSet.get({
-                fields: ["id", "content", "start", "end", "group"], // 指定要获取的字段
-            });
+            return itemsDataSet.get();
         }
         return [];
     }
@@ -231,9 +234,7 @@
     // 暴露获取所有 groups 的方法
     export function getAllGroups(): TimelineGroup[] {
         if (groupsDataSet) {
-            return groupsDataSet.get({
-                fields: ["id", "content"], // 指定要获取的字段
-            });
+            return groupsDataSet.get();
         }
         return [];
     }
