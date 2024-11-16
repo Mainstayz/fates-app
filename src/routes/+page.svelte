@@ -11,22 +11,31 @@
     import { resetMode, setMode, ModeWatcher } from "mode-watcher";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import AddEventForm from "$lib/components/AddEventForm.svelte";
+    import * as Dialog from "$lib/components/ui/dialog/index";
+    import EventFormFields from "$lib/components/EventFormFields.svelte";
+    import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     let timelineComponent: Timeline;
 
     // 使用响应式声明存储时间线数据
     let groups: TimelineGroup[] = [];
     let items: TimelineItem[] = [];
 
+    let editingItem: TimelineItem | null = null;
+
+    let editDialogOpen = false;
+
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         console.log("handleAdd", item);
         callback(item); // 确认添加
+        await saveTimelineData();
     };
 
     // 处理移动事件
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
         console.log("handleMove", item);
         callback(item); // 确认移动
+        await saveTimelineData();
     };
 
     // 处理正在移动
@@ -36,9 +45,10 @@
     };
 
     // 处理更新事件
-    const handleUpdate = async (item: any, callback: (item: any | null) => void) => {
-        callback(item);
-        await saveTimelineData(); // 删除后保存
+    const handleUpdate = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        console.log("handleUpdate", item);
+        editingItem = item;
+        editDialogOpen = true;
     };
 
     // 处理删除事件
@@ -192,25 +202,59 @@
     // 应该持久化
     // let isDarkMode = getMode() === 'dark';
 
-    function handleEventSubmit(event: CustomEvent<{
-        title: string;
-        startTime: Date;
-        endTime: Date;
-        tags: string[];
-        color: string;
-    }>) {
-
+    function handleEventSubmit(
+        event: CustomEvent<{
+            title: string;
+            startTime: Date;
+            endTime: Date;
+            tags: string[];
+            color: string;
+        }>
+    ) {
         const formData = event.detail;
         const newItem: TimelineItem = {
             id: Date.now().toString(),
             content: formData.title,
             start: formData.startTime.toISOString(),
             end: formData.endTime.toISOString(),
-            color:formData.color,
-            tags:formData.tags,
+            color: formData.color,
+            tags: formData.tags,
         };
 
         timelineComponent.addItem(newItem);
+    }
+
+    // 处理编辑提交
+    function handleEditSubmit(
+        event: CustomEvent<{
+            title: string;
+            startTime: Date;
+            endTime: Date;
+            tags: string[];
+            color: string;
+        }>
+    ) {
+        if (!editingItem) return;
+
+        const formData = event.detail;
+        const updatedItem = {
+            ...editingItem,
+            content: formData.title,
+            start: formData.startTime.toISOString(),
+            end: formData.endTime.toISOString(),
+            color: formData.color,
+            tags: formData.tags,
+        };
+
+        timelineComponent.addItem(updatedItem);
+        editingItem = null;
+        editDialogOpen = false;
+        saveTimelineData();
+    }
+
+    function handleDialogClose() {
+        editingItem = null;
+        editDialogOpen = false;
     }
 </script>
 
@@ -268,22 +312,22 @@
                 <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
                     <AddEventForm on:submit={handleEventSubmit} />
-                    <Button variant="outline" onclick={() => timelineComponent.clearAll()}>
-                        Clear All
-                    </Button>
+                    <Button variant="outline" onclick={() => timelineComponent.clearAll()}>Clear All</Button>
                     <Button
                         variant="outline"
-                        onclick={() => timelineComponent.setWindow(
-                            new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-                            new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
-                        )}>Nearby 3 Days</Button
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                            )}>Nearby 3 Days</Button
                     >
                     <Button
                         variant="outline"
-                        onclick={() => timelineComponent.setWindow(
-                            new Date(Date.now() - 3 * 60 * 60 * 1000),
-                            new Date(Date.now() + 3 * 60 * 60 * 1000)
-                        )}>Nearby 6 Hours</Button
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 3 * 60 * 60 * 1000),
+                                new Date(Date.now() + 3 * 60 * 60 * 1000)
+                            )}>Nearby 6 Hours</Button
                     >
                 </div>
                 <Timeline
@@ -310,6 +354,27 @@
             </Card>
         </TabsContent>
     </Tabs>
+
+    <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog.Content class="sm:max-w-[425px]">
+            <Dialog.Header>
+                <Dialog.Title>编辑事件</Dialog.Title>
+                <Dialog.Description>修改事件的详细信息</Dialog.Description>
+            </Dialog.Header>
+            {#if editingItem}
+                <EventFormFields
+                    on:submit={handleEditSubmit}
+                    title={editingItem.content}
+                    tags={editingItem.tags?.join(", ")}
+                    color={editingItem.color}
+                    startDateInput={formatDateForInput(new Date(editingItem.start))}
+                    startTimeInput={formatTimeForInput(new Date(editingItem.start))}
+                    endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
+                    endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
+                />
+            {/if}
+        </Dialog.Content>
+    </Dialog.Root>
 </main>
 
 <style>

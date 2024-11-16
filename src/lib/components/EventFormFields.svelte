@@ -3,16 +3,30 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
-    import * as Form from "$lib/components/ui/form";
     import { z } from "zod";
+    import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
 
-    export let title = "";
-    export let tags = "";
-    export let color = "blue";
-    export let startDateInput = "";
-    export let startTimeInput = "";
-    export let endDateInput = "";
-    export let endTimeInput = "";
+    const props = $props<{
+        title?: string;
+        tags?: string;
+        color?: "blue" | "green" | "red" | "yellow";
+        startDateInput?: string;
+        startTimeInput?: string;
+        endDateInput?: string;
+        endTimeInput?: string;
+    }>();
+
+    // 设置默认值
+    const now = new Date();
+    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    let title = props.title ?? "";
+    let tags = props.tags ?? "";
+    let color = props.color ?? "blue";
+    let startDateInput = props.startDateInput ?? formatDateForInput(now);
+    let startTimeInput = props.startTimeInput ?? formatTimeForInput(now);
+    let endDateInput = props.endDateInput ?? formatDateForInput(twoHoursLater);
+    let endTimeInput = props.endTimeInput ?? formatTimeForInput(twoHoursLater);
 
     // 表单错误状态
     let errors: {
@@ -45,17 +59,10 @@
         endTime: z.string().min(1, "请选择结束时间"),
     });
 
-    // 添加时间转换函数
-    function toDateTime(dateStr: string, timeStr: string): Date {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const [hours, minutes] = timeStr.split(":").map(Number);
-        return new Date(year, month - 1, day, hours, minutes);
-    }
-
     // 验证时间范围
     function validateTimeRange(): boolean {
-        const startDateTime = toDateTime(startDateInput, startTimeInput);
-        const endDateTime = toDateTime(endDateInput, endTimeInput);
+        const startDateTime = updateDateTime(startDateInput, startTimeInput);
+        const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
         if (endDateTime <= startDateTime) {
             errors.timeRange = "结束时间必须晚于开始时间";
@@ -96,15 +103,19 @@
         }
     }
 
-    // 实时验证时间范围
-    $: if (startDateInput && startTimeInput && endDateInput && endTimeInput) {
-        validateTimeRange();
-    }
-
     function handleSubmit() {
         if (validateForm()) {
-            // 只有验证通过才触发submit事件
-            dispatch("submit");
+            const startDateTime = updateDateTime(startDateInput, startTimeInput);
+            const endDateTime = updateDateTime(endDateInput, endTimeInput);
+
+            // 触发submit事件，传递处理后的数据
+            dispatch("submit", {
+                title,
+                tags: tags.split(",").map((tag: string) => tag.trim()),
+                color,
+                startTime: startDateTime,
+                endTime: endDateTime
+            });
         }
     }
 
@@ -115,45 +126,83 @@
 <form class="grid gap-4" on:submit|preventDefault={handleSubmit}>
     <div class="grid gap-2">
         <Label for="title">标题</Label>
-        <Input id="title" bind:value={title} placeholder="输入事件标题" />
+        <Input
+            id="title"
+            bind:value={title}
+            placeholder="输入事件标题"
+            class={errors.title ? "border-destructive" : ""}
+        />
         {#if errors.title}
-            <span class="text-sm text-red-500">{errors.title}</span>
+            <span class="text-sm text-destructive">
+                {errors.title}
+            </span>
         {/if}
     </div>
 
     <div class="grid gap-2">
         <Label for="startTime">开始时间</Label>
         <div class="grid grid-cols-2 gap-2">
-            <Input type="date" id="startDate" bind:value={startDateInput} />
-            <Input type="time" id="startTime" bind:value={startTimeInput} />
+            <Input
+                type="date"
+                id="startDate"
+                bind:value={startDateInput}
+                class={errors.startDate || errors.timeRange ? "border-destructive" : ""}
+            />
+            <Input
+                type="time"
+                id="startTime"
+                bind:value={startTimeInput}
+                class={errors.startDate || errors.timeRange ? "border-destructive" : ""}
+            />
         </div>
         {#if errors.startDate}
-            <span class="text-sm text-red-500">{errors.startDate}</span>
+            <span class="text-sm text-destructive">
+                {errors.startDate}
+            </span>
         {/if}
     </div>
 
     <div class="grid gap-2">
         <Label for="endTime">结束时间</Label>
         <div class="grid grid-cols-2 gap-2">
-            <Input type="date" id="endDate" bind:value={endDateInput} />
-            <Input type="time" id="endTime" bind:value={endTimeInput} />
+            <Input
+                type="date"
+                id="endDate"
+                bind:value={endDateInput}
+                class={errors.endDate || errors.timeRange ? "border-destructive" : ""}
+            />
+            <Input
+                type="time"
+                id="endTime"
+                bind:value={endTimeInput}
+                class={errors.endDate || errors.timeRange ? "border-destructive" : ""}
+            />
         </div>
         {#if errors.endDate}
-            <span class="text-sm text-red-500">{errors.endDate}</span>
+            <span class="text-sm text-destructive">
+                {errors.endDate}
+            </span>
         {/if}
     </div>
 
     {#if errors.timeRange}
-        <div class="text-sm text-red-500">
+        <span class="text-sm text-destructive">
             {errors.timeRange}
-        </div>
+        </span>
     {/if}
 
     <div class="grid gap-2">
         <Label for="tags">标签</Label>
-        <Input id="tags" bind:value={tags} placeholder="输入标签，用逗号分隔" />
+        <Input
+            id="tags"
+            bind:value={tags}
+            placeholder="输入标签，用逗号分隔"
+            class={errors.tags ? "border-destructive" : ""}
+        />
         {#if errors.tags}
-            <span class="text-sm text-red-500">{errors.tags}</span>
+            <span class="text-sm text-destructive">
+                {errors.tags}
+            </span>
         {/if}
     </div>
 

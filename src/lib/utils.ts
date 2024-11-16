@@ -209,3 +209,33 @@ export function getPackageManagerInstallCmd(pm: PackageManager): string {
 export function isPackageManager(value: any): value is PackageManager {
 	return packageManagers.includes(value);
 }
+
+// 格式化日期为 YYYY-MM-DD 格式
+export function formatDateForInput(date: Date): string {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
+// 格式化时间为 HH:mm 格式
+export function formatTimeForInput(date: Date): string {
+	const hours = String(date.getHours()).padStart(2, '0');
+	const minutes = String(date.getMinutes()).padStart(2, '0');
+	return `${hours}:${minutes}`;
+}
+
+// 更新完整的日期时间
+export function updateDateTime(dateStr: string, timeStr: string): Date {
+	const [year, month, day] = dateStr.split("-").map(Number);
+	const [hours, minutes] = timeStr.split(":").map(Number);
+	const date = new Date();
+	date.setFullYear(year);
+	date.setMonth(month - 1);
+	date.setDate(day);
+	date.setHours(hours);
+	date.setMinutes(minutes);
+	date.setSeconds(0);
+	date.setMilliseconds(0);
+	return date;
+}

@@ -5,6 +5,16 @@
     import EventFormFields from "./EventFormFields.svelte";
     import { createEventDispatcher } from "svelte";
 
+    // 添加 isEdit 和 editData 属性
+    export let isEdit = false;
+    export let editData: {
+        title: string;
+        tags: string[];
+        color: string;
+        start: string | Date;
+        end: string | Date;
+    } | null = null;
+
     export let onSubmit:
         | ((event: { title: string; tags: string[]; color: string; startTime: Date; endTime: Date }) => void)
         | undefined = undefined;
@@ -22,6 +32,22 @@
     let endDateInput = formatDateForInput(endTime);
     let startTimeInput = formatTimeForInput(startTime);
     let endTimeInput = formatTimeForInput(endTime);
+
+    // 当 editData 变化时，更新表单数据
+    $: if (editData) {
+        title = editData.title;
+        tags = editData.tags.join(", ");
+        color = editData.color;
+        const startDate = new Date(editData.start);
+        const endDate = new Date(editData.end);
+        startDateInput = formatDateForInput(startDate);
+        startTimeInput = formatTimeForInput(startDate);
+        endDateInput = formatDateForInput(endDate);
+        endTimeInput = formatTimeForInput(endDate);
+        if (isEdit) {
+            popoverOpen = true;
+        }
+    }
 
     // 格式化日期为 YYYY-MM-DD 格式
     function formatDateForInput(date: Date): string {
@@ -81,7 +107,11 @@
             onSubmit(eventData);
         }
 
-        // 重置表单
+        resetForm();
+    }
+
+    // 提取重置表单的逻辑到单独的函数
+    function resetForm() {
         title = "";
         tags = "";
         color = "blue";
@@ -93,14 +123,23 @@
         endDateInput = formatDateForInput(endTime);
         endTimeInput = formatTimeForInput(endTime);
         popoverOpen = false;
+        isEdit = false;
+        editData = null;
+    }
+
+    // 添加关闭弹窗时的处理
+    function handlePopoverClose() {
+        if (isEdit) {
+            resetForm();
+        }
     }
 </script>
 
-<Popover.Root bind:open={popoverOpen}>
+<Popover.Root bind:open={popoverOpen} onOpenChange={handlePopoverClose}>
     <Popover.Trigger>
-        <Button>
+        <Button variant={isEdit ? "outline" : "default"}>
             <Plus class="h-4 w-4 mr-2" />
-            Add
+            {isEdit ? 'Edit' : 'Add'}
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-80">
