@@ -364,7 +364,6 @@
             </Dialog.Header>
             {#if editingItem}
                 <EventFormFields
-                    on:submit={handleEditSubmit}
                     title={editingItem.content}
                     tags={editingItem.tags?.join(", ")}
                     color={editingItem.color as "blue" | "green" | "red" | "yellow"}
@@ -372,6 +371,23 @@
                     startTimeInput={formatTimeForInput(new Date(editingItem.start))}
                     endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
                     endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
+                    onSubmit={(formData) => {
+                        if (!editingItem) return;
+
+                        const updatedItem: TimelineItem = {
+                            ...editingItem,
+                            content: formData.title,
+                            start: formData.startTime.toISOString(),
+                            end: formData.endTime.toISOString(),
+                            color: formData.color,
+                            tags: formData.tags,
+                        };
+
+                        timelineComponent.updateItem(updatedItem);
+                        editingItem = null;
+                        editDialogOpen = false;
+                        saveTimelineData();
+                    }}
                 />
             {/if}
         </Dialog.Content>

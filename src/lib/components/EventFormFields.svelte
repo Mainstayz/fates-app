@@ -6,7 +6,7 @@
     import { z } from "zod";
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
 
-    // 使用 $bindable() 使属性可绑定
+    // 修改为接收 onSubmit 回调函数
     let {
         title = $bindable(""),
         tags = $bindable(""),
@@ -14,7 +14,14 @@
         startDateInput = $bindable(formatDateForInput(new Date())),
         startTimeInput = $bindable(formatTimeForInput(new Date())),
         endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
-        endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000)))
+        endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
+        onSubmit = $bindable((data: {
+            title: string;
+            tags: string[];
+            color: "blue" | "green" | "red" | "yellow";
+            startTime: Date;
+            endTime: Date;
+        }) => {})
     } = $props<{
         title?: string;
         tags?: string;
@@ -23,6 +30,13 @@
         startTimeInput?: string;
         endDateInput?: string;
         endTimeInput?: string;
+        onSubmit?: (data: {
+            title: string;
+            tags: string[];
+            color: "blue" | "green" | "red" | "yellow";
+            startTime: Date;
+            endTime: Date;
+        }) => void;
     }>();
 
     // 单错误状态
@@ -111,8 +125,8 @@
             const startDateTime = updateDateTime(startDateInput, startTimeInput);
             const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
-            // 触发submit事件，传递处理后的数据
-            dispatch("submit", {
+            // 使用回调函数而不是事件
+            onSubmit({
                 title,
                 tags: tags.split(",").map((tag: string) => tag.trim()),
                 color,
@@ -121,9 +135,6 @@
             });
         }
     }
-
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
 </script>
 
 <form
