@@ -25,14 +25,14 @@
         endTimeInput?: string;
     }>();
 
-    // 表单错误状态
-    let errors: {
-        title?: string;
-        tags?: string;
-        startDate?: string;
-        endDate?: string;
-        timeRange?: string;
-    } = {};
+    // 单错误状态
+    let errors = $state<Record<string, string | undefined>>({
+        title: undefined,
+        tags: undefined,
+        startDate: undefined,
+        endDate: undefined,
+        timeRange: undefined
+    });
 
     const colors = [
         { value: "blue", label: "蓝色" },
@@ -69,7 +69,13 @@
     }
 
     function validateForm() {
-        errors = {};
+        errors = {
+            title: undefined,
+            tags: undefined,
+            startDate: undefined,
+            endDate: undefined,
+            timeRange: undefined
+        };
         try {
             // 首先验证基本字段
             formSchema.parse({
@@ -120,7 +126,13 @@
     const dispatch = createEventDispatcher();
 </script>
 
-<form class="grid gap-4" on:submit|preventDefault={handleSubmit}>
+<form
+    class="grid gap-4"
+    onsubmit={e => {
+        e.preventDefault();
+        handleSubmit();
+    }}
+>
     <div class="grid gap-2">
         <Label for="title">标题</Label>
         <Input
