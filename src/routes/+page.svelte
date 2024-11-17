@@ -17,6 +17,7 @@
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import Statistics from "$lib/components/Statistics.svelte";
     let timelineComponent: Timeline;
+    let statisticsComponent: Statistics;
 
     // 使用响应式声明存储时间线数据
     let groups: TimelineGroup[] = $state([]);
@@ -198,7 +199,7 @@
     };
 
     // 添加一个变量来跟踪当前选中的标签页
-    let currentTab = "timeline";
+    let currentTab = $state("timeline");
     // 应该持久化
     // let isDarkMode = getMode() === 'dark';
 
@@ -257,6 +258,17 @@
         editingItem = null;
         editDialogOpen = false;
     }
+
+    // 修改 currentTab 的处理方式，添加 tab 变化的处理
+    function handleTabChange(value: string) {
+
+        currentTab = value;
+        if (value === 'statistics' && statisticsComponent) {
+            console.log("handleTabChange", value, items);
+            const currentItems = timelineComponent.getAllItems();
+            statisticsComponent.updateCharts(currentItems);
+        }
+    }
 </script>
 
 <main class="container mx-auto p-4 space-y-4 noSelect">
@@ -264,14 +276,6 @@
         <h1 class="text-3xl font-bold">Time Tracking</h1>
     </div> -->
 
-    <!-- <div class="flex items-center justify-end">
-        <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
-            <TabsList>
-                <TabsTrigger value="timeline">时间线</TabsTrigger>
-                <TabsTrigger value="statistics">统计</TabsTrigger>
-            </TabsList>
-        </Tabs>
-    </div> -->
     <!-- <div class="flex items-center gap-2"> -->
     <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
                 {#if isDarkMode}
@@ -306,10 +310,10 @@
 
     <!-- <div class="h-px bg-border" ></div> -->
     <div class="p-4">
-        <Tabs value={currentTab}>
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
             <TabsList>
                 <TabsTrigger value="timeline">时间线</TabsTrigger>
-            <TabsTrigger value="statistics">统计</TabsTrigger>
+                <TabsTrigger value="statistics">统计</TabsTrigger>
         </TabsList>
         <TabsContent value="timeline">
             <!-- <Card class="p-6"> -->
@@ -382,7 +386,7 @@
         <TabsContent value="statistics">
             <div class="p-6">
                 <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
-                <Statistics {items} />
+                <Statistics bind:this={statisticsComponent} {items} />
             </div>
             </TabsContent>
         </Tabs>

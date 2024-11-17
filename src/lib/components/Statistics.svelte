@@ -72,6 +72,7 @@
     }
 
     function createCharts() {
+        console.log("Creating charts ...");
         const tagStats = calculateTagStats(items);
         const tags = Object.keys(tagStats);
         const durations = Object.values(tagStats);
@@ -190,12 +191,22 @@
 
     // 监听 items 和 selectedRange 变化，重新渲染图表
     $: if (items && pieChartElement && barChartElement) {
+        console.log("Items changed, re-rendering charts ...");
         createCharts();
     }
 
     // 处理时间范围变化
     function handleValueSelect(event: CustomEvent<TimeRange>) {
         selectedRange = event.detail;
+    }
+
+    // Add update callback
+    export function updateCharts(newItems: TimelineItem[]) {
+        items = newItems;
+        console.log('updateCharts', items);
+        if (pieChartElement && barChartElement) {
+            createCharts();
+        }
     }
 </script>
 
