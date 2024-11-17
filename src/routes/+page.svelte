@@ -304,57 +304,61 @@
     <!-- </div> -->
 
     <!-- <div class="h-px bg-border" ></div> -->
-
-    <Tabs value={currentTab}>
-        <TabsList>
-            <TabsTrigger value="timeline">时间线</TabsTrigger>
+    <div class="p-4">
+        <Tabs value={currentTab}>
+            <TabsList>
+                <TabsTrigger value="timeline">时间线</TabsTrigger>
             <TabsTrigger value="statistics">统计</TabsTrigger>
         </TabsList>
         <TabsContent value="timeline">
             <!-- <Card class="p-6"> -->
             <div class="py-4">
                 <!-- 添加一个销毁全部的按钮 -->
-                <div class="flex gap-2 justify-end">
-                    <AddEventForm on:submit={handleEventSubmit} />
-                    <AlertDialog.Root bind:open={alertClearAll}>
-                        <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-                            <Trash2 />
-                        </AlertDialog.Trigger>
-                        <AlertDialog.Content>
-                            <AlertDialog.Header>
-                                <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                                <AlertDialog.Description>
-                                    This action cannot be undone. This will permanently delete your all records.
-                                </AlertDialog.Description>
-                            </AlertDialog.Header>
-                            <AlertDialog.Footer>
-                                <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                                <AlertDialog.Action
-                                    onclick={() => {
-                                        timelineComponent.clearAll();
-                                        saveTimelineData();
-                                        alertClearAll = false;
-                                    }}>Confirm</AlertDialog.Action
-                                >
-                            </AlertDialog.Footer>
-                        </AlertDialog.Content>
-                    </AlertDialog.Root>
-                    <Button
-                        variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
-                            )}>Nearby 3 Days</Button
-                    >
-                    <Button
-                        variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 3 * 60 * 60 * 1000),
-                                new Date(Date.now() + 3 * 60 * 60 * 1000)
-                            )}>Nearby 6 Hours</Button
-                    >
+                <div class="flex gap-2 justify-between">
+                    <div class="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onclick={() =>
+                                timelineComponent.setWindow(
+                                    new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                                    new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                                )}>Nearby 3 Days</Button
+                        >
+                        <Button
+                            variant="outline"
+                            onclick={() =>
+                                timelineComponent.setWindow(
+                                    new Date(Date.now() - 3 * 60 * 60 * 1000),
+                                    new Date(Date.now() + 3 * 60 * 60 * 1000)
+                                )}>Nearby 6 Hours</Button
+                        >
+                    </div>
+                    <div class="flex gap-2">
+                        <AddEventForm on:submit={handleEventSubmit} />
+                        <AlertDialog.Root bind:open={alertClearAll}>
+                            <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
+                                <Trash2 />
+                            </AlertDialog.Trigger>
+                            <AlertDialog.Content>
+                                <AlertDialog.Header>
+                                    <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                                    <AlertDialog.Description>
+                                        This action cannot be undone. This will permanently delete your all records.
+                                    </AlertDialog.Description>
+                                </AlertDialog.Header>
+                                <AlertDialog.Footer>
+                                    <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                                    <AlertDialog.Action
+                                        onclick={() => {
+                                            timelineComponent.clearAll();
+                                            saveTimelineData();
+                                            alertClearAll = false;
+                                        }}>Confirm</AlertDialog.Action
+                                    >
+                                </AlertDialog.Footer>
+                            </AlertDialog.Content>
+                        </AlertDialog.Root>
+                    </div>
                 </div>
                 <!-- 添加阴影 -->
                 <Timeline
@@ -379,8 +383,9 @@
                 <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
                 <p>这里将显示统计信息...</p>
             </Card>
-        </TabsContent>
-    </Tabs>
+            </TabsContent>
+        </Tabs>
+    </div>
 
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
         <Dialog.Content class="sm:max-w-[425px]">
