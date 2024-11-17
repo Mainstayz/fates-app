@@ -202,8 +202,7 @@
 <div class="space-y-4">
     <!-- 时间范围选择器 -->
     <div class="w-[200px]">
-        <Label for="timerange">时间范围</Label>
-        <Select.Root bind:value={selectedRange}>
+        <Select.Root  type="single" bind:value={selectedRange}>
             <Select.Trigger class="w-full">
                 <span>{timeRanges.find(r => r.value === selectedRange)?.label || '选择时间范围'}</span>
             </Select.Trigger>
