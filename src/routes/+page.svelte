@@ -258,7 +258,7 @@
     }
 </script>
 
-<main class="container mx-auto p-4 space-y-4">
+<main class="container mx-auto p-4 space-y-4 noSelect">
     <!-- <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold">Time Tracking</h1>
     </div> -->
@@ -308,7 +308,7 @@
     <Tabs value={currentTab}>
         <TabsContent value="timeline">
             <!-- <Card class="p-6"> -->
-            <div class="px-4 pt-6">
+            <div class="px-4 py-6">
                 <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
                     <AddEventForm on:submit={handleEventSubmit} />
@@ -325,11 +325,13 @@
                             </AlertDialog.Header>
                             <AlertDialog.Footer>
                                 <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                                <AlertDialog.Action onclick={() => {
-                                    timelineComponent.clearAll();
-                                    saveTimelineData();
-                                    alertClearAll = false;
-                                }}>Confirm</AlertDialog.Action>
+                                <AlertDialog.Action
+                                    onclick={() => {
+                                        timelineComponent.clearAll();
+                                        saveTimelineData();
+                                        alertClearAll = false;
+                                    }}>Confirm</AlertDialog.Action
+                                >
                             </AlertDialog.Footer>
                         </AlertDialog.Content>
                     </AlertDialog.Root>
@@ -350,6 +352,7 @@
                             )}>Nearby 6 Hours</Button
                     >
                 </div>
+                <!-- 添加阴影 -->
                 <Timeline
                     bind:this={timelineComponent}
                     zoomMin={1000 * 60 * 5}
@@ -392,7 +395,7 @@
                     endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
                     onSubmit={(formData) => {
                         if (!editingItem) return;
-                        handleEditSubmit(new CustomEvent('submit', { detail: formData }));
+                        handleEditSubmit(new CustomEvent("submit", { detail: formData }));
                     }}
                 />
             {/if}
@@ -402,4 +405,21 @@
 
 <style>
     /* 可以删除之前的样式，因为现在使用 Tailwind CSS */
+    /* :global(.container) {
+        -webkit-tap-highlight-color: transparent;
+    } */
+
+    .noSelect {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .noSelect:focus {
+        outline: none !important;
+    }
 </style>

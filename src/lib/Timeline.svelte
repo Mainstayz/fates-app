@@ -62,7 +62,13 @@
         const options: TimelineOptions = {
             height: "400px",
             groupEditable: true,
-            editable: true,
+            editable: {
+                add: false, // add new items by double tapping
+                updateTime: true, // drag items horizontally
+                updateGroup: true, // drag items from one group to another
+                remove: true, // delete an item by tapping the delete button top right
+                overrideItems: false, // allow these options to override item.editable
+            },
             selectable: true,
             multiselect: true,
             itemsAlwaysDraggable: {
@@ -273,6 +279,7 @@
     :global(.vis-timeline) {
         border: 1px solid var(--border) !important;
         border-radius: var(--radius) !important;
+        @apply bg-background;
     }
 
     /* 标签集中的标签样式 */
@@ -296,21 +303,46 @@
         position: absolute;
         border-width: 1px;
         border-radius: var(--radius) !important;
-        @apply bg-blue-200 text-foreground border-blue-300;
+        @apply bg-blue-300 text-foreground border-blue-300;
     }
 
-    /* 选中状态的时间线项目样式 */
-    :global(.vis-timeline .vis-item.vis-selected) {
-        @apply bg-orange-100 text-foreground bg-orange-200;
+    :global(.vis-item.blue) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-blue-300 text-foreground border-blue-300;
     }
 
     /* yelloW */
     :global(.vis-item.yellow) {
         position: absolute;
+        border-width:1px;
+        border-radius: var(--radius) !important;
+        @apply bg-yellow-300  text-foreground border-yellow-300;
+    }
+
+    /* red */
+    :global(.vis-item.red) {
+        position: absolute;
+        border-width:1px;
+        border-radius: var(--radius) !important;
+        @apply bg-red-300  text-foreground border-red-300;
+    }
+
+    :global(.vis-item.green) {
+        position: absolute;
         border-width: 1px;
         border-radius: var(--radius) !important;
-        @apply bg-yellow-400  text-foreground bg-yellow-500;
+        @apply bg-green-300 text-foreground border-green-300;
     }
+
+
+    /* 选中状态的时间线项目样式 */
+    /* :global(.vis-timeline .vis-item.vis-selected) {
+        @apply bg-orange-100 text-foreground bg-orange-200;
+    } */
+
+
 
     /* 时间线项目内容样式 */
     :global(.vis-timeline .vis-item .vis-item-content) {
@@ -400,7 +432,7 @@
     /* 今天日期背景颜色 */
     :global(.vis-time-axis .vis-grid.vis-today) {
         /* background: var(--destructive); */
-        @apply bg-gray-100;
+        @apply bg-neutral-100;
     }
     /* .vis-rolling-mode-btn */
     :global(.vis-rolling-mode-btn) {
