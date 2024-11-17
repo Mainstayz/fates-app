@@ -2,7 +2,8 @@
     import { onMount, onDestroy } from 'svelte';
     import ApexCharts from 'apexcharts';
     import type { TimelineItem } from '$lib/types';
-    import { Button } from "$lib/components/ui/button";
+    import * as Select from "$lib/components/ui/select";
+    import { Label } from "$lib/components/ui/label";
 
     export let items: TimelineItem[] = [];
 
@@ -11,8 +12,18 @@
     let pieChart: ApexCharts;
     let barChart: ApexCharts;
 
+    type TimeRange = 'all' | 'year' | 'month' | 'week';
+
     // 添加时间范围状态
-    let selectedRange = 'all';
+    let selectedRange: TimeRange = 'all';
+
+    // 时间范围选项
+    const timeRanges = [
+        { value: 'all', label: '所有时间' },
+        { value: 'year', label: '今年来' },
+        { value: 'month', label: '最近一个月' },
+        { value: 'week', label: '最近一周' }
+    ] as const;
 
     // 根据选择的时间范围过滤数据
     function filterItemsByRange(items: TimelineItem[], range: string): TimelineItem[] {
@@ -183,38 +194,29 @@
     }
 
     // 处理时间范围变化
-    function handleRangeChange(range: string) {
-        selectedRange = range;
+    function handleValueSelect(event: CustomEvent<TimeRange>) {
+        selectedRange = event.detail;
     }
 </script>
 
 <div class="space-y-4">
-    <!-- 时间范围选择按钮组 -->
-    <div class="flex gap-2 justify-start">
-        <Button
-            variant={selectedRange === 'all' ? 'default' : 'outline'}
-            on:click={() => handleRangeChange('all')}
-        >
-            所有
-        </Button>
-        <Button
-            variant={selectedRange === 'year' ? 'default' : 'outline'}
-            on:click={() => handleRangeChange('year')}
-        >
-            今年来
-        </Button>
-        <Button
-            variant={selectedRange === 'month' ? 'default' : 'outline'}
-            on:click={() => handleRangeChange('month')}
-        >
-            最近一个月
-        </Button>
-        <Button
-            variant={selectedRange === 'week' ? 'default' : 'outline'}
-            on:click={() => handleRangeChange('week')}
-        >
-            最近一周
-        </Button>
+    <!-- 时间范围选择器 -->
+    <div class="w-[200px]">
+        <Label for="timerange">时间范围</Label>
+        <Select.Root bind:value={selectedRange}>
+            <Select.Trigger class="w-full">
+                <span>{timeRanges.find(r => r.value === selectedRange)?.label || '选择时间范围'}</span>
+            </Select.Trigger>
+            <Select.Content>
+                <Select.Group>
+                    {#each timeRanges as range}
+                        <Select.Item value={range.value}>
+                            {range.label}
+                        </Select.Item>
+                    {/each}
+                </Select.Group>
+            </Select.Content>
+        </Select.Root>
     </div>
 
     <!-- 图表容器 -->
