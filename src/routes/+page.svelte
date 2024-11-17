@@ -15,6 +15,7 @@
     import * as Dialog from "$lib/components/ui/dialog/index";
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
+    import Statistics from "$lib/components/Statistics.svelte";
     let timelineComponent: Timeline;
 
     // 使用响应式声明存储时间线数据
@@ -379,10 +380,10 @@
 
         <!-- TODO -->
         <TabsContent value="statistics">
-            <Card class="p-6">
+            <div class="p-6">
                 <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
-                <p>这里将显示统计信息...</p>
-            </Card>
+                <Statistics {items} />
+            </div>
             </TabsContent>
         </Tabs>
     </div>
