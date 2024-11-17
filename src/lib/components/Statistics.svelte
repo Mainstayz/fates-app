@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
     import ApexCharts from 'apexcharts';
     import type { TimelineItem } from '$lib/types';
+    import { Button } from "$lib/components/ui/button";
 
     export let items: TimelineItem[] = [];
 
@@ -10,10 +11,40 @@
     let pieChart: ApexCharts;
     let barChart: ApexCharts;
 
+    // 添加时间范围状态
+    let selectedRange = 'all';
+
+    // 根据选择的时间范围过滤数据
+    function filterItemsByRange(items: TimelineItem[], range: string): TimelineItem[] {
+        const now = new Date();
+        const startDate = new Date();
+
+        switch (range) {
+            case 'week':
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                startDate.setMonth(now.getMonth() - 1);
+                break;
+            case 'year':
+                startDate.setFullYear(now.getFullYear(), 0, 1); // 今年1月1日
+                break;
+            default:
+                return items; // 'all' 返回所有数据
+        }
+
+        return items.filter(item => {
+            const itemDate = new Date(item.start);
+            return itemDate >= startDate && itemDate <= now;
+        });
+    }
+
     function calculateTagStats(items: TimelineItem[]) {
         const tagDurations: { [key: string]: number } = {};
 
-        items.forEach(item => {
+        const filteredItems = filterItemsByRange(items, selectedRange);
+
+        filteredItems.forEach(item => {
             if (!item.start || !item.end) return;
 
             const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
@@ -34,14 +65,27 @@
         const tags = Object.keys(tagStats);
         const durations = Object.values(tagStats);
         const totalDuration = durations.reduce((a, b) => a + b, 0);
-        const durationHours = durations.map(d => +(d / (1000 * 60 * 60)).toFixed(2)); // 转换为小时
+        const durationHours = durations.map(d => +(d / (1000 * 60 * 60)).toFixed(2));
 
         // 饼图配置
         const pieChartOptions = {
             series: durations.map(d => +(d / totalDuration * 100).toFixed(1)),
             chart: {
                 type: 'pie',
-                height: 350
+                height: 350,
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 350
+                    }
+                }
             },
             labels: tags,
             title: {
@@ -63,7 +107,7 @@
                 }
             }],
             theme: {
-                palette: 'palette8' // 使用内置配色方案
+                palette: 'palette8'
             }
         };
 
@@ -75,7 +119,16 @@
             }],
             chart: {
                 type: 'bar',
-                height: 350
+                height: 350,
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 350
+                    }
+                }
             },
             plotOptions: {
                 bar: {
@@ -124,19 +177,53 @@
         if (barChart) barChart.destroy();
     });
 
-    // 监听 items 变化，重新渲染图表
-    $: if (items) {
-        if (pieChartElement && barChartElement) {
-            createCharts();
-        }
+    // 监听 items 和 selectedRange 变化，重新渲染图表
+    $: if (items && pieChartElement && barChartElement) {
+        createCharts();
+    }
+
+    // 处理时间范围变化
+    function handleRangeChange(range: string) {
+        selectedRange = range;
     }
 </script>
 
-<div class="flex flex-col md:flex-row gap-4 w-full">
-    <div class="w-full md:w-1/2">
-        <div bind:this={pieChartElement}></div>
+<div class="space-y-4">
+    <!-- 时间范围选择按钮组 -->
+    <div class="flex gap-2 justify-start">
+        <Button
+            variant={selectedRange === 'all' ? 'default' : 'outline'}
+            on:click={() => handleRangeChange('all')}
+        >
+            所有
+        </Button>
+        <Button
+            variant={selectedRange === 'year' ? 'default' : 'outline'}
+            on:click={() => handleRangeChange('year')}
+        >
+            今年来
+        </Button>
+        <Button
+            variant={selectedRange === 'month' ? 'default' : 'outline'}
+            on:click={() => handleRangeChange('month')}
+        >
+            最近一个月
+        </Button>
+        <Button
+            variant={selectedRange === 'week' ? 'default' : 'outline'}
+            on:click={() => handleRangeChange('week')}
+        >
+            最近一周
+        </Button>
     </div>
-    <div class="w-full md:w-1/2">
-        <div bind:this={barChartElement}></div>
+
+    <!-- 图表容器 -->
+    <div class="flex flex-col md:flex-row gap-4 w-full">
+        <div class="w-full md:w-1/2">
+            <div bind:this={pieChartElement}></div>
+        </div>
+        <div class="w-full md:w-1/2">
+            <div bind:this={barChartElement}></div>
+        </div>
     </div>
 </div>
