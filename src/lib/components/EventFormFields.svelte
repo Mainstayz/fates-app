@@ -150,7 +150,6 @@
             id="title"
             bind:value={title}
             placeholder="输入事件标题"
-            class={errors.title ? "border-destructive" : ""}
         />
         {#if errors.title}
             <span class="text-sm text-destructive">

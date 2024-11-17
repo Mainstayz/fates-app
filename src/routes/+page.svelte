@@ -8,7 +8,7 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Card } from "$lib/components/ui/card";
     import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
-    import { Settings, Moon, Sun, Plus } from "lucide-svelte";
+    import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
     import { resetMode, setMode, ModeWatcher } from "mode-watcher";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import AddEventForm from "$lib/components/AddEventForm.svelte";
@@ -263,14 +263,14 @@
         <h1 class="text-3xl font-bold">Time Tracking</h1>
     </div> -->
 
-    <!-- <div class="flex items-center justify-end"> -->
-    <!-- <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
+    <!-- <div class="flex items-center justify-end">
+        <Tabs value={currentTab} onValueChange={(value) => (currentTab = value)} class="w-[400px]">
             <TabsList>
                 <TabsTrigger value="timeline">时间线</TabsTrigger>
                 <TabsTrigger value="statistics">统计</TabsTrigger>
             </TabsList>
-        </Tabs> -->
-
+        </Tabs>
+    </div> -->
     <!-- <div class="flex items-center gap-2"> -->
     <!-- <Button variant="outline" size="icon" on:click={toggleMode}>
                 {#if isDarkMode}
@@ -306,15 +306,19 @@
     <!-- <div class="h-px bg-border" ></div> -->
 
     <Tabs value={currentTab}>
+        <TabsList>
+            <TabsTrigger value="timeline">时间线</TabsTrigger>
+            <TabsTrigger value="statistics">统计</TabsTrigger>
+        </TabsList>
         <TabsContent value="timeline">
             <!-- <Card class="p-6"> -->
-            <div class="px-4 py-6">
+            <div class="py-4">
                 <!-- 添加一个销毁全部的按钮 -->
                 <div class="flex gap-2 justify-end">
                     <AddEventForm on:submit={handleEventSubmit} />
                     <AlertDialog.Root bind:open={alertClearAll}>
-                        <AlertDialog.Trigger class={buttonVariants({ variant: "outline" })}>
-                            Clear All
+                        <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
+                            <Trash2 />
                         </AlertDialog.Trigger>
                         <AlertDialog.Content>
                             <AlertDialog.Header>
