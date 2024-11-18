@@ -114,7 +114,7 @@ pub fn run() {
 
             // 初始化通知配置
             let config = NotificationConfig {
-                work_start_time: "08:00".to_string(),
+                work_start_time: "00:01".to_string(),
                 work_end_time: "24:00".to_string(),
                 check_interval: 1,
                 notify_before: 15,
