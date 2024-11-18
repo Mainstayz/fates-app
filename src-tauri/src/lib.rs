@@ -1,40 +1,14 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
-use serde::{Deserialize, Serialize};
+mod models;
+mod tray;
+
+use crate::models::TimelineData;
 use std::fs;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tauri::{path::BaseDirectory, Manager};
-mod tray;
 use tray::try_register_tray_icon;
 const APP_NAME: &str = "Fates";
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TimelineData {
-    groups: Vec<TimelineGroup>,
-    items: Vec<TimelineItem>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TimelineGroup {
-    id: String,
-    content: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct TimelineItem {
-    id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    group: Option<String>,
-    content: String,
-    start: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    end: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tags: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    className: Option<String>,
-}
 
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
