@@ -58,7 +58,7 @@ fn create_tray_menu(app: &mut App) -> Result<tauri::menu::Menu<Wry>, Box<dyn std
 }
 
 /// 创建菜单事件处理器
-fn create_menu_handler(handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
+fn create_menu_handler(_handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
     move |app: &AppHandle, event: MenuEvent| match event.id().as_ref() {
         "quit" => std::process::exit(0),
         "show" => show_main_window(app),

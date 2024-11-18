@@ -3,5 +3,12 @@
     "identifier": "default",
     "description": "Capability for the main window",
     "windows": ["main"],
-    "permissions": ["core:default", "shell:allow-open", "dialog:default", "log:default", "log:default"]
+    "permissions": [
+        "core:default",
+        "shell:allow-open",
+        "dialog:default",
+        "log:default",
+        "log:default",
+        "notification:default"
+    ]
 }

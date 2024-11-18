@@ -1,10 +1,9 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+// Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
-use dirs::data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
-
+use tauri::{path::BaseDirectory, Manager};
 mod tray;
 use tray::try_register_tray_icon;
 const APP_NAME: &str = "Fates";
@@ -39,8 +38,8 @@ pub struct TimelineItem {
 
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
-async fn save_timeline_data(data: TimelineData) -> Result<(), String> {
-    let app_dir = get_app_data_dir()?;
+async fn save_timeline_data(app_handle: tauri::AppHandle, data: TimelineData) -> Result<(), String> {
+    let app_dir = get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
 
     let json_string =
@@ -53,8 +52,8 @@ async fn save_timeline_data(data: TimelineData) -> Result<(), String> {
 
 /// 从 JSON 文件加载时间线数据
 #[tauri::command]
-async fn load_timeline_data() -> Result<Option<TimelineData>, String> {
-    let app_dir = get_app_data_dir()?;
+async fn load_timeline_data(app_handle: tauri::AppHandle) -> Result<Option<TimelineData>, String> {
+    let app_dir = get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
 
     if !file_path.exists() {
@@ -70,12 +69,34 @@ async fn load_timeline_data() -> Result<Option<TimelineData>, String> {
 }
 
 /// 获取应用数据目录
-fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
-    let app_dir = data_dir()
-        .ok_or_else(|| "无法获取数据目录".to_string())?
-        .join(APP_NAME);
+fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    // 先检查 APP_NAME
+    if APP_NAME.is_empty() {
+        return Err("APP_NAME 不能为空".to_string());
+    }
 
-    fs::create_dir_all(&app_dir).map_err(|e| format!("创建目录失败：{}", e))?;
+    // 获取基础目录
+    let base_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("获取应用数据目录失败：{}", e))?;
+
+    // 构造完整路径
+    let app_dir = base_dir.join(APP_NAME);
+
+    // 检查目录是否可访问
+    if app_dir.exists() && !app_dir.is_dir() {
+        return Err(format!(
+            "路径 {} 已存在但不是目录",
+            app_dir.display()
+        ));
+    }
+
+    // 创建目录
+    fs::create_dir_all(&app_dir)
+        .map_err(|e| format!("创建目录 {} 失败：{}", app_dir.display(), e))?;
+
+    log::info!("应用数据目录：{}", app_dir.display());
 
     Ok(app_dir)
 }
@@ -100,6 +121,7 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
@@ -108,7 +130,14 @@ pub fn run() {
             save_timeline_data,
             load_timeline_data
         ])
-        .setup(|app| try_register_tray_icon(app))
+        .setup(|app| {
+            // 注册托盘图标
+            let _ = try_register_tray_icon(app);
+            let path = app.path().resolve("resources/textfile.txt", BaseDirectory::Resource)?;
+            let content = fs::read_to_string(path).unwrap();
+            log::info!("文件内容：{}", content);
+            Ok(())
+        })
         .on_window_event(handle_window_event)
         .build(tauri::generate_context!())
         .expect("Tauri 应用程序初始化失败");
