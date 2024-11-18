@@ -45,7 +45,8 @@ impl NotificationManager {
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
-            let mut interval = time::interval(Duration::from_secs(5)); // 每分钟检查一次
+            let mut interval = time::interval(Duration::from_secs(60)); // 改为每分钟检查一次
+            let mut last_no_task_check = Local::now();
 
             loop {
                 interval.tick().await;
@@ -57,17 +58,20 @@ impl NotificationManager {
                     log::debug!("当前时间在工作时间内");
                     let data = timeline_data.lock().unwrap();
 
-                    // 检查是否有任务
-                    if Self::should_notify_no_tasks(&now, &data) {
-                        log::info!("没有计划任务，发送通知");
-                        let notification = Notification {
-                            id: uuid::Uuid::new_v4().to_string(),
-                            title: "没有计划任务".to_string(),
-                            message: "建议规划一些任务".to_string(),
-                            timestamp: now.to_rfc3339(),
-                            notification_type: NotificationType::NoTask,
-                        };
-                        callback(notification);
+                    // 每2小时检查一次是否有任务
+                    if (now - last_no_task_check).num_hours() >= 2 {
+                        if Self::should_notify_no_tasks(&now, &data) {
+                            log::info!("没有计划任务，发送通知");
+                            let notification = Notification {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                title: "没有计划任务".to_string(),
+                                message: "建议规划一些任务".to_string(),
+                                timestamp: now.to_rfc3339(),
+                                notification_type: NotificationType::NoTask,
+                            };
+                            callback(notification);
+                        }
+                        last_no_task_check = now;
                     }
 
                     // 检查即将开始的任务
@@ -88,7 +92,7 @@ impl NotificationManager {
                             }
                         }
 
-                        // 检查即将结束的任务
+                        // 检查即将结束的���务
                         if let Some(end_time) = &item.end {
                             if let Ok(end_time) = DateTime::parse_from_rfc3339(end_time) {
                                 let duration = end_time.signed_duration_since(now);
