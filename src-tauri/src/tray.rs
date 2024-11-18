@@ -86,5 +86,7 @@ fn show_main_window(app: &AppHandle) {
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
+    } else {
+        println!("主窗口不存在");
     }
 }

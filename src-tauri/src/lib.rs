@@ -40,75 +40,81 @@ pub struct TimelineItem {
     className: Option<String>,
 }
 
+/// 保存时间线数据到 JSON 文件
 #[tauri::command]
 async fn save_timeline_data(data: TimelineData) -> Result<(), String> {
-    let app_dir = data_dir().unwrap().join(APP_NAME);
-
-    fs::create_dir_all(&app_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
-
+    let app_dir = get_app_data_dir()?;
     let file_path = app_dir.join("timeline_data.json");
 
-    println!("file_path: {}", file_path.to_string_lossy());
-
     let json_string = serde_json::to_string_pretty(&data)
-        .map_err(|e| format!("Failed to serialize data: {}", e))?;
+        .map_err(|e| format!("序列化数据失败：{}", e))?;
 
-    fs::write(file_path, json_string).map_err(|e| format!("Failed to write file: {}", e))?;
+    fs::write(file_path, json_string)
+        .map_err(|e| format!("写入文件失败：{}", e))?;
 
     Ok(())
 }
 
+/// 从 JSON 文件加载时间线数据
 #[tauri::command]
 async fn load_timeline_data() -> Result<Option<TimelineData>, String> {
-    let app_dir = data_dir().unwrap().join(APP_NAME);
-
+    let app_dir = get_app_data_dir()?;
     let file_path = app_dir.join("timeline_data.json");
 
     if !file_path.exists() {
         return Ok(None);
     }
 
-    let content =
-        fs::read_to_string(file_path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let content = fs::read_to_string(file_path)
+        .map_err(|e| format!("读取文件失败：{}", e))?;
 
-    let data: TimelineData =
-        serde_json::from_str(&content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    let data: TimelineData = serde_json::from_str(&content)
+        .map_err(|e| format!("解析 JSON 失败：{}", e))?;
 
     Ok(Some(data))
 }
 
+/// 获取应用数据目录
+fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
+    let app_dir = data_dir()
+        .ok_or_else(|| "无法获取数据目录".to_string())?
+        .join(APP_NAME);
+
+    fs::create_dir_all(&app_dir)
+        .map_err(|e| format!("创建目录失败：{}", e))?;
+
+    Ok(app_dir)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
-
-    builder = builder.plugin(tauri_plugin_dialog::init());
-    builder = builder.plugin(tauri_plugin_shell::init());
-
-    builder = builder.invoke_handler(tauri::generate_handler![
-        greet,
-        save_timeline_data,
-        load_timeline_data
-    ]);
-
-    let context = tauri::generate_context!();
-
-    let app = builder
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
+        .invoke_handler(tauri::generate_handler![
+            save_timeline_data,
+            load_timeline_data
+        ])
         .setup(|app| try_register_tray_icon(app))
-        .on_window_event(|window, window_event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = window_event {
-                // 关闭窗口时隐藏而不是退出
-                window.hide().unwrap_or_default();
-                // 阻止窗口关闭
-                api.prevent_close();
-            }
-        })
-        .build(context)
-        .expect("error while running tauri application");
+        .on_window_event(handle_window_event)
+        .build(tauri::generate_context!())
+        .expect("Tauri 应用程序初始化失败");
 
-    app.run(|_app_handle, event| match event {
-        tauri::RunEvent::ExitRequested { api, .. } => {
-            api.prevent_exit();
-        }
-        _ => {}
-    });
+    builder.run(handle_run_event);
+}
+
+/// 处理窗口事件
+fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
+    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+        // 关闭窗口时隐藏而不是退出
+        window.hide().unwrap_or_default();
+        api.prevent_close();
+    }
+}
+
+/// 处理运行时事件
+fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
+    if let tauri::RunEvent::ExitRequested { api, .. } = event {
+        api.prevent_exit();
+    }
 }

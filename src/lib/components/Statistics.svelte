@@ -40,7 +40,7 @@
                 startDate.setMonth(now.getMonth() - 1);
                 break;
             case 'year':
-                startDate.setFullYear(now.getFullYear(), 0, 1); // 今年1月1日
+                startDate.setFullYear(now.getFullYear(), 0, 1); // 今年 1 月 1 日
                 break;
             default:
                 return items; // 'all' 返回所有数据
@@ -143,6 +143,12 @@
     }
 
     function createCharts() {
+        // 确保 DOM 元素存在
+        if (!pieChartElement || !barChartElement) {
+            console.log("DOM elements not ready yet");
+            return;
+        }
+
         console.log("Creating charts ...");
         const tagStats = calculateTagStats(items);
         const tags = Object.keys(tagStats);
@@ -151,44 +157,83 @@
         const durationHours = durations.map(d => +(d / (1000 * 60 * 60)).toFixed(2));
 
         // 销毁现有图表
-        if (pieChart) pieChart.destroy();
-        if (barChart) barChart.destroy();
+        if (pieChart) {
+            pieChart.destroy();
+            pieChart = null;
+        }
+        if (barChart) {
+            barChart.destroy();
+            barChart = null;
+        }
 
         // 创建新图表
-        pieChart = new ApexCharts(pieChartElement, getPieChartOptions(tags, durations, totalDuration));
-        barChart = new ApexCharts(barChartElement, getBarChartOptions(tags, durationHours));
+        try {
+            pieChart = new ApexCharts(pieChartElement, getPieChartOptions(tags, durations, totalDuration));
+            barChart = new ApexCharts(barChartElement, getBarChartOptions(tags, durationHours));
 
-        pieChart.render();
-        barChart.render();
+            pieChart.render();
+            barChart.render();
+        } catch (error) {
+            console.error("Error creating charts:", error);
+        }
     }
 
     onMount(() => {
-        createCharts();
+        // 使用 setTimeout 确保 DOM 完全准备好
+        setTimeout(() => {
+            if (items && items.length > 0) {
+                createCharts();
+            }
+        }, 0);
     });
 
     onDestroy(() => {
-        if (pieChart) pieChart.destroy();
-        if (barChart) barChart.destroy();
+        if (pieChart) {
+            pieChart.destroy();
+            pieChart = null;
+        }
+        if (barChart) {
+            barChart.destroy();
+            barChart = null;
+        }
     });
 
-    // 监听 items 和 selectedRange 变化，重新渲染图表
-    $: if (items && pieChartElement && barChartElement) {
-        console.log("Items changed, re-rendering charts ...");
-        createCharts();
+    // 监听 items 和 selectedRange 变化
+    $: {
+        if (items) {
+            console.log("Items changed, re-rendering charts ...");
+            // 使用 setTimeout 确保 DOM 更新完成
+            setTimeout(() => {
+                createCharts();
+            }, 0);
+        }
+    }
+
+    export function updateCharts(newItems: TimelineItem[]) {
+        items = newItems;
+        console.log('updateCharts called with items:', items);
+
+        if (items.length === 0) {
+            if (pieChart) {
+                pieChart.destroy();
+                pieChart = null;
+            }
+            if (barChart) {
+                barChart.destroy();
+                barChart = null;
+            }
+            return;
+        }
+
+        // 使用 setTimeout 确保 DOM 更新完成
+        setTimeout(() => {
+            createCharts();
+        }, 0);
     }
 
     // 处理时间范围变化
     function handleValueSelect(event: CustomEvent<TimeRange>) {
         selectedRange = event.detail;
-    }
-
-    // Add update callback
-    export function updateCharts(newItems: TimelineItem[]) {
-        items = newItems;
-        console.log('updateCharts', items);
-        if (pieChartElement && barChartElement) {
-            createCharts();
-        }
     }
 </script>
 
@@ -212,12 +257,24 @@
     </div>
 
     <!-- 图表容器 -->
-    <div class="flex flex-col md:flex-row gap-4 w-full">
-        <div class="w-full md:w-1/2">
-            <div bind:this={pieChartElement}></div>
+    {#if items && items.length > 0}
+        <!-- 图表容器 -->
+        <div class="flex flex-col md:flex-row gap-4 w-full">
+            <div class="w-full md:w-1/2">
+                <div bind:this={pieChartElement}></div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <div bind:this={barChartElement}></div>
+            </div>
         </div>
-        <div class="w-full md:w-1/2">
-            <div bind:this={barChartElement}></div>
+    {:else}
+        <!-- 空状态显示 -->
+        <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="text-lg font-medium mb-2">暂无数据</h3>
+            <p class="text-sm text-center">请添加一些时间记录来查看统计图表</p>
         </div>
-    </div>
+    {/if}
 </div>
