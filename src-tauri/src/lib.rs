@@ -121,33 +121,55 @@ pub fn run() {
             };
 
             let app_handle = app.handle();
-
-            // 尝试加载现有的时间线数据
-            let app_dir = get_app_data_dir(app_handle.clone())?;
-            let file_path = app_dir.join("timeline_data.json");
-            let timeline_data = if file_path.exists() {
-                let content = fs::read_to_string(&file_path)
-                    .map_err(|e| format!("读取时间线数据失败: {}", e))?;
-                serde_json::from_str(&content)
-                    .map_err(|e| format!("解析时间线数据失败: {}", e))?
-            } else {
-                TimelineData {
-                    groups: Vec::new(),
-                    items: Vec::new(),
-                }
-            };
+            let app_handle_clone = app_handle.clone();
 
             // 创建通知管理器
-
             let notification_manager = NotificationManager::new(
-                timeline_data,
+                // 获取时间线数据的回调函数
+                move || {
+                    let app_dir = get_app_data_dir(app_handle_clone.clone())
+                        .expect("Failed to get app data dir");
+                    let file_path = app_dir.join("timeline_data.json");
+
+                    if file_path.exists() {
+                        match fs::read_to_string(&file_path) {
+                            Ok(content) => {
+                                match serde_json::from_str(&content) {
+                                    Ok(data) => data,
+                                    Err(e) => {
+                                        log::error!("解析时间线数据失败: {}", e);
+                                        TimelineData {
+                                            groups: Vec::new(),
+                                            items: Vec::new(),
+                                        }
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                log::error!("读取时间线数据失败: {}", e);
+                                TimelineData {
+                                    groups: Vec::new(),
+                                    items: Vec::new(),
+                                }
+                            }
+                        }
+                    } else {
+                        TimelineData {
+                            groups: Vec::new(),
+                            items: Vec::new(),
+                        }
+                    }
+                },
                 config,
                 move |notification| {
                     let title = notification.title.clone();
                     let body = notification.message.clone();
+                    log::info!("发送通知 - title: {}, body: {}", title, body);
                     // 使用 tauri 的通知插件发送系统通知
-                    log::info!("title: {}, body: {}", title, body);
-
+                    // let _ = tauri_plugin_notification::send(
+                    //     &title,
+                    //     Some(&body),
+                    // );
                 }
             );
 
@@ -197,14 +219,6 @@ async fn update_timeline_data(
     app_handle: tauri::AppHandle,
     data: TimelineData,
 ) -> Result<(), String> {
-    // 首先保存数据到文件
-
-    save_timeline_data(app_handle.clone(), data.clone()).await?;
-
-    // 更新通知管理器中的数据
-    if let Some(notification_manager) = app_handle.try_state::<Arc<NotificationManager>>() {
-        notification_manager.update_timeline(data.clone());
-    }
-
-    Ok(())
+    // 只需要保存数据到文件，NotificationManager 会在下次检查时自动获取最新数据
+    save_timeline_data(app_handle.clone(), data).await
 }

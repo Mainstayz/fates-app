@@ -6,11 +6,11 @@ use tokio::time;
 use crate::models::{Notification, NotificationConfig, NotificationType, TimelineData};
 
 /// 通知管理器结构体
-/// - timeline_data: 时间线数据，使用 Arc<Mutex> 实现线程安全的共享
+/// - get_timeline: 获取时间线数据的回调函数
 /// - config: 通知配置
 /// - callback: 发送通知的回调函数
 pub struct NotificationManager {
-    timeline_data: Arc<Mutex<TimelineData>>,
+    get_timeline: Arc<dyn Fn() -> TimelineData + Send + Sync>,
     config: NotificationConfig,
     callback: Arc<dyn Fn(Notification) + Send + Sync>,
 }
@@ -18,34 +18,28 @@ pub struct NotificationManager {
 impl NotificationManager {
     /// 创建新的通知管理器实例
     pub fn new(
-        timeline_data: TimelineData,
+        get_timeline: impl Fn() -> TimelineData + Send + Sync + 'static,
         config: NotificationConfig,
         callback: impl Fn(Notification) + Send + Sync + 'static,
     ) -> Self {
         NotificationManager {
-            timeline_data: Arc::new(Mutex::new(timeline_data)),
+            get_timeline: Arc::new(get_timeline),
             config,
             callback: Arc::new(callback),
         }
-    }
-
-    /// 更新时间线数据
-    pub fn update_timeline(&self, new_data: TimelineData) {
-        let mut data = self.timeline_data.lock().unwrap();
-        *data = new_data;
     }
 
     /// 启动通知循环
     /// 这是一个异步函数，会在后台持续运行检查是否需要发送通知
     pub async fn start_notification_loop(&self) {
         log::info!("开始通知循环");
-        let timeline_data = Arc::clone(&self.timeline_data);
+        let get_timeline = Arc::clone(&self.get_timeline);
         let config = self.config.clone();
         let callback = Arc::clone(&self.callback);
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
-            let mut interval = time::interval(Duration::from_secs(60)); // 改为每分钟检查一次
+            let mut interval = time::interval(Duration::from_secs(60));
 
             loop {
                 interval.tick().await;
@@ -58,8 +52,9 @@ impl NotificationManager {
                 }
 
                 log::debug!("当前时间 {} 在工作时间内", now);
-                let data = timeline_data.lock().unwrap();
-                // Check for no tasks every 2 hours
+                let data = get_timeline(); // 使用回调获取最新数据
+
+                // Check for no tasks
                 log::debug!("开始检查没有任务的情况...");
                 if Self::should_notify_no_tasks(&now, &data) {
                     log::info!("未找到计划任务，正在发送通知");
