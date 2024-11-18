@@ -52,7 +52,7 @@
         });
     }
 
-    // 优化 calculateTagStats 函数，添加类型注解
+    // 优化 calculateTagStats 函数
     function calculateTagStats(items: TimelineItem[]): { [key: string]: number } {
         const tagDurations: { [key: string]: number } = {};
         const filteredItems = filterItemsByRange(items, selectedRange);
@@ -61,11 +61,13 @@
             if (!item.start || !item.end) return;
 
             const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
-            // 简化三元表达式
-            const tags = item.tags?.length ? item.tags : ['其他'];
+            // 修改这里：确保空标签或空数组被正确处理为"其他"
+            const tags = (!item.tags || item.tags.length === 0) ? ['其他'] : item.tags;
 
             tags.forEach(tag => {
-                tagDurations[tag] = (tagDurations[tag] || 0) + duration;
+                // 确保标签不是空字符串
+                const tagName = tag.trim() || '其他';
+                tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
             });
         });
 
