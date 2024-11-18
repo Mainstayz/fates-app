@@ -385,7 +385,6 @@
         <!-- TODO -->
         <TabsContent value="statistics">
             <div class="p-6">
-                <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
                 <Statistics bind:this={statisticsComponent} items={items} />
             </div>
             </TabsContent>

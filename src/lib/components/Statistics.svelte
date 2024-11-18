@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
-    import ApexCharts from 'apexcharts';
-    import type { TimelineItem } from '$lib/types';
+    import { onMount, onDestroy } from "svelte";
+    import ApexCharts from "apexcharts";
+    import type { TimelineItem } from "$lib/types";
     import * as Select from "$lib/components/ui/select";
 
     // 类型定义
-    type TimeRange = 'all' | 'year' | 'month' | 'week';
+    type TimeRange = "all" | "year" | "month" | "week";
 
     // Props
     export let items: TimelineItem[] = [];
@@ -19,12 +19,12 @@
     let barChart: ApexCharts;
 
     // 时间范围状态和选项
-    let selectedRange: TimeRange = 'all';
+    let selectedRange: TimeRange = "all";
     const timeRanges = [
-        { value: 'all', label: '所有时间' },
-        { value: 'year', label: '今年来' },
-        { value: 'month', label: '最近一个月' },
-        { value: 'week', label: '最近一周' }
+        { value: "all", label: "所有时间" },
+        { value: "year", label: "今年来" },
+        { value: "month", label: "最近一个月" },
+        { value: "week", label: "最近一周" },
     ] as const;
 
     // 根据选择的时间范围过滤数据
@@ -33,20 +33,20 @@
         const startDate = new Date();
 
         switch (range) {
-            case 'week':
+            case "week":
                 startDate.setDate(now.getDate() - 7);
                 break;
-            case 'month':
+            case "month":
                 startDate.setMonth(now.getMonth() - 1);
                 break;
-            case 'year':
+            case "year":
                 startDate.setFullYear(now.getFullYear(), 0, 1); // 今年 1 月 1 日
                 break;
             default:
                 return items; // 'all' 返回所有数据
         }
 
-        return items.filter(item => {
+        return items.filter((item) => {
             const itemDate = new Date(item.start);
             return itemDate >= startDate && itemDate <= now;
         });
@@ -57,16 +57,16 @@
         const tagDurations: { [key: string]: number } = {};
         const filteredItems = filterItemsByRange(items, selectedRange);
 
-        filteredItems.forEach(item => {
+        filteredItems.forEach((item) => {
             if (!item.start || !item.end) return;
 
             const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
             // 修改这里：确保空标签或空数组被正确处理为"其他"
-            const tags = (!item.tags || item.tags.length === 0) ? ['其他'] : item.tags;
+            const tags = !item.tags || item.tags.length === 0 ? ["其他"] : item.tags;
 
-            tags.forEach(tag => {
+            tags.forEach((tag) => {
                 // 确保标签不是空字符串
-                const tagName = tag.trim() || '其他';
+                const tagName = tag.trim() || "其他";
                 tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
             });
         });
@@ -77,29 +77,31 @@
     // 将图表配置抽离为单独的函数
     function getPieChartOptions(tags: string[], durations: number[], totalDuration: number) {
         return {
-            series: durations.map(d => +(d / totalDuration * 100).toFixed(1)),
+            series: durations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
             chart: {
-                type: 'donut',
+                type: "donut",
                 height: 350,
                 animations: {
                     enabled: true,
-                    easing: 'easeinout',
+                    easing: "easeinout",
                     speed: 800,
                     animateGradually: { enabled: true, delay: 150 },
-                    dynamicAnimation: { enabled: true, speed: 350 }
-                }
+                    dynamicAnimation: { enabled: true, speed: 350 },
+                },
             },
             labels: tags,
-            title: { text: '标签占比分布 (%)', align: 'center' },
-            legend: { position: 'bottom' },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    chart: { width: 300 },
-                    legend: { position: 'bottom' }
-                }
-            }],
-            theme: { palette: 'palette8' }
+            title: { text: "标签占比分布 (%)", align: "center" },
+            legend: { position: "bottom" },
+            responsive: [
+                {
+                    breakpoint: 480,
+                    options: {
+                        chart: { width: 300 },
+                        legend: { position: "bottom" },
+                    },
+                },
+            ],
+            theme: { palette: "palette8" },
         };
     }
 
@@ -109,38 +111,40 @@
         // 创建包含标签和时长的对象数组，以便排序
         const combined = tags.map((tag, index) => ({
             tag,
-            duration: durationHours[index]
+            duration: durationHours[index],
         }));
 
         // 按时长降序排序
         combined.sort((a, b) => b.duration - a.duration);
 
         // 分离排序后的标签和时长
-        const sortedTags = combined.map(item => item.tag);
-        const sortedHours = combined.map(item => item.duration);
+        const sortedTags = combined.map((item) => item.tag);
+        const sortedHours = combined.map((item) => item.duration);
 
         return {
-            series: [{
-                name: '时长（小时）',
-                data: sortedHours,
-                color: '#3B82F6' // 设置为蓝色
-            }],
+            series: [
+                {
+                    name: "时长（小时）",
+                    data: sortedHours,
+                    color: "#3B82F6", // 设置为蓝色
+                },
+            ],
             chart: {
-                type: 'bar',
+                type: "bar",
                 height: 350,
                 animations: {
                     enabled: true,
-                    easing: 'easeinout',
+                    easing: "easeinout",
                     speed: 800,
-                    dynamicAnimation: { enabled: true, speed: 350 }
-                }
+                    dynamicAnimation: { enabled: true, speed: 350 },
+                },
             },
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
             xaxis: { categories: sortedTags },
             // yaxis: { title: { text: '小时' } },
-            title: { text: '标签时长分布（小时）', align: 'center' },
-            theme: { palette: 'palette8' }
+            title: { text: "标签时长分布（小时）", align: "center" },
+            theme: { palette: "palette8" },
         };
     }
 
@@ -156,7 +160,7 @@
         const tags = Object.keys(tagStats);
         const durations = Object.values(tagStats);
         const totalDuration = durations.reduce((a, b) => a + b, 0);
-        const durationHours = durations.map(d => +(d / (1000 * 60 * 60)).toFixed(2));
+        const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));
 
         // 销毁现有图表
         if (pieChart) {
@@ -213,7 +217,7 @@
 
     export function updateCharts(newItems: TimelineItem[]) {
         items = newItems;
-        console.log('updateCharts called with items:', items);
+        console.log("updateCharts called with items:", items);
 
         if (items.length === 0) {
             if (pieChart) {
@@ -240,26 +244,24 @@
 </script>
 
 <div class="space-y-4">
-    <!-- 时间范围选择器 -->
-    <div class="w-[200px]">
-        <Select.Root  type="single" bind:value={selectedRange}>
-            <Select.Trigger class="w-full">
-                <span>{timeRanges.find(r => r.value === selectedRange)?.label || '选择时间范围'}</span>
-            </Select.Trigger>
-            <Select.Content>
-                <Select.Group>
-                    {#each timeRanges as range}
-                        <Select.Item value={range.value}>
-                            {range.label}
-                        </Select.Item>
-                    {/each}
-                </Select.Group>
-            </Select.Content>
-        </Select.Root>
-    </div>
-
     <!-- 图表容器 -->
     {#if items && items.length > 0}
+        <div class="w-[200px]">
+            <Select.Root type="single" bind:value={selectedRange}>
+                <Select.Trigger class="w-full">
+                    <span>{timeRanges.find((r) => r.value === selectedRange)?.label || "选择时间范围"}</span>
+                </Select.Trigger>
+                <Select.Content>
+                    <Select.Group>
+                        {#each timeRanges as range}
+                            <Select.Item value={range.value}>
+                                {range.label}
+                            </Select.Item>
+                        {/each}
+                    </Select.Group>
+                </Select.Content>
+            </Select.Root>
+        </div>
         <!-- 图表容器 -->
         <div class="flex flex-col md:flex-row gap-4 w-full">
             <div class="w-full md:w-1/2">
@@ -270,10 +272,22 @@
             </div>
         </div>
     {:else}
+        <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
         <!-- 空状态显示 -->
         <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-16 h-16 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
             </svg>
             <h3 class="text-lg font-medium mb-2">暂无数据</h3>
             <p class="text-sm text-center">请添加一些时间记录来查看统计图表</p>
