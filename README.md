@@ -6,25 +6,31 @@ This template should help get you started developing with Tauri, SvelteKit and T
 
 [VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
 
-
 ## Install
 
-```
+```bash
+
 pnpm install
 
 pnpm tauri dev
 
-
-
-<!-- 添加 shadcn 组件库 -->
 ```
-<!-- 添加 tailwindcss 支持 -->
+
+### 添加 shadcn 组件库
+
+1. 添加 tailwindcss 支持
+2. 初始化 shadcn 组件库
+3. 安装 shadcn 组件库
+
+```bash
+
 npx sv add tailwindcss
-
-<!-- 初始化 shadcn 组件库 -->
 npx shadcn-svelte@next init
-
-<!-- 安装 shadcn 组件库 -->
 npx shadcn-svelte@next add button
+
 ```
+
+### 系统托盘教程
+
+[系统托盘教程](https://v2.tauri.app/zh-cn/learn/system-tray/)
 

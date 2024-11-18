@@ -8,6 +8,8 @@ use dirs::data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
 
+mod tray;
+use tray::try_register_tray_icon;
 const APP_NAME: &str = "Fates";
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,6 +25,7 @@ pub struct TimelineGroup {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 pub struct TimelineItem {
     id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,17 +77,45 @@ async fn load_timeline_data() -> Result<Option<TimelineData>, String> {
     Ok(Some(data))
 }
 
+fn app_callback(_: &tauri::AppHandle<tauri::Wry>, event: tauri::RunEvent) {
+    match event {
+        tauri::RunEvent::ExitRequested { api, code, .. } => {
+            // prevent close background on webview windows closing
+            println!("ExitRequested code: {:?}", code);
+            api.prevent_exit();
+        }
+        tauri::RunEvent::Exit => {
+            println!("Exit");
+        }
+        _ => {}
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![
-            // 注册命令
-            greet,
-            save_timeline_data,
-            load_timeline_data
-        ])
-        .run(tauri::generate_context!())
+    let mut builder = tauri::Builder::default();
+
+    builder = builder.plugin(tauri_plugin_dialog::init());
+    builder = builder.plugin(tauri_plugin_shell::init());
+
+    builder = builder.invoke_handler(tauri::generate_handler![
+        // 注册命令
+        greet,
+        save_timeline_data,
+        load_timeline_data
+    ]);
+
+    let context = tauri::generate_context!();
+
+    let app = builder
+        .setup(|_app| try_register_tray_icon(_app))
+        .build(context)
         .expect("error while running tauri application");
-}
+
+    app.run(|_app_handle, event| match event {
+        tauri::RunEvent::ExitRequested { api, .. } => {
+            api.prevent_exit();
+        }
+        _ => {}
+    });
+} //
