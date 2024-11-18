@@ -39,7 +39,7 @@ impl NotificationManager {
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
-            let mut interval = time::interval(Duration::from_secs(60));
+            let mut interval = time::interval(Duration::from_secs(15));
 
             loop {
                 interval.tick().await;
@@ -65,7 +65,7 @@ impl NotificationManager {
                         timestamp: now.to_rfc3339(),
                         notification_type: NotificationType::NoTask,
                     });
-                    return;
+                    continue;
                 }
 
                 // Check upcoming tasks
