@@ -1,12 +1,9 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 use dirs::data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 
 mod tray;
 use tray::try_register_tray_icon;
@@ -46,11 +43,10 @@ async fn save_timeline_data(data: TimelineData) -> Result<(), String> {
     let app_dir = get_app_data_dir()?;
     let file_path = app_dir.join("timeline_data.json");
 
-    let json_string = serde_json::to_string_pretty(&data)
-        .map_err(|e| format!("序列化数据失败：{}", e))?;
+    let json_string =
+        serde_json::to_string_pretty(&data).map_err(|e| format!("序列化数据失败：{}", e))?;
 
-    fs::write(file_path, json_string)
-        .map_err(|e| format!("写入文件失败：{}", e))?;
+    fs::write(file_path, json_string).map_err(|e| format!("写入文件失败：{}", e))?;
 
     Ok(())
 }
@@ -65,11 +61,10 @@ async fn load_timeline_data() -> Result<Option<TimelineData>, String> {
         return Ok(None);
     }
 
-    let content = fs::read_to_string(file_path)
-        .map_err(|e| format!("读取文件失败：{}", e))?;
+    let content = fs::read_to_string(file_path).map_err(|e| format!("读取文件失败：{}", e))?;
 
-    let data: TimelineData = serde_json::from_str(&content)
-        .map_err(|e| format!("解析 JSON 失败：{}", e))?;
+    let data: TimelineData =
+        serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败：{}", e))?;
 
     Ok(Some(data))
 }
@@ -80,17 +75,35 @@ fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
         .ok_or_else(|| "无法获取数据目录".to_string())?
         .join(APP_NAME);
 
-    fs::create_dir_all(&app_dir)
-        .map_err(|e| format!("创建目录失败：{}", e))?;
+    fs::create_dir_all(&app_dir).map_err(|e| format!("创建目录失败：{}", e))?;
 
     Ok(app_dir)
 }
+// Target::new(TargetKind::Webview),
+//     ///         Target::new(TargetKind::LogDir { file_name: Some("webview".into()) }).filter(|metadata| metadata.target() == WEBVIEW_TARGET),
+///         Target::new(TargetKind::LogDir { file_name: Some("rust".into()) }).filter(|metadata| metadata.target() != WEBVIEW_TARGET),
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let logger_builder = tauri_plugin_log::Builder::new()
+        .targets([
+            Target::new(TargetKind::Stdout),
+            Target::new(TargetKind::Webview),
+            Target::new(TargetKind::LogDir {
+                file_name: Some("rust".into()),
+            })
+            .filter(|metadata| metadata.target() != WEBVIEW_TARGET),
+            Target::new(TargetKind::LogDir {
+                file_name: Some("webview".into()),
+            })
+            .filter(|metadata| metadata.target() == WEBVIEW_TARGET),
+        ])
+        .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(logger_builder)
         .invoke_handler(tauri::generate_handler![
             save_timeline_data,
             load_timeline_data
@@ -99,7 +112,8 @@ pub fn run() {
         .on_window_event(handle_window_event)
         .build(tauri::generate_context!())
         .expect("Tauri 应用程序初始化失败");
-
+    // 打印日志目录
+    log::info!("初始化完成");
     builder.run(handle_run_event);
 }
 

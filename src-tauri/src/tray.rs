@@ -3,8 +3,7 @@
 use tauri::{
     menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    App, AppHandle, Manager,
-    Wry,
+    App, AppHandle, Manager, Wry,
 };
 
 use std::{thread::sleep, time::Duration};
