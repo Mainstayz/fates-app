@@ -170,6 +170,18 @@ impl NotificationManager {
                 }
             }
         }
+
+        // 检查当前时间是否有任务
+        for item in &data.items {
+            if let (Ok(start_time), end_opt) = (DateTime::parse_from_rfc3339(&item.start), item.end.as_ref()) {
+                if let Some(end_time) = end_opt.and_then(|e| DateTime::parse_from_rfc3339(e).ok()) {
+                    if *now >= start_time && *now <= end_time {
+                        return false;
+                    }
+                }
+            }
+        }
+
         true
     }
 }
