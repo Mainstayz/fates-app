@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineData {
     pub groups: Vec<TimelineGroup>,
     pub items: Vec<TimelineItem>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineGroup {
     pub id: String,
     pub content: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
 pub struct TimelineItem {
     pub id: String,
@@ -30,10 +30,10 @@ pub struct TimelineItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationConfig {
-    pub work_start_time: String,  // "08:00"
-    pub work_end_time: String,    // "18:00"
-    pub check_interval: u64,      // 检查间隔(分钟)
-    pub notify_before: u64,       // 提前多少分钟通知
+    pub work_start_time: String, // "08:00"
+    pub work_end_time: String,   // "18:00"
+    pub check_interval: u64,     // 检查间隔(分钟)
+    pub notify_before: u64,      // 提前多少分钟通知
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,7 +47,7 @@ pub struct Notification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NotificationType {
-    NoTask,           // 没有任务提醒
-    TaskStart,        // 任务即将开始
-    TaskEnd,          // 任务即将结束
+    NoTask,    // 没有任务提醒
+    TaskStart, // 任务即将开始
+    TaskEnd,   // 任务即将结束
 }

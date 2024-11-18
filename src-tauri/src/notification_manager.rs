@@ -8,7 +8,7 @@ use crate::models::{TimelineData, Notification, NotificationConfig, Notification
 pub struct NotificationManager {
     timeline_data: Arc<Mutex<TimelineData>>,
     config: NotificationConfig,
-    callback: Box<dyn Fn(Notification) + Send + Sync>,
+    callback: Arc<dyn Fn(Notification) + Send + Sync>,
 }
 
 impl NotificationManager {
@@ -20,7 +20,7 @@ impl NotificationManager {
         NotificationManager {
             timeline_data: Arc::new(Mutex::new(timeline_data)),
             config,
-            callback: Box::new(callback),
+            callback: Arc::new(callback),
         }
     }
 
@@ -32,10 +32,10 @@ impl NotificationManager {
     pub async fn start_notification_loop(&self) {
         let timeline_data = Arc::clone(&self.timeline_data);
         let config = self.config.clone();
-        let callback = Arc::new(self.callback.clone());
+        let callback = Arc::clone(&self.callback);
 
         tokio::spawn(async move {
-            let mut interval = time::interval(Duration::from_secs(60)); // 每分钟检查一次
+            let mut interval = time::interval(Duration::from_secs(5)); // 每分钟检查一次
 
             loop {
                 interval.tick().await;
@@ -105,7 +105,7 @@ impl NotificationManager {
 
     fn should_notify_no_tasks(now: &DateTime<Local>, data: &TimelineData) -> bool {
         // 检查从现在到未来2小时内是否有任务
-        let future = now + chrono::Duration::hours(2);
+        let future = *now + chrono::Duration::hours(2);
 
         for item in &data.items {
             if let Ok(start_time) = DateTime::parse_from_rfc3339(&item.start) {

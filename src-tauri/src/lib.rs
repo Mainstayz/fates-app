@@ -1,13 +1,16 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
 mod models;
+mod notification_manager;
 mod tray;
 
-use crate::models::TimelineData;
-use std::fs;
+use crate::models::{NotificationConfig, TimelineData};
+use crate::notification_manager::NotificationManager;
+use std::{clone, fs};
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tauri::{path::BaseDirectory, Manager};
 use tray::try_register_tray_icon;
+use std::sync::Arc;
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -102,14 +105,66 @@ pub fn run() {
         .plugin(logger_builder)
         .invoke_handler(tauri::generate_handler![
             save_timeline_data,
-            load_timeline_data
+            load_timeline_data,
+            update_timeline_data
         ])
         .setup(|app| {
             // 注册托盘图标
             let _ = try_register_tray_icon(app);
-            let path = app.path().resolve("resources/textfile.txt", BaseDirectory::Resource)?;
-            let content = fs::read_to_string(path).unwrap();
-            log::info!("文件内容：{}", content);
+
+            // 初始化通知配置
+            let config = NotificationConfig {
+                work_start_time: "08:00".to_string(),
+                work_end_time: "24:00".to_string(),
+                check_interval: 1,
+                notify_before: 15,
+            };
+
+            let app_handle = app.handle();
+
+            // 尝试加载现有的时间线数据
+            let app_dir = get_app_data_dir(app_handle.clone())?;
+            let file_path = app_dir.join("timeline_data.json");
+            let timeline_data = if file_path.exists() {
+                let content = fs::read_to_string(&file_path)
+                    .map_err(|e| format!("读取时间线数据失败: {}", e))?;
+                serde_json::from_str(&content)
+                    .map_err(|e| format!("解析时间线数据失败: {}", e))?
+            } else {
+                TimelineData {
+                    groups: Vec::new(),
+                    items: Vec::new(),
+                }
+            };
+
+            // 创建通知管理器
+
+            let notification_manager = NotificationManager::new(
+                timeline_data,
+                config,
+                move |notification| {
+                    let title = notification.title.clone();
+                    let body = notification.message.clone();
+                    // 使用 tauri 的通知插件发送系统通知
+                    log::info!("title: {}, body: {}", title, body);
+
+                }
+            );
+
+            // 将通知管理器存储在应用状态中
+            app.manage(Arc::new(notification_manager));
+
+            // 在spawn之前获取notification_manager的克隆
+            let notification_manager = {
+                let state = app.state::<Arc<NotificationManager>>();
+                state.inner().clone()
+            };
+
+            // 启动通知循环
+            tauri::async_runtime::spawn(async move {
+                notification_manager.start_notification_loop().await;
+            });
+
             Ok(())
         })
         .on_window_event(handle_window_event)
@@ -134,4 +189,22 @@ fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
     if let tauri::RunEvent::ExitRequested { api, .. } = event {
         api.prevent_exit();
     }
+}
+
+/// 更新时间线数据的命令
+#[tauri::command]
+async fn update_timeline_data(
+    app_handle: tauri::AppHandle,
+    data: TimelineData,
+) -> Result<(), String> {
+    // 首先保存数据到文件
+
+    save_timeline_data(app_handle.clone(), data.clone()).await?;
+
+    // 更新通知管理器中的数据
+    if let Some(notification_manager) = app_handle.try_state::<Arc<NotificationManager>>() {
+        notification_manager.update_timeline(data.clone());
+    }
+
+    Ok(())
 }
