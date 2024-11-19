@@ -7,7 +7,7 @@
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Card } from "$lib/components/ui/card";
-    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
+    import { Tabs, TabsList, TabsTrigger, TabsContent, Root } from "$lib/components/ui/tabs";
     import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
     import { resetMode, setMode, ModeWatcher } from "mode-watcher";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -311,7 +311,7 @@
     <!-- <div class="h-px bg-border" ></div> -->
     <div class="p-4">
         <Tabs value={currentTab} onValueChange={handleTabChange}>
-            <TabsList>
+            <TabsList class="ml-auto">
                 <TabsTrigger value="timeline">时间线</TabsTrigger>
                 <TabsTrigger value="statistics">统计</TabsTrigger>
         </TabsList>

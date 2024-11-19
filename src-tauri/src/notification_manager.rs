@@ -83,10 +83,10 @@ impl NotificationManager {
         callback: &Arc<dyn Fn(Notification) + Send + Sync>,
     ) {
         log::debug!("开始检查任务列表，共 {} 个任务", data.items.len());
-        log::debug!("当前配置的提前通知时间: {} 分钟", config.notify_before);
+        log::debug!("当前配置的提前通知时间：{} 分钟", config.notify_before);
 
         for item in &data.items {
-            log::debug!("正在检查任务: {}", item.content);
+            log::debug!("正在检查任务：{}", item.content);
 
             // 检查任务开始时间
             match DateTime::parse_from_rfc3339(&item.start) {
@@ -99,7 +99,7 @@ impl NotificationManager {
                         if let Ok(end_time) = DateTime::parse_from_rfc3339(end_str) {
                             let duration = end_time.signed_duration_since(start_time).num_minutes();
                             log::debug!(
-                                "任务「{}」的总时长: {} 分钟",
+                                "任务「{}」的总时长：{} 分钟",
                                 item.content,
                                 duration
                             );
@@ -127,14 +127,14 @@ impl NotificationManager {
                     };
 
                     log::debug!(
-                        "任务「{}」的调整后通知时间: {} 分钟",
+                        "任务「{}」的调整后通知时间：{} 分钟",
                         item.content,
                         adjusted_notify_before
                     );
 
                     if minutes <= adjusted_notify_before && minutes > 0 {
                         log::info!(
-                            "触发开始通知条件: 距开始 {} 分钟 <= 调整后通知时间 {} 分钟",
+                            "触发开始通知条件：距开始 {} 分钟 <= 调整后通知时间 {} 分钟",
                             minutes,
                             adjusted_notify_before
                         );
@@ -168,13 +168,13 @@ impl NotificationManager {
                         }
                     } else {
                         log::debug!(
-                            "不满足开始通知条件: 距开始 {} 分钟, 调整后通知时间 {} 分钟",
+                            "不满足开始通知条件：距开始 {} 分钟，调整后通知时间 {} 分钟",
                             minutes,
                             adjusted_notify_before
                         );
                     }
                 }
-                Err(e) => log::error!("解析任务「{}」的开始时间失败: {}", item.content, e),
+                Err(e) => log::error!("解析任务「{}」的开始时间失败：{}", item.content, e),
             }
 
             // 检查任务结束时间
@@ -189,7 +189,7 @@ impl NotificationManager {
                                 let minutes = duration.num_minutes();
 
                                 log::debug!(
-                                    "检查结束通知 - 任务「{}」: 总时长 {} 分钟, 距结束 {} 分钟",
+                                    "检查结束通知 - 任务「{}」: 总时长 {} 分钟，距结束 {} 分钟",
                                     item.content,
                                     total_duration,
                                     minutes
@@ -197,7 +197,7 @@ impl NotificationManager {
 
                                 if minutes <= config.notify_before && minutes > 0 {
                                     log::info!(
-                                        "触发结束通知: 任务「{}」距结束 {} 分钟 <= 提前通知时间 {} 分钟",
+                                        "触发结束通知：任务「{}」距结束 {} 分钟 <= 提前通知时间 {} 分钟",
                                         item.content,
                                         minutes,
                                         config.notify_before
@@ -223,7 +223,7 @@ impl NotificationManager {
                             }
                         }
                     }
-                    Err(e) => log::error!("解析任务「{}」的结束时间失败: {}", item.content, e),
+                    Err(e) => log::error!("解析任务「{}」的结束时间失败：{}", item.content, e),
                 }
             }
         }
@@ -245,7 +245,7 @@ impl NotificationManager {
             Ok(time) => time,
             Err(e) => {
                 log::error!(
-                    "解析工作开始时间失败: {}, 时间字符串: {}",
+                    "解析工作开始时间失败：{}, 时间字符串：{}",
                     e,
                     config.work_start_time
                 );
@@ -256,13 +256,13 @@ impl NotificationManager {
         let work_end = match NaiveTime::parse_from_str(work_end_str, "%H:%M") {
             Ok(time) => time,
             Err(e) => {
-                log::error!("解析工作结束时间失败: {}, 时间字符串: {}", e, work_end_str);
+                log::error!("解析工作结束时间失败：{}, 时间字符串：{}", e, work_end_str);
                 return false;
             }
         };
 
         log::debug!(
-            "当前时间: {}, 工作开始时间: {}, 工作结束时间: {}",
+            "当前时间：{}, 工作开始时间：{}, 工作结束时间：{}",
             current_time,
             work_start,
             work_end
@@ -277,9 +277,9 @@ impl NotificationManager {
     }
 
     /// 检查是否需要发送"没有任务"的提醒
-    /// 如果从现在到未来2小时内没有任务，返回 true
+    /// 如果从现在到未来 2 小时内没有任务，返回 true
     fn should_notify_no_tasks(now: &DateTime<Local>, data: &TimelineData) -> bool {
-        // 检查从现在到未来2小时内是否有任务
+        // 检查从现在到未来 2 小时内是否有任务
         let future = *now + chrono::Duration::hours(2);
 
         for item in &data.items {

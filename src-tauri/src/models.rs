@@ -32,7 +32,7 @@ pub struct TimelineItem {
 pub struct NotificationConfig {
     pub work_start_time: String, // "08:00"
     pub work_end_time: String,   // "18:00"
-    pub check_interval: u64,     // 检查间隔(分钟)
+    pub check_interval: u64,     // 检查间隔 (分钟)
     pub notify_before: i64,      // 提前多少分钟通知
 }
 
