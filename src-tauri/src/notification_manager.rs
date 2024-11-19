@@ -2,7 +2,7 @@ use chrono::{DateTime, Local, NaiveTime};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::time;
-
+use tauri_plugin_notification::NotificationExt;
 use crate::models::{Notification, NotificationConfig, NotificationType, TimelineData};
 
 /// 通知管理器结构体
@@ -304,5 +304,16 @@ impl NotificationManager {
         }
 
         true
+    }
+
+    // 添加新的发送通知方法
+    pub fn send_notification(app_handle: &tauri::AppHandle, title: &str, body: &str) -> Result<(), String> {
+        app_handle
+            .notification()
+            .builder()
+            .title(title)
+            .body(body)
+            .show()
+            .map_err(|e| format!("发送通知失败：{}", e))
     }
 }

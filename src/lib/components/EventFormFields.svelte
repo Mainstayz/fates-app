@@ -157,6 +157,21 @@
     </div>
 
     <div class="grid gap-2">
+        <Label for="tags">标签</Label>
+        <Input
+            id="tags"
+            bind:value={tags}
+            placeholder="输入标签，用逗号分隔"
+            class={errors.tags ? "border-destructive" : ""}
+        />
+        {#if errors.tags}
+            <span class="text-sm text-destructive">
+                {errors.tags}
+            </span>
+        {/if}
+    </div>
+
+    <div class="grid gap-2">
         <Label for="startTime">开始时间</Label>
         <div class="grid grid-cols-2 gap-2">
             <Input
@@ -208,20 +223,7 @@
         </span>
     {/if}
 
-    <div class="grid gap-2">
-        <Label for="tags">标签</Label>
-        <Input
-            id="tags"
-            bind:value={tags}
-            placeholder="输入标签，用逗号分隔"
-            class={errors.tags ? "border-destructive" : ""}
-        />
-        {#if errors.tags}
-            <span class="text-sm text-destructive">
-                {errors.tags}
-            </span>
-        {/if}
-    </div>
+
 
     <div class="grid gap-2">
         <Label for="color">颜色</Label>

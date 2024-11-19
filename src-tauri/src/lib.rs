@@ -16,12 +16,14 @@ const APP_NAME: &str = "Fates";
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
 async fn save_timeline_data(app_handle: tauri::AppHandle, data: TimelineData) -> Result<(), String> {
+
     let app_dir = get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
-
     let json_string =
         serde_json::to_string_pretty(&data).map_err(|e| format!("序列化数据失败：{}", e))?;
 
+    let item_count = data.items.len();
+    log::info!("保存时间线数据，共{}个项目", item_count);
     fs::write(file_path, json_string).map_err(|e| format!("写入文件失败：{}", e))?;
 
     Ok(())
@@ -120,9 +122,8 @@ pub fn run() {
                 notify_before: 15,
             };
 
-            let app_handle = app.handle();
-            let app_handle_clone = app_handle.clone();
-
+            let app_handle_clone = app.handle().clone();
+            let app_handle_clone_2 =  app.handle().clone();
             // 创建通知管理器
             let notification_manager = NotificationManager::new(
                 // 获取时间线数据的回调函数
@@ -137,7 +138,7 @@ pub fn run() {
                                 match serde_json::from_str(&content) {
                                     Ok(data) => data,
                                     Err(e) => {
-                                        log::error!("解析时间线数据失败: {}", e);
+                                        log::error!("解析时间线数据失败：{}", e);
                                         TimelineData {
                                             groups: Vec::new(),
                                             items: Vec::new(),
@@ -146,7 +147,7 @@ pub fn run() {
                                 }
                             }
                             Err(e) => {
-                                log::error!("读取时间线数据失败: {}", e);
+                                log::error!("读取时间线数据失败：{}", e);
                                 TimelineData {
                                     groups: Vec::new(),
                                     items: Vec::new(),
@@ -165,18 +166,17 @@ pub fn run() {
                     let title = notification.title.clone();
                     let body = notification.message.clone();
                     log::info!("发送通知 - title: {}, body: {}", title, body);
-                    // 使用 tauri 的通知插件发送系统通知
-                    // let _ = tauri_plugin_notification::send(
-                    //     &title,
-                    //     Some(&body),
-                    // );
+                    // 在这里克隆 app_handle
+                    if let Err(e) = NotificationManager::send_notification(&app_handle_clone_2, &title, &body) {
+                        log::error!("发送通知失败：{}", e);
+                    }
                 }
             );
 
             // 将通知管理器存储在应用状态中
             app.manage(Arc::new(notification_manager));
 
-            // 在spawn之前获取notification_manager的克隆
+            // 在 spawn 之前获取 notification_manager 的克隆
             let notification_manager = {
                 let state = app.state::<Arc<NotificationManager>>();
                 state.inner().clone()

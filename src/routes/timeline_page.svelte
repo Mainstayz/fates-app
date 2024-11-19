@@ -3,7 +3,6 @@
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import AddEventForm from "$lib/components/AddEventForm.svelte";
@@ -11,10 +10,7 @@
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
-
     let timelineComponent: Timeline;
-
-
 
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
@@ -22,16 +18,19 @@
     let editDialogOpen = $state(false);
     let alertClearAll = $state(false);
 
+    let deleteItem: TimelineItem | null = $state(null);
+    let alertDelete = $state(false);
+
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
-        console.log("handleAdd", item);
+        console.log("添加任务：", item);
         callback(item); // 确认添加
-        await saveTimelineData();
+        await saveTimelineData( );
     };
 
     // 处理移动事件
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
-        console.log("handleMove", item);
+        console.log("移动任务：", item);
         callback(item); // 确认移动
         await saveTimelineData();
     };
@@ -44,24 +43,17 @@
 
     // 处理更新事件
     const handleUpdate = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        console.log("handleUpdate", item);
+        console.log("更新任务：", item);
         editingItem = item;
         editDialogOpen = true;
+        callback(null);
     };
 
     // 处理删除事件
     const handleRemove = async (item: any, callback: (item: any | null) => void) => {
-        const confirmed = await confirm(`确定要删除事件 ${item.content}?`, {
-            title: "删除确认",
-            kind: "warning",
-        });
-
-        if (confirmed) {
-            callback(item);
-            await saveTimelineData(); // 删除后保存
-        } else {
-            callback(null);
-        }
+        deleteItem = item;
+        alertDelete = true;
+        callback(null);
     };
 
     export function getAllItems() {
@@ -258,9 +250,9 @@
                         <AlertDialog.Footer>
                             <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
                             <AlertDialog.Action
-                                onclick={() => {
+                                onclick={async () => {
                                     timelineComponent.clearAll();
-                                    saveTimelineData();
+                                    await saveTimelineData();
                                     alertClearAll = false;
                                 }}>Confirm</AlertDialog.Action
                             >
@@ -308,3 +300,27 @@
         {/if}
     </Dialog.Content>
 </Dialog.Root>
+
+{#if deleteItem}
+    <AlertDialog.Root bind:open={alertDelete}>
+        <AlertDialog.Content>
+        <AlertDialog.Header>
+            <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+            <AlertDialog.Description>
+                This action cannot be undone. This will permanently delete your event.
+            </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={async () => {
+                alertDelete = false;
+                if (deleteItem) {
+                    timelineComponent.removeItem(deleteItem.id);
+                    await saveTimelineData(); // 删除后保存
+                    deleteItem = null;
+                }
+            }}>Confirm</AlertDialog.Action>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+    </AlertDialog.Root>
+{/if}
