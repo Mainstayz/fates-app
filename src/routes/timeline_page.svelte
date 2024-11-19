@@ -1,6 +1,4 @@
 <script lang="ts">
-    import App from "./app.svelte";
-
     import Timeline from "$lib/Timeline.svelte";
     import type { TimelineGroup, TimelineItem } from "$lib/types";
     import { onMount } from "svelte";
@@ -8,25 +6,20 @@
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import { Card } from "$lib/components/ui/card";
-    import { Tabs, TabsList, TabsTrigger, TabsContent, Root } from "$lib/components/ui/tabs";
-    import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
-    import { resetMode, setMode, ModeWatcher } from "mode-watcher";
-    import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import AddEventForm from "$lib/components/AddEventForm.svelte";
     import * as Dialog from "$lib/components/ui/dialog/index";
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
-    import Statistics from "$lib/components/Statistics.svelte";
-    let timelineComponent: Timeline;
-    let statisticsComponent: Statistics;
+    import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
 
-    // 使用响应式声明存储时间线数据
+    let timelineComponent: Timeline;
+
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
     let editingItem: TimelineItem | null = $state(null);
     let editDialogOpen = $state(false);
     let alertClearAll = $state(false);
+
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         console.log("handleAdd", item);
@@ -137,45 +130,6 @@
         };
     });
 
-    // 模拟实时添加数据
-    onMount(() => {
-        // 3 秒后添加新组和事件
-        setTimeout(() => {
-            // 获取当前最大 ID
-            const existingGroups = timelineComponent.getAllGroups();
-            const existingItems = timelineComponent.getAllItems();
-            const maxGroupId = Math.max(0, ...existingGroups.map((g) => Number(g.id)));
-            const maxItemId = Math.max(0, ...existingItems.map((i) => Number(i.id)));
-
-            // 使用新的 ID 添加数据
-            const newGroupId = maxGroupId + 1;
-            const newItemId = maxItemId + 1;
-
-            // 添加新组
-            // timelineComponent.addGroup({
-            //     id: newGroupId,
-            //     content: "新组 C",
-            // });
-
-            // 添加新事件到新组
-            // timelineComponent.addItem({
-            //     id: newItemId,
-            //     content: "新事件",
-            //     start: new Date(),
-            //     end: new Date(new Date().getTime() + 1000 * 60 * 60),
-            //     group: newGroupId,
-            // });
-
-            // 5 秒后更新组名
-            // setTimeout(() => {
-            //     timelineComponent.updateGroup({
-            //         id: newGroupId,
-            //         content: "更新后的组 C",
-            //     });
-            // }, 2000);
-        }, 3000);
-    });
-
     // 导出所有数据的示例
     const handleExport = () => {
         const allItems = timelineComponent.getAllItems();
@@ -199,11 +153,6 @@
         a.click();
         URL.revokeObjectURL(url);
     };
-
-    // 添加一个变量来跟踪当前选中的标签页
-    let currentTab = $state("timeline");
-    // 应该持久化
-    // let isDarkMode = getMode() === 'dark';
 
     function handleEventSubmit(
         event: CustomEvent<{
@@ -260,41 +209,92 @@
         editingItem = null;
         editDialogOpen = false;
     }
-
-    // 修改 currentTab 的处理方式，添加 tab 变化的处理
-    function handleTabChange(value: string) {
-
-        currentTab = value;
-        if (value === 'statistics' && statisticsComponent) {
-            console.log("handleTabChange", value, items);
-            const currentItems = timelineComponent.getAllItems();
-            statisticsComponent.updateCharts(currentItems);
-        }
-    }
 </script>
 
-<main class="noSelect">
-    <App />
+<div class="p-4">
+    <div class="py-4">
+        <div class="flex gap-2 justify-between">
+            <div class="flex gap-2">
+                <Button
+                    variant="outline"
+                    onclick={() =>
+                        timelineComponent.setWindow(
+                            new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                            new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                        )}>Nearby 3 Days</Button
+                >
+                <Button
+                    variant="outline"
+                    onclick={() =>
+                        timelineComponent.setWindow(
+                            new Date(Date.now() - 3 * 60 * 60 * 1000),
+                            new Date(Date.now() + 3 * 60 * 60 * 1000)
+                        )}>Nearby 6 Hours</Button
+                >
+            </div>
+            <div class="flex gap-2">
+                <AddEventForm on:submit={handleEventSubmit} />
+                <AlertDialog.Root bind:open={alertClearAll}>
+                    <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
+                        <Trash2 />
+                    </AlertDialog.Trigger>
+                    <AlertDialog.Content>
+                        <AlertDialog.Header>
+                            <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                            <AlertDialog.Description>
+                                This action cannot be undone. This will permanently delete your all records.
+                            </AlertDialog.Description>
+                        </AlertDialog.Header>
+                        <AlertDialog.Footer>
+                            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                            <AlertDialog.Action
+                                onclick={() => {
+                                    timelineComponent.clearAll();
+                                    saveTimelineData();
+                                    alertClearAll = false;
+                                }}>Confirm</AlertDialog.Action
+                            >
+                        </AlertDialog.Footer>
+                    </AlertDialog.Content>
+                </AlertDialog.Root>
+            </div>
+        </div>
 
-</main>
+        <Timeline
+            bind:this={timelineComponent}
+            zoomMin={1000 * 60 * 5}
+            zoomMax={1000 * 60 * 60 * 24 * 3}
+            {items}
+            {groups}
+            onAdd={handleAdd}
+            onUpdate={handleUpdate}
+            onRemove={handleRemove}
+            onMove={handleMove}
+            onMoving={handleMoving}
+        />
+    </div>
+</div>
 
-<style>
-    /* 可以删除之前的样式，因为现在使用 Tailwind CSS */
-    /* :global(.container) {
-        -webkit-tap-highlight-color: transparent;
-    } */
-
-    .noSelect {
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        -khtml-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
-
-    .noSelect:focus {
-        outline: none !important;
-    }
-</style>
+<Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
+    <Dialog.Content class="sm:max-w-[425px]">
+        <Dialog.Header>
+            <Dialog.Title>编辑事件</Dialog.Title>
+            <Dialog.Description>修改事件的详细信息</Dialog.Description>
+        </Dialog.Header>
+        {#if editingItem}
+            <EventFormFields
+                title={editingItem.content}
+                tags={editingItem.tags?.join(", ")}
+                color={editingItem.className as "blue" | "green" | "red" | "yellow"}
+                startDateInput={formatDateForInput(new Date(editingItem.start))}
+                startTimeInput={formatTimeForInput(new Date(editingItem.start))}
+                endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
+                endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
+                onSubmit={(formData) => {
+                    if (!editingItem) return;
+                    handleEditSubmit(new CustomEvent("submit", { detail: formData }));
+                }}
+            />
+        {/if}
+    </Dialog.Content>
+</Dialog.Root>
