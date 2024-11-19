@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Timeline from "$lib/Timeline.svelte";
+    import Timeline from "$lib/components/Timeline.svelte";
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
