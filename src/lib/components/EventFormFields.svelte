@@ -15,13 +15,15 @@
         startTimeInput = $bindable(formatTimeForInput(new Date())),
         endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
         endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
-        onSubmit = $bindable((data: {
-            title: string;
-            tags: string[];
-            color: "blue" | "green" | "red" | "yellow";
-            startTime: Date;
-            endTime: Date;
-        }) => {})
+        onSubmit = $bindable(
+            (data: {
+                title: string;
+                tags: string[];
+                color: "blue" | "green" | "red" | "yellow";
+                startTime: Date;
+                endTime: Date;
+            }) => {}
+        ),
     } = $props<{
         title?: string;
         tags?: string;
@@ -45,7 +47,7 @@
         tags: undefined,
         startDate: undefined,
         endDate: undefined,
-        timeRange: undefined
+        timeRange: undefined,
     });
 
     const colors = [
@@ -59,7 +61,7 @@
         return colors.find((c) => c.value === value)?.label ?? "选择颜色";
     }
 
-    // 表单验证schema
+    // 表单验证 schema
     const formSchema = z.object({
         title: z.string().min(1, "标题不能为空"),
         tags: z.string(),
@@ -88,7 +90,7 @@
             tags: undefined,
             startDate: undefined,
             endDate: undefined,
-            timeRange: undefined
+            timeRange: undefined,
         };
         try {
             // 首先验证基本字段
@@ -131,7 +133,7 @@
                 tags: tags.split(",").map((tag: string) => tag.trim()),
                 color,
                 startTime: startDateTime,
-                endTime: endDateTime
+                endTime: endDateTime,
             });
         }
     }
@@ -139,18 +141,14 @@
 
 <form
     class="grid gap-4"
-    onsubmit={e => {
+    onsubmit={(e) => {
         e.preventDefault();
         handleSubmit();
     }}
 >
     <div class="grid gap-2">
         <Label for="title">标题</Label>
-        <Input
-            id="title"
-            bind:value={title}
-            placeholder="输入事件标题"
-        />
+        <Input id="title" bind:value={title} placeholder="输入事件标题" />
         {#if errors.title}
             <span class="text-sm text-destructive">
                 {errors.title}

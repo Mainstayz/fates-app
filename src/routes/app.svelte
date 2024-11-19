@@ -6,7 +6,7 @@
     import StatisticsPage from "./statistics_page.svelte";
     import { primaryRoutes } from "../config";
 
-    let navCollapsedSize = $state(6);
+    let navCollapsedSize = $state(5);
     let selectedRoute: string = $state("");
     let statisticsComponent: StatisticsPage | null = null;
     let timelineComponent: TimelinePage | null = null;
@@ -28,6 +28,10 @@
         // 更新选中的路由
         selectedRoute = route;
     }
+
+    function onSettingsClick() {
+        console.log("onSettingsClick");
+    }
 </script>
 
 <div class="w-full h-full">
@@ -39,7 +43,7 @@
         maxSize={navCollapsedSize}
         collapsible={true}
     >
-        <Nav routes={primaryRoutes} {onRouteSelect} />
+        <Nav routes={primaryRoutes} {onRouteSelect} {onSettingsClick} />
     </Resizable.Pane>
     <Resizable.Handle />
     <Resizable.Pane>
