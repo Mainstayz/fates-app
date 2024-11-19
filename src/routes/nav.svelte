@@ -41,7 +41,7 @@
                     <Tooltip.Trigger>
                         <Button
                             size="icon"
-                            variant={selectedRoute === route ? "default" : "ghost"}
+                            variant={selectedRoute === route ? "default" : "secondary"}
                             onclick={() => handleRouteClick(route)}
                         >
                             <route.icon />

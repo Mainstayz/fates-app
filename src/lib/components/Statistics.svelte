@@ -19,7 +19,7 @@
     let barChart: ApexCharts;
 
     // 时间范围状态和选项
-    let selectedRange: TimeRange = "all";
+    let selectedRange: TimeRange = $state("all");
     const timeRanges = [
         { value: "all", label: "所有时间" },
         { value: "year", label: "今年来" },
@@ -232,6 +232,13 @@
     function handleValueSelect(event: CustomEvent<TimeRange>) {
         selectedRange = event.detail;
     }
+
+    // 监听 selectedRange 变化
+    $effect(() => {
+        console.log("selectedRange changed:", selectedRange);
+        createCharts();
+    });
+
 </script>
 
 <div class="space-y-4">
