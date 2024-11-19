@@ -1,6 +1,6 @@
 <script lang="ts">
     import Timeline from "$lib/Timeline.svelte";
-    import type { TimelineGroup, TimelineItem } from "$lib/types";
+    import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { confirm, ask, message } from "@tauri-apps/plugin-dialog";
@@ -13,6 +13,8 @@
     import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
 
     let timelineComponent: Timeline;
+
+
 
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
@@ -61,6 +63,14 @@
             callback(null);
         }
     };
+
+    export function getAllItems() {
+        const timelineData: TimelineData = {
+            groups: timelineComponent.getAllGroups(),
+            items: timelineComponent.getAllItems(),
+        };
+        return timelineData;
+    }
 
     // 保存时间线数据
     async function saveTimelineData() {

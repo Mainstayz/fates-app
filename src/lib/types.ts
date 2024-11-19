@@ -12,3 +12,8 @@ export interface TimelineItem {
     tags?: string[];
     className?: string;
 }
+
+export interface TimelineData {
+    groups: TimelineGroup[];
+    items: TimelineItem[];
+}

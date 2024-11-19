@@ -8,7 +8,7 @@
     type TimeRange = "all" | "year" | "month" | "week";
 
     // Props
-    export let items: TimelineItem[] = [];
+    let { items }: { items: TimelineItem[] } = $props();
 
     // DOM 引用
     let pieChartElement: HTMLElement;
@@ -205,15 +205,6 @@
     });
 
     // 监听 items 和 selectedRange 变化
-    $: {
-        if (items) {
-            console.log("Items changed, re-rendering charts ...");
-            // 使用 setTimeout 确保 DOM 更新完成
-            setTimeout(() => {
-                createCharts();
-            }, 0);
-        }
-    }
 
     export function updateCharts(newItems: TimelineItem[]) {
         items = newItems;

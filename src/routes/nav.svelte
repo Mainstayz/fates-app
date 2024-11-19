@@ -2,29 +2,36 @@
     import type { Route } from "../config";
     import { Button } from "$lib/components/ui/button";
     import * as Tooltip from "$lib/components/ui/tooltip/index";
+
     export let routes: Route[];
-    let selectedVarian = "default";
-    let noSelectedVariant = "ghost";
+    export let onRouteSelect: (route: string) => void;
+
+    // 添加选中的路由状态，默认为第一个路由
+    let selectedRoute: Route | null = routes[0];
+
+    // 初始化时触发第一个路由的回调
+    onRouteSelect(routes[0].label);
+
+    // 处理按钮点击事件
+    function handleRouteClick(route: Route) {
+        if (selectedRoute?.label !== route.label) {
+            selectedRoute = route;
+            onRouteSelect(route.label);
+        }
+    }
 </script>
 
-<!--
-flex flex-col: 使用 flexbox 布局，子元素垂直排列
-gap-2: 子元素之间的间距为 2 个单位
-py-2: 上下内边距为 2 个单位
--->
 <div class="flex flex-col gap-2 py-4">
-    <!--
-    grid: 使用网格布局
-    gap-1: 网格元素之间的间距为 1 个单位
-    px-2: 左右内边距为 2 个单位
-    justify-center: 水平居中对齐
-    -->
     <nav class="grid gap-2 px-2 justify-center">
         {#each routes as route}
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={0}>
                     <Tooltip.Trigger>
-                        <Button size="icon">
+                        <Button
+                            size="icon"
+                            variant={selectedRoute === route ? "default" : "ghost"}
+                            onclick={() => handleRouteClick(route)}
+                        >
                             <route.icon />
                         </Button>
                     </Tooltip.Trigger>

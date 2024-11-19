@@ -12,7 +12,12 @@ export const primaryRoutes: Route[] = [
     {
         icon: Icons.ChartGantt,
         variant: "default",
-        label: "Dashboard",
+        label: "timeline",
+    },
+    {
+        icon: Icons.CharCombined,
+        variant: "default",
+        label: "statistics",
     },
 
     {
