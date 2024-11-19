@@ -28,6 +28,10 @@ npx sv add tailwindcss
 npx shadcn-svelte@next init
 npx shadcn-svelte@next add button
 
+# 重新生成组件库
+
+```bash
+npx shadcn-svelte@next add alert-dialog button calendar card dialog dropdown-menu form input label popover select separator tabs
 ```
 
 ### 系统托盘教程

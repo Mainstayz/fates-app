@@ -7,7 +7,7 @@
 		ref = $bindable(null),
 		class: className,
 		...restProps
-	}: WithoutChildrenOrChild<SelectPrimitive.ScrollUpButtonProps> = $props();
+	}: WithoutChildrenOrChild<SelectPrimitive.ScrollDownButtonProps> = $props();
 </script>
 
 <SelectPrimitive.ScrollUpButton
