@@ -30,8 +30,9 @@
     }
 </script>
 
-<Resizable.PaneGroup direction="horizontal" class="h-full items-stretch" {onLayoutChange}>
-    <Resizable.Pane
+<div class="w-full h-full">
+    <Resizable.PaneGroup direction="horizontal" class="h-full items-stretch" {onLayoutChange}>
+        <Resizable.Pane
         defaultSize={navCollapsedSize}
         collapsedSize={navCollapsedSize}
         minSize={navCollapsedSize}
@@ -49,4 +50,5 @@
             <StatisticsPage bind:this={statisticsComponent} items={timelineData?.items ?? []} />
         {/if}
     </Resizable.Pane>
-</Resizable.PaneGroup>
+    </Resizable.PaneGroup>
+</div>

@@ -2,7 +2,7 @@
     import App from "./app.svelte";
 </script>
 
-<main class="noSelect">
+<main class="noSelect w-full h-full">
     <App />
 
 </main>
