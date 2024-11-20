@@ -31,7 +31,7 @@ npx shadcn-svelte@next add button
 # 重新生成组件库
 
 ```bash
-npx shadcn-svelte@next add alert-dialog button calendar card dialog dropdown-menu form input label popover select separator tabs
+npx shadcn-svelte@next add alert-dialog button calendar card dialog dropdown-menu form input label popover resizable select separator tabs tooltip
 ```
 
 ### 系统托盘教程
