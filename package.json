@@ -29,7 +29,7 @@
     "@sveltejs/vite-plugin-svelte": "^4.0.1",
     "@tauri-apps/cli": "^2.1.0",
     "autoprefixer": "^10.4.20",
-    "bits-ui": "1.0.0-next.60",
+    "bits-ui": "1.0.0-next.63",
     "clsx": "^2.1.1",
     "formsnap": "2.0.0-next.1",
     "lucide-svelte": "^0.456.0",
