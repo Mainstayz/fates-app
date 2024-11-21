@@ -85,7 +85,8 @@
             series: durations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
             chart: {
                 type: "donut",
-                height: 350,
+                height: "100%", // 改为 100%
+                width: "100%", // 添加宽度 100%
                 animations: {
                     enabled: true,
                     easing: "easeinout",
@@ -101,7 +102,10 @@
                 {
                     breakpoint: 480,
                     options: {
-                        chart: { width: 300 },
+                        chart: {
+                            height: "100%", // 修改响应式配置
+                            width: "100%",
+                        },
                         legend: { position: "bottom" },
                     },
                 },
@@ -129,13 +133,13 @@
     function updateTagsDetailChart() {
         if (!selectedTag || !tagsBarChartElement) return;
 
-        const filteredItems = filterItemsByRange(items, selectedRange).filter(item =>
-            item.tags && item.tags.includes(selectedTag)
+        const filteredItems = filterItemsByRange(items, selectedRange).filter(
+            (item) => item.tags && item.tags.includes(selectedTag)
         );
 
-        const detailData = filteredItems.map(item => ({
+        const detailData = filteredItems.map((item) => ({
             content: item.content,
-            duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2)
+            duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2),
         }));
 
         // 销毁现有图表
@@ -145,33 +149,35 @@
         }
 
         const options = {
-            series: [{
-                name: "时长（小时）",
-                data: detailData.map(d => Number(d.duration))
-            }],
+            series: [
+                {
+                    name: "时长（小时）",
+                    data: detailData.map((d) => Number(d.duration)),
+                },
+            ],
             chart: {
-                type: 'bar',
-                height: '100%',
+                type: "bar",
+                height: "100%",
                 animations: {
                     enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
+                    easing: "easeinout",
+                    speed: 800,
+                },
             },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    borderRadius: 4
-                }
+                    borderRadius: 4,
+                },
             },
             title: {
                 text: `${selectedTag} 标签详情`,
-                align: 'center'
+                align: "center",
             },
             xaxis: {
-                categories: detailData.map(d => d.content)
+                categories: detailData.map((d) => d.content),
             },
-            theme: { palette: 'palette8' }
+            theme: { palette: "palette8" },
         };
 
         tagsBarChart = new ApexCharts(tagsBarChartElement, options);
@@ -190,7 +196,8 @@
             ],
             chart: {
                 type: "bar",
-                height: '100%',
+                height: "100%", // 改为 100%
+                width: "100%", // 添加宽度 100%
                 animations: {
                     enabled: true,
                     easing: "easeinout",
@@ -198,8 +205,8 @@
                     dynamicAnimation: { enabled: true, speed: 350 },
                 },
                 events: {
-                    dataPointSelection: handleBarChartClick
-                }
+                    dataPointSelection: handleBarChartClick,
+                },
             },
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
@@ -305,7 +312,6 @@
         console.log("selectedRange changed:", selectedRange);
         createCharts();
     });
-
 </script>
 
 <div class="flex flex-col h-full">
@@ -330,19 +336,19 @@
         <!-- 图表容器 -->
         <div class="flex-1 flex flex-col">
             <!-- 上部分图表 占 1/3 高度 -->
-            <div class="flex flex-row w-full flex-none h-1/3">
-                <div class="w-1/3 flex items-center justify-center  bg-yellow-300">
+            <div class="flex flex-row w-full flex-none h-2/4">
+                <div class="w-1/3 flex items-center justify-center">
                     <!-- 123 -->
                     <div bind:this={pieChartElement} class="w-full h-full"></div>
                 </div>
-                <div class="w-2/3 flex items-center justify-center bg-red-300">
+                <div class="w-2/3 flex items-center justify-center">
                     <!-- 456 -->
                     <div bind:this={barChartElement} class="w-full"></div>
                 </div>
             </div>
 
             <!-- 下部分标签详情图表 占 2/3 高度 -->
-            <div class="w-full flex-1 bg-blue-300">
+            <div class="w-full flex-1">
                 <div bind:this={tagsBarChartElement} class="w-full"></div>
             </div>
         </div>
