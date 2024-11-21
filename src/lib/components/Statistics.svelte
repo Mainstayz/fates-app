@@ -137,9 +137,20 @@
         if (!selectedTag || !tagsBarChartElement) return;
 
         const filteredItems = filterItemsByRange(items, selectedRange).filter(
-            (item) => item.tags && item.tags.includes(selectedTag)
+            (item) => {
+                if (selectedTag === "其他") {
+                    // 处理"其他"标签的情况：
+                    // 1. 没有标签的项目
+                    // 2. 标签数组为空的项目
+                    console.log("item.tags:", item.tags);
+                    // 需要判断 tags length 为 1，且 值为 "" 空字符串的场景
+                    return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
+                }
+                // 其他标签正常过滤
+                return item.tags && item.tags.includes(selectedTag);
+            }
         );
-
+        console.log("updateTagsDetailChart called with selectedTag:", selectedTag, "filteredItems:", filteredItems);
         const detailData = filteredItems.map((item) => ({
             content: item.content,
             duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2),
@@ -216,14 +227,26 @@
         tagsBarChart.render();
     }
 
-    // 修改 getBarChartOptions 函数，添加点击事件
+    // 修改 getBarChartOptions 函数，添加点击事件，右上
     function getBarChartOptions(tags: string[], durationHours: number[]) {
+        // 创建标签和时长的配对数组并排序
+        const sortedData = tags
+            .map((tag, index) => ({
+                tag,
+                duration: durationHours[index]
+            }))
+            .sort((a, b) => b.duration - a.duration);
+
+        // 从排序后的数据中分离出标签和时长
+        const sortedTags = sortedData.map(item => item.tag);
+        const sortedDurations = sortedData.map(item => item.duration);
+
         const options = {
             series: [
                 {
                     name: "时长（小时）",
-                    data: durationHours,
-                    color: "#3B82F6", // 设置为蓝色
+                    data: sortedDurations,  // 使用排序后的时长
+                    color: "#3B82F6",
                 },
             ],
             chart: {
@@ -246,7 +269,7 @@
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
             xaxis: {
-                categories: tags,
+                categories: sortedTags,  // 使用排序后的标签
                 labels: {
                     show: false,
                 },
