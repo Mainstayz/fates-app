@@ -139,25 +139,26 @@
         const filteredItems = filterItemsByRange(items, selectedRange).filter(
             (item) => {
                 if (selectedTag === "其他") {
-                    // 处理"其他"标签的情况：
-                    // 1. 没有标签的项目
-                    // 2. 标签数组为空的项目
                     console.log("item.tags:", item.tags);
-                    // 需要判断 tags length 为 1，且 值为 "" 空字符串的场景
                     return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
                 }
-                // 其他标签正常过滤
                 return item.tags && item.tags.includes(selectedTag);
             }
         );
+
         console.log("updateTagsDetailChart called with selectedTag:", selectedTag, "filteredItems:", filteredItems);
-        const detailData = filteredItems.map((item) => ({
+        let detailData = filteredItems.map((item) => ({
             content: item.content,
             duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2),
         }));
 
         // 添加排序逻辑
         detailData.sort((a, b) => Number(b.duration) - Number(a.duration));
+
+        // 限制只显示前 10 个数据
+        if (detailData.length > 10) {
+            detailData = detailData.slice(0, 10);
+        }
 
         // 销毁现有图表
         if (tagsBarChart) {
@@ -282,7 +283,7 @@
             },
             // yaxis: { title: { text: '小时' } },
             title: {
-                //  text: "标签时长分布（小时）",
+                //  text: "标签时长��布（小时）",
                 align: "center",
             },
             grid: {
