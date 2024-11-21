@@ -13,10 +13,12 @@
     // DOM 引用
     let pieChartElement: HTMLElement;
     let barChartElement: HTMLElement;
+    let tagsBarChartElement: HTMLElement;
 
     // Chart 实例
     let pieChart: ApexCharts;
     let barChart: ApexCharts;
+    let tagsBarChart: ApexCharts;
 
     // 时间范围状态和选项
     let selectedRange: TimeRange = $state("all");
@@ -26,6 +28,9 @@
         { value: "month", label: "最近一个月" },
         { value: "week", label: "最近一周" },
     ] as const;
+
+    // 在 script 标签内添加新的变量和函数
+    let selectedTag: string | null = null;
 
     // 根据选择的时间范围过滤数据
     function filterItemsByRange(items: TimelineItem[], range: string): TimelineItem[] {
@@ -105,47 +110,105 @@
         };
     }
 
-    function getBarChartOptions(tags: string[], durationHours: number[]) {
-        console.log("getBarChartOptions", tags, durationHours);
+    // 添加处理柱状图点击事件的函数
+    function handleBarChartClick(event: any, chartContext: any, config: any) {
+        const tagIndex = config.dataPointIndex;
+        if (tagIndex !== -1) {
+            const tagStats = calculateTagStats(items);
+            const tags = Object.keys(tagStats);
+            // 获取排序后的标签
+            const sortedTags = Object.entries(tagStats)
+                .sort(([, a], [, b]) => b - a)
+                .map(([tag]) => tag);
+            selectedTag = sortedTags[tagIndex];
+            updateTagsDetailChart();
+        }
+    }
 
-        // 创建包含标签和时长的对象数组，以便排序
-        const combined = tags.map((tag, index) => ({
-            tag,
-            duration: durationHours[index],
+    // 添加更新标签详情图表的函数
+    function updateTagsDetailChart() {
+        if (!selectedTag || !tagsBarChartElement) return;
+
+        const filteredItems = filterItemsByRange(items, selectedRange).filter(item =>
+            item.tags && item.tags.includes(selectedTag)
+        );
+
+        const detailData = filteredItems.map(item => ({
+            content: item.content,
+            duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2)
         }));
 
-        // 按时长降序排序
-        combined.sort((a, b) => b.duration - a.duration);
+        // 销毁现有图表
+        if (tagsBarChart) {
+            tagsBarChart.destroy();
+            tagsBarChart = null;
+        }
 
-        // 分离排序后的标签和时长
-        const sortedTags = combined.map((item) => item.tag);
-        const sortedHours = combined.map((item) => item.duration);
+        const options = {
+            series: [{
+                name: "时长（小时）",
+                data: detailData.map(d => Number(d.duration))
+            }],
+            chart: {
+                type: 'bar',
+                height: '100%',
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    borderRadius: 4
+                }
+            },
+            title: {
+                text: `${selectedTag} 标签详情`,
+                align: 'center'
+            },
+            xaxis: {
+                categories: detailData.map(d => d.content)
+            },
+            theme: { palette: 'palette8' }
+        };
 
-        return {
+        tagsBarChart = new ApexCharts(tagsBarChartElement, options);
+        tagsBarChart.render();
+    }
+
+    // 修改 getBarChartOptions 函数，添加点击事件
+    function getBarChartOptions(tags: string[], durationHours: number[]) {
+        const options = {
             series: [
                 {
                     name: "时长（小时）",
-                    data: sortedHours,
+                    data: durationHours,
                     color: "#3B82F6", // 设置为蓝色
                 },
             ],
             chart: {
                 type: "bar",
-                height: 350,
+                height: '100%',
                 animations: {
                     enabled: true,
                     easing: "easeinout",
                     speed: 800,
                     dynamicAnimation: { enabled: true, speed: 350 },
                 },
+                events: {
+                    dataPointSelection: handleBarChartClick
+                }
             },
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
-            xaxis: { categories: sortedTags },
+            xaxis: { categories: tags },
             // yaxis: { title: { text: '小时' } },
             title: { text: "标签时长分布（小时）", align: "center" },
             theme: { palette: "palette8" },
         };
+        return options;
     }
 
     function createCharts() {
@@ -201,6 +264,10 @@
         if (barChart) {
             barChart.destroy();
             barChart = null;
+        }
+        if (tagsBarChart) {
+            tagsBarChart.destroy();
+            tagsBarChart = null;
         }
     });
 
@@ -261,12 +328,20 @@
             </Select.Root>
         </div>
         <!-- 图表容器 -->
-        <div class="flex flex-col md:flex-row gap-4 w-full h-1/3">
-            <div class="w-full md:w-1/3">
-                <div bind:this={pieChartElement}></div>
+        <div class="flex flex-col w-full h-screen">
+            <!-- 上部分图表 占 1/3 高度 -->
+            <div class="flex flex-row w-full h-1/3">
+                <div class="w-1/2 flex items-center justify-center">
+                    <div bind:this={pieChartElement} class="w-full h-full"></div>
+                </div>
+                <div class="w-1/2 flex items-center justify-center">
+                    <div bind:this={barChartElement} class="w-full h-full"></div>
+                </div>
             </div>
-            <div class="w-full md:w-2/3">
-                <div bind:this={barChartElement}></div>
+
+            <!-- 下部分标签详情图表 占 2/3 高度 -->
+            <div class="w-full h-2/3">
+                <div bind:this={tagsBarChartElement} class="w-full h-full"></div>
             </div>
         </div>
     {:else}
