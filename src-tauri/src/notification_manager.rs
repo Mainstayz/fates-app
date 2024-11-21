@@ -166,11 +166,11 @@ impl NotificationManager {
                             });
                         }
                     } else {
-                        log::debug!(
-                            "不满足开始通知条件：距开始 {} 分钟，调整后通知时间 {} 分钟",
-                            minutes,
-                            adjusted_notify_before
-                        );
+                        // log::debug!(
+                        //     "不满足开始通知条件：距开始 {} 分钟，调整后通知时间 {} 分钟",
+                        //     minutes,
+                        //     adjusted_notify_before
+                        // );
                     }
                 }
                 Err(e) => log::error!("解析任务「{}」的开始时间失败：{}", item.content, e),
