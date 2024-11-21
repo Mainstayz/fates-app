@@ -79,7 +79,7 @@
         return tagDurations;
     }
 
-    // 将图表配置抽离为单独的函数
+    // 将图表配置抽离为单独的函数，左上
     function getPieChartOptions(tags: string[], durations: number[], totalDuration: number) {
         return {
             series: durations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
@@ -96,7 +96,10 @@
                 },
             },
             labels: tags,
-            title: { text: "标签占比分布 (%)", align: "center" },
+            title: {
+                // text: "标签占比分布 (%)",
+                align: "center",
+            },
             legend: { position: "bottom" },
             responsive: [
                 {
@@ -129,7 +132,7 @@
         }
     }
 
-    // 添加更新标签详情图表的函数
+    // 添加更新标签详情图表的函数，下面图表
     function updateTagsDetailChart() {
         if (!selectedTag || !tagsBarChartElement) return;
 
@@ -141,6 +144,9 @@
             content: item.content,
             duration: ((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(2),
         }));
+
+        // 添加排序逻辑
+        detailData.sort((a, b) => Number(b.duration) - Number(a.duration));
 
         // 销毁现有图表
         if (tagsBarChart) {
@@ -163,6 +169,9 @@
                     easing: "easeinout",
                     speed: 800,
                 },
+                toolbar: {
+                    show: false,
+                },
             },
             plotOptions: {
                 bar: {
@@ -171,12 +180,35 @@
                 },
             },
             title: {
-                text: `${selectedTag} 标签详情`,
+                // text: `${selectedTag} 标签详情`,
                 align: "center",
             },
             xaxis: {
                 categories: detailData.map((d) => d.content),
+                labels: {
+                    show: false,
+                },
+                axisBorder: {
+                    show: false,
+                },
+                axisTicks: {
+                    show: false,
+                },
             },
+            grid: {
+                show: false,
+                xaxis: {
+                    lines: {
+                        show: false,
+                    },
+                },
+                yaxis: {
+                    lines: {
+                        show: false,
+                    },
+                },
+            },
+
             theme: { palette: "palette8" },
         };
 
@@ -207,12 +239,43 @@
                 events: {
                     dataPointSelection: handleBarChartClick,
                 },
+                toolbar: {
+                    show: false,
+                },
             },
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
-            xaxis: { categories: tags },
+            xaxis: {
+                categories: tags,
+                labels: {
+                    show: false,
+                },
+                axisBorder: {
+                    show: false,
+                },
+                axisTicks: {
+                    show: false,
+                },
+            },
             // yaxis: { title: { text: '小时' } },
-            title: { text: "标签时长分布（小时）", align: "center" },
+            title: {
+                //  text: "标签时长分布（小时）",
+                align: "center",
+            },
+            grid: {
+                show: false,
+                xaxis: {
+                    lines: {
+                        show: false,
+                    },
+                },
+                yaxis: {
+                    lines: {
+                        show: false,
+                    },
+                },
+            },
+
             theme: { palette: "palette8" },
         };
         return options;
@@ -231,6 +294,18 @@
         const durations = Object.values(tagStats);
         const totalDuration = durations.reduce((a, b) => a + b, 0);
         const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));
+
+        // 添加：如果还没有选中的标签，自动选择占比最大的标签
+        if (!selectedTag && tags.length > 0) {
+            const sortedTags = Object.entries(tagStats)
+                .sort(([, a], [, b]) => b - a)
+                .map(([tag]) => tag);
+            selectedTag = sortedTags[0];
+            // 确保在下一个事件循环中更新标签详情图表
+            setTimeout(() => {
+                updateTagsDetailChart();
+            }, 0);
+        }
 
         // 销毁现有图表
         if (pieChart) {
