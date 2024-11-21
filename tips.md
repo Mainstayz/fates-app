@@ -19,3 +19,6 @@ https://uicolorful.com/template/saas
 使用 Export：
 
 https://uicolors.app/create
+
+* [ ] 设置页面
+* [ ] 通知

@@ -167,7 +167,6 @@
                     donut: {
                         size: '70%',
                     },
-                    expandOnClick: false,
                 }
             },
             labels: sortedTags,  // 使用排序后的标签
@@ -272,7 +271,7 @@
                 },
             },
             title: {
-                // text: `${selectedTag} 标签详情`,
+                text: `${selectedTag} 详情`,
                 align: "center",
             },
             xaxis: {
@@ -513,9 +512,10 @@
             </Select.Root>
         </div>
         <!-- 图表容器 -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col pt-4 gap-4">
             <!-- 上部分图表 占 1/3 高度 -->
-            <div class="flex flex-row w-full flex-none h-2/4">
+             <!-- 添加边框 -->
+            <div class="flex flex-row w-full flex-none h-2/4 border rounded-lg">
                 <div class="w-1/3 flex items-center justify-center">
                     <!-- 123 -->
                     <div bind:this={pieChartElement} class="w-full h-full"></div>
@@ -527,7 +527,7 @@
             </div>
 
             <!-- 下部分标签详情图表 占 2/3 高度 -->
-            <div class="w-full flex-1">
+            <div class="w-full flex-1 border rounded-lg">
                 <div bind:this={tagsBarChartElement} class="w-full"></div>
             </div>
         </div>

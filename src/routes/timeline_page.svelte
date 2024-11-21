@@ -25,7 +25,7 @@
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         console.log("添加任务：", item);
         callback(item); // 确认添加
-        await saveTimelineData( );
+        await saveTimelineData();
     };
 
     // 处理移动事件
@@ -213,118 +213,122 @@
     }
 </script>
 
-<div class="p-6">
-    <div>
-        <h2 class="text-2xl font-bold tracking-tight">Welcome back!</h2>
-        <p class="text-muted-foreground">Here's a list of your tasks for this month!</p>
-    </div>
-    <div class="py-4">
-        <div class="flex gap-2 justify-between">
-            <div class="flex gap-2">
-                <Button
-                    variant="outline"
-                    onclick={() =>
-                        timelineComponent.setWindow(
-                            new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-                            new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
-                        )}>Nearby 3 Days</Button
-                >
-                <Button
-                    variant="outline"
-                    onclick={() =>
-                        timelineComponent.setWindow(
-                            new Date(Date.now() - 3 * 60 * 60 * 1000),
-                            new Date(Date.now() + 3 * 60 * 60 * 1000)
-                        )}>Nearby 6 Hours</Button
-                >
-            </div>
-            <div class="flex gap-2">
-                <AddEventForm on:submit={handleEventSubmit} />
-                <AlertDialog.Root bind:open={alertClearAll}>
-                    <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-                        <Trash2 />
-                    </AlertDialog.Trigger>
-                    <AlertDialog.Content>
-                        <AlertDialog.Header>
-                            <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                            <AlertDialog.Description>
-                                This action cannot be undone. This will permanently delete your all records.
-                            </AlertDialog.Description>
-                        </AlertDialog.Header>
-                        <AlertDialog.Footer>
-                            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                            <AlertDialog.Action
-                                onclick={async () => {
-                                    timelineComponent.clearAll();
-                                    await saveTimelineData();
-                                    alertClearAll = false;
-                                }}>Confirm</AlertDialog.Action
-                            >
-                        </AlertDialog.Footer>
-                    </AlertDialog.Content>
-                </AlertDialog.Root>
-            </div>
+<div class="flex flex-col h-full">
+    <div class="p-6">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight">Welcome back!</h2>
+            <p class="text-muted-foreground">Here's a list of your tasks for this month!</p>
         </div>
+        <div class="py-6">
+            <div class="flex gap-2 justify-between">
+                <div class="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
+                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
+                            )}>Nearby 3 Days</Button
+                    >
+                    <Button
+                        variant="outline"
+                        onclick={() =>
+                            timelineComponent.setWindow(
+                                new Date(Date.now() - 3 * 60 * 60 * 1000),
+                                new Date(Date.now() + 3 * 60 * 60 * 1000)
+                            )}>Nearby 6 Hours</Button
+                    >
+                </div>
+                <div class="flex gap-2">
+                    <AddEventForm on:submit={handleEventSubmit} />
+                    <AlertDialog.Root bind:open={alertClearAll}>
+                        <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
+                            <Trash2 />
+                        </AlertDialog.Trigger>
+                        <AlertDialog.Content>
+                            <AlertDialog.Header>
+                                <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                                <AlertDialog.Description>
+                                    This action cannot be undone. This will permanently delete your all records.
+                                </AlertDialog.Description>
+                            </AlertDialog.Header>
+                            <AlertDialog.Footer>
+                                <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                                <AlertDialog.Action
+                                    onclick={async () => {
+                                        timelineComponent.clearAll();
+                                        await saveTimelineData();
+                                        alertClearAll = false;
+                                    }}>Confirm</AlertDialog.Action
+                                >
+                            </AlertDialog.Footer>
+                        </AlertDialog.Content>
+                    </AlertDialog.Root>
+                </div>
+            </div>
 
-        <Timeline
-            bind:this={timelineComponent}
-            zoomMin={1000 * 60 * 5}
-            zoomMax={1000 * 60 * 60 * 24 * 3}
-            {items}
-            {groups}
-            onAdd={handleAdd}
-            onUpdate={handleUpdate}
-            onRemove={handleRemove}
-            onMove={handleMove}
-            onMoving={handleMoving}
-        />
-    </div>
-</div>
-
-<Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
-    <Dialog.Content class="sm:max-w-[425px]">
-        <Dialog.Header>
-            <Dialog.Title>编辑事件</Dialog.Title>
-            <Dialog.Description>修改事件的详细信息</Dialog.Description>
-        </Dialog.Header>
-        {#if editingItem}
-            <EventFormFields
-                title={editingItem.content}
-                tags={editingItem.tags?.join(", ")}
-                color={editingItem.className as "blue" | "green" | "red" | "yellow"}
-                startDateInput={formatDateForInput(new Date(editingItem.start))}
-                startTimeInput={formatTimeForInput(new Date(editingItem.start))}
-                endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
-                endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
-                onSubmit={(formData) => {
-                    if (!editingItem) return;
-                    handleEditSubmit(new CustomEvent("submit", { detail: formData }));
-                }}
+            <Timeline
+                bind:this={timelineComponent}
+                zoomMin={1000 * 60 * 5}
+                zoomMax={1000 * 60 * 60 * 24 * 3}
+                {items}
+                {groups}
+                onAdd={handleAdd}
+                onUpdate={handleUpdate}
+                onRemove={handleRemove}
+                onMove={handleMove}
+                onMoving={handleMoving}
             />
-        {/if}
-    </Dialog.Content>
-</Dialog.Root>
+        </div>
+    </div>
 
-{#if deleteItem}
-    <AlertDialog.Root bind:open={alertDelete}>
-        <AlertDialog.Content>
-        <AlertDialog.Header>
-            <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-            <AlertDialog.Description>
-                This action cannot be undone. This will permanently delete your event.
-            </AlertDialog.Description>
-        </AlertDialog.Header>
-        <AlertDialog.Footer>
-            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-            <AlertDialog.Action onclick={async () => {
-                alertDelete = false;
-                if (deleteItem) {
-                    timelineComponent.removeItem(deleteItem.id);
-                    await saveTimelineData(); // 删除后保存
-                    deleteItem = null;
-                }
-            }}>Confirm</AlertDialog.Action>
-        </AlertDialog.Footer>
-    </AlertDialog.Content>
-    </AlertDialog.Root>
-{/if}
+    <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog.Content class="sm:max-w-[425px]">
+            <Dialog.Header>
+                <Dialog.Title>编辑事件</Dialog.Title>
+                <Dialog.Description>修改事件的详细信息</Dialog.Description>
+            </Dialog.Header>
+            {#if editingItem}
+                <EventFormFields
+                    title={editingItem.content}
+                    tags={editingItem.tags?.join(", ")}
+                    color={editingItem.className as "blue" | "green" | "red" | "yellow"}
+                    startDateInput={formatDateForInput(new Date(editingItem.start))}
+                    startTimeInput={formatTimeForInput(new Date(editingItem.start))}
+                    endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
+                    endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
+                    onSubmit={(formData) => {
+                        if (!editingItem) return;
+                        handleEditSubmit(new CustomEvent("submit", { detail: formData }));
+                    }}
+                />
+            {/if}
+        </Dialog.Content>
+    </Dialog.Root>
+
+    {#if deleteItem}
+        <AlertDialog.Root bind:open={alertDelete}>
+            <AlertDialog.Content>
+                <AlertDialog.Header>
+                    <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                    <AlertDialog.Description>
+                        This action cannot be undone. This will permanently delete your event.
+                    </AlertDialog.Description>
+                </AlertDialog.Header>
+                <AlertDialog.Footer>
+                    <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                    <AlertDialog.Action
+                        onclick={async () => {
+                            alertDelete = false;
+                            if (deleteItem) {
+                                timelineComponent.removeItem(deleteItem.id);
+                                await saveTimelineData(); // 删除后保存
+                                deleteItem = null;
+                            }
+                        }}>Confirm</AlertDialog.Action
+                    >
+                </AlertDialog.Footer>
+            </AlertDialog.Content>
+        </AlertDialog.Root>
+    {/if}
+</div>
