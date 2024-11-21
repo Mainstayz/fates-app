@@ -148,7 +148,7 @@
 >
     <div class="grid gap-2">
         <Label for="title">标题</Label>
-        <Input id="title" bind:value={title} placeholder="输入事件标题" />
+        <Input id="title" autocomplete="off" bind:value={title} placeholder="输入事件标题" />
         {#if errors.title}
             <span class="text-sm text-destructive">
                 {errors.title}
@@ -160,6 +160,7 @@
         <Label for="tags">标签</Label>
         <Input
             id="tags"
+            autocomplete="off"
             bind:value={tags}
             placeholder="输入标签，用逗号分隔"
             class={errors.tags ? "border-destructive" : ""}

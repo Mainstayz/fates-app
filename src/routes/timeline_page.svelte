@@ -213,7 +213,11 @@
     }
 </script>
 
-<div class="p-4">
+<div class="p-6">
+    <div>
+        <h2 class="text-2xl font-bold tracking-tight">Welcome back!</h2>
+        <p class="text-muted-foreground">Here's a list of your tasks for this month!</p>
+    </div>
     <div class="py-4">
         <div class="flex gap-2 justify-between">
             <div class="flex gap-2">

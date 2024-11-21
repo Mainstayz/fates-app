@@ -80,7 +80,6 @@
             series: durations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
             chart: {
                 type: "donut",
-                height: 350,
                 animations: {
                     enabled: true,
                     easing: "easeinout",
@@ -131,7 +130,6 @@
             ],
             chart: {
                 type: "bar",
-                height: 350,
                 animations: {
                     enabled: true,
                     easing: "easeinout",
@@ -241,7 +239,7 @@
 
 </script>
 
-<div class="space-y-4">
+<div class="flex flex-col h-full w-full space-y-4">
     <!-- 图表容器 -->
     {#if items && items.length > 0}
         <div class="w-[200px]">
@@ -260,19 +258,19 @@
                 </Select.Content>
             </Select.Root>
         </div>
-        <!-- 图表容器 -->
-        <div class="flex flex-col md:flex-row gap-4 w-full">
-            <div class="w-full md:w-1/2">
-                <div bind:this={pieChartElement}></div>
+        <!-- 修改图表容器样式 -->
+        <div class="flex flex-col md:flex-row gap-4 w-full flex-1">
+            <div class="w-full md:w-1/3 h-full">
+                <div bind:this={pieChartElement} class="h-full w-full"></div>
             </div>
-            <div class="w-full md:w-1/2">
-                <div bind:this={barChartElement}></div>
+            <div class="w-full md:w-2/3 h-full">
+                <div bind:this={barChartElement} class="h-full w-full"></div>
             </div>
         </div>
     {:else}
         <h2 class="text-2xl font-semibold mb-4">统计信息</h2>
-        <!-- 空状态显示 -->
-        <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
+        <!-- 空状态显示也撑满容器 -->
+        <div class="flex flex-col items-center justify-center h-full w-full p-8 text-gray-500 bg-gray-50 rounded-lg">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-16 h-16 mb-4"
