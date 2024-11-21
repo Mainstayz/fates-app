@@ -104,14 +104,53 @@
         return tagDurations;
     }
 
-    // 将图表配置抽离为单独的函数，左上
+    // 修改 handlePieChartClick 函数
+    function handlePieChartClick(event: any, chartContext: any, config: any) {
+        const tagIndex = config.dataPointIndex;
+        if (tagIndex !== -1) {
+            const tagStats = calculateTagStats(items);
+
+            // 对标签按时长排序
+            const sortedEntries = Object.entries(tagStats)
+                .sort(([, a], [, b]) => b - a);
+
+            // 如果标签数量超过 10 个，只取前 9 个加"其他"
+            const finalEntries = sortedEntries.length > 10
+                ? [...sortedEntries.slice(0, 9), ['其他', sortedEntries.slice(9).reduce((sum, [, val]) => sum + val, 0)]]
+                : sortedEntries;
+
+            const clickedTag = finalEntries[tagIndex][0];
+
+            // 如果点击的是"其他"类别，则不更新选中标签
+            if (clickedTag === otherTag) {
+                return;
+            }
+
+            selectedTag = clickedTag;
+            updateTagsDetailChart();
+        }
+    }
+
+    // 修改 getPieChartOptions 函数，确保数据排序
     function getPieChartOptions(tags: string[], durations: number[], totalDuration: number) {
+        // 创建标签和时长的配对数组并排序
+        const sortedData = tags
+            .map((tag, index) => ({
+                tag,
+                duration: durations[index]
+            }))
+            .sort((a, b) => b.duration - a.duration);
+
+        // 从排序后的数据中分离出标签和时长
+        const sortedTags = sortedData.map(item => item.tag);
+        const sortedDurations = sortedData.map(item => item.duration);
+
         return {
-            series: durations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
+            series: sortedDurations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
             chart: {
                 type: "donut",
-                height: "100%", // 改为 100%
-                width: "100%", // 添加宽度 100%
+                height: "100%",
+                width: "100%",
                 animations: {
                     enabled: true,
                     easing: "easeinout",
@@ -120,12 +159,19 @@
                     dynamicAnimation: { enabled: true, speed: 350 },
                 },
                 events: {
-                    dataPointSelection: handleBarChartClick,
+                    dataPointSelection: handlePieChartClick,
                 },
             },
-            labels: tags,
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%',
+                    },
+                    expandOnClick: false,
+                }
+            },
+            labels: sortedTags,  // 使用排序后的标签
             title: {
-                // text: "标签占比分布 (%)",
                 align: "center",
             },
             legend: { position: "bottom" },
@@ -134,7 +180,7 @@
                     breakpoint: 480,
                     options: {
                         chart: {
-                            height: "100%", // 修改响应式配置
+                            height: "100%",
                             width: "100%",
                         },
                         legend: { position: "bottom" },
