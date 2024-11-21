@@ -51,11 +51,11 @@ impl NotificationManager {
                     continue;
                 }
 
-                log::debug!("当前时间 {} 在工作时间内", now);
+                // log::debug!("当前时间 {} 在工作时间内", now);
                 let data = get_timeline(); // 使用回调获取最新数据
 
                 // Check for no tasks
-                log::debug!("开始检查没有任务的情况...");
+                // log::debug!("开始检查没有任务的情况...");
                 if Self::should_notify_no_tasks(&now, &data) {
                     log::info!("未找到计划任务，正在发送通知");
                     callback(Notification {
@@ -69,7 +69,7 @@ impl NotificationManager {
                 }
 
                 // Check upcoming tasks
-                log::debug!("开始检查即将到来、结束的任务情况...");
+                // log::debug!("开始检查即将到来、结束的任务情况...");
                 Self::check_upcoming_tasks(&now, &data, &config, &callback);
             }
         });
@@ -82,55 +82,54 @@ impl NotificationManager {
         config: &NotificationConfig,
         callback: &Arc<dyn Fn(Notification) + Send + Sync>,
     ) {
-        log::debug!("开始检查任务列表，共 {} 个任务", data.items.len());
-        log::debug!("当前配置的提前通知时间：{} 分钟", config.notify_before);
+        // log::debug!("开始检查任务列表，共 {} 个任务", data.items.len());
+        // log::debug!("当前配置的提前通知时间：{} 分钟", config.notify_before);
 
         for item in &data.items {
-            log::debug!("正在检查任务：{}", item.content);
+            // log::debug!("正在检查任务：{}", item.content);
 
             // 检查任务开始时间
             match DateTime::parse_from_rfc3339(&item.start) {
                 Ok(start_time) => {
                     let duration = start_time.signed_duration_since(*now);
                     let minutes = duration.num_minutes();
-
                     // 获取任务的总时长
                     let total_duration_minutes = if let Some(end_str) = &item.end {
                         if let Ok(end_time) = DateTime::parse_from_rfc3339(end_str) {
                             let duration = end_time.signed_duration_since(start_time).num_minutes();
-                            log::debug!(
-                                "任务「{}」的总时长：{} 分钟",
-                                item.content,
-                                duration
-                            );
+                            // log::debug!(
+                            //     "任务「{}」的总时长：{} 分钟",
+                            //     item.content,
+                            //     duration
+                            // );
                             duration
                         } else {
-                            log::warn!("任务「{}」的结束时间解析失败，使用默认最大值", item.content);
+                            // log::warn!("任务「{}」的结束时间解析失败，使用默认最大值", item.content);
                             i64::MAX
                         }
                     } else {
-                        log::debug!("任务「{}」没有结束时间", item.content);
+                        // log::debug!("任务「{}」没有结束时间", item.content);
                         i64::MAX
                     };
 
                     // 调整通知时间
                     let adjusted_notify_before = if total_duration_minutes <= config.notify_before {
-                        log::info!(
-                            "任务「{}」的时长（{}分钟）小于提前通知时间（{}分钟），调整通知时间",
-                            item.content,
-                            total_duration_minutes,
-                            config.notify_before
-                        );
+                        // log::info!(
+                        //     "任务「{}」的时长（{}分钟）小于提前通知时间（{}分钟），调整通知时间",
+                        //     item.content,
+                        //     total_duration_minutes,
+                        //     config.notify_before
+                        // );
                         total_duration_minutes
                     } else {
                         config.notify_before
                     };
 
-                    log::debug!(
-                        "任务「{}」的调整后通知时间：{} 分钟",
-                        item.content,
-                        adjusted_notify_before
-                    );
+                    // log::debug!(
+                    //     "任务「{}」的调整后通知时间：{} 分钟",
+                    //     item.content,
+                    //     adjusted_notify_before
+                    // );
 
                     if minutes <= adjusted_notify_before && minutes > 0 {
                         log::info!(
@@ -188,12 +187,12 @@ impl NotificationManager {
                                 let duration = end_time.signed_duration_since(*now);
                                 let minutes = duration.num_minutes();
 
-                                log::debug!(
-                                    "检查结束通知 - 任务「{}」: 总时长 {} 分钟，距结束 {} 分钟",
-                                    item.content,
-                                    total_duration,
-                                    minutes
-                                );
+                                // log::debug!(
+                                //     "检查结束通知 - 任务「{}」: 总时长 {} 分钟，距结束 {} 分钟",
+                                //     item.content,
+                                //     total_duration,
+                                //     minutes
+                                // );
 
                                 if minutes <= config.notify_before && minutes > 0 {
                                     log::info!(
@@ -214,12 +213,12 @@ impl NotificationManager {
                                     });
                                 }
                             } else {
-                                log::debug!(
-                                    "跳过结束通知检查 - 任务「{}」: 总时长 {} 分钟 <= 提前通知时间 {} 分钟",
-                                    item.content,
-                                    total_duration,
-                                    config.notify_before
-                                );
+                                // log::debug!(
+                                //     "跳过结束通知检查 - 任务「{}」: 总时长 {} 分钟 <= 提前通知时间 {} 分钟",
+                                //     item.content,
+                                //     total_duration,
+                                //     config.notify_before
+                                // );
                             }
                         }
                     }
@@ -261,12 +260,12 @@ impl NotificationManager {
             }
         };
 
-        log::debug!(
-            "当前时间：{}, 工作开始时间：{}, 工作结束时间：{}",
-            current_time,
-            work_start,
-            work_end
-        );
+        // log::debug!(
+        //     "当前时间：{}, 工作开始时间：{}, 工作结束时间：{}",
+        //     current_time,
+        //     work_start,
+        //     work_end
+        // );
 
         // 如果结束时间是 24:00，且当前时间大于等于工作开始时间，就认为在工作时间内
         if config.work_end_time == "24:00" {
