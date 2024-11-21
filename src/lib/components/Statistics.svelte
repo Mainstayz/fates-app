@@ -308,7 +308,7 @@
 
 </script>
 
-<div class="space-y-4">
+<div class="flex flex-col h-full">
     <!-- 图表容器 -->
     {#if items && items.length > 0}
         <div class="w-[200px]">
@@ -328,20 +328,22 @@
             </Select.Root>
         </div>
         <!-- 图表容器 -->
-        <div class="flex flex-col w-full h-screen">
+        <div class="flex-1 flex flex-col">
             <!-- 上部分图表 占 1/3 高度 -->
-            <div class="flex flex-row w-full h-1/3">
-                <div class="w-1/2 flex items-center justify-center">
+            <div class="flex flex-row w-full flex-none h-1/3">
+                <div class="w-1/3 flex items-center justify-center  bg-yellow-300">
+                    <!-- 123 -->
                     <div bind:this={pieChartElement} class="w-full h-full"></div>
                 </div>
-                <div class="w-1/2 flex items-center justify-center">
-                    <div bind:this={barChartElement} class="w-full h-full"></div>
+                <div class="w-2/3 flex items-center justify-center bg-red-300">
+                    <!-- 456 -->
+                    <div bind:this={barChartElement} class="w-full"></div>
                 </div>
             </div>
 
             <!-- 下部分标签详情图表 占 2/3 高度 -->
-            <div class="w-full h-2/3">
-                <div bind:this={tagsBarChartElement} class="w-full h-full"></div>
+            <div class="w-full flex-1 bg-blue-300">
+                <div bind:this={tagsBarChartElement} class="w-full"></div>
             </div>
         </div>
     {:else}
