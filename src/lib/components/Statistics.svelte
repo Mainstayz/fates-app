@@ -10,6 +10,11 @@
     // Props
     let { items }: { items: TimelineItem[] } = $props();
 
+    // 未分类
+    const unclassifiedTag = "未分类";
+    // 其他
+    const otherTag = "其他";
+
     // DOM 引用
     let pieChartElement: HTMLElement;
     let barChartElement: HTMLElement;
@@ -57,7 +62,7 @@
         });
     }
 
-    // 优化 calculateTagStats 函数
+    // 修改 calculateTagStats 函数
     function calculateTagStats(items: TimelineItem[]): { [key: string]: number } {
         const tagDurations: { [key: string]: number } = {};
         const filteredItems = filterItemsByRange(items, selectedRange);
@@ -66,15 +71,35 @@
             if (!item.start || !item.end) return;
 
             const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
-            // 修改这里：确保空标签或空数组被正确处理为"其他"
-            const tags = !item.tags || item.tags.length === 0 ? ["其他"] : item.tags;
+
+            const tags = !item.tags || item.tags.length === 0 ? [""] : item.tags;
 
             tags.forEach((tag) => {
-                // 确保标签不是空字符串
-                const tagName = tag.trim() || "其他";
+                const tagName = tag.trim() || unclassifiedTag;
                 tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
             });
         });
+
+        // 对标签按时长进行排序
+        const sortedEntries = Object.entries(tagDurations).sort(([, a], [, b]) => b - a);
+
+        // 如果标签数量超过 10 个，将剩余的合并到"其他"类别
+        if (sortedEntries.length > 10) {
+            const top9Entries = sortedEntries.slice(0, 9);
+            const remainingEntries = sortedEntries.slice(9);
+
+            // 计算其他类别的总时长
+            const othersDuration = remainingEntries.reduce((sum, [, duration]) => sum + duration, 0);
+
+            // 创建新的结果对象
+            const result: { [key: string]: number } = {};
+            top9Entries.forEach(([tag, duration]) => {
+                result[tag] = duration;
+            });
+            result[otherTag] = othersDuration;
+
+            return result;
+        }
 
         return tagDurations;
     }
@@ -93,6 +118,9 @@
                     speed: 800,
                     animateGradually: { enabled: true, delay: 150 },
                     dynamicAnimation: { enabled: true, speed: 350 },
+                },
+                events: {
+                    dataPointSelection: handleBarChartClick,
                 },
             },
             labels: tags,
@@ -117,8 +145,9 @@
         };
     }
 
-    // 添加处理柱状图点击事件的函数
+    // 修改 handleBarChartClick 函数以处理"其他"类别
     function handleBarChartClick(event: any, chartContext: any, config: any) {
+        console.log("handleBarChartClick called with event:", event, "chartContext:", chartContext, "config:", config);
         const tagIndex = config.dataPointIndex;
         if (tagIndex !== -1) {
             const tagStats = calculateTagStats(items);
@@ -127,6 +156,12 @@
             const sortedTags = Object.entries(tagStats)
                 .sort(([, a], [, b]) => b - a)
                 .map(([tag]) => tag);
+
+            // 如果点击的是"其他"类别，则不更新选中标签
+            if (sortedTags[tagIndex] === otherTag) {
+                return;
+            }
+
             selectedTag = sortedTags[tagIndex];
             updateTagsDetailChart();
         }
@@ -138,8 +173,7 @@
 
         const filteredItems = filterItemsByRange(items, selectedRange).filter(
             (item) => {
-                if (selectedTag === "其他") {
-                    console.log("item.tags:", item.tags);
+                if (selectedTag === unclassifiedTag) {
                     return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
                 }
                 return item.tags && item.tags.includes(selectedTag);
@@ -283,7 +317,7 @@
             },
             // yaxis: { title: { text: '小时' } },
             title: {
-                //  text: "标签时长��布（小时）",
+                //  text: "标签时长布（小时）",
                 align: "center",
             },
             grid: {
