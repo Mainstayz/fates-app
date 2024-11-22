@@ -14,7 +14,7 @@ use tray::try_register_tray_icon;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use crate::tray::flash_tray_icon;
-
+use crate::tray::get_tray_flash_state;
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -132,7 +132,8 @@ pub fn run() {
             save_timeline_data,
             load_timeline_data,
             update_timeline_data,
-            auto_launch
+            auto_launch,
+            get_tray_flash_state
         ])
         .setup(|app| {
             // 注册托盘图标

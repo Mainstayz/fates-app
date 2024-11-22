@@ -4,7 +4,7 @@ use tauri::{
     menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     App, AppHandle, Manager, Wry,
-    async_runtime,
+    async_runtime,Emitter
 };
 use std::sync::Mutex;
 use std::{thread::sleep, time::Duration};
@@ -89,8 +89,9 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
     move |_tray, event| {
         if let TrayIconEvent::Click { button, .. } = event {
             if button == MouseButton::Left {
-                if get_tray_icon_state(handle.clone()) {
-                    // 如果正在闪烁，则停止闪烁
+                if get_tray_flash_state(handle.clone()) {
+                    // 发送 tray_flash_did_click 事件
+                    handle.emit("tray_flash_did_click", ()).unwrap();
                     flash_tray_icon(handle.clone(), false).unwrap();
                 }
                 show_main_window(handle.clone());
@@ -108,17 +109,24 @@ fn show_main_window(app: AppHandle) {
         let _ = window.show();
         let _ = window.set_focus();
     } else {
-        println!("主窗口不存在");
+        log::warn!("主窗口不存在");
     }
 }
 // 获取托盘图标状态
-fn get_tray_icon_state(app: AppHandle) -> bool {
+#[cfg(target_os = "windows")]
+#[tauri::command]
+pub fn get_tray_flash_state(app: AppHandle) -> bool {
     let state = app.state::<Mutex<TrayState>>();
     let state = state.lock().unwrap();
     state.is_running
 }
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+fn get_tray_flash_state(_app: AppHandle) -> bool {
+    false
+}
 
-
+/// 闪烁托盘图标
 #[cfg(target_os = "windows")]
 pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::error::Error>> {
     let state = app.state::<Mutex<TrayState>>();

@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { window, app } from "@tauri-apps/api";
+    import { Window as TauriWindow } from "@tauri-apps/api/window";
+    import { listen } from "@tauri-apps/api/event";
+
     import Timeline from "$lib/components/Timeline.svelte";
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { onMount } from "svelte";
@@ -21,7 +25,6 @@
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
     let showClearAllDialog = $state(false);
-
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
         console.log("添加任务：", item);
@@ -117,19 +120,24 @@
         }
     }
 
-    // 自动保存功能
-    let autoSaveInterval: ReturnType<typeof setInterval>;
+    let unlistenTrayFlash: () => void;
+    async function listenTrayFlash() {
+        unlistenTrayFlash = await listen("tray_flash_did_click", (event) => {
+            console.log("Tray flash clicked:", event);
+        });
+    }
 
     onMount(() => {
         // 加载保存的数据
+        listenTrayFlash();
         loadTimelineData();
-
         // 设置自动保存（每 5 分钟）
-        autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
+        let autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
 
         return () => {
             clearInterval(autoSaveInterval);
             saveTimelineData();
+            unlistenTrayFlash();
         };
     });
 
