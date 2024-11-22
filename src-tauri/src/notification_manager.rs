@@ -39,7 +39,7 @@ impl NotificationManager {
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
-            let mut interval = time::interval(Duration::from_secs(15));
+            let mut interval = time::interval(Duration::from_secs(config.check_interval * 60));
 
             loop {
                 interval.tick().await;
