@@ -2,7 +2,7 @@
     import { window, app } from "@tauri-apps/api";
     import { Window as TauriWindow } from "@tauri-apps/api/window";
     import { listen } from "@tauri-apps/api/event";
-
+    import { warn, debug, trace, info, error, attachConsole, attachLogger } from "@tauri-apps/plugin-log";
     import Timeline from "$lib/components/Timeline.svelte";
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { onMount } from "svelte";
@@ -27,14 +27,12 @@
     let showClearAllDialog = $state(false);
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
-        console.log("添加任务：", item);
         callback(item); // 确认添加
         await saveTimelineData();
     };
 
     // 处理移动事件
     const handleMove = async (item: any, callback: (item: any | null) => void) => {
-        console.log("移动任务：", item);
         callback(item); // 确认移动
         await saveTimelineData();
     };
@@ -47,7 +45,6 @@
 
     // 处理更新事件
     const handleUpdate = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        console.log("更新任务：", item);
         editingItem = item;
         editDialogOpen = true;
         callback(null);
@@ -74,12 +71,10 @@
             groups: timelineComponent.getAllGroups(),
             items: timelineComponent.getAllItems(),
         };
-        console.log("Timeline data:", timelineData);
         try {
             await invoke("save_timeline_data", { data: timelineData });
-            console.log("Timeline data saved successfully");
-        } catch (error) {
-            console.error("Failed to save timeline data:", error);
+        } catch (e) {
+            error(`Failed to save timeline data: ${e}`);
         }
     }
 
@@ -115,28 +110,28 @@
                     });
                 }
             }
-        } catch (error) {
-            console.error("Failed to load timeline data:", error);
+        } catch (e) {
+            error(`Failed to load timeline data: ${e}`);
         }
     }
 
     let unlistenTrayFlash: () => void;
     async function listenTrayFlash() {
         unlistenTrayFlash = await listen("tray_flash_did_click", (event) => {
-            console.log("Tray flash clicked:", event);
+            info(`Tray flash clicked: ${event}`);
         });
     }
 
     onMount(() => {
         // 加载保存的数据
-        console.log("****** onMount ******");
+        debug("****** onMount ******");
         listenTrayFlash();
         loadTimelineData();
         // 设置自动保存（每 5 分钟）
         let autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
 
         return () => {
-            console.log("****** onUnmount ******");
+            debug("****** onUnmount ******");
             clearInterval(autoSaveInterval);
             saveTimelineData();
             unlistenTrayFlash();
@@ -147,9 +142,6 @@
     const handleExport = () => {
         const allItems = timelineComponent.getAllItems();
         const allGroups = timelineComponent.getAllGroups();
-
-        console.log("所有事件：", allItems);
-        console.log("所有分组：", allGroups);
 
         // 可以将数据转换为 JSON 字符串
         const exportData = {
@@ -219,7 +211,6 @@
     }
 
     function handleDialogClose(open: boolean) {
-        console.log("编辑对话状态：", open);
         editingItem = null;
         editDialogOpen = false;
     }
