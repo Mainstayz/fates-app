@@ -3,7 +3,7 @@
 mod models;
 mod notification_manager;
 mod tray;
-
+mod autostart;
 use crate::models::{NotificationConfig, TimelineData};
 use crate::notification_manager::NotificationManager;
 use std::sync::Arc;
@@ -11,6 +11,9 @@ use std::{clone, fs};
 use tauri::{path::BaseDirectory, Manager};
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_autostart::ManagerExt;
+
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -47,6 +50,21 @@ async fn load_timeline_data(app_handle: tauri::AppHandle) -> Result<Option<Timel
         serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败：{}", e))?;
 
     Ok(Some(data))
+}
+
+/// 更新时间线数据的命令
+#[tauri::command]
+async fn update_timeline_data(
+    app_handle: tauri::AppHandle,
+    data: TimelineData,
+) -> Result<(), String> {
+    // 只需要保存数据到文件，NotificationManager 会在下次检查时自动获取最新数据
+    save_timeline_data(app_handle.clone(), data).await
+}
+
+#[tauri::command]
+async fn auto_launch(app: tauri::AppHandle, enable: bool) {
+    autostart::enable_autostart(app, enable);
 }
 
 /// 获取应用数据目录
@@ -99,7 +117,11 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--flag1", "--flag2"]),
+        ))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
@@ -108,7 +130,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             save_timeline_data,
             load_timeline_data,
-            update_timeline_data
+            update_timeline_data,
+            auto_launch
         ])
         .setup(|app| {
             // 注册托盘图标
@@ -213,12 +236,3 @@ fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
     }
 }
 
-/// 更新时间线数据的命令
-#[tauri::command]
-async fn update_timeline_data(
-    app_handle: tauri::AppHandle,
-    data: TimelineData,
-) -> Result<(), String> {
-    // 只需要保存数据到文件，NotificationManager 会在下次检查时自动获取最新数据
-    save_timeline_data(app_handle.clone(), data).await
-}
