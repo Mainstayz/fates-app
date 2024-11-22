@@ -208,7 +208,8 @@
         saveTimelineData();
     }
 
-    function handleDialogClose() {
+    function handleDialogClose(open: boolean) {
+        console.log("编辑对话状态：", open);
         editingItem = null;
         editDialogOpen = false;
     }

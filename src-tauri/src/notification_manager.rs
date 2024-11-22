@@ -308,7 +308,7 @@ impl NotificationManager {
 
     // 添加新的发送通知方法
     pub fn send_notification(
-        app_handle: &tauri::AppHandle,
+        app_handle: tauri::AppHandle,
         title: &str,
         body: &str,
     ) -> Result<(), String> {

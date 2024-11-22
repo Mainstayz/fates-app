@@ -13,6 +13,7 @@ use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
+use crate::tray::flash_tray_icon;
 
 const APP_NAME: &str = "Fates";
 
@@ -141,7 +142,7 @@ pub fn run() {
             let config = NotificationConfig {
                 work_start_time: "00:01".to_string(),
                 work_end_time: "24:00".to_string(),
-                check_interval: 1,
+                check_interval: 60 * 2,
                 notify_before: 15,
             };
 
@@ -187,9 +188,13 @@ pub fn run() {
                     let title = notification.title.clone();
                     let body = notification.message.clone();
                     log::info!("发送通知 - title: {}, body: {}", title, body);
+
+
+                    // 闪烁托盘图标
+                    flash_tray_icon(app_handle_clone_2.clone(), true).unwrap();
                     // 在这里克隆 app_handle
                     if let Err(e) =
-                        NotificationManager::send_notification(&app_handle_clone_2, &title, &body)
+                        NotificationManager::send_notification(app_handle_clone_2.clone(), &title, &body)
                     {
                         log::error!("发送通知失败：{}", e);
                     }

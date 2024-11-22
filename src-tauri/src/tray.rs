@@ -4,9 +4,19 @@ use tauri::{
     menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     App, AppHandle, Manager, Wry,
+    async_runtime,
 };
-
+use std::sync::Mutex;
 use std::{thread::sleep, time::Duration};
+use tokio::time::interval;
+
+#[derive(Default)]
+struct TrayState {
+    timer: Option<async_runtime::JoinHandle<()>>,
+    is_running: bool,
+}
+
+
 
 /// 尝试注册系统托盘图标，最多重试 10 次
 pub fn try_register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
@@ -33,9 +43,12 @@ fn register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let icon = app.default_window_icon().unwrap().clone();
     let handle = app.handle();
 
+    app.manage(Mutex::new(TrayState::default()));
+
     // 构建托盘图标
-    TrayIconBuilder::new()
+    TrayIconBuilder::with_id("tray")
         .icon(icon)
+        .tooltip("Time Tracking")
         .menu(&menu)
         .on_menu_event(create_menu_handler(handle.clone()))
         .on_tray_icon_event(create_tray_handler(handle.clone()))
@@ -48,9 +61,12 @@ fn register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 fn create_tray_menu(app: &mut App) -> Result<tauri::menu::Menu<Wry>, Box<dyn std::error::Error>> {
     let quit = MenuItemBuilder::with_id("quit", "退出").build(app)?;
     let show = MenuItemBuilder::with_id("show", "显示").build(app)?;
-
+    let flash = MenuItemBuilder::with_id("flash", "闪烁").build(app)?;
+    let flash_off = MenuItemBuilder::with_id("flash_off", "停止闪烁").build(app)?;
     MenuBuilder::new(app)
         .item(&show)
+        .item(&flash)
+        .item(&flash_off)
         .separator()
         .item(&quit)
         .build()
@@ -61,7 +77,9 @@ fn create_tray_menu(app: &mut App) -> Result<tauri::menu::Menu<Wry>, Box<dyn std
 fn create_menu_handler(_handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
     move |app: &AppHandle, event: MenuEvent| match event.id().as_ref() {
         "quit" => std::process::exit(0),
-        "show" => show_main_window(app),
+        "show" => show_main_window(app.clone()),
+        "flash" => flash_tray_icon(app.clone(), true).unwrap(),
+        "flash_off" => flash_tray_icon(app.clone(), false).unwrap(),
         _ => (),
     }
 }
@@ -71,7 +89,11 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
     move |_tray, event| {
         if let TrayIconEvent::Click { button, .. } = event {
             if button == MouseButton::Left {
-                show_main_window(&handle);
+                if get_tray_icon_state(handle.clone()) {
+                    // 如果正在闪烁，则停止闪烁
+                    flash_tray_icon(handle.clone(), false).unwrap();
+                }
+                show_main_window(handle.clone());
             }
             // 右键点击会自动显示菜单，无需额外处理
         }
@@ -79,7 +101,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
 }
 
 /// 显示主窗口
-fn show_main_window(app: &AppHandle) {
+fn show_main_window(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         // 依次执行：取消最小化、显示窗口、设置焦点
         let _ = window.unminimize();
@@ -88,4 +110,69 @@ fn show_main_window(app: &AppHandle) {
     } else {
         println!("主窗口不存在");
     }
+}
+// 获取托盘图标状态
+fn get_tray_icon_state(app: AppHandle) -> bool {
+    let state = app.state::<Mutex<TrayState>>();
+    let state = state.lock().unwrap();
+    state.is_running
+}
+
+
+#[cfg(target_os = "windows")]
+pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let state = app.state::<Mutex<TrayState>>();
+
+    let mut state = state.lock().unwrap();
+
+    if flash == state.is_running {
+        return Ok(());
+    }
+
+     // 如果已有计时器在运行，先停止它
+    if let Some(timer) = state.timer.take() {
+        state.is_running = false;
+        log::info!("停止定时器");
+        timer.abort();
+    }
+
+    let tray_icon = app.tray_by_id("tray").ok_or_else(|| "Tray icon not found")?;
+    let app_handle = app.clone();
+
+    if flash {
+        log::info!("开始闪烁");
+        state.is_running = true;
+        let is_running = state.is_running;
+        state.timer = Some(async_runtime::spawn(async move {
+            let mut flag = true;
+            let mut interval = interval(Duration::from_millis(500));
+            while is_running {
+
+                if flag {
+                    if let Err(e) = tray_icon.set_icon(None) {
+                        println!("设置托盘图标失败：{}", e);
+                    }
+                } else {
+                    let icon = app_handle.default_window_icon().unwrap().clone();
+                    if let Err(e) = tray_icon.set_icon(Some(icon)) {
+                        println!("设置托盘图标失败：{}", e);
+                    }
+                }
+                flag = !flag;
+                interval.tick().await;
+            }
+        }));
+    } else {
+        state.is_running = false;
+        let icon = app_handle.default_window_icon().unwrap().clone();
+        if let Err(e) = tray_icon.set_icon(Some(icon)) {
+            println!("设置托盘图标失败：{}", e);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn flash_tray_icon(_app: AppHandle, _flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+    Ok(())
 }
