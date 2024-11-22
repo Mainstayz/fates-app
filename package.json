@@ -21,6 +21,7 @@
     "@tauri-apps/plugin-shell": "^2.0.1",
     "@tauri-apps/plugin-store": "~2",
     "apexcharts": "^4.0.0",
+    "handlebars": "^4.7.8",
     "vis-data": "^7.1.9",
     "vis-timeline": "^7.7.3"
   },

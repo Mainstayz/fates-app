@@ -1,3 +1,14 @@
+
+export interface TimelineItemOriginal {
+    id: string;
+    title: string;
+    startTime: Date;
+    endTime?: Date;
+    tags?: string[];
+    color?: string;
+}
+
+
 export interface TimelineGroup {
     id: string;
     content: string;

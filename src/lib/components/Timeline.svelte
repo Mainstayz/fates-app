@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Handlebars from "handlebars";
     import { onMount, onDestroy } from "svelte";
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
@@ -34,6 +35,20 @@
     let resetTimeout: number | undefined;
     let itemsDataSet: DataSet<TimelineItem>;
     let groupsDataSet: DataSet<TimelineGroup> | undefined;
+
+    let ganttItemTemplate: string = `
+        <div class="gantt-item {{className}}">
+            <div class="gantt-item-title">{{content}}</div>
+            {{#if tags}}
+            <div class="gantt-item-tags">
+                {{#each tags}}
+                <span class="gantt-item-tag">{{this}}</span>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+    `;
+    const template = Handlebars.compile(ganttItemTemplate);
 
     // 检查并重置时间线的函数
     const checkAndResetTimeline = () => {
@@ -148,7 +163,6 @@
     $effect(() => {
         if (itemsDataSet && props.items) {
             const currentIds = new Set(itemsDataSet.getIds());
-
             props.items.forEach((item: TimelineItem) => {
                 if (currentIds.has(item.id)) {
                     itemsDataSet.update(item);
@@ -316,7 +330,7 @@
     /* yelloW */
     :global(.vis-item.yellow) {
         position: absolute;
-        border-width:1px;
+        border-width: 1px;
         border-radius: var(--radius) !important;
         @apply bg-yellow-300  text-foreground border-yellow-300;
     }
@@ -324,7 +338,7 @@
     /* red */
     :global(.vis-item.red) {
         position: absolute;
-        border-width:1px;
+        border-width: 1px;
         border-radius: var(--radius) !important;
         @apply bg-red-300  text-foreground border-red-300;
     }
@@ -336,13 +350,10 @@
         @apply bg-green-300 text-foreground border-green-300;
     }
 
-
     /* 选中状态的时间线项目样式 */
     /* :global(.vis-timeline .vis-item.vis-selected) {
         @apply bg-orange-100 text-foreground bg-orange-200;
     } */
-
-
 
     /* 时间线项目内容样式 */
     :global(.vis-timeline .vis-item .vis-item-content) {

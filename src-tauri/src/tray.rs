@@ -122,7 +122,7 @@ pub fn get_tray_flash_state(app: AppHandle) -> bool {
 }
 #[cfg(not(target_os = "windows"))]
 #[tauri::command]
-fn get_tray_flash_state(_app: AppHandle) -> bool {
+pub fn get_tray_flash_state(_app: AppHandle) -> bool {
     false
 }
 
