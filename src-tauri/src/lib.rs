@@ -6,17 +6,19 @@ mod tray;
 
 use crate::models::{NotificationConfig, TimelineData};
 use crate::notification_manager::NotificationManager;
-use std::{clone, fs};
-use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
-use tauri::{path::BaseDirectory, Manager};
-use tray::try_register_tray_icon;
 use std::sync::Arc;
+use std::{clone, fs};
+use tauri::{path::BaseDirectory, Manager};
+use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
+use tray::try_register_tray_icon;
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
-async fn save_timeline_data(app_handle: tauri::AppHandle, data: TimelineData) -> Result<(), String> {
-
+async fn save_timeline_data(
+    app_handle: tauri::AppHandle,
+    data: TimelineData,
+) -> Result<(), String> {
     let app_dir = get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
     let json_string =
@@ -65,10 +67,7 @@ fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, 
 
     // 检查目录是否可访问
     if app_dir.exists() && !app_dir.is_dir() {
-        return Err(format!(
-            "路径 {} 已存在但不是目录",
-            app_dir.display()
-        ));
+        return Err(format!("路径 {} 已存在但不是目录", app_dir.display()));
     }
 
     // 创建目录
@@ -100,6 +99,7 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
@@ -123,7 +123,7 @@ pub fn run() {
             };
 
             let app_handle_clone = app.handle().clone();
-            let app_handle_clone_2 =  app.handle().clone();
+            let app_handle_clone_2 = app.handle().clone();
             // 创建通知管理器
             let notification_manager = NotificationManager::new(
                 // 获取时间线数据的回调函数
@@ -134,18 +134,16 @@ pub fn run() {
 
                     if file_path.exists() {
                         match fs::read_to_string(&file_path) {
-                            Ok(content) => {
-                                match serde_json::from_str(&content) {
-                                    Ok(data) => data,
-                                    Err(e) => {
-                                        log::error!("解析时间线数据失败：{}", e);
-                                        TimelineData {
-                                            groups: Vec::new(),
-                                            items: Vec::new(),
-                                        }
+                            Ok(content) => match serde_json::from_str(&content) {
+                                Ok(data) => data,
+                                Err(e) => {
+                                    log::error!("解析时间线数据失败：{}", e);
+                                    TimelineData {
+                                        groups: Vec::new(),
+                                        items: Vec::new(),
                                     }
                                 }
-                            }
+                            },
                             Err(e) => {
                                 log::error!("读取时间线数据失败：{}", e);
                                 TimelineData {
@@ -167,10 +165,12 @@ pub fn run() {
                     let body = notification.message.clone();
                     log::info!("发送通知 - title: {}, body: {}", title, body);
                     // 在这里克隆 app_handle
-                    if let Err(e) = NotificationManager::send_notification(&app_handle_clone_2, &title, &body) {
+                    if let Err(e) =
+                        NotificationManager::send_notification(&app_handle_clone_2, &title, &body)
+                    {
                         log::error!("发送通知失败：{}", e);
                     }
-                }
+                },
             );
 
             // 将通知管理器存储在应用状态中

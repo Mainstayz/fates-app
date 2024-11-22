@@ -30,3 +30,6 @@ tauri-plugin-notification = "2"
 chrono = "0.4.38"
 tokio = "1.41.1"
 uuid = "1.11.0"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"

@@ -160,7 +160,6 @@
         <Label for="tags">标签</Label>
         <Input
             id="tags"
-            autocomplete="off"
             bind:value={tags}
             placeholder="输入标签，用逗号分隔"
             class={errors.tags ? "border-destructive" : ""}

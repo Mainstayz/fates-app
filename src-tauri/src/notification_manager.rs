@@ -1,9 +1,9 @@
+use crate::models::{Notification, NotificationConfig, NotificationType, TimelineData};
 use chrono::{DateTime, Local, NaiveTime};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::time;
 use tauri_plugin_notification::NotificationExt;
-use crate::models::{Notification, NotificationConfig, NotificationType, TimelineData};
+use tokio::time;
 
 /// 通知管理器结构体
 /// - get_timeline: 获取时间线数据的回调函数
@@ -181,7 +181,8 @@ impl NotificationManager {
                 match DateTime::parse_from_rfc3339(end_str) {
                     Ok(end_time) => {
                         if let Ok(start_time) = DateTime::parse_from_rfc3339(&item.start) {
-                            let total_duration = end_time.signed_duration_since(start_time).num_minutes();
+                            let total_duration =
+                                end_time.signed_duration_since(start_time).num_minutes();
 
                             if total_duration > config.notify_before {
                                 let duration = end_time.signed_duration_since(*now);
@@ -306,7 +307,11 @@ impl NotificationManager {
     }
 
     // 添加新的发送通知方法
-    pub fn send_notification(app_handle: &tauri::AppHandle, title: &str, body: &str) -> Result<(), String> {
+    pub fn send_notification(
+        app_handle: &tauri::AppHandle,
+        title: &str,
+        body: &str,
+    ) -> Result<(), String> {
         app_handle
             .notification()
             .builder()
