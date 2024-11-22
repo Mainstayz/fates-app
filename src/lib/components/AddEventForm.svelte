@@ -47,8 +47,9 @@
 
 <Popover.Root bind:open={popoverOpen}>
     <Popover.Trigger>
-        <Button variant="default" size="icon">
+        <Button variant="default">
             <Plus/>
+            Add Event
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-80">

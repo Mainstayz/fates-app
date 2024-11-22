@@ -1,37 +1,69 @@
 <script lang="ts">
-    import { invoke } from '@tauri-apps/api/core';
     import * as Dialog from "$lib/components/ui/dialog";
-
+    import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
+    import { load } from '@tauri-apps/plugin-store';
+    import { onMount, onDestroy } from 'svelte';
     let { open = $bindable(), ...props} = $props();
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
     let checkInterval = $state(2); // 默认 2 小时
 
+
     async function toggleAutoStart(enabled: boolean) {
+        console.log("设置开机启动：", enabled);
         try {
-            await invoke("toggle_autostart", { enabled });
-            autoStart = enabled;
+            if (enabled) {
+                await enable();
+            } else {
+                await disable();
+            }
         } catch (error) {
-            console.error("Failed to toggle autostart:", error);
+            console.error("设置开机启动失败：", error);
         }
     }
 
     // 初始化时获取自启动状态
     async function initSettings() {
         try {
-            const isEnabled = await invoke("is_autostart_enabled");
-            autoStart = isEnabled as boolean;
+            console.log("初始化设置：");
+            autoStart = await isEnabled();
+            let settings = await load('settings.json', { autoSave: false });
+            language = await settings.get<string>('language') || "zh";
+            checkInterval = await settings.get<number>('checkInterval') || 2;
         } catch (error) {
             console.error("Failed to get autostart status:", error);
         }
     }
 
-    initSettings();
+    async function saveSettings() {
+        try {
+            console.log("保存设置：", language, checkInterval);
+            let settings = await load('settings.json', { autoSave: false });
+            settings.set('language', language);
+            settings.set('checkInterval', checkInterval);
+            await settings.save();
+        } catch (error) {
+            console.error("保存设置失败：", error);
+        }
+    }
+
+
+    onMount(async () => {
+        await initSettings();
+    });
+
+    $effect(() => {
+        if (open) {
+            saveSettings();
+        }
+    });
+
+
 </script>
 
 <Dialog.Root bind:open={open}>
-    <Dialog.Content class="sm:max-w-[425px]">
+    <Dialog.Content class="sm:max-w-[800px]">
         <Dialog.Header>
             <Dialog.Title>设置</Dialog.Title>
         </Dialog.Header>

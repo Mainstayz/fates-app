@@ -6,8 +6,8 @@
 
 <div class="flex flex-col h-full">
     <div class="px-6 pt-6">
-        <h2 class="text-2xl font-bold tracking-tight">Welcome back!</h2>
-        <p class="text-muted-foreground">Here's a list of your tasks for this month!</p>
+        <h2 class="text-2xl font-bold tracking-tight">Statistics</h2>
+        <p class="text-muted-foreground">A web woven with words, capturing fleeting moments of time.</p>
     </div>
     <div class="flex-1 p-6">
         <Statistics {items} />

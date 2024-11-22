@@ -20,6 +20,7 @@
 
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
+    let showClearAllDialog = $state(false);
 
     // 处理添加事件
     const handleAdd = async (item: any, callback: (item: any | null) => void) => {
@@ -216,8 +217,8 @@
 <div class="flex flex-col h-full">
     <div class="p-6">
         <div>
-            <h2 class="text-2xl font-bold tracking-tight">Welcome back!</h2>
-            <p class="text-muted-foreground">Here's a list of your tasks for this month!</p>
+            <h2 class="text-2xl font-bold tracking-tight">Time Tracking</h2>
+            <p class="text-muted-foreground">Painting a Portrait of Every Moment with Words!</p>
         </div>
         <div class="py-6">
             <div class="flex gap-2 justify-between">
@@ -241,29 +242,31 @@
                 </div>
                 <div class="flex gap-2">
                     <AddEventForm on:submit={handleEventSubmit} />
-                    <AlertDialog.Root bind:open={alertClearAll}>
-                        <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-                            <Trash2 />
-                        </AlertDialog.Trigger>
-                        <AlertDialog.Content>
-                            <AlertDialog.Header>
-                                <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                                <AlertDialog.Description>
-                                    This action cannot be undone. This will permanently delete your all records.
-                                </AlertDialog.Description>
-                            </AlertDialog.Header>
-                            <AlertDialog.Footer>
-                                <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                                <AlertDialog.Action
-                                    onclick={async () => {
-                                        timelineComponent.clearAll();
-                                        await saveTimelineData();
-                                        alertClearAll = false;
-                                    }}>Confirm</AlertDialog.Action
-                                >
-                            </AlertDialog.Footer>
-                        </AlertDialog.Content>
-                    </AlertDialog.Root>
+                    {#if showClearAllDialog}
+                        <AlertDialog.Root bind:open={alertClearAll}>
+                            <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
+                                <Trash2 />
+                            </AlertDialog.Trigger>
+                            <AlertDialog.Content>
+                                <AlertDialog.Header>
+                                    <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+                                    <AlertDialog.Description>
+                                        This action cannot be undone. This will permanently delete your all records.
+                                    </AlertDialog.Description>
+                                </AlertDialog.Header>
+                                <AlertDialog.Footer>
+                                    <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                                    <AlertDialog.Action
+                                        onclick={async () => {
+                                            timelineComponent.clearAll();
+                                            await saveTimelineData();
+                                            alertClearAll = false;
+                                        }}>Confirm</AlertDialog.Action
+                                    >
+                                </AlertDialog.Footer>
+                            </AlertDialog.Content>
+                        </AlertDialog.Root>
+                    {/if}
                 </div>
             </div>
 
