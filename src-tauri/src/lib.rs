@@ -64,7 +64,7 @@ async fn update_timeline_data(
 
 #[tauri::command]
 async fn auto_launch(app: tauri::AppHandle, enable: bool) {
-    autostart::enable_autostart(app, enable);
+    let _ = autostart::enable_autostart(app, enable);
 }
 
 /// 获取应用数据目录

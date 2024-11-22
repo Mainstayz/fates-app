@@ -4,13 +4,16 @@
     import type { TimelineData } from "$lib/types";
     import TimelinePage from "./timeline_page.svelte";
     import StatisticsPage from "./statistics_page.svelte";
+    import SettingsDialog from "./settings_dialog.svelte";
     import { primaryRoutes } from "../config";
 
     let navCollapsedSize = $state(5);
     let selectedRoute: string = $state("");
+    let settingsOpen = $state(false);
     let statisticsComponent: StatisticsPage | null = null;
     let timelineComponent: TimelinePage | null = null;
     let timelineData: TimelineData | null = null;
+
     $inspect(navCollapsedSize);
 
     function onLayoutChange(sizes: number[]) {
@@ -30,7 +33,7 @@
     }
 
     function onSettingsClick() {
-        console.log("onSettingsClick");
+        settingsOpen = true;
     }
 </script>
 
@@ -56,3 +59,5 @@
     </Resizable.Pane>
     </Resizable.PaneGroup>
 </div>
+
+<SettingsDialog bind:open={settingsOpen} />
