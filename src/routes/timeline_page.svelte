@@ -129,12 +129,14 @@
 
     onMount(() => {
         // 加载保存的数据
+        console.log("****** onMount ******");
         listenTrayFlash();
         loadTimelineData();
         // 设置自动保存（每 5 分钟）
         let autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
 
         return () => {
+            console.log("****** onUnmount ******");
             clearInterval(autoSaveInterval);
             saveTimelineData();
             unlistenTrayFlash();
