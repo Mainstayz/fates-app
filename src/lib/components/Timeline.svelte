@@ -40,11 +40,11 @@
 
     // Handlebars 模板
     const template = Handlebars.compile(`
-        <div class="gantt-item {{className}}">
+        <div class="gantt-item">
             <div class="gantt-item-title">{{content}}</div>
             {{#if tags}}
             <div class="gantt-item-tags">
-                {{#each tags}}<span class="gantt-item-tag">{{this}}</span>{{/each}}
+                {{#each tags}}<span class="gantt-item-tag"> {{this}} </span>{{/each}}
             </div>
             {{/if}}
         </div>
@@ -52,23 +52,27 @@
 
     // 数据转换函数
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
+        const renderedContent = template({
+            content: item.content,
+            tags: item.tags,
+            className: item.className,
+        });
+
+        console.log(renderedContent);
+
         return {
             ...item,
-            content: template({
-                content: item.content,
-                tags: item.tags,
-                className: item.className
-            }),
+            content: renderedContent,
             _raw: {
                 content: item.content,
-                tags: item.tags
-            }
+                tags: item.tags,
+            },
         };
     }
 
     function convertToExternalItem(item: TimelineItemInternal): TimelineItem {
         if (!item._raw) {
-            throw new Error('Internal item missing _raw data');
+            throw new Error("Internal item missing _raw data");
         }
         return {
             id: item.id,
@@ -77,7 +81,7 @@
             start: item.start,
             end: item.end,
             tags: item._raw.tags,
-            className: item.className
+            className: item.className,
         };
     }
 
@@ -86,10 +90,8 @@
         if (!handler) return undefined;
 
         return (item: TimelineItemInternal, callback: TimelineCallback<TimelineItemInternal>) => {
-            handler(
-                convertToExternalItem(item),
-                (resultItem: TimelineItem | null) =>
-                    callback(resultItem ? convertToInternalItem(resultItem) : null)
+            handler(convertToExternalItem(item), (resultItem: TimelineItem | null) =>
+                callback(resultItem ? convertToInternalItem(resultItem) : null)
             );
         };
     }
@@ -143,6 +145,9 @@
             onMoving: createEventHandler(props.onMoving),
             onUpdate: createEventHandler(props.onUpdate),
             onRemove: createEventHandler(props.onRemove),
+            xss: {
+                disabled: true,
+            },
         };
 
         // 初始化 Timeline
@@ -161,11 +166,9 @@
         const currentTime = new Date();
 
         if (currentTime < window.start || currentTime > window.end) {
-            timeline.setWindow(
-                DEFAULT_CONFIG.START,
-                DEFAULT_CONFIG.END,
-                { animation: { duration: 500, easingFunction: "easeOutQuad" }}
-            );
+            timeline.setWindow(DEFAULT_CONFIG.START, DEFAULT_CONFIG.END, {
+                animation: { duration: 500, easingFunction: "easeOutQuad" },
+            });
         }
     }
 
@@ -174,29 +177,25 @@
         if (!itemsDataSet || !props.items) return;
 
         const currentIds = new Set(itemsDataSet.getIds());
-        props.items.forEach(item => {
+        props.items.forEach((item) => {
             const internalItem = convertToInternalItem(item);
-            currentIds.has(item.id)
-                ? itemsDataSet.update(internalItem)
-                : itemsDataSet.add(internalItem);
+            currentIds.has(item.id) ? itemsDataSet.update(internalItem) : itemsDataSet.add(internalItem);
             currentIds.delete(item.id);
         });
 
-        currentIds.forEach(id => itemsDataSet.remove(id));
+        currentIds.forEach((id) => itemsDataSet.remove(id));
     });
 
     $effect(() => {
         if (!groupsDataSet || !props.groups) return;
 
         const currentIds = new Set(groupsDataSet.getIds());
-        props.groups.forEach(group => {
-            currentIds.has(group.id)
-                ? groupsDataSet.update(group)
-                : groupsDataSet.add(group);
+        props.groups.forEach((group) => {
+            currentIds.has(group.id) ? groupsDataSet.update(group) : groupsDataSet.add(group);
             currentIds.delete(group.id);
         });
 
-        currentIds.forEach(id => groupsDataSet.remove(id));
+        currentIds.forEach((id) => groupsDataSet.remove(id));
     });
 
     // 导出的方法 - 直接导出而不是通过对象
@@ -255,5 +254,187 @@
         height: 400px;
         margin: 20px 0;
     }
-    /* 其他样式保持不变... */
+    /* 时间线容器样式 */
+    :global(.vis-timeline) {
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        @apply bg-background;
+    }
+
+    /* 标签集中的标签样式 */
+    :global(.vis-timeline .vis-labelset .vis-label) {
+        display: flex;
+        align-items: center;
+        /* padding-left: 1rem; */
+        /* padding-right: 1rem; */
+        border-bottom: none;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    /* 前景中组的边框样式 */
+    :global(.vis-timeline .vis-foreground .vis-group) {
+        border-bottom: none;
+    }
+
+    /* 时间线项目的基本样式 */
+    :global(.vis-timeline .vis-item) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-blue-300 text-foreground border-blue-300;
+    }
+
+    :global(.vis-item.blue) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-blue-300 text-foreground border-blue-300;
+    }
+
+    /* yelloW */
+    :global(.vis-item.yellow) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-yellow-300  text-foreground border-yellow-300;
+    }
+
+    /* red */
+    :global(.vis-item.red) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-red-300  text-foreground border-red-300;
+    }
+
+    :global(.vis-item.green) {
+        position: absolute;
+        border-width: 1px;
+        border-radius: var(--radius) !important;
+        @apply bg-green-300 text-foreground border-green-300;
+    }
+
+    /* 选中状态的时间线项目样式 */
+    /* :global(.vis-timeline .vis-item.vis-selected) {
+        @apply bg-orange-100 text-foreground bg-orange-200;
+    } */
+
+    /* 时间线项目内容样式 */
+    :global(.vis-timeline .vis-item .vis-item-content) {
+        padding: 0.75rem 1rem;
+        width: 100%;
+        transform: none !important;
+    }
+
+    /* 时间轴样式 */
+    :global(.vis-timeline .vis-time-axis) {
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    /* 时间轴文本样式 */
+    :global(.vis-timeline .vis-time-axis .vis-text) {
+        @apply text-muted-foreground;
+    }
+
+    /* 时间轴次要网格线样式 */
+    :global(.vis-timeline .vis-time-axis .vis-grid.vis-minor) {
+        @apply border-gray-300;
+    }
+
+    /* 时间轴垂直网格线样式 */
+    :global(.vis-timeline .vis-time-axis .vis-grid.vis-vertical) {
+        border-left-style: dashed !important;
+    }
+
+    /* 移除面板阴影 */
+    :global(.vis-timeline .vis-panel .vis-shadow) {
+        box-shadow: none !important;
+    }
+
+    /* 面板边框颜色设置 */
+    :global(
+            .vis-timeline .vis-panel.vis-bottom,
+            .vis-timeline .vis-panel.vis-center,
+            .vis-timeline .vis-panel.vis-left,
+            .vis-timeline .vis-panel.vis-right,
+            .vis-timeline .vis-panel.vis-top
+        ) {
+        border-color: var(--border) !important;
+    }
+
+    /* 当前时间指示器样式 */
+    :global(.vis-timeline .vis-current-time) {
+        background-color: transparent !important;
+        width: 200px !important;
+        position: relative !important;
+        left: -200px !important;
+        background: linear-gradient(
+            to right,
+            rgba(23, 198, 83, 0) 0%,
+            rgba(23, 198, 83, 0.1) 45%,
+            rgba(23, 198, 83, 0.2) 99%,
+            rgba(23, 198, 83, 1) 100%
+        ) !important;
+    }
+
+    /* :global(
+            .vis-panel.vis-center,
+            .vis-panel.vis-left,
+            .vis-panel.vis-right,
+            .vis-panel.vis-top,
+            .vis-panel.vis-bottom
+        ) {
+        border: 0px solid;
+    } */
+
+    /* 主要刻度文字（日期） */
+    /* :global(.vis-time-axis .vis-text.vis-major) {
+        font-weight: bold;
+    } */
+
+    /* 次要刻度（小时、分钟） */
+    /* :global(.vis-time-axis .vis-grid.vis-minor) {
+        border-color: transparent;
+    } */
+
+    /* 主要刻度（日期） */
+    /* :global(.vis-time-axis .vis-grid.vis-major) {
+        border-color: orange;
+    } */
+
+    /* 今天日期背景颜色 */
+    :global(.vis-time-axis .vis-grid.vis-today) {
+        /* background: var(--destructive); */
+        @apply bg-neutral-100;
+    }
+    /* .vis-rolling-mode-btn */
+    :global(.vis-rolling-mode-btn) {
+        @apply bg-blue-300;
+    }
+
+    /* 字体大小 */
+    :global(.gantt-item-title) {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    :global(.gantt-item-tags) {
+        display: flex;
+        gap: 4px;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+
+    :global(.gantt-item-tag) {
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
 </style>
