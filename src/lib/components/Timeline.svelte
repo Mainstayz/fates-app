@@ -3,7 +3,7 @@
     import { onMount, onDestroy } from "svelte";
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
-    import type { TimelineItem, TimelineGroup } from "$lib/types";
+    import type { TimelineItem, TimelineGroup, TimelineItemInternal } from "$lib/types";
 
     const props = $props<{
         zoomMin?: number;
@@ -33,7 +33,7 @@
     let timeline: Timeline;
     let container: HTMLElement;
     let resetTimeout: number | undefined;
-    let itemsDataSet: DataSet<TimelineItem>;
+    let itemsDataSet: DataSet<TimelineItemInternal>;
     let groupsDataSet: DataSet<TimelineGroup> | undefined;
 
     let ganttItemTemplate: string = `
@@ -65,9 +65,47 @@
         }
     };
 
+    // 转换 TimelineItem 到 TimelineItemInternal
+    function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
+        // 使用 handlebars 模板渲染内容
+        const renderedContent = template({
+            content: item.content,
+            tags: item.tags,
+            className: item.className
+        });
+
+        return {
+            ...item,
+            content: renderedContent,
+            // 存储原始数据，用于转换回 TimelineItem
+            _raw: {
+                content: item.content,
+                tags: item.tags
+            }
+        };
+    }
+
+    // 转换 TimelineItemInternal 回 TimelineItem
+    function convertToExternalItem(item: TimelineItemInternal): TimelineItem {
+        if (!item._raw) {
+            throw new Error('Internal item missing _raw data');
+        }
+
+        return {
+            id: item.id,
+            group: item.group,
+            content: item._raw.content,
+            start: item.start,
+            end: item.end,
+            tags: item._raw.tags,
+            className: item.className
+        };
+    }
+
     onMount(() => {
-        // 创建数据集
-        itemsDataSet = new DataSet(props.items || []);
+        // 转换初始数据
+        const internalItems = (props.items || []).map(convertToInternalItem);
+        itemsDataSet = new DataSet(internalItems);
 
         // 只在有 groups 数据时才创建和使用 groupsDataSet
         const groups = props.groups || [];
@@ -117,24 +155,42 @@
                 follow: true,
                 offset: 0.5,
             },
+            onAdd: props.onAdd ?
+                (item: TimelineItemInternal, callback) => {
+                    props.onAdd!(
+                        convertToExternalItem(item),
+                        (resultItem) => callback(resultItem ? convertToInternalItem(resultItem) : null)
+                    );
+                } : undefined,
+            onMove: props.onMove ?
+                (item: TimelineItemInternal, callback) => {
+                    props.onMove!(
+                        convertToExternalItem(item),
+                        (resultItem) => callback(resultItem ? convertToInternalItem(resultItem) : null)
+                    );
+                } : undefined,
+            onMoving: props.onMoving ?
+                (item: TimelineItemInternal, callback) => {
+                    props.onMoving!(
+                        convertToExternalItem(item),
+                        (resultItem) => callback(resultItem ? convertToInternalItem(resultItem) : null)
+                    );
+                } : undefined,
+            onUpdate: props.onUpdate ?
+                (item: TimelineItemInternal, callback) => {
+                    props.onUpdate!(
+                        convertToExternalItem(item),
+                        (resultItem) => callback(resultItem ? convertToInternalItem(resultItem) : null)
+                    );
+                } : undefined,
+            onRemove: props.onRemove ?
+                (item: TimelineItemInternal, callback) => {
+                    props.onRemove!(
+                        convertToExternalItem(item),
+                        (resultItem) => callback(resultItem ? convertToInternalItem(resultItem) : null)
+                    );
+                } : undefined,
         };
-
-        // 判断并设置回调函数
-        if (props.onAdd) {
-            options.onAdd = props.onAdd;
-        }
-        if (props.onMove) {
-            options.onMove = props.onMove;
-        }
-        if (props.onMoving) {
-            options.onMoving = props.onMoving;
-        }
-        if (props.onUpdate) {
-            options.onUpdate = props.onUpdate;
-        }
-        if (props.onRemove) {
-            options.onRemove = props.onRemove;
-        }
 
         // 初始化时间线，只在有 groups 时传入 groupsDataSet
         timeline = new Timeline(
@@ -164,10 +220,11 @@
         if (itemsDataSet && props.items) {
             const currentIds = new Set(itemsDataSet.getIds());
             props.items.forEach((item: TimelineItem) => {
+                const internalItem = convertToInternalItem(item);
                 if (currentIds.has(item.id)) {
-                    itemsDataSet.update(item);
+                    itemsDataSet.update(internalItem);
                 } else {
-                    itemsDataSet.add(item);
+                    itemsDataSet.add(internalItem);
                 }
                 currentIds.delete(item.id);
             });
@@ -211,7 +268,7 @@
     // 暴露添加单个项目的方法
     export function addItem(item: TimelineItem) {
         if (itemsDataSet) {
-            itemsDataSet.add(item);
+            itemsDataSet.add(convertToInternalItem(item));
         }
     }
 
@@ -246,7 +303,7 @@
     // 暴露获取所有 items 的方法
     export function getAllItems(): TimelineItem[] {
         if (itemsDataSet) {
-            return itemsDataSet.get();
+            return itemsDataSet.get().map(convertToExternalItem);
         }
         return [];
     }
@@ -262,7 +319,7 @@
     // 添加更新项目的方法
     export function updateItem(item: TimelineItem) {
         if (itemsDataSet) {
-            itemsDataSet.update(item);
+            itemsDataSet.update(convertToInternalItem(item));
         }
     }
 
