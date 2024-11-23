@@ -41,12 +41,14 @@
     // Handlebars 模板
     const template = Handlebars.compile(`
         <div class="gantt-item">
-            <div class="gantt-item-title">{{content}}</div>
-            {{#if tags}}
-            <div class="gantt-item-tags">
-                {{#each tags}}<span class="gantt-item-tag"> {{this}} </span>{{/each}}
+            <div class="gantt-item-content">
+                <div class="gantt-item-title">{{content}}</div>
+                {{#if tags}}
+                    <div class="gantt-item-tags">
+                        {{#each tags}}<span class="gantt-item-tag"> {{this}} </span>{{/each}}
+                    </div>
+                {{/if}}
             </div>
-            {{/if}}
         </div>
     `);
 
@@ -413,6 +415,20 @@
     /* .vis-rolling-mode-btn */
     :global(.vis-rolling-mode-btn) {
         @apply bg-blue-300;
+    }
+    /* .vis-timeline .vis-item .vis-item-content */
+    :global(.vis-timeline .vis-item .vis-item-content) {
+        padding: 0.5rem 0.75rem;
+    }
+
+    :global(.gantt-item) {
+        /* 固定高度 */
+        height: 32px;
+        /* 内容水平居中 */
+        display: flex;
+        align-items: center;
+        /* 内容垂直居中 */
+        /* justify-content: center; */
     }
 
     /* 字体大小 */
