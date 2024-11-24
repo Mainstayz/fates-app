@@ -60,8 +60,6 @@
             className: item.className,
         });
 
-        console.log(renderedContent);
-
         return {
             ...item,
             content: renderedContent,

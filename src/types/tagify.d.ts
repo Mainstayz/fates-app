@@ -1,32 +1,41 @@
 declare module '@yaireo/tagify' {
-    export interface TagifySettings {
+    interface TagifySettings {
         maxTags?: number;
         backspace?: boolean;
         placeholder?: string;
         dropdown?: {
             enabled?: number;
-            maxItems?: number;
-            position?: string;
-            closeOnSelect?: boolean;
-            searchKeys?: string[];
             classname?: string;
+            maxItems?: number;
+            closeOnSelect?: boolean;
         };
         whitelist?: string[];
     }
 
-    export interface TagifyTag {
+    interface TagifyValue {
         value: string;
         [key: string]: any;
     }
 
-    export default class Tagify {
+    class Tagify {
         constructor(input: HTMLInputElement, settings?: TagifySettings);
-        destroy(): void;
-        addTags(tags: string[] | string): void;
-        removeTag(tag: HTMLElement): void;
-        on(event: string, callback: Function): void;
-        off(event: string, callback: Function): void;
-        value: TagifyTag[];
+
+        value: TagifyValue[];
         settings: TagifySettings;
+        DOM: {
+            input: HTMLInputElement;
+            scope: HTMLElement;
+        };
+
+        destroy(): void;
+        removeTag(tag: string | number): void;
+        removeAllTags(): void;
+        addTags(tags: string[]): void;
+        whitelist: string[];
+
+        on(event: string, callback: (e: { detail: any }) => void): void;
+        off(event: string, callback?: (e: { detail: any }) => void): void;
     }
+
+    export default Tagify;
 }
