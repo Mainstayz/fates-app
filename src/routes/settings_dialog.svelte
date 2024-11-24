@@ -1,5 +1,6 @@
 <script lang="ts">
     import * as Dialog from "$lib/components/ui/dialog";
+    import * as Select from "$lib/components/ui/select";
     import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
     import { load } from '@tauri-apps/plugin-store';
     import { onMount, onDestroy } from 'svelte';
@@ -9,6 +10,15 @@
     let autoStart = $state(false);
     let checkInterval = $state(2); // 默认 2 小时
 
+    // 添加语言选项配置
+    const languages = [
+        { value: "zh", label: "中文" },
+        { value: "en", label: "English" }
+    ] as const;
+
+    function getLanguageLabel(value: string) {
+        return languages.find((l) => l.value === value)?.label ?? "选择语言";
+    }
 
     async function toggleAutoStart(enabled: boolean) {
         console.log("设置开机启动：", enabled);
@@ -70,14 +80,20 @@
         <div class="grid gap-4 py-4">
             <div class="grid grid-cols-4 items-center gap-4">
                 <label for="language-select" class="text-right">语言</label>
-                <select
-                    id="language-select"
-                    class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
-                    bind:value={language}
-                >
-                    <option value="zh">中文</option>
-                    <option value="en">English</option>
-                </select>
+                <div class="col-span-3">
+                    <Select.Root type="single" bind:value={language}>
+                        <Select.Trigger class="w-full">
+                            {getLanguageLabel(language)}
+                        </Select.Trigger>
+                        <Select.Content>
+                            {#each languages as languageOption}
+                                <Select.Item value={languageOption.value}>
+                                    {languageOption.label}
+                                </Select.Item>
+                            {/each}
+                        </Select.Content>
+                    </Select.Root>
+                </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
                 <label for="autostart-checkbox" class="text-right">开机启动</label>
@@ -86,7 +102,7 @@
                         id="autostart-checkbox"
                         type="checkbox"
                         bind:checked={autoStart}
-                        onchange={(e) => toggleAutoStart(e.currentTarget.checked)}
+                        onchange={(e: Event) => toggleAutoStart((e.currentTarget as HTMLInputElement).checked)}
                     />
                 </div>
             </div>
