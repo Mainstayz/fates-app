@@ -36,7 +36,6 @@ export const tagStore = {
 
     // 添加新标签
     async addTags(newTags: string[]) {
-        console.log(`addTags: ${newTags}`);
         if (!store) {
             await this.initialize();
         }

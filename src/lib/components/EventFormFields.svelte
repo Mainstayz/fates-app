@@ -1,29 +1,21 @@
 <script lang="ts">
-    // 导入语句分组
+    // 1. 将导入语句按功能分组并添加注释
+    // UI Components
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
+
+    // Third-party libraries
     import { z } from "zod";
     import Tagify from "@yaireo/tagify";
     import "@yaireo/tagify/dist/tagify.css";
 
+    // Utils & Stores
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { tagStore } from "$lib/stores/tagStore";
 
-    // Props 定义分组
-    let {
-        title = $bindable(""),
-        tags = $bindable(""),
-        color = $bindable("blue" as const),
-        startDateInput = $bindable(formatDateForInput(new Date())),
-        startTimeInput = $bindable(formatTimeForInput(new Date())),
-        endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
-        endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
-        onSubmit = $bindable((data: EventFormData) => {})
-    } = $props<EventFormProps>();
-
-    // 类型定义分组
+    // 2. 将类型定义移到顶部
     type EventFormData = {
         title: string;
         tags: string[];
@@ -32,16 +24,37 @@
         endTime: Date;
     };
 
-    type EventFormProps = {
-        title?: string;
-        tags?: string;
-        color?: "blue" | "green" | "red" | "yellow";
-        startDateInput?: string;
-        startTimeInput?: string;
-        endDateInput?: string;
-        endTimeInput?: string;
-        onSubmit?: (data: EventFormData) => void;
+    // 3. 将常量配置集中管理
+    const COLORS = [
+        { value: "blue", label: "普通任务" },
+        { value: "green", label: "低优先级" },
+        { value: "red", label: "高优先级" },
+        { value: "yellow", label: "中优先级" },
+    ] as const;
+
+    const TAGIFY_CONFIG = {
+        maxTags: 3,
+        backspace: true,
+        placeholder: "输入标签",
+        dropdown: {
+            enabled: 1,
+            classname: "tags-look",
+            maxItems: 5,
+            closeOnSelect: false,
+        }
     };
+
+    // 4. Props 定义更简洁
+    let {
+        title = $bindable(""),
+        tags = $bindable(""),
+        color = $bindable("blue" as const),
+        startDateInput = $bindable(formatDateForInput(new Date())),
+        startTimeInput = $bindable(formatTimeForInput(new Date())),
+        endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
+        endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
+        onSubmit = $bindable((data: EventFormData) => {}),
+    } = $props();
 
     // 单错误状态
     let errors = $state<Record<string, string | undefined>>({
@@ -51,16 +64,9 @@
         endDate: undefined,
         timeRange: undefined,
     });
-    // 优先级
-    const colors = [
-        { value: "blue", label: "普通任务" },
-        { value: "green", label: "低优先级" },
-        { value: "red", label: "高优先级" },
-        { value: "yellow", label: "中优先级" },
-    ] as const;
 
     function getColorLabel(value: string) {
-        return colors.find((c) => c.value === value)?.label ?? "选择优先级";
+        return COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
     }
 
     // 表单验证相关函数分组
@@ -86,6 +92,7 @@
     }
 
     function validateForm() {
+        console.log('🔍 开始表单验证');
         resetErrors();
 
         try {
@@ -98,9 +105,11 @@
                 endDate: endDateInput,
                 endTime: endTimeInput,
             });
+            console.log('✅ Zod schema 验证通过');
 
             return validateTimeRange();
         } catch (error) {
+            console.error('❌ 表单验证失败:', error);
             handleValidationError(error);
             return false;
         }
@@ -127,11 +136,25 @@
     }
 
     function handleSubmit() {
+        console.log('📝 提交表单，当前数据:', {
+            title,
+            tags,
+            color,
+            startDateInput,
+            startTimeInput,
+            endDateInput,
+            endTimeInput
+        });
+
         if (validateForm()) {
             const startDateTime = updateDateTime(startDateInput, startTimeInput);
             const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
-            // 使用回调函数而不是事件
+            console.log('✨ 表单验证通过，处理后的数据:', {
+                startDateTime,
+                endDateTime
+            });
+
             onSubmit({
                 title,
                 tags: tags.split(",").map((tag: string) => tag.trim()),
@@ -150,33 +173,27 @@
 
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
+        console.log('📚 加载历史标签:', tags);
         historicalTags = tags;
         // 果 tagify 已经初始化，立即更新白名单
         if (tagify) {
+            console.log('📝 更新 Tagify 白名单');
             tagify.whitelist = tags;
         }
     });
 
     $effect(() => {
+        console.log('🏗️ Tagify 初始化开始');
         if (tagifyInput) {
-            tagify = new Tagify(tagifyInput, {
-                maxTags: 3,
-                backspace: true,
-                placeholder: "输入标签",
-                dropdown: {
-                    enabled: 1, // 可以解决 maxItems，maxTags 问题
-                    classname: "tags-look",
-                    maxItems: 5,
-                    closeOnSelect: false,
-                },
-                whitelist: historicalTags,
-            });
+            tagify = new Tagify(tagifyInput, TAGIFY_CONFIG);
+            console.log('📋 Tagify 配置:', TAGIFY_CONFIG);
 
             // 同步 tags 值并保存新标签
             tagify.on("add", async (e) => {
-                console.log("tagify add ...", e);
+                console.log('➕ Tagify 添加标签:', e.detail);
                 const tagifyValue = tagify.value;
                 const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
+                console.log('📌 当前所有标签:', newTags);
                 tags = newTags.join(",");
 
                 // 保存新标签到存储并更新建议列表
@@ -185,26 +202,28 @@
                 tagify.whitelist = updatedTags;
 
                 // 如果标签数量达到最大值，禁用输入但保持可删除
-                if (tagify.value.length >= tagify.settings.maxTags) {
-                    tagify.DOM.input.style.display = "none"; // 隐藏输入框而不是设置只读
+                if (tagify.value.length >= (tagify.settings?.maxTags ?? 3)) {
+                    tagify.DOM.input.style.display = "none";
                 }
             });
 
             // 修改 remove 事件处理
             tagify.on("remove", (e) => {
-                console.log("tagify remove ... ", e);
+                console.log('➖ Tagify 移除标签:', e.detail);
                 const tagifyValue = tagify.value;
                 const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
+                console.log('📌 剩余标签:', currentTags);
                 tags = currentTags.join(",");
 
                 // 如果标签数量减少，重新显示输入框
-                if (tagify.value.length < tagify.settings.maxTags) {
+                if (tagify.value.length < (tagify.settings?.maxTags ?? 3)) {
                     tagify.DOM.input.style.display = ""; // 恢复输入框显示
                 }
             });
 
             // 初始化已有的标签
             if (tags) {
+                console.log('🔄 初始化现有标签:', tags);
                 const initialTags = tags
                     .split(",")
                     .map((tag: string) => tag.trim())
@@ -221,7 +240,7 @@
         }
 
         return () => {
-            console.log("tagify destroy ...");
+            console.log('🧹 清理 Tagify 实例');
             if (tagify) {
                 // 移除事件监听
                 tagify.off("add");
@@ -318,7 +337,7 @@
                 {getColorLabel(color)}
             </Select.Trigger>
             <Select.Content>
-                {#each colors as colorOption}
+                {#each COLORS as colorOption}
                     <Select.Item value={colorOption.value}>
                         {colorOption.label}
                     </Select.Item>
