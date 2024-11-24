@@ -1,15 +1,17 @@
 <script lang="ts">
+    // 导入语句分组
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
     import { z } from "zod";
-    import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
     import Tagify from "@yaireo/tagify";
     import "@yaireo/tagify/dist/tagify.css";
+
+    import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { tagStore } from "$lib/stores/tagStore";
 
-    // 修改为接收 onSubmit 回调函数
+    // Props 定义分组
     let {
         title = $bindable(""),
         tags = $bindable(""),
@@ -18,16 +20,19 @@
         startTimeInput = $bindable(formatTimeForInput(new Date())),
         endDateInput = $bindable(formatDateForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
         endTimeInput = $bindable(formatTimeForInput(new Date(Date.now() + 2 * 60 * 60 * 1000))),
-        onSubmit = $bindable(
-            (data: {
-                title: string;
-                tags: string[];
-                color: "blue" | "green" | "red" | "yellow";
-                startTime: Date;
-                endTime: Date;
-            }) => {}
-        ),
-    } = $props<{
+        onSubmit = $bindable((data: EventFormData) => {})
+    } = $props<EventFormProps>();
+
+    // 类型定义分组
+    type EventFormData = {
+        title: string;
+        tags: string[];
+        color: "blue" | "green" | "red" | "yellow";
+        startTime: Date;
+        endTime: Date;
+    };
+
+    type EventFormProps = {
         title?: string;
         tags?: string;
         color?: "blue" | "green" | "red" | "yellow";
@@ -35,17 +40,8 @@
         startTimeInput?: string;
         endDateInput?: string;
         endTimeInput?: string;
-        onSubmit?: (data: {
-            title: string;
-            tags: string[];
-            color: "blue" | "green" | "red" | "yellow";
-            startTime: Date;
-            endTime: Date;
-        }) => void;
-    }>();
-    $inspect(tags).with((type, value) => {
-        console.log(`tags: ${type} ${value}`);
-    });
+        onSubmit?: (data: EventFormData) => void;
+    };
 
     // 单错误状态
     let errors = $state<Record<string, string | undefined>>({
@@ -67,7 +63,7 @@
         return colors.find((c) => c.value === value)?.label ?? "选择优先级";
     }
 
-    // 表单验证 schema
+    // 表单验证相关函数分组
     const formSchema = z.object({
         title: z.string().min(1, "标题不能为空"),
         tags: z.string(),
@@ -78,7 +74,6 @@
         endTime: z.string().min(1, "请选择结束时间"),
     });
 
-    // 验证时间范围
     function validateTimeRange(): boolean {
         const startDateTime = updateDateTime(startDateInput, startTimeInput);
         const endDateTime = updateDateTime(endDateInput, endTimeInput);
@@ -91,15 +86,9 @@
     }
 
     function validateForm() {
-        errors = {
-            title: undefined,
-            tags: undefined,
-            startDate: undefined,
-            endDate: undefined,
-            timeRange: undefined,
-        };
+        resetErrors();
+
         try {
-            // 首先验证基本字段
             formSchema.parse({
                 title,
                 tags,
@@ -110,21 +99,30 @@
                 endTime: endTimeInput,
             });
 
-            // 然后验证时间范围
-            if (!validateTimeRange()) {
-                return false;
-            }
-
-            return true;
+            return validateTimeRange();
         } catch (error) {
-            if (error instanceof z.ZodError) {
-                error.errors.forEach((err) => {
-                    if (err.path) {
-                        errors[err.path[0] as keyof typeof errors] = err.message;
-                    }
-                });
-            }
+            handleValidationError(error);
             return false;
+        }
+    }
+
+    function resetErrors() {
+        errors = {
+            title: undefined,
+            tags: undefined,
+            startDate: undefined,
+            endDate: undefined,
+            timeRange: undefined,
+        };
+    }
+
+    function handleValidationError(error: unknown) {
+        if (error instanceof z.ZodError) {
+            error.errors.forEach((err) => {
+                if (err.path) {
+                    errors[err.path[0] as keyof typeof errors] = err.message;
+                }
+            });
         }
     }
 
