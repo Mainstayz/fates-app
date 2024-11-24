@@ -5,6 +5,8 @@
     import { Button } from "$lib/components/ui/button";
     import { z } from "zod";
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
+    import Tagify from '@yaireo/tagify';
+    import '@yaireo/tagify/dist/tagify.css';
 
     // 修改为接收 onSubmit 回调函数
     let {
@@ -137,6 +139,40 @@
             });
         }
     }
+
+    let tagifyInput: HTMLInputElement;
+    let tagify: Tagify;
+
+    $effect(() => {
+        if (tagifyInput) {
+            tagify = new Tagify(tagifyInput, {
+                maxTags: 10,
+                backspace: true,
+                placeholder: "输入标签",
+                dropdown: {
+                    enabled: 0
+                }
+            });
+
+            // 同步 tags 值
+            tagify.on('change', (e) => {
+                const tagifyValue = tagify.value;
+                tags = tagifyValue.map(tag => tag.value).join(',');
+            });
+
+            // 初始化已有的标签
+            if (tags) {
+                const initialTags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                tagify.addTags(initialTags);
+            }
+        }
+
+        return () => {
+            if (tagify) {
+                tagify.destroy();
+            }
+        };
+    });
 </script>
 
 <form
@@ -158,11 +194,10 @@
 
     <div class="grid gap-2">
         <Label for="tags">标签</Label>
-        <Input
-            type="text"
-            bind:value={tags}
-            placeholder="输入标签，用逗号分隔"
-            class={errors.tags ? "border-destructive" : ""}
+        <input
+            bind:this={tagifyInput}
+            name="tags"
+            class={`tagify-input ${errors.tags ? "border-destructive" : ""}`}
         />
         {#if errors.tags}
             <span class="text-sm text-destructive">
@@ -251,4 +286,43 @@
     :global([type="time"]) {
         background-color: var(--background) !important;
     }
+    /* <input
+    class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50" type="text" autocomplete="off" placeholder="输入任务标题">
+    */
+    :global(.tagify) {
+        --tags-border-color: var(--input);
+        background-color: var(--background);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        font-size: 0.875rem;
+        height: 2.5rem;
+    }
+
+    /*
+
+    :global(.tagify:hover) {
+        border-color: var(--input);
+    }
+
+    :global(.tagify.border-destructive) {
+        border-color: var(--destructive);
+    }
+
+    :global(.tagify__tag) {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+    }
+
+    :global(.tagify__tag__removeBtn) {
+        color: var(--primary-foreground);
+        opacity: 0.75;
+    }
+
+    :global(.tagify__tag__removeBtn:hover) {
+        opacity: 1;
+    }
+
+    :global(.tagify__input) {
+        color: var(--foreground);
+    } */
 </style>
