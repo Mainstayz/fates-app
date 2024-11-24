@@ -150,12 +150,16 @@
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
         historicalTags = tags;
+        // 如果 tagify 已经初始化，立即更新白名单
+        if (tagify) {
+            tagify.whitelist = tags;
+        }
     });
 
     $effect(() => {
         if (tagifyInput) {
             tagify = new Tagify(tagifyInput, {
-                maxTags: 1,
+                maxTags: 3,
                 backspace: true,
                 placeholder: "输入标签",
                 dropdown: {
