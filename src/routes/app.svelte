@@ -40,23 +40,23 @@
 <div class="w-full h-full">
     <Resizable.PaneGroup direction="horizontal" class="h-full items-stretch" {onLayoutChange}>
         <Resizable.Pane
-        defaultSize={navCollapsedSize}
-        collapsedSize={navCollapsedSize}
-        minSize={navCollapsedSize}
-        maxSize={navCollapsedSize}
-        collapsible={true}
-    >
-        <Nav routes={primaryRoutes} {onRouteSelect} {onSettingsClick} />
-    </Resizable.Pane>
-    <Resizable.Handle />
-    <Resizable.Pane>
-        {#if selectedRoute === "timeline" || selectedRoute === ""}
-            <TimelinePage bind:this={timelineComponent} />
-        {/if}
-        {#if selectedRoute === "statistics"}
-            <StatisticsPage bind:this={statisticsComponent} items={timelineData?.items ?? []} />
-        {/if}
-    </Resizable.Pane>
+            defaultSize={navCollapsedSize}
+            collapsedSize={navCollapsedSize}
+            minSize={navCollapsedSize}
+            maxSize={navCollapsedSize}
+            collapsible={true}
+        >
+            <Nav routes={primaryRoutes} {onRouteSelect} {onSettingsClick} />
+        </Resizable.Pane>
+        <Resizable.Handle />
+        <Resizable.Pane>
+            {#if selectedRoute === "timeline" || selectedRoute === ""}
+                <TimelinePage bind:this={timelineComponent} />
+            {/if}
+            {#if selectedRoute === "statistics"}
+                <StatisticsPage bind:this={statisticsComponent} items={timelineData?.items ?? []} />
+            {/if}
+        </Resizable.Pane>
     </Resizable.PaneGroup>
 </div>
 

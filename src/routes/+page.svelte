@@ -4,14 +4,9 @@
 
 <main class="noSelect w-full h-full">
     <App />
-
 </main>
 
 <style>
-    /* 可以删除之前的样式，因为现在使用 Tailwind CSS */
-    /* :global(.container) {
-        -webkit-tap-highlight-color: transparent;
-    } */
     .noSelect {
         -webkit-tap-highlight-color: transparent;
         -webkit-touch-callout: none;
