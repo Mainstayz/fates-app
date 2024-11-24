@@ -5,8 +5,9 @@
     import { Button } from "$lib/components/ui/button";
     import { z } from "zod";
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
-    import Tagify from '@yaireo/tagify';
-    import '@yaireo/tagify/dist/tagify.css';
+    import Tagify from "@yaireo/tagify";
+    import "@yaireo/tagify/dist/tagify.css";
+    import { tagStore } from "$lib/stores/tagStore";
 
     // 修改为接收 onSubmit 回调函数
     let {
@@ -143,27 +144,53 @@
     let tagifyInput: HTMLInputElement;
     let tagify: Tagify;
 
+    // 修改订阅标签存储部分
+    let historicalTags: string[] = [];
+
+    // 初始加载历史标签
+    tagStore.getTags().then((tags) => {
+        historicalTags = tags;
+    });
+
     $effect(() => {
         if (tagifyInput) {
             tagify = new Tagify(tagifyInput, {
-                maxTags: 10,
+                maxTags: 1,
                 backspace: true,
                 placeholder: "输入标签",
                 dropdown: {
-                    enabled: 0
-                }
+                    enabled: 0,
+                    classname: "tags-look",
+                    maxItems: 10,
+                    closeOnSelect: false,
+                },
+                whitelist: historicalTags,
             });
 
-            // 同步 tags 值
-            tagify.on('change', (e) => {
+            // 同步 tags 值并保存新标签
+            tagify.on("add", async () => {
                 const tagifyValue = tagify.value;
-                tags = tagifyValue.map(tag => tag.value).join(',');
+                const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
+                tags = newTags.join(",");
+
+                // 保存新标签到存储并更新建议列表
+                const updatedTags = await tagStore.addTags(newTags);
+                historicalTags = updatedTags;
+                tagify.settings.whitelist = updatedTags;
             });
 
             // 初始化已有的标签
             if (tags) {
-                const initialTags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                const initialTags = tags
+                    .split(",")
+                    .map((tag: string) => tag.trim())
+                    .filter(Boolean);
                 tagify.addTags(initialTags);
+                // 保存初始标签到存储
+                tagStore.addTags(initialTags).then((updatedTags) => {
+                    historicalTags = updatedTags;
+                    tagify.settings.whitelist = updatedTags;
+                });
             }
         }
 
@@ -177,7 +204,7 @@
 
 <form
     class="grid gap-4"
-    onsubmit={(e: { preventDefault: () => void; }) => {
+    onsubmit={(e: { preventDefault: () => void }) => {
         e.preventDefault();
         handleSubmit();
     }}
@@ -194,11 +221,7 @@
 
     <div class="grid gap-2">
         <Label for="tags">标签</Label>
-        <input
-            bind:this={tagifyInput}
-            name="tags"
-            class={`tagify-input ${errors.tags ? "border-destructive" : ""}`}
-        />
+        <input bind:this={tagifyInput} name="tags" class={`tagify-input ${errors.tags ? "border-destructive" : ""}`} />
         {#if errors.tags}
             <span class="text-sm text-destructive">
                 {errors.tags}
@@ -258,8 +281,6 @@
         </span>
     {/if}
 
-
-
     <div class="grid gap-2">
         <Label for="color">优先级</Label>
         <Select.Root type="single" bind:value={color}>
@@ -278,7 +299,6 @@
 
     <Button type="submit" class="w-full">提交</Button>
 </form>
-
 
 <style>
     :global([type="text"]),
@@ -331,4 +351,36 @@
     :global(.tagify__input) {
         color: var(--foreground);
     } */
+
+    :global(.tags-look) {
+        border-width: 0px;
+        margin-top: 2px;
+    }
+
+    /* tagify__dropdown__wrapper */
+    :global(.tagify__dropdown__wrapper) {
+        border-width: 0px;
+    }
+
+    /* 标签下拉框样式 */
+    :global(.tags-look .tagify__dropdown__item) {
+        display: inline-block;
+        border-radius: 3px;
+        padding: 0.3em 0.5em;
+        border: 1px solid #ccc;
+        background: #f3f3f3;
+        margin: 0.2em;
+        font-size: 0.85em;
+        color: black;
+        transition: 0s;
+    }
+
+    :global(.tags-look .tagify__dropdown__item--active) {
+        color: black;
+    }
+
+    :global(.tags-look .tagify__dropdown__item:hover) {
+        background: lightyellow;
+        border-color: gold;
+    }
 </style>
