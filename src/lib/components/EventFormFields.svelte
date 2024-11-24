@@ -43,6 +43,9 @@
             endTime: Date;
         }) => void;
     }>();
+    $inspect(tags).with((type, value) => {
+        console.log(`tags: ${type} ${value}`);
+    });
 
     // 单错误状态
     let errors = $state<Record<string, string | undefined>>({
@@ -150,7 +153,7 @@
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
         historicalTags = tags;
-        // ��果 tagify 已经初始化，立即更新白名单
+        // 果 tagify 已经初始化，立即更新白名单
         if (tagify) {
             tagify.whitelist = tags;
         }
@@ -163,16 +166,17 @@
                 backspace: true,
                 placeholder: "输入标签",
                 dropdown: {
-                    enabled: 0,
+                    enabled: 1, // 可以解决 maxItems，maxTags 问题
                     classname: "tags-look",
-                    maxItems: 10,
+                    maxItems: 5,
                     closeOnSelect: false,
                 },
                 whitelist: historicalTags,
             });
 
             // 同步 tags 值并保存新标签
-            tagify.on("add", async () => {
+            tagify.on("add", async (e) => {
+                console.log("tagify add ...", e);
                 const tagifyValue = tagify.value;
                 const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
                 tags = newTags.join(",");
@@ -180,14 +184,25 @@
                 // 保存新标签到存储并更新建议列表
                 const updatedTags = await tagStore.addTags(newTags);
                 historicalTags = updatedTags;
-                tagify.settings.whitelist = updatedTags;
+                tagify.whitelist = updatedTags;
+
+                // 如果标签数量达到最大值，禁用输入但保持可删除
+                if (tagify.value.length >= tagify.settings.maxTags) {
+                    tagify.DOM.input.style.display = "none"; // 隐藏输入框而不是设置只读
+                }
             });
 
-            // 添加 remove 事件处理
-            tagify.on("remove", () => {
+            // 修改 remove 事件处理
+            tagify.on("remove", (e) => {
+                console.log("tagify remove ... ", e);
                 const tagifyValue = tagify.value;
                 const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
                 tags = currentTags.join(",");
+
+                // 如果标签数量减少，重新显示输入框
+                if (tagify.value.length < tagify.settings.maxTags) {
+                    tagify.DOM.input.style.display = ""; // 恢复输入框显示
+                }
             });
 
             // 初始化已有的标签
@@ -196,18 +211,23 @@
                     .split(",")
                     .map((tag: string) => tag.trim())
                     .filter(Boolean);
+
                 tagify.removeAllTags();
                 tagify.addTags(initialTags);
                 // 保存初始标签到存储
                 tagStore.addTags(initialTags).then((updatedTags) => {
                     historicalTags = updatedTags;
-                    tagify.settings.whitelist = updatedTags;
+                    tagify.whitelist = updatedTags;
                 });
             }
         }
 
         return () => {
+            console.log("tagify destroy ...");
             if (tagify) {
+                // 移除事件监听
+                tagify.off("add");
+                tagify.off("remove");
                 tagify.destroy();
             }
         };
@@ -325,6 +345,8 @@
         --placeholder-color: var(--muted-foreground);
         --placeholder-color-focus: var(--muted-foreground);
 
+        flex-wrap: nowrap;
+
         background-color: var(--background);
         border-radius: var(--radius);
 
@@ -367,6 +389,7 @@
     :global(.tags-look) {
         border-width: 0px;
         margin-top: 2px;
+        flex-wrap: nowrap;
     }
 
     /* tagify__dropdown__wrapper */

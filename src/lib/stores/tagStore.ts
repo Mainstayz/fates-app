@@ -36,6 +36,7 @@ export const tagStore = {
 
     // 添加新标签
     async addTags(newTags: string[]) {
+        console.log(`addTags: ${newTags}`);
         if (!store) {
             await this.initialize();
         }
@@ -45,7 +46,7 @@ export const tagStore = {
             const uniqueTags = [...new Set([...currentTags, ...newTags])];
             // 保持最新的100个标签
             const limitedTags = uniqueTags.slice(-100);
-
+            console.log(`limitedTags: ${limitedTags}`);
             // 保存到文件
             await store.set('tags', { tags: limitedTags });
             await store.save();
