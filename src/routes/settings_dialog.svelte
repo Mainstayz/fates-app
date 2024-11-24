@@ -1,10 +1,13 @@
 <script lang="ts">
     import * as Dialog from "$lib/components/ui/dialog";
     import * as Select from "$lib/components/ui/select";
-    import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
-    import { load } from '@tauri-apps/plugin-store';
-    import { onMount, onDestroy } from 'svelte';
-    let { open = $bindable(), ...props} = $props();
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
+    import { Checkbox } from "$lib/components/ui/checkbox";
+    import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
+    import { load } from "@tauri-apps/plugin-store";
+    import { onMount, onDestroy } from "svelte";
+    let { open = $bindable(), ...props } = $props();
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
@@ -13,7 +16,7 @@
     // 添加语言选项配置
     const languages = [
         { value: "zh", label: "中文" },
-        { value: "en", label: "English" }
+        { value: "en", label: "English" },
     ] as const;
 
     function getLanguageLabel(value: string) {
@@ -38,9 +41,9 @@
         try {
             console.log("初始化设置：");
             autoStart = await isEnabled();
-            let settings = await load('settings.json', { autoSave: false });
-            language = await settings.get<string>('language') || "zh";
-            checkInterval = await settings.get<number>('checkInterval') || 2;
+            let settings = await load("settings.json", { autoSave: false });
+            language = (await settings.get<string>("language")) || "zh";
+            checkInterval = (await settings.get<number>("checkInterval")) || 2;
         } catch (error) {
             console.error("Failed to get autostart status:", error);
         }
@@ -49,15 +52,14 @@
     async function saveSettings() {
         try {
             console.log("保存设置：", language, checkInterval);
-            let settings = await load('settings.json', { autoSave: false });
-            settings.set('language', language);
-            settings.set('checkInterval', checkInterval);
+            let settings = await load("settings.json", { autoSave: false });
+            settings.set("language", language);
+            settings.set("checkInterval", checkInterval);
             await settings.save();
         } catch (error) {
             console.error("保存设置失败：", error);
         }
     }
-
 
     onMount(async () => {
         await initSettings();
@@ -68,18 +70,16 @@
             saveSettings();
         }
     });
-
-
 </script>
 
-<Dialog.Root bind:open={open}>
+<Dialog.Root bind:open>
     <Dialog.Content class="sm:max-w-[800px]">
         <Dialog.Header>
             <Dialog.Title>设置</Dialog.Title>
         </Dialog.Header>
         <div class="grid gap-4 py-4">
             <div class="grid grid-cols-4 items-center gap-4">
-                <label for="language-select" class="text-right">语言</label>
+                <Label for="language-select" class="text-right">语言</Label>
                 <div class="col-span-3">
                     <Select.Root type="single" bind:value={language}>
                         <Select.Trigger class="w-full">
@@ -96,25 +96,20 @@
                 </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
-                <label for="autostart-checkbox" class="text-right">开机启动</label>
+                <Label for="autostart-checkbox" class="text-right">开机启动</Label>
                 <div class="col-span-3">
-                    <input
-                        id="autostart-checkbox"
-                        type="checkbox"
-                        bind:checked={autoStart}
-                        onchange={(e: Event) => toggleAutoStart((e.currentTarget as HTMLInputElement).checked)}
-                    />
+                    <Checkbox id="autostart-checkbox" bind:checked={autoStart} onCheckedChange={toggleAutoStart} />
                 </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
-                <label for="check-interval-input" class="text-right">检测间隔 (小时)</label>
-                <input
+                <Label for="check-interval-input" class="text-right">检测间隔 (小时)</Label>
+                <Input
                     id="check-interval-input"
                     type="number"
                     min="0.5"
                     max="24"
                     step="0.5"
-                    class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+                    class="col-span-3"
                     bind:value={checkInterval}
                 />
             </div>
@@ -124,3 +119,12 @@
         </Dialog.Footer>
     </Dialog.Content>
 </Dialog.Root>
+
+<style>
+    :global([type="text"]),
+    :global([type="date"]),
+    :global([type="number"]),
+    :global([type="time"]) {
+        background-color: var(--background) !important;
+    }
+</style>
