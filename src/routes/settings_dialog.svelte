@@ -3,7 +3,7 @@
     import * as Select from "$lib/components/ui/select";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Checkbox } from "$lib/components/ui/checkbox";
+    import * as Switch from "$lib/components/ui/switch";
     import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
     import { load } from "@tauri-apps/plugin-store";
     import { onMount, onDestroy } from "svelte";
@@ -61,6 +61,16 @@
         }
     }
 
+    async function handleAutoStartChange(checked: boolean) {
+        try {
+            await toggleAutoStart(checked);
+            autoStart = checked;
+        } catch (error) {
+            console.error("设置开机启动失败：", error);
+            autoStart = !checked;
+        }
+    }
+
     onMount(async () => {
         await initSettings();
     });
@@ -96,9 +106,13 @@
                 </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="autostart-checkbox" class="text-right">开机启动</Label>
+                <Label for="autostart-switch" class="text-right">开机启动</Label>
                 <div class="col-span-3">
-                    <Checkbox id="autostart-checkbox" bind:checked={autoStart} onCheckedChange={toggleAutoStart} />
+                    <Switch.Root
+                        id="autostart-switch"
+                        checked={autoStart}
+                        onCheckedChange={handleAutoStartChange}
+                    />
                 </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
