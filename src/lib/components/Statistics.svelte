@@ -111,13 +111,16 @@
             const tagStats = calculateTagStats(items);
 
             // 对标签按时长排序
-            const sortedEntries = Object.entries(tagStats)
-                .sort(([, a], [, b]) => b - a);
+            const sortedEntries = Object.entries(tagStats).sort(([, a], [, b]) => b - a);
 
             // 如果标签数量超过 10 个，只取前 9 个加"其他"
-            const finalEntries = sortedEntries.length > 10
-                ? [...sortedEntries.slice(0, 9), ['其他', sortedEntries.slice(9).reduce((sum, [, val]) => sum + val, 0)]]
-                : sortedEntries;
+            const finalEntries =
+                sortedEntries.length > 10
+                    ? [
+                          ...sortedEntries.slice(0, 9),
+                          ["其他", sortedEntries.slice(9).reduce((sum, [, val]) => sum + val, 0)],
+                      ]
+                    : sortedEntries;
 
             const clickedTag = finalEntries[tagIndex][0];
 
@@ -137,13 +140,13 @@
         const sortedData = tags
             .map((tag, index) => ({
                 tag,
-                duration: durations[index]
+                duration: durations[index],
             }))
             .sort((a, b) => b.duration - a.duration);
 
         // 从排序后的数据中分离出标签和时长
-        const sortedTags = sortedData.map(item => item.tag);
-        const sortedDurations = sortedData.map(item => item.duration);
+        const sortedTags = sortedData.map((item) => item.tag);
+        const sortedDurations = sortedData.map((item) => item.duration);
 
         return {
             series: sortedDurations.map((d) => +((d / totalDuration) * 100).toFixed(1)),
@@ -165,11 +168,11 @@
             plotOptions: {
                 pie: {
                     donut: {
-                        size: '70%',
+                        size: "70%",
                     },
-                }
+                },
             },
-            labels: sortedTags,  // 使用排序后的标签
+            labels: sortedTags, // 使用排序后的标签
             title: {
                 align: "center",
             },
@@ -216,14 +219,12 @@
     function updateTagsDetailChart() {
         if (!selectedTag || !tagsBarChartElement) return;
 
-        const filteredItems = filterItemsByRange(items, selectedRange).filter(
-            (item) => {
-                if (selectedTag === unclassifiedTag) {
-                    return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
-                }
-                return item.tags && item.tags.includes(selectedTag);
+        const filteredItems = filterItemsByRange(items, selectedRange).filter((item) => {
+            if (selectedTag === unclassifiedTag) {
+                return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
             }
-        );
+            return item.tags && item.tags.includes(selectedTag);
+        });
 
         console.log("updateTagsDetailChart called with selectedTag:", selectedTag, "filteredItems:", filteredItems);
         let detailData = filteredItems.map((item) => ({
@@ -313,19 +314,19 @@
         const sortedData = tags
             .map((tag, index) => ({
                 tag,
-                duration: durationHours[index]
+                duration: durationHours[index],
             }))
             .sort((a, b) => b.duration - a.duration);
 
         // 从排序后的数据中分离出标签和时长
-        const sortedTags = sortedData.map(item => item.tag);
-        const sortedDurations = sortedData.map(item => item.duration);
+        const sortedTags = sortedData.map((item) => item.tag);
+        const sortedDurations = sortedData.map((item) => item.duration);
 
         const options = {
             series: [
                 {
                     name: "时长（小时）",
-                    data: sortedDurations,  // 使用排序后的时长
+                    data: sortedDurations, // 使用排序后的时长
                     color: "#3B82F6",
                 },
             ],
@@ -349,7 +350,7 @@
             plotOptions: { bar: { borderRadius: 4, horizontal: true } },
             dataLabels: { enabled: false },
             xaxis: {
-                categories: sortedTags,  // 使用排序后的标签
+                categories: sortedTags, // 使用排序后的标签
                 labels: {
                     show: false,
                 },
@@ -514,7 +515,7 @@
         <!-- 图表容器 -->
         <div class="flex-1 flex flex-col pt-4 gap-4">
             <!-- 上部分图表 占 1/3 高度 -->
-             <!-- 添加边框 -->
+            <!-- 添加边框 -->
             <div class="flex flex-row w-full flex-none h-2/4 border rounded-lg">
                 <div class="w-1/3 flex items-center justify-center">
                     <!-- 123 -->

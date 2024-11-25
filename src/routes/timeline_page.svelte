@@ -1,45 +1,107 @@
 <script lang="ts">
+    // 导入必要的依赖
     import { window, app } from "@tauri-apps/api";
     import { Window as TauriWindow } from "@tauri-apps/api/window";
     import { listen } from "@tauri-apps/api/event";
-    import { warn, debug, trace, info, error, attachConsole, attachLogger } from "@tauri-apps/plugin-log";
-    import Timeline from "$lib/components/Timeline.svelte";
-    import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
-    import { onMount } from "svelte";
+    import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
     import { invoke } from "@tauri-apps/api/core";
+    import { onMount } from "svelte";
+
+    // 导入组件
+    import Timeline from "$lib/components/Timeline.svelte";
+    import AddEventForm from "$lib/components/AddEventForm.svelte";
+    import EventFormFields from "$lib/components/EventFormFields.svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import AddEventForm from "$lib/components/AddEventForm.svelte";
     import * as Dialog from "$lib/components/ui/dialog/index";
-    import EventFormFields from "$lib/components/EventFormFields.svelte";
+
+    // 导入类型和工具函数
+    import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
-    let timelineComponent: Timeline;
 
+    // 组件状态管理
+    let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
+
+    // 编辑状态管理
     let editingItem: TimelineItem | null = $state(null);
     let editDialogOpen = $state(false);
-    let alertClearAll = $state(false);
 
+    // 删除状态管理
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
+    let alertClearAll = $state(false);
     let showClearAllDialog = $state(false);
+
+    /**
+     * 数据持久化相关函数
+     */
+    // 保存时间线数据到本地存储
+    async function saveTimelineData() {
+        if (!timelineComponent) return;
+
+        const timelineData = {
+            groups: timelineComponent.getAllGroups() || [],
+            items: timelineComponent.getAllItems() || [],
+        };
+        try {
+            await invoke("save_timeline_data", { data: timelineData });
+        } catch (e) {
+            error(`保存时间线数据失败: ${e}`);
+        }
+    }
+
+    // 从本地存储加载时间线数据
+    async function loadTimelineData() {
+        try {
+            const result = await invoke<{ groups: any[]; items: any[] } | null>("load_timeline_data");
+            if (!result) return;
+
+            groups = result.groups || [];
+            items = result.items || [];
+
+            if (timelineComponent) {
+                // 清除现有数据
+                clearTimelineData();
+                // 重新加载数据
+                result.groups?.forEach(group => timelineComponent.addGroup(group));
+                result.items?.forEach(item => timelineComponent.addItem(item));
+            }
+        } catch (e) {
+            error(`加载时间线数据失败: ${e}`);
+        }
+    }
+
+    // 清除时间线所有数据
+    function clearTimelineData() {
+        if (!timelineComponent) return;
+
+        const existingItems = timelineComponent.getAllItems() || [];
+        existingItems.forEach(item => timelineComponent.removeItem(item.id));
+
+        const existingGroups = timelineComponent.getAllGroups() || [];
+        existingGroups.forEach(group => timelineComponent.removeGroup(group.id));
+    }
+
+    /**
+     * Timeline 事件处理函数
+     */
     // 处理添加事件
-    const handleAdd = async (item: any, callback: (item: any | null) => void) => {
-        callback(item); // 确认添加
+    const handleAdd = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        callback(item);
         await saveTimelineData();
     };
 
     // 处理移动事件
-    const handleMove = async (item: any, callback: (item: any | null) => void) => {
-        callback(item); // 确认移动
+    const handleMove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        callback(item);
         await saveTimelineData();
     };
 
-    // 处理正在移动
-    const handleMoving = (item: any, callback: (item: any) => void) => {
-        // 可以在这里添加移动限制逻辑
+    // 处理正在移动的事件（可以添加移动限制逻辑）
+    const handleMoving = (item: TimelineItem, callback: (item: TimelineItem) => void) => {
         callback(item);
     };
 
@@ -51,123 +113,23 @@
     };
 
     // 处理删除事件
-    const handleRemove = async (item: any, callback: (item: any | null) => void) => {
+    const handleRemove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
         deleteItem = item;
         alertDelete = true;
         callback(null);
     };
 
-    export function getAllItems() {
-        const timelineData: TimelineData = {
-            groups: timelineComponent.getAllGroups(),
-            items: timelineComponent.getAllItems(),
-        };
-        return timelineData;
-    }
-
-    // 保存时间线数据
-    async function saveTimelineData() {
-        const timelineData = {
-            groups: timelineComponent.getAllGroups(),
-            items: timelineComponent.getAllItems(),
-        };
-        try {
-            await invoke("save_timeline_data", { data: timelineData });
-        } catch (e) {
-            error(`Failed to save timeline data: ${e}`);
-        }
-    }
-
-    // 加载时间线数据
-    async function loadTimelineData() {
-        try {
-            const result = await invoke<{ groups: any[]; items: any[] } | null>("load_timeline_data");
-            if (result) {
-                // 直接更新响应式变量
-                groups = result.groups;
-                items = result.items;
-
-                // 使用现有的方法更新时间线
-                if (timelineComponent) {
-                    // 清除所有现有数据
-                    const existingItems = timelineComponent.getAllItems();
-                    existingItems.forEach((item) => {
-                        timelineComponent.removeItem(item.id);
-                    });
-
-                    const existingGroups = timelineComponent.getAllGroups();
-                    existingGroups.forEach((group) => {
-                        timelineComponent.removeGroup(group.id);
-                    });
-
-                    // 添加新数据（先添加组，再添加项目）
-                    result.groups.forEach((group) => {
-                        timelineComponent.addGroup(group);
-                    });
-
-                    result.items.forEach((item) => {
-                        timelineComponent.addItem(item);
-                    });
-                }
-            }
-        } catch (e) {
-            error(`Failed to load timeline data: ${e}`);
-        }
-    }
-
-    let unlistenTrayFlash: () => void;
-    async function listenTrayFlash() {
-        unlistenTrayFlash = await listen("tray_flash_did_click", (event) => {
-            info(`Tray flash clicked: ${event}`);
-        });
-    }
-
-    onMount(() => {
-        // 加载保存的数据
-        debug("****** onMount ******");
-        listenTrayFlash();
-        loadTimelineData();
-        // 设置自动保存（每 5 分钟）
-        let autoSaveInterval = setInterval(saveTimelineData, 1 * 60 * 1000);
-
-        return () => {
-            debug("****** onUnmount ******");
-            clearInterval(autoSaveInterval);
-            saveTimelineData();
-            unlistenTrayFlash();
-        };
-    });
-
-    // 导出所有数据的示例
-    const handleExport = () => {
-        const allItems = timelineComponent.getAllItems();
-        const allGroups = timelineComponent.getAllGroups();
-
-        // 可以将数据转换为 JSON 字符串
-        const exportData = {
-            items: allItems,
-            groups: allGroups,
-        };
-
-        // 示例：下载为 JSON 文件
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "timeline-export.json";
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
-    function handleEventSubmit(
-        event: CustomEvent<{
-            title: string;
-            startTime: Date;
-            endTime: Date;
-            tags: string[];
-            color: string;
-        }>
-    ) {
+    /**
+     * 表单提交处理函数
+     */
+    // 处理新事件提交
+    function handleEventSubmit(event: CustomEvent<{
+        title: string;
+        startTime: Date;
+        endTime: Date;
+        tags: string[];
+        color: string;
+    }>) {
         const formData = event.detail;
         const newItem: TimelineItem = {
             id: Date.now().toString(),
@@ -179,18 +141,17 @@
         };
 
         timelineComponent.addItem(newItem);
+        saveTimelineData();
     }
 
-    // 处理编辑提交
-    function handleEditSubmit(
-        event: CustomEvent<{
-            title: string;
-            startTime: Date;
-            endTime: Date;
-            tags: string[];
-            color: string;
-        }>
-    ) {
+    // 处理编辑事件提交
+    function handleEditSubmit(event: CustomEvent<{
+        title: string;
+        startTime: Date;
+        endTime: Date;
+        tags: string[];
+        color: string;
+    }>) {
         if (!editingItem) return;
 
         const formData = event.detail;
@@ -203,17 +164,45 @@
             tags: formData.tags,
         };
 
-        // 使用 updateItem 而不是 addItem
         timelineComponent.updateItem(updatedItem);
         editingItem = null;
         editDialogOpen = false;
         saveTimelineData();
     }
 
-    function handleDialogClose(open: boolean) {
+    // 对话框相关处理函数
+    function handleDialogClose() {
         editingItem = null;
         editDialogOpen = false;
     }
+
+    // 获取所有时间线项目
+    export function getAllItems(): TimelineData {
+        if (!timelineComponent) {
+            return { groups: [], items: [] };
+        }
+        const allGroups = timelineComponent.getAllGroups() || [];
+        const allItems = timelineComponent.getAllItems() || [];
+        return {
+            groups: allGroups,
+            items: allItems,
+        };
+    }
+
+    // 组件生命周期
+    onMount(() => {
+        debug("时间线组件已挂载");
+        loadTimelineData();
+
+        // 设置自动保存（每分钟）
+        const autoSaveInterval = setInterval(saveTimelineData, 60 * 1000);
+
+        return () => {
+            debug("时间线组件即将卸载");
+            clearInterval(autoSaveInterval);
+            saveTimelineData();
+        };
+    });
 </script>
 
 <div class="flex flex-col h-full">
@@ -302,7 +291,7 @@
                     startTimeInput={formatTimeForInput(new Date(editingItem.start))}
                     endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
                     endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
-                    onSubmit={(formData) => {
+                    onSubmit={(formData: any) => {
                         if (!editingItem) return;
                         handleEditSubmit(new CustomEvent("submit", { detail: formData }));
                     }}

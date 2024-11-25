@@ -8,11 +8,11 @@
     import { primaryRoutes } from "../config";
 
     let navCollapsedSize = $state(5);
-    let selectedRoute: string = $state("");
+    let selectedRoute = $state("");
     let settingsOpen = $state(false);
-    let statisticsComponent: StatisticsPage | null = null;
-    let timelineComponent: TimelinePage | null = null;
-    let timelineData: TimelineData | null = null;
+    let statisticsComponent = $state<StatisticsPage | null>(null);
+    let timelineComponent = $state<TimelinePage | null>(null);
+    let timelineData = $state<TimelineData | null>(null);
 
     $inspect(navCollapsedSize);
 

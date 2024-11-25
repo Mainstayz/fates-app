@@ -25,10 +25,10 @@
 
     // 默认配置
     const DEFAULT_CONFIG = {
-        ZOOM_MIN: 1000 * 60 * 1, // 1分钟
-        ZOOM_MAX: 1000 * 60 * 60 * 24 * 1.5, // 1.5天
-        START: new Date(new Date().setHours(new Date().getHours() - 3)), // 当前时间前3小时
-        END: new Date(new Date().setHours(new Date().getHours() + 3)), // 当前时间后3小时
+        ZOOM_MIN: 1000 * 60 * 1, // 1 分钟
+        ZOOM_MAX: 1000 * 60 * 60 * 24 * 1.5, // 1.5 天
+        START: new Date(new Date().setHours(new Date().getHours() - 3)), // 当前时间前 3 小时
+        END: new Date(new Date().setHours(new Date().getHours() + 3)), // 当前时间后 3 小时
     } as const;
 
     // 组件状态
@@ -246,7 +246,7 @@
     });
 </script>
 
-<div bind:this={container} />
+<div bind:this={container}></div>
 
 <style>
     div {
