@@ -371,15 +371,17 @@
             <Select.Trigger class="w-full">
                 {#if color}
                     <div class="flex items-center gap-2">
-                        <svelte:component
-                            this={COLORS.find(c => c.value === color)?.icon}
-                            class={`w-4 h-4 ${
-                                color === 'red' ? 'text-red-500' :
-                                color === 'yellow' ? 'text-yellow-500' :
-                                color === 'green' ? 'text-green-500' :
-                                'text-gray-500'
-                            }`}
-                        />
+                        {#if color}
+                            {@const Icon = COLORS.find(c => c.value === color)?.icon}
+                            <Icon
+                                class={`w-4 h-4 ${
+                                    color === 'red' ? 'text-red-500' :
+                                    color === 'yellow' ? 'text-yellow-500' :
+                                    color === 'green' ? 'text-green-500' :
+                                    'text-blue-500'
+                                }`}
+                            />
+                        {/if}
                         {getColorLabel(color)}
                     </div>
                 {/if}
@@ -387,14 +389,14 @@
             <Select.Content>
                 {#each COLORS as colorOption}
                     <Select.Item value={colorOption.value}>
+                        {@const Icon = colorOption.icon}
                         <div class="flex items-center gap-2">
-                            <svelte:component
-                                this={colorOption.icon}
+                            <Icon
                                 class={`w-4 h-4 ${
                                     colorOption.value === 'red' ? 'text-red-500' :
                                     colorOption.value === 'yellow' ? 'text-yellow-500' :
                                     colorOption.value === 'green' ? 'text-green-500' :
-                                    'text-gray-500'
+                                    'text-blue-500'
                                 }`}
                             />
                             {colorOption.label}
