@@ -13,7 +13,7 @@
 
     // Utils & Stores
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
-    import { tagStore } from "$lib/stores/tagStore";
+    import { tagStore } from "$lib/utils/tagStore";
 
     // 2. 将类型定义移到顶部
     type EventFormData = {
@@ -136,7 +136,7 @@
     }
 
     function handleSubmit() {
-        console.log('📝 提交表单，当前数据:', {
+        console.log('📝 提交表单，当前数据：', {
             title,
             tags,
             color,
@@ -150,7 +150,7 @@
             const startDateTime = updateDateTime(startDateInput, startTimeInput);
             const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
-            console.log('✨ 表单验证通过，处理后的数据:', {
+            console.log('✨ 表单验证通过，处理后的数据：', {
                 startDateTime,
                 endDateTime
             });
@@ -173,7 +173,7 @@
 
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
-        console.log('📚 加载历史标签:', tags);
+        console.log('📚 加载历史标签：', tags);
         historicalTags = tags;
         // 果 tagify 已经初始化，立即更新白名单
         if (tagify) {
@@ -186,14 +186,14 @@
         console.log('🏗️ Tagify 初始化开始');
         if (tagifyInput) {
             tagify = new Tagify(tagifyInput, TAGIFY_CONFIG);
-            console.log('📋 Tagify 配置:', TAGIFY_CONFIG);
+            console.log('📋 Tagify 配置：', TAGIFY_CONFIG);
 
             // 同步 tags 值并保存新标签
             tagify.on("add", async (e) => {
-                console.log('➕ Tagify 添加标签:', e.detail);
+                console.log('➕ Tagify 添加标签：', e.detail);
                 const tagifyValue = tagify.value;
                 const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log('📌 当前所有标签:', newTags);
+                console.log('📌 当前所有标签：', newTags);
                 tags = newTags.join(",");
 
                 // 保存新标签到存储并更新建议列表
@@ -209,10 +209,10 @@
 
             // 修改 remove 事件处理
             tagify.on("remove", (e) => {
-                console.log('➖ Tagify 移除标签:', e.detail);
+                console.log('➖ Tagify 移除标签：', e.detail);
                 const tagifyValue = tagify.value;
                 const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log('📌 剩余标签:', currentTags);
+                console.log('📌 剩余标签：', currentTags);
                 tags = currentTags.join(",");
 
                 // 如果标签数量减少，重新显示输入框
