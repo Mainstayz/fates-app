@@ -3,7 +3,7 @@ export interface TimelineItem {
     group?: string;
     content: string;
     start: string;
-    end?: string;
+    end: string;
     tags?: string[];
     className?: string;
 }

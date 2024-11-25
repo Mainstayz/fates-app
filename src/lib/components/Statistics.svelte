@@ -16,17 +16,21 @@
     const otherTag = "其他";
 
     // DOM 引用
+    // svelte-ignore non_reactive_update
     let pieChartElement: HTMLElement;
+    // svelte-ignore non_reactive_update
     let barChartElement: HTMLElement;
+    // svelte-ignore non_reactive_update
     let tagsBarChartElement: HTMLElement;
 
     // Chart 实例
-    let pieChart: ApexCharts;
-    let barChart: ApexCharts;
-    let tagsBarChart: ApexCharts;
+    let pieChart: ApexCharts | null = null;
+    let barChart: ApexCharts | null = null;
+    let tagsBarChart: ApexCharts | null = null;
 
-    // 时间范围状态和选项
+    // 时间范围状态和选项，这会更新所有图表
     let selectedRange: TimeRange = $state("all");
+
     const timeRanges = [
         { value: "all", label: "所有时间" },
         { value: "year", label: "今年来" },
@@ -39,6 +43,9 @@
 
     // 根据选择的时间范围过滤数据
     function filterItemsByRange(items: TimelineItem[], range: string): TimelineItem[] {
+        console.log("过滤时间范围：", range);
+        console.log("输入数据条数：", items.length);
+
         const now = new Date();
         const startDate = new Date();
 
@@ -53,43 +60,66 @@
                 startDate.setFullYear(now.getFullYear(), 0, 1); // 今年 1 月 1 日
                 break;
             default:
+                console.log("返回所有数据");
                 return items; // 'all' 返回所有数据
         }
 
-        return items.filter((item) => {
+        console.log("开始日期：", startDate.toISOString());
+        console.log("结束日期：", now.toISOString());
+
+        const filteredItems = items.filter((item) => {
             const itemDate = new Date(item.start);
             return itemDate >= startDate && itemDate <= now;
         });
+
+        console.log("过滤后数据条数:", filteredItems.length);
+        return filteredItems;
     }
 
     // 修改 calculateTagStats 函数
     function calculateTagStats(items: TimelineItem[]): { [key: string]: number } {
+        console.log("开始计算标签统计...");
+        console.log("输入项目数:", items.length);
+
         const tagDurations: { [key: string]: number } = {};
         const filteredItems = filterItemsByRange(items, selectedRange);
+        console.log("过滤后项目数:", filteredItems.length);
 
         filteredItems.forEach((item) => {
-            if (!item.start || !item.end) return;
+            if (!item.start || !item.end) {
+                console.log("跳过无效项目：", item);
+                return;
+            }
 
             const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
+            console.log("项目时长 (ms):", duration);
 
             const tags = !item.tags || item.tags.length === 0 ? [""] : item.tags;
+            console.log("项目标签：", tags);
 
             tags.forEach((tag) => {
                 const tagName = tag.trim() || unclassifiedTag;
                 tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
+                console.log(`更新标签 "${tagName}" 时长为:`, tagDurations[tagName]);
             });
         });
 
+        console.log("原始标签统计：", tagDurations);
+
         // 对标签按时长进行排序
         const sortedEntries = Object.entries(tagDurations).sort(([, a], [, b]) => b - a);
+        console.log("排序后的标签：", sortedEntries);
 
         // 如果标签数量超过 10 个，将剩余的合并到"其他"类别
         if (sortedEntries.length > 10) {
+            console.log("标签数量超过 10 个，进行合并处理");
+
             const top9Entries = sortedEntries.slice(0, 9);
             const remainingEntries = sortedEntries.slice(9);
 
             // 计算其他类别的总时长
             const othersDuration = remainingEntries.reduce((sum, [, duration]) => sum + duration, 0);
+            console.log("其他类别总时长：", othersDuration);
 
             // 创建新的结果对象
             const result: { [key: string]: number } = {};
@@ -98,9 +128,11 @@
             });
             result[otherTag] = othersDuration;
 
+            console.log("最终处理结果：", result);
             return result;
         }
 
+        console.log("最终处理结果：", tagDurations);
         return tagDurations;
     }
 
@@ -118,7 +150,7 @@
                 sortedEntries.length > 10
                     ? [
                           ...sortedEntries.slice(0, 9),
-                          ["其他", sortedEntries.slice(9).reduce((sum, [, val]) => sum + val, 0)],
+                          [otherTag, sortedEntries.slice(9).reduce((sum, [, val]) => sum + val, 0)],
                       ]
                     : sortedEntries;
 
@@ -129,7 +161,7 @@
                 return;
             }
 
-            selectedTag = clickedTag;
+            selectedTag = clickedTag as string;
             updateTagsDetailChart();
         }
     }
@@ -221,9 +253,9 @@
 
         const filteredItems = filterItemsByRange(items, selectedRange).filter((item) => {
             if (selectedTag === unclassifiedTag) {
-                return (item.tags.length === 1 && item.tags[0] === "") || !item.tags || item.tags.length === 0;
+                return (!item.tags?.length) || (item.tags?.length === 1 && item.tags[0] === "");
             }
-            return item.tags && item.tags.includes(selectedTag);
+            return item.tags?.includes(selectedTag!) ?? false;
         });
 
         console.log("updateTagsDetailChart called with selectedTag:", selectedTag, "filteredItems:", filteredItems);
