@@ -29,11 +29,7 @@ async fn save_timeline_data(
     let file_path = app_dir.join("timeline_data.json");
     let json_string =
         serde_json::to_string_pretty(&data).map_err(|e| format!("序列化数据失败：{}", e))?;
-
-    let item_count = data.items.len();
-    log::info!("保存时间线数据，共{}个项目", item_count);
     fs::write(file_path, json_string).map_err(|e| format!("写入文件失败：{}", e))?;
-
     Ok(())
 }
 
@@ -48,9 +44,6 @@ async fn load_timeline_data(app_handle: tauri::AppHandle) -> Result<Option<Timel
     }
 
     let content = fs::read_to_string(&file_path).map_err(|e| format!("读取文件失败：{}", e))?;
-
-    // 添加日志记录原始 JSON 内容
-    log::debug!("读取到的 JSON 内容：{}", content);
 
     match serde_json::from_str::<TimelineData>(&content) {
         Ok(data) => Ok(Some(data)),
@@ -108,8 +101,6 @@ fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, 
     // 创建目录
     fs::create_dir_all(&app_dir)
         .map_err(|e| format!("创建目录 {} 失败：{}", app_dir.display(), e))?;
-
-    log::info!("应用数据目录：{}", app_dir.display());
 
     Ok(app_dir)
 }
@@ -206,7 +197,8 @@ pub fn run() {
                     };
 
                     // 获取上次检查时间
-                    static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+                    static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> =
+                        std::sync::Mutex::new(None);
 
                     // 获取锁
                     let mut last = LAST_CHECK.lock().unwrap();
