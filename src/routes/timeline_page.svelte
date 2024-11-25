@@ -56,9 +56,13 @@
     // 从本地存储加载时间线数据
     async function loadTimelineData() {
         try {
+            console.log("尝试加载时间线数据 ...");
             const result = await invoke<{ groups: any[]; items: any[] } | null>("load_timeline_data");
-            if (!result) return;
-
+            if (!result) {
+                console.log("加载时间线数据失败：没有数据");
+                return;
+            }
+            console.log("加载时间线数据：", result);
             groups = result.groups || [];
             items = result.items || [];
 
@@ -189,18 +193,53 @@
         };
     }
 
+    // 定义事件监听器配置
+    const EVENT_LISTENERS = [
+        {
+            event: 'reload_timeline_data',
+            handler: () => {
+                console.log("on reload_timeline_data ...");
+                loadTimelineData();
+            }
+        },
+        {
+            event: 'tray_flash_did_click',
+            handler: () => {
+                console.log("on tray_flash_did_click ...");
+            }
+        }
+    ] as const;
+
+    // 统一管理事件监听器
+    let unlisteners: Array<() => void> = [];
+
+    // 设置所有事件监听器
+    async function setupEventListeners() {
+        for (const { event, handler } of EVENT_LISTENERS) {
+            console.log("设置事件监听器：", event);
+            const unlisten = await listen(event, handler);
+            unlisteners.push(unlisten);
+        }
+    }
+
+    // 清理所有事件监听器
+    function cleanupEventListeners() {
+        console.log("清理事件监听器 ...");
+        unlisteners.forEach(unlisten => unlisten?.());
+        unlisteners = [];
+    }
+
     // 组件生命周期
     onMount(() => {
         debug("时间线组件已挂载");
+        setupEventListeners();
         loadTimelineData();
-
-        // 设置自动保存（每分钟）
         const autoSaveInterval = setInterval(saveTimelineData, 60 * 1000);
-
         return () => {
             debug("时间线组件即将卸载");
             clearInterval(autoSaveInterval);
             saveTimelineData();
+            cleanupEventListeners();
         };
     });
 </script>

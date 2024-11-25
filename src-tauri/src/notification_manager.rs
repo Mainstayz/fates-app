@@ -2,29 +2,34 @@ use crate::models::{Notification, NotificationConfig, NotificationType, Timeline
 use chrono::{DateTime, Local, NaiveTime};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use tauri::AppHandle;
 use tauri_plugin_notification::NotificationExt;
 use tokio::time;
 
 /// 通知管理器结构体
+/// - check_handler: 返回值为 true 时，才进行后续的检查
 /// - get_timeline: 获取时间线数据的回调函数
 /// - config: 通知配置
 /// - callback: 发送通知的回调函数
 pub struct NotificationManager {
-    get_timeline: Arc<dyn Fn() -> TimelineData + Send + Sync>,
     config: NotificationConfig,
+    check_handler: Arc<dyn Fn() -> bool + Send + Sync>,
+    get_timeline: Arc<dyn Fn() -> TimelineData + Send + Sync>,
     callback: Arc<dyn Fn(Notification) + Send + Sync>,
 }
 
 impl NotificationManager {
     /// 创建新的通知管理器实例
     pub fn new(
-        get_timeline: impl Fn() -> TimelineData + Send + Sync + 'static,
         config: NotificationConfig,
+        check_handler: impl Fn() -> bool + Send + Sync + 'static,
+        get_timeline: impl Fn() -> TimelineData + Send + Sync + 'static,
         callback: impl Fn(Notification) + Send + Sync + 'static,
     ) -> Self {
         NotificationManager {
-            get_timeline: Arc::new(get_timeline),
             config,
+            check_handler: Arc::new(check_handler),
+            get_timeline: Arc::new(get_timeline),
             callback: Arc::new(callback),
         }
     }
@@ -33,6 +38,7 @@ impl NotificationManager {
     /// 这是一个异步函数，会在后台持续运行检查是否需要发送通知
     pub async fn start_notification_loop(&self) {
         log::info!("开始通知循环");
+        let check_handler = Arc::clone(&self.check_handler);
         let get_timeline = Arc::clone(&self.get_timeline);
         let config = self.config.clone();
         let callback = Arc::clone(&self.callback);
@@ -40,9 +46,12 @@ impl NotificationManager {
         tokio::spawn(async move {
             log::info!("启动异步任务");
             let mut interval = time::interval(Duration::from_secs(config.check_interval * 60));
-
             loop {
                 interval.tick().await;
+                if !check_handler() {
+                    continue;
+                }
+
                 let now = Local::now();
 
                 // Skip if not in work time

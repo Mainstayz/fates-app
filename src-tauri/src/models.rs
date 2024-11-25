@@ -1,5 +1,20 @@
 use serde::{Deserialize, Serialize};
 
+// settings.json
+pub const SETTINGS_FILE_NAME: &str = "settings.json";
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(non_snake_case)]
+pub struct Settings {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checkInterval: Option<i64>,
+}
+
+// timeline_data.json
+pub const TIMELINE_DATA_FILE_NAME: &str = "timeline_data.json";
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineData {
     pub groups: Vec<TimelineGroup>,

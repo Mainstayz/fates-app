@@ -1,20 +1,22 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
+mod autostart;
 mod models;
 mod notification_manager;
 mod tray;
-mod autostart;
-use crate::models::{NotificationConfig, TimelineData};
+use crate::models::{
+    NotificationConfig, Settings, TimelineData, SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,
+};
 use crate::notification_manager::NotificationManager;
+use crate::tray::flash_tray_icon;
+use crate::tray::get_tray_flash_state;
 use std::sync::Arc;
 use std::{clone, fs};
 use tauri::{path::BaseDirectory, Manager};
-use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
-use tray::try_register_tray_icon;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
-use crate::tray::flash_tray_icon;
-use crate::tray::get_tray_flash_state;
+use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
+use tray::try_register_tray_icon;
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -45,12 +47,24 @@ async fn load_timeline_data(app_handle: tauri::AppHandle) -> Result<Option<Timel
         return Ok(None);
     }
 
-    let content = fs::read_to_string(file_path).map_err(|e| format!("读取文件失败：{}", e))?;
+    let content = fs::read_to_string(&file_path).map_err(|e| format!("读取文件失败：{}", e))?;
 
-    let data: TimelineData =
-        serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败：{}", e))?;
+    // 添加日志记录原始 JSON 内容
+    log::debug!("读取到的 JSON 内容：{}", content);
 
-    Ok(Some(data))
+    match serde_json::from_str::<TimelineData>(&content) {
+        Ok(data) => Ok(Some(data)),
+        Err(e) => {
+            // 记录详细的错误信息
+            log::error!("JSON 解析错误：{}，原始内容：{}", e, content);
+
+            // 尝试创建一个空的数据结构
+            Ok(Some(TimelineData {
+                groups: Vec::new(),
+                items: Vec::new(),
+            }))
+        }
+    }
 }
 
 /// 更新时间线数据的命令
@@ -81,13 +95,15 @@ fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, 
         .app_data_dir()
         .map_err(|e| format!("获取应用数据目录失败：{}", e))?;
 
+    let app_dir = base_dir;
+
     // 构造完整路径
-    let app_dir = base_dir.join(APP_NAME);
+    // let app_dir = base_dir.join(APP_NAME);
 
     // 检查目录是否可访问
-    if app_dir.exists() && !app_dir.is_dir() {
-        return Err(format!("路径 {} 已存在但不是目录", app_dir.display()));
-    }
+    // if app_dir.exists() && !app_dir.is_dir() {
+    //     return Err(format!("路径 {} 已存在但不是目录", app_dir.display()));
+    // }
 
     // 创建目录
     fs::create_dir_all(&app_dir)
@@ -140,22 +156,88 @@ pub fn run() {
             let _ = try_register_tray_icon(app);
 
             // 初始化通知配置
-            let config = NotificationConfig {
+            let config: NotificationConfig = NotificationConfig {
                 work_start_time: "00:01".to_string(),
                 work_end_time: "24:00".to_string(),
-                check_interval: 60 * 2,
+                check_interval: 1,
                 notify_before: 15,
             };
 
             let app_handle_clone = app.handle().clone();
             let app_handle_clone_2 = app.handle().clone();
+            let app_handle_clone_3 = app.handle().clone();
             // 创建通知管理器
             let notification_manager = NotificationManager::new(
+                config,
+                move || {
+                    // 如果异常都返回 false
+                    // 读取 SETTINGS_FILE_NAME
+                    // 读取 settings.json 文件
+                    let app_dir = match get_app_data_dir(app_handle_clone.clone()) {
+                        Ok(dir) => dir,
+                        Err(e) => {
+                            log::error!("获取应用数据目录失败：{}", e);
+                            return false;
+                        }
+                    };
+                    let settings_path = app_dir.join(SETTINGS_FILE_NAME);
+
+                    // 如果文件不存在，返回 false
+                    if !settings_path.exists() {
+                        return false;
+                    }
+
+                    // 读取文件内容
+                    let content = match fs::read_to_string(&settings_path) {
+                        Ok(content) => content,
+                        Err(e) => {
+                            log::error!("读取设置文件失败：{}", e);
+                            return false;
+                        }
+                    };
+
+                    // 解析 JSON
+                    let settings: Settings = match serde_json::from_str(&content) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("解析设置文件失败：{}", e);
+                            return false;
+                        }
+                    };
+
+                    // 获取上次检查时间
+                    static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+
+                    // 获取锁
+                    let mut last = LAST_CHECK.lock().unwrap();
+
+                    let now = std::time::Instant::now();
+                    let check_interval = settings.checkInterval.unwrap_or(2); // 默认 2 小时
+
+                    if let Some(last_check) = *last {
+                        let elapsed = now.duration_since(last_check);
+                        // 如果时间差大于等于检查间隔，返回 true
+                        if elapsed.as_secs() >= (check_interval as u64 * 3600) {
+                            *last = Some(now);
+                            true
+                        } else {
+                            log::info!(
+                                "时间差小于检查间隔，不检查 {} < {}",
+                                elapsed.as_secs(),
+                                check_interval * 3600
+                            );
+                            false
+                        }
+                    } else {
+                        *last = Some(now);
+                        true
+                    }
+                },
                 // 获取时间线数据的回调函数
                 move || {
-                    let app_dir = get_app_data_dir(app_handle_clone.clone())
+                    let app_dir = get_app_data_dir(app_handle_clone_2.clone())
                         .expect("Failed to get app data dir");
-                    let file_path = app_dir.join("timeline_data.json");
+                    let file_path = app_dir.join(TIMELINE_DATA_FILE_NAME);
 
                     if file_path.exists() {
                         match fs::read_to_string(&file_path) {
@@ -184,19 +266,19 @@ pub fn run() {
                         }
                     }
                 },
-                config,
                 move |notification| {
                     let title = notification.title.clone();
                     let body = notification.message.clone();
                     log::info!("发送通知 - title: {}, body: {}", title, body);
 
-
                     // 闪烁托盘图标
-                    flash_tray_icon(app_handle_clone_2.clone(), true).unwrap();
+                    flash_tray_icon(app_handle_clone_3.clone(), true).unwrap();
                     // 在这里克隆 app_handle
-                    if let Err(e) =
-                        NotificationManager::send_notification(app_handle_clone_2.clone(), &title, &body)
-                    {
+                    if let Err(e) = NotificationManager::send_notification(
+                        app_handle_clone_3.clone(),
+                        &title,
+                        &body,
+                    ) {
                         log::error!("发送通知失败：{}", e);
                     }
                 },
@@ -241,4 +323,3 @@ fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
         api.prevent_exit();
     }
 }
-
