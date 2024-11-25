@@ -43,7 +43,7 @@ export const tagStore = {
         try {
             const currentTags = await this.getTags();
             const uniqueTags = [...new Set([...currentTags, ...newTags])];
-            // 保持最新的100个标签
+            // 保持最新的 100 个标签
             const limitedTags = uniqueTags.slice(-100);
             console.log(`limitedTags: ${limitedTags}`);
             // 保存到文件

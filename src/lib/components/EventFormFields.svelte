@@ -16,6 +16,7 @@
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { tagStore } from "$lib/utils/tagStore";
     import { CircleHelp } from "lucide-svelte";
+    import { tagPriorityStore } from "$lib/utils/tagPriorityStore";
 
     // 2. 将类型定义移到顶部
     type EventFormData = {
@@ -137,7 +138,7 @@
         }
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
         console.log("📝 提交表单，当前数据：", {
             title,
             tags,
@@ -152,14 +153,15 @@
             const startDateTime = updateDateTime(startDateInput, startTimeInput);
             const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
-            console.log("✨ 表单验证通过，处理后的数据：", {
-                startDateTime,
-                endDateTime,
-            });
+            // 记录标签和优先级的关系
+            const tagList = tags.split(",").map((tag: string) => tag.trim());
+            if (tagList.length === 1) {
+                await tagPriorityStore.addPriority(tagList[0], color);
+            }
 
             onSubmit({
                 title,
-                tags: tags.split(",").map((tag: string) => tag.trim()),
+                tags: tagList,
                 color,
                 startTime: startDateTime,
                 endTime: endDateTime,
@@ -212,6 +214,14 @@
                 const updatedTags = await tagStore.addTags(newTags);
                 historicalTags = updatedTags;
                 tagify.whitelist = updatedTags;
+
+                // 如果只有一个标签，检查是否有相关的优先级
+                if (newTags.length === 1) {
+                    const suggestedColor = await tagPriorityStore.getMostUsedColorForTag(newTags[0]);
+                    if (suggestedColor) {
+                        color = suggestedColor;
+                    }
+                }
 
                 // 如果标签数量达到最大值，禁用输入但保持可删除
                 if (tagify.value.length >= (tagify.settings?.maxTags ?? 3)) {
