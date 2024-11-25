@@ -91,4 +91,4 @@
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full" />
+<div bind:this={chartElement} class="w-full h-full"> </div>

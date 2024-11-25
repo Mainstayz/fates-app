@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
     import ApexCharts from "apexcharts";
-    import type { TimelineItem } from "$lib/types";
 
     export let data: { tags: string[], durations: number[], totalDuration: number };
     export let onTagSelect: (tag: string) => void;

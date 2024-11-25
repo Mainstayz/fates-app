@@ -33,7 +33,7 @@
                 },
             },
             title: {
-                text: `${selectedTag} 详情`,
+                text: `${selectedTag} 前 10 条`,
                 align: "center",
             },
             xaxis: {
@@ -84,4 +84,4 @@
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full" />
+<div bind:this={chartElement} class="w-full h-full"></div>

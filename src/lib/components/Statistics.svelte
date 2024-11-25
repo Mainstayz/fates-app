@@ -1,17 +1,21 @@
 <script lang="ts">
+    // 导入必要的组件和工具
     import { onMount } from "svelte";
     import * as Select from "$lib/components/ui/select";
     import PieChart from "./charts/PieChart.svelte";
     import BarChart from "./charts/BarChart.svelte";
     import TagDetailChart from "./charts/TagDetailChart.svelte";
     import type { TimelineItem } from "$lib/types";
-    import { calculateTagStats, filterItemsByRange, type TimeRange } from "$lib/utils/statistics";
+    import { calculateTagStats, filterItemsByRange, type TimeRange, UNCLASSIFIED_TAG, OTHER_TAG } from "$lib/utils/statistics";
 
-    let { items }: { items: TimelineItem[] } = $props();
+    // 定义组件的属性和状态
+    let { items }: { items: TimelineItem[] } = $props();  // 接收时间项数组作为属性
 
-    let selectedRange: TimeRange = $state("all");
-    let selectedTag: string | null = $state(null);
+    // 定义响应式状态
+    let selectedRange: TimeRange = $state("all");     // 选中的时间范围，默认为"全部"
+    let selectedTag: string | null = $state(null);    // 选中的标签，默认为 null
 
+    // 定义时间范围选项
     const timeRanges = [
         { value: "all", label: "所有时间" },
         { value: "year", label: "今年来" },
@@ -19,70 +23,82 @@
         { value: "week", label: "最近一周" },
     ] as const;
 
+    // 处理标签选择的函数
     function handleTagSelect(tag: string) {
         selectedTag = tag;
     }
 
+    // 获取图表数据的函数
     function getChartData() {
+        // 计算所选时间范围内的标签统计数据
         const stats = calculateTagStats(items, selectedRange);
-        const tags = Object.keys(stats);
-        const durations = Object.values(stats);
-        const totalDuration = durations.reduce((a, b) => a + b, 0);
-        const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));
+        const tags = Object.keys(stats);              // 获取所有标签
+        const durations = Object.values(stats);       // 获取对应的持续时间
+        const totalDuration = durations.reduce((a, b) => a + b, 0);  // 计算总时长
+        const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));  // 转换为小时
 
-        return {
-            tags,
-            durations,
-            durationHours,
-            totalDuration,
-        };
+        return { tags, durations, durationHours, totalDuration };
     }
 
+    // 获取标签详细数据的函数
+    /**
+     * 获取标签详细数据的函数
+     * 根据选中的标签返回相关时间项的详细信息
+     * @returns {Array<{content: string, duration: number}>} 返回包含内容和时长的数组
+     */
     function getTagDetailData() {
-        console.log("getTagDetailData called with selectedTag:", selectedTag);
+        // 如果没有选中标签，返回空数组
+        if (!selectedTag) return [];
 
-        if (!selectedTag) {
-            console.log("No selectedTag, returning empty array");
-            return [];
-        }
-
+        // 根据时间范围筛选项目
         const filteredItems = filterItemsByRange(items, selectedRange);
-        console.log("Filtered items by range:", filteredItems.length);
 
-        if (selectedTag === "其他") {
+        // 处理"其他"标签的特殊情况
+        // 获取排名靠后的标签（第 10 个之后的所有标签）
+        if (selectedTag === OTHER_TAG) {
+
             console.log('Processing "其他" tag');
+            // 用于存储每个标签的总时长
             const tagDurations: { [key: string]: number } = {};
 
+            // 计算每个标签的总时长
             filteredItems.forEach((item) => {
                 if (!item.start || !item.end) return;
                 const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
+                // 如果没有标签则使用空字符串
                 const tags = !item.tags || item.tags.length === 0 ? [""] : item.tags;
 
+                // 为每个标签累加时长
                 tags.forEach((tag) => {
-                    const tagName = tag.trim() || "未分类";
+                    const tagName = tag.trim() || UNCLASSIFIED_TAG;
                     tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
                 });
             });
 
+            // 按时长降序排序标签
             const sortedEntries = Object.entries(tagDurations)
                 .sort(([, a], [, b]) => b - a);
 
             console.log("Total tags before filtering:", sortedEntries.length);
 
+            // 如果标签总数不超过 10 个，则不需要"其他"分类
             if (sortedEntries.length <= 10) {
                 console.log("Not enough tags for '其他' category");
                 return [];
             }
 
+            // 获取排名靠后的标签（第10个之后的所有标签）
             const otherTags = sortedEntries.slice(9).map(([tag]) => tag);
             console.log("Tags in '其他' category:", otherTags);
 
+            // 筛选包含"其他"标签的时间项
             const result = filteredItems
                 .filter((item) => {
                     const hasOtherTag = item.tags?.some((tag) => otherTags.includes(tag));
                     console.log("Item:", item.content, "has other tag:", hasOtherTag);
                     return hasOtherTag;
                 })
+                // 转换为所需的数据格式
                 .map((item) => {
                     const duration = +(
                         (new Date(item.end).getTime() - new Date(item.start).getTime()) /
@@ -94,6 +110,7 @@
                         duration,
                     };
                 })
+                // 按时长降序排序并只取前 10 个
                 .sort((a, b) => b.duration - a.duration)
                 .slice(0, 10);
 
@@ -101,8 +118,10 @@
             return result;
         }
 
-        if (selectedTag === "未分类") {
+        // 处理"未分类"标签的特殊情况
+        if (selectedTag === UNCLASSIFIED_TAG) {
             console.log('Processing "未分类" tag');
+            // 筛选没有标签或标签为空的时间项
             const result = filteredItems
                 .filter((item) => !item.tags?.length || (item.tags.length === 1 && item.tags[0] === ""))
                 .map((item) => ({
@@ -119,19 +138,23 @@
             return result;
         }
 
+        // 处理普通标签
         console.log("Processing regular tag:", selectedTag);
+        // 筛选包含所选标签的时间项
         const result = filteredItems
             .filter((item) => {
                 const hasTag = item.tags?.includes(selectedTag ?? "");
                 console.log("Item:", item.content, "has tag:", hasTag);
                 return hasTag;
             })
+            // 转换为所需的数据格式
             .map((item) => ({
                 content: item.content,
                 duration: +((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(
                     2
                 ),
             }))
+            // 按时长降序排序并只取前 10 个
             .sort((a, b) => b.duration - a.duration)
             .slice(0, 10);
 
