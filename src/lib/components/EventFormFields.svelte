@@ -5,6 +5,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
+    import * as Tooltip from "$lib/components/ui/tooltip";
 
     // Third-party libraries
     import { z } from "zod";
@@ -14,6 +15,7 @@
     // Utils & Stores
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { tagStore } from "$lib/utils/tagStore";
+    import { CircleHelp } from "lucide-svelte";
 
     // 2. 将类型定义移到顶部
     type EventFormData = {
@@ -41,7 +43,7 @@
             classname: "tags-look",
             maxItems: 5,
             closeOnSelect: false,
-        }
+        },
     };
 
     // 4. Props 定义更简洁
@@ -92,7 +94,7 @@
     }
 
     function validateForm() {
-        console.log('🔍 开始表单验证');
+        console.log("🔍 开始表单验证");
         resetErrors();
 
         try {
@@ -105,11 +107,11 @@
                 endDate: endDateInput,
                 endTime: endTimeInput,
             });
-            console.log('✅ Zod schema 验证通过');
+            console.log("✅ Zod schema 验证通过");
 
             return validateTimeRange();
         } catch (error) {
-            console.error('❌ 表单验证失败:', error);
+            console.error("❌ 表单验证失败:", error);
             handleValidationError(error);
             return false;
         }
@@ -136,23 +138,23 @@
     }
 
     function handleSubmit() {
-        console.log('📝 提交表单，当前数据：', {
+        console.log("📝 提交表单，当前数据：", {
             title,
             tags,
             color,
             startDateInput,
             startTimeInput,
             endDateInput,
-            endTimeInput
+            endTimeInput,
         });
 
         if (validateForm()) {
             const startDateTime = updateDateTime(startDateInput, startTimeInput);
             const endDateTime = updateDateTime(endDateInput, endTimeInput);
 
-            console.log('✨ 表单验证通过，处理后的数据：', {
+            console.log("✨ 表单验证通过，处理后的数据：", {
                 startDateTime,
-                endDateTime
+                endDateTime,
             });
 
             onSubmit({
@@ -173,27 +175,37 @@
 
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
-        console.log('📚 加载历史标签：', tags);
+        console.log("📚 加载历史标签：", tags);
+        const defaultTags = [
+            "重要且紧急",
+            "重要但不紧急",
+            "不重要但紧急",
+            "不重要也不紧急",
+        ];
+        // 如果 tags 为不包含 defaultTags，则加上 defaultTags
+        if (!tags.some((tag) => defaultTags.includes(tag))) {
+            tags = [...defaultTags, ...tags];
+        }
         historicalTags = tags;
         // 果 tagify 已经初始化，立即更新白名单
         if (tagify) {
-            console.log('📝 更新 Tagify 白名单');
+            console.log("📝 更新 Tagify 白名单");
             tagify.whitelist = tags;
         }
     });
 
     $effect(() => {
-        console.log('🏗️ Tagify 初始化开始');
+        console.log("🏗️ Tagify 初始化开始");
         if (tagifyInput) {
             tagify = new Tagify(tagifyInput, TAGIFY_CONFIG);
-            console.log('📋 Tagify 配置：', TAGIFY_CONFIG);
+            console.log("📋 Tagify 配置：", TAGIFY_CONFIG);
 
             // 同步 tags 值并保存新标签
             tagify.on("add", async (e) => {
-                console.log('➕ Tagify 添加标签：', e.detail);
+                console.log("➕ Tagify 添加标签：", e.detail);
                 const tagifyValue = tagify.value;
                 const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log('📌 当前所有标签：', newTags);
+                console.log("📌 当前所有标签：", newTags);
                 tags = newTags.join(",");
 
                 // 保存新标签到存储并更新建议列表
@@ -209,10 +221,10 @@
 
             // 修改 remove 事件处理
             tagify.on("remove", (e) => {
-                console.log('➖ Tagify 移除标签：', e.detail);
+                console.log("➖ Tagify 移除标签：", e.detail);
                 const tagifyValue = tagify.value;
                 const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log('📌 剩余标签：', currentTags);
+                console.log("📌 剩余标签：", currentTags);
                 tags = currentTags.join(",");
 
                 // 如果标签数量减少，重新显示输入框
@@ -223,7 +235,7 @@
 
             // 初始化已有的标签
             if (tags) {
-                console.log('🔄 初始化现有标签:', tags);
+                console.log("🔄 初始化现有标签:", tags);
                 const initialTags = tags
                     .split(",")
                     .map((tag: string) => tag.trim())
@@ -240,7 +252,7 @@
         }
 
         return () => {
-            console.log('🧹 清理 Tagify 实例');
+            console.log("🧹 清理 Tagify 实例");
             if (tagify) {
                 // 移除事件监听
                 tagify.off("add");
@@ -269,7 +281,19 @@
     </div>
 
     <div class="grid gap-2">
-        <Label for="tags">标签</Label>
+        <div class="flex items-center gap-2">
+            <Label for="tags">标签</Label>
+            <Tooltip.Provider>
+                <Tooltip.Root delayDuration={100}>
+                    <Tooltip.Trigger>
+                        <CircleHelp class="w-3 h-3" />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                        用于分类和筛选事件，如：重要且紧急、重要但不紧急、不重要但紧急、不重要也不紧急。
+                    </Tooltip.Content>
+                </Tooltip.Root>
+            </Tooltip.Provider>
+        </div>
         <input bind:this={tagifyInput} name="tags" class={`tagify-input ${errors.tags ? "border-destructive" : ""}`} />
         {#if errors.tags}
             <span class="text-sm text-destructive">
