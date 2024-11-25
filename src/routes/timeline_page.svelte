@@ -14,6 +14,7 @@
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog/index";
+    import * as Select from "$lib/components/ui/select";
 
     // 导入类型和工具函数
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
@@ -34,6 +35,18 @@
     let alertDelete = $state(false);
     let alertClearAll = $state(false);
     let showClearAllDialog = $state(false);
+
+    // 时间范围选择状态管理
+    let selectedRange = $state("1d"); // 默认选择 3 天
+
+    // 时间范围选项
+    const timeRanges = [
+        { value: "6h", label: "最近 6 小时" },
+        { value: "12h", label: "最近 12 小时" },
+        { value: "1d", label: "最近 1 天" },
+        { value: "3d", label: "最近 3 天" },
+        { value: "7d", label: "最近 7 天" },
+    ] as const;
 
     /**
      * 数据持久化相关函数
@@ -229,12 +242,53 @@
         unlisteners = [];
     }
 
+    // 添加处理时间范围变化的函数
+    function handleTimeRangeChange(value: string) {
+        console.log("handleTimeRangeChange: ", value);
+        selectedRange = value;
+        const now = Date.now();
+        let msOffset: number;
+
+        switch (value) {
+            case "6h":
+                msOffset = 3 * 60 * 60 * 1000;
+                break;
+            case "12h":
+                msOffset = 6 * 60 * 60 * 1000;
+                break;
+            case "1d":
+                msOffset = 12 * 60 * 60 * 1000;
+                break;
+            case "3d":
+                msOffset = 1.5 * 24 * 60 * 60 * 1000;
+                break;
+            case "7d":
+                msOffset = 3.5 * 24 * 60 * 60 * 1000;
+                break;
+            default:
+                msOffset = 1.5 * 24 * 60 * 60 * 1000;
+        }
+
+        timelineComponent.setWindow(
+            new Date(now - msOffset),
+            new Date(now + msOffset)
+        );
+    }
+
+    // 添加 effect 监听 selectedRange 的变化
+    $effect(() => {
+        if (timelineComponent) {
+            handleTimeRangeChange(selectedRange);
+        }
+    });
+
     // 组件生命周期
     onMount(() => {
         debug("时间线组件已挂载");
         setupEventListeners();
         loadTimelineData();
         const autoSaveInterval = setInterval(saveTimelineData, 60 * 1000);
+        handleTimeRangeChange(selectedRange);
         return () => {
             debug("时间线组件即将卸载");
             clearInterval(autoSaveInterval);
@@ -253,22 +307,20 @@
         <div class="py-6">
             <div class="flex gap-2 justify-between">
                 <div class="flex gap-2">
-                    <Button
-                        variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000),
-                                new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000)
-                            )}>Nearby 3 Days</Button
-                    >
-                    <Button
-                        variant="outline"
-                        onclick={() =>
-                            timelineComponent.setWindow(
-                                new Date(Date.now() - 3 * 60 * 60 * 1000),
-                                new Date(Date.now() + 3 * 60 * 60 * 1000)
-                            )}>Nearby 6 Hours</Button
-                    >
+                    <Select.Root type="single" bind:value={selectedRange}>
+                        <Select.Trigger class="w-[180px]">
+                            <span>{timeRanges.find((r) => r.value === selectedRange)?.label || "选择时间范围"}</span>
+                        </Select.Trigger>
+                        <Select.Content>
+                            <Select.Group>
+                                {#each timeRanges as range}
+                                    <Select.Item value={range.value}>
+                                        {range.label}
+                                    </Select.Item>
+                                {/each}
+                            </Select.Group>
+                        </Select.Content>
+                    </Select.Root>
                 </div>
                 <div class="flex gap-2">
                     <AddEventForm on:submit={handleEventSubmit} />
@@ -303,9 +355,11 @@
             <Timeline
                 bind:this={timelineComponent}
                 zoomMin={1000 * 60 * 5}
-                zoomMax={1000 * 60 * 60 * 24 * 3}
+                zoomMax={1000 * 60 * 60 * 24 * 7}
                 {items}
                 {groups}
+                start={new Date(new Date().setHours(new Date().getHours() - 12))}
+                end={new Date(new Date().setHours(new Date().getHours() + 12))}
                 onAdd={handleAdd}
                 onUpdate={handleUpdate}
                 onRemove={handleRemove}

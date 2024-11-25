@@ -1,13 +1,13 @@
 // https://github.com/eythaann/Seelen-UI/blob/master/src/background/tray.rs
 
-use tauri::{
-    menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
-    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    App, AppHandle, Manager, Wry,
-    async_runtime,Emitter
-};
 use std::sync::Mutex;
 use std::{thread::sleep, time::Duration};
+use tauri::{
+    async_runtime,
+    menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
+    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+    App, AppHandle, Emitter, Manager, Wry,
+};
 use tokio::time::interval;
 
 #[derive(Default)]
@@ -15,8 +15,6 @@ struct TrayState {
     timer: Option<async_runtime::JoinHandle<()>>,
     is_running: bool,
 }
-
-
 
 /// 尝试注册系统托盘图标，最多重试 10 次
 pub fn try_register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
@@ -138,14 +136,16 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
         return Ok(());
     }
 
-     // 如果已有计时器在运行，先停止它
+    // 如果已有计时器在运行，先停止它
     if let Some(timer) = state.timer.take() {
         state.is_running = false;
         log::info!("停止定时器");
         timer.abort();
     }
 
-    let tray_icon = app.tray_by_id("tray").ok_or_else(|| "Tray icon not found")?;
+    let tray_icon = app
+        .tray_by_id("tray")
+        .ok_or_else(|| "Tray icon not found")?;
     let app_handle = app.clone();
 
     if flash {
@@ -156,7 +156,6 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
             let mut flag = true;
             let mut interval = interval(Duration::from_millis(500));
             while is_running {
-
                 if flag {
                     if let Err(e) = tray_icon.set_icon(None) {
                         println!("设置托盘图标失败：{}", e);

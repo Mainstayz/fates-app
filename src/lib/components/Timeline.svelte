@@ -45,7 +45,10 @@
                 <div class="gantt-item-title">{{content}}</div>
                 {{#if tags}}
                     <div class="gantt-item-tags">
-                        {{#each tags}}<span class="gantt-item-tag"> {{this}} </span>{{/each}}
+                        <span class="gantt-item-tag">tags: </span>
+                        {{#each tags}}
+                            <span class="gantt-item-tag">{{this}}</span>{{#unless @last}} <span class="gantt-item-tag">,</span> {{/unless}}
+                        {{/each}}
                     </div>
                 {{/if}}
             </div>
@@ -432,7 +435,7 @@
     /* 字体大小 */
     :global(.gantt-item-title) {
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 700;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -440,13 +443,14 @@
 
     :global(.gantt-item-tags) {
         display: flex;
-        gap: 4px;
+        gap: 1px;
         flex-wrap: nowrap;
         overflow: hidden;
     }
 
     :global(.gantt-item-tag) {
-        padding: 1px 6px;
+        padding: 1px 2px;
+        font-weight: 300;
         border-radius: 3px;
         font-size: 11px;
         white-space: nowrap;
