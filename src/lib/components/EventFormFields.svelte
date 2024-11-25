@@ -6,6 +6,7 @@
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
     import * as Tooltip from "$lib/components/ui/tooltip";
+    import { Flame, Zap, Leaf, Circle } from "lucide-svelte";
 
     // Third-party libraries
     import { z } from "zod";
@@ -29,10 +30,10 @@
 
     // 3. 将常量配置集中管理
     const COLORS = [
-        { value: "blue", label: "普通任务" },
-        { value: "green", label: "低优先级" },
-        { value: "red", label: "高优先级" },
-        { value: "yellow", label: "中优先级" },
+        { value: "blue", label: "普通任务", icon: Circle },
+        { value: "green", label: "低优先级", icon: Leaf },
+        { value: "red", label: "高优先级", icon: Flame },
+        { value: "yellow", label: "中优先级", icon: Zap },
     ] as const;
 
     const TAGIFY_CONFIG = {
@@ -296,7 +297,7 @@
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={100}>
                     <Tooltip.Trigger>
-                        <CircleHelp class="w-3 h-3" />
+                        <CircleHelp class="w-3 h-3" tabindex={-1} />
                     </Tooltip.Trigger>
                     <Tooltip.Content>
                         用于分类和筛选事件，如：重要且紧急、重要但不紧急、不重要但紧急、不重要也不紧急。
@@ -368,12 +369,36 @@
         <Label for="color">优先级</Label>
         <Select.Root type="single" bind:value={color}>
             <Select.Trigger class="w-full">
-                {getColorLabel(color)}
+                {#if color}
+                    <div class="flex items-center gap-2">
+                        <svelte:component
+                            this={COLORS.find(c => c.value === color)?.icon}
+                            class={`w-4 h-4 ${
+                                color === 'red' ? 'text-red-500' :
+                                color === 'yellow' ? 'text-yellow-500' :
+                                color === 'green' ? 'text-green-500' :
+                                'text-gray-500'
+                            }`}
+                        />
+                        {getColorLabel(color)}
+                    </div>
+                {/if}
             </Select.Trigger>
             <Select.Content>
                 {#each COLORS as colorOption}
                     <Select.Item value={colorOption.value}>
-                        {colorOption.label}
+                        <div class="flex items-center gap-2">
+                            <svelte:component
+                                this={colorOption.icon}
+                                class={`w-4 h-4 ${
+                                    colorOption.value === 'red' ? 'text-red-500' :
+                                    colorOption.value === 'yellow' ? 'text-yellow-500' :
+                                    colorOption.value === 'green' ? 'text-green-500' :
+                                    'text-gray-500'
+                                }`}
+                            />
+                            {colorOption.label}
+                        </div>
                     </Select.Item>
                 {/each}
             </Select.Content>
