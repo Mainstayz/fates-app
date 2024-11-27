@@ -49,7 +49,7 @@
     <Popover.Trigger>
         <Button variant="default">
             <Plus/>
-            Add Event
+            添加任务
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-80">

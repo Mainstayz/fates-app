@@ -54,6 +54,30 @@
             </div>
         </div>
     `);
+    // 实现一个 tooltip 的模板
+    // 内容为 item 的 start 和 end
+    const tooltipTemplate = Handlebars.compile(`
+        <div class="flex flex-col p-0.5 whitespace-nowrap">
+            <div class="flex items-center">
+                <span class="pl-1 text-gray-400 mr-2 text-xs">开始时间：</span>
+                <span class="text-sm">{{formatDate start}}</span>
+            </div>
+            <div class="flex items-center">
+                <span class="pl-1 text-gray-400 mr-2 text-xs">结束时间：</span>
+                <span class="text-sm">{{formatDate end}}</span>
+            </div>
+        </div>
+    `);
+
+    Handlebars.registerHelper("formatDate", function (date) {
+        // 格式化日期 11/27 10:00
+        return new Date(date).toLocaleString("zh-CN", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    });
 
     // 数据转换函数
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
@@ -142,6 +166,15 @@
                 },
             },
             rollingMode: { follow: true, offset: 0.5 },
+            orientation: "top",
+            tooltipOnItemUpdateTime: {
+                template: function (item: TimelineItemInternal) {
+                    return tooltipTemplate({
+                        start: item.start,
+                        end: item.end,
+                    });
+                },
+            },
             // 事件处理
             onAdd: createEventHandler(props.onAdd),
             onMove: createEventHandler(props.onMove),
@@ -455,4 +488,15 @@
         font-size: 11px;
         white-space: nowrap;
     }
+
+    :global(.vis-item .vis-onUpdateTime-tooltip) {
+        border-radius: var(--radius) !important;
+        /* 添加阴影 */
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+        /* 背景颜色，80% 透明度 */
+        background: #262626 !important;
+        width: 160px;
+        padding: 1px;
+    }
 </style>
+

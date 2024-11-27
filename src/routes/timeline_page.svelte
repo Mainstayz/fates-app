@@ -301,8 +301,8 @@
 <div class="flex flex-col h-full">
     <div class="p-6">
         <div>
-            <h2 class="text-2xl font-bold tracking-tight">Time Tracking</h2>
-            <p class="text-muted-foreground">Painting a Portrait of Every Moment with Words!</p>
+            <h2 class="text-2xl font-bold tracking-tight">时间追踪</h2>
+            <p class="text-muted-foreground">用文字描绘每一个瞬间！</p>
         </div>
         <div class="py-6">
             <div class="flex gap-2 justify-between">
