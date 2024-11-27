@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:build": "esno ./scripts/build.ts"
   },
   "license": "MIT",
   "dependencies": {
@@ -35,9 +36,11 @@
     "@sveltejs/kit": "^2.8.5",
     "@sveltejs/vite-plugin-svelte": "^4.0.2",
     "@tauri-apps/cli": "^2.1.0",
+    "@types/node": "^22.10.0",
     "autoprefixer": "^10.4.20",
     "bits-ui": "1.0.0-next.64",
     "clsx": "^2.1.1",
+    "esno": "^4.8.0",
     "formsnap": "2.0.0-next.1",
     "lucide-svelte": "^0.456.0",
     "mode-watcher": "^0.4.1",
