@@ -42,9 +42,12 @@
     const template = Handlebars.compile(`
         <div class="gantt-item">
             <div class="gantt-item-content">
-                <div class="gantt-item-title">{{content}}</div>
-                {{#if tags}}
-                    <div class="gantt-item-tags">
+                    <div class="flex items-center gap-1">
+                        <div class="gantt-item-title">{{content}}</div>
+                        <div class="gantt-item-date">({{formatDateRange start end}})</div>
+                    </div>
+                    {{#if tags}}
+                        <div class="gantt-item-tags">
                         <span class="gantt-item-tag">tags: </span>
                         {{#each tags}}
                             <span class="gantt-item-tag">{{this}}</span>{{#unless @last}} <span class="gantt-item-tag">,</span> {{/unless}}
@@ -79,12 +82,26 @@
         });
     });
 
+    // Handlebars 输入 start 和 end ,返回可读性更高的字符串，如 15m, 1.5h, 2d
+    Handlebars.registerHelper("formatDateRange", function (start: string, end: string) {
+        const diff = new Date(end).getTime() - new Date(start).getTime();
+        // 保留一位小数
+        const minutes = Math.round(diff / 1000 / 60 * 10) / 10;
+        const hours = Math.round(minutes / 60 * 10) / 10;
+        const days = Math.round(hours / 24 * 10) / 10;
+        if (minutes < 60) return `${minutes}m`;
+        if (hours < 24) return `${hours}h`;
+        return `${days}d`;
+    });
+
     // 数据转换函数
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
         const renderedContent = template({
             content: item.content,
             tags: item.tags,
             className: item.className,
+            start: item.start,
+            end: item.end,
         });
 
         return {
@@ -469,6 +486,14 @@
     :global(.gantt-item-title) {
         font-size: 14px;
         font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    :global(.gantt-item-date) {
+        font-size: 13px;
+        font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
