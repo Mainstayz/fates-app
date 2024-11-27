@@ -26,29 +26,29 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
-      
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
           cache: "pnpm" # Set this to npm, yarn or pnpm.
-          
-      - name: Install pnpm
-        run: npm install -g pnpm
-        
+
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-          
+
       - name: Install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: pnpm install --no-frozen-lockfile # Change this to npm, yarn or pnpm.
-        
+
       - name: Build the app
         id: build
         uses: tauri-apps/tauri-action@v0
@@ -64,12 +64,12 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      - name: Upload assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload assets
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # artifactPaths: ${{ steps.build.outputs.artifactPaths }}
-        run: pnpm updater
-        
+        # run: pnpm updater
+
       # - name: Deploy
       #   uses: peaceiris/actions-gh-pages@v3
       #   with:
