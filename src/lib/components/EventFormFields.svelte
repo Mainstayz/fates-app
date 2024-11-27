@@ -179,12 +179,7 @@
     // 初始加载历史标签
     tagStore.getTags().then((tags) => {
         console.log("📚 加载历史标签：", tags);
-        const defaultTags = [
-            "重要且紧急",
-            "重要但不紧急",
-            "不重要但紧急",
-            "不重要也不紧急",
-        ];
+        const defaultTags = ["重要且紧急", "重要但不紧急", "不重要但紧急", "不重要也不紧急"];
         // 如果 tags 为不包含 defaultTags，则加上 defaultTags
         if (!tags.some((tag) => defaultTags.includes(tag))) {
             tags = [...defaultTags, ...tags];
@@ -282,7 +277,31 @@
     }}
 >
     <div class="grid gap-2">
-        <Label for="title">标题</Label>
+        <div class="flex items-center gap-2">
+            <Label for="title">标题</Label>
+            <Tooltip.Provider>
+                <Tooltip.Root delayDuration={100}>
+                    <Tooltip.Trigger>
+                        <CircleHelp class="w-3 h-3" tabindex={-1} />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                        <div class="space-y-3">
+                            <div class="font-medium text-sm text-red-400">
+                                避免笼统的描述，如 "系统开发"，因为看不出具体做什么。
+                            </div>
+                            <div class="font-medium text-sm">
+                                具体描述示例：<span>"修复商品库存同步延迟的Bug"</span>
+                            </div>
+                            <div class="text-sm mb-2">建议使用以下公式记录：</div>
+                            <div class="font-medium text-sm p-2 rounded">动作词 + 具体对象 + 预期结果【可选】</div>
+                            <div class="text-sm mt-2">
+                                例如：<span>"开发【什么功能】实现【什么目的】"</span>
+                            </div>
+                        </div>
+                    </Tooltip.Content>
+                </Tooltip.Root>
+            </Tooltip.Provider>
+        </div>
         <Input type="text" autocomplete="off" bind:value={title} placeholder="输入任务标题" />
         {#if errors.title}
             <span class="text-sm text-destructive">
@@ -372,13 +391,16 @@
                 {#if color}
                     <div class="flex items-center gap-2">
                         {#if color}
-                            {@const Icon = COLORS.find(c => c.value === color)?.icon}
+                            {@const Icon = COLORS.find((c) => c.value === color)?.icon}
                             <Icon
                                 class={`w-4 h-4 ${
-                                    color === 'red' ? 'text-red-500' :
-                                    color === 'yellow' ? 'text-yellow-500' :
-                                    color === 'green' ? 'text-green-500' :
-                                    'text-blue-500'
+                                    color === "red"
+                                        ? "text-red-500"
+                                        : color === "yellow"
+                                          ? "text-yellow-500"
+                                          : color === "green"
+                                            ? "text-green-500"
+                                            : "text-blue-500"
                                 }`}
                             />
                         {/if}
@@ -393,10 +415,13 @@
                         <div class="flex items-center gap-2">
                             <Icon
                                 class={`w-4 h-4 ${
-                                    colorOption.value === 'red' ? 'text-red-500' :
-                                    colorOption.value === 'yellow' ? 'text-yellow-500' :
-                                    colorOption.value === 'green' ? 'text-green-500' :
-                                    'text-blue-500'
+                                    colorOption.value === "red"
+                                        ? "text-red-500"
+                                        : colorOption.value === "yellow"
+                                          ? "text-yellow-500"
+                                          : colorOption.value === "green"
+                                            ? "text-green-500"
+                                            : "text-blue-500"
                                 }`}
                             />
                             {colorOption.label}
