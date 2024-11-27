@@ -25,14 +25,31 @@
     "bundle": {
         "active": true,
         "targets": "all",
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-        "resources": ["resources/**/*"]
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
+        "resources": [
+            "resources/**/*"
+        ],
+        "createUpdaterArtifacts": true
     },
     "plugins": {
         "fs": {
             "scope": {
-                "allow": ["$APPDATA/**"]
+                "allow": [
+                    "$APPDATA/**"
+                ]
             }
+        },
+        "updater": {
+            "windows": {
+                "installMode": "passive"
+            },
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGNjg5MDhGQUNBMDlBRjkKUldUNW1xQ3NqNUJvSHc2ZmEzY0ZSeFBlRTNmeGtCbWNTZEpUNDUrOUFRWmFCMDdUd2hybmRxcW4K"
         }
     }
 }

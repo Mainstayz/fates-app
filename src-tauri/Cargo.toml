@@ -31,7 +31,9 @@ chrono = "0.4.38"
 tokio = "1.41.1"
 uuid = "1.11.0"
 tauri-plugin-store = "2"
+tauri-plugin-process = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-global-shortcut = "2"
+tauri-plugin-updater = "2"

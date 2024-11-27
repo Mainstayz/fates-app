@@ -20,5 +20,4 @@ https://uicolorful.com/template/saas
 
 https://uicolors.app/create
 
-* [ ] 设置页面
-* [ ] 通知
+Tauri 2.0 Updater 自动更新指南[https://juejin.cn/post/7358446362575568906]
