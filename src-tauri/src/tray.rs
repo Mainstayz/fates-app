@@ -46,7 +46,7 @@ fn register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // 构建托盘图标
     TrayIconBuilder::with_id("tray")
         .icon(icon)
-        .tooltip("Time Tracking")
+        .tooltip("Fates")
         .menu(&menu)
         .on_menu_event(create_menu_handler(handle.clone()))
         .on_tray_icon_event(create_tray_handler(handle.clone()))
