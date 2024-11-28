@@ -269,6 +269,8 @@
     });
 </script>
 
+<!-- 添加一个不见看的button，用于测试标签提交 -->
+<button hidden onclick={handleSubmit}>提交</button>
 <form
     class="grid gap-4"
     onsubmit={(e: { preventDefault: () => void }) => {
@@ -279,8 +281,8 @@
     <div class="grid gap-2">
         <div class="flex items-center gap-2">
             <Label for="title">标题</Label>
-            <Tooltip.Provider>
-                <Tooltip.Root delayDuration={100}>
+            <!-- <Tooltip.Provider>
+                <Tooltip.Root>
                     <Tooltip.Trigger>
                         <CircleHelp class="w-3 h-3" tabindex={-1} />
                     </Tooltip.Trigger>
@@ -300,7 +302,7 @@
                         </div>
                     </Tooltip.Content>
                 </Tooltip.Root>
-            </Tooltip.Provider>
+            </Tooltip.Provider> -->
         </div>
         <Input type="text" autocomplete="off" bind:value={title} placeholder="输入任务标题" autofocus  />
         {#if errors.title}
@@ -455,7 +457,7 @@
 
         border: 1px solid var(--border);
         font-size: 0.875rem;
-        height: 2.5rem;
+        min-height: 2.5rem;
     }
     :global(.tagify--focus) {
         border-color: var(--foreground);
