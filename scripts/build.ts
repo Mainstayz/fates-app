@@ -13,6 +13,8 @@ async function build() {
         // 读取公钥
         key = await readFileAsync(resolve(cwd, '.tauri/app.key'), 'utf-8') // 读取私钥
         pwd = await readFileAsync(resolve(cwd, '.tauri/password.key'), 'utf-8') // 读取密码
+        console.log('key:', key)
+        console.log('pwd:', pwd)
     }
     catch(_) {
         throw new Error('No private key found, private key is used to sign updates, see https://v2.tauri.app/plugin/updater')
