@@ -103,6 +103,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                 rect: _,
             } => {
                 log::info!("托盘图标进入: {:?}", position);
+                handle.emit("tray_mouseenter", position).unwrap();
             }
             TrayIconEvent::Leave {
                 id: _,
@@ -110,6 +111,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                 rect: _,
             } => {
                 log::info!("托盘图标离开: {:?}", position);
+                handle.emit("tray_mouseleave", position).unwrap();
             }
             _ => (),
         } //    右键点击会自动显示菜单，无需额外处理
