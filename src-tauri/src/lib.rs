@@ -19,7 +19,6 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
 
-
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -128,6 +127,7 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -149,7 +149,6 @@ pub fn run() {
             get_tray_flash_state
         ])
         .setup(|app| {
-
             // 仅在构建 macOS 时设置背景颜色
             #[cfg(target_os = "macos")]
             {
