@@ -85,18 +85,34 @@ fn create_menu_handler(_handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
 /// 创建托盘图标事件处理器
 fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, TrayIconEvent) {
     move |_tray, event| {
-        if let TrayIconEvent::Click { button, .. } = event {
-            if button == MouseButton::Left {
-                if get_tray_flash_state(handle.clone()) {
-                    // 发送 tray_flash_did_click 事件
-                    log::info!("发送 tray_flash_did_click 事件");
-                    handle.emit("tray_flash_did_click", ()).unwrap();
-                    flash_tray_icon(handle.clone(), false).unwrap();
+        match event {
+            TrayIconEvent::Click { button, .. } => {
+                if button == MouseButton::Left {
+                    if get_tray_flash_state(handle.clone()) {
+                        // 发送 tray_flash_did_click 事件
+                        log::info!("发送 tray_flash_did_click 事件");
+                        handle.emit("tray_flash_did_click", ()).unwrap();
+                        flash_tray_icon(handle.clone(), false).unwrap();
+                    }
+                    show_main_window(handle.clone());
                 }
-                show_main_window(handle.clone());
             }
-            // 右键点击会自动显示菜单，无需额外处理
-        }
+            TrayIconEvent::Enter {
+                id: _,
+                position,
+                rect: _,
+            } => {
+                log::info!("托盘图标进入: {:?}", position);
+            }
+            TrayIconEvent::Leave {
+                id: _,
+                position,
+                rect: _,
+            } => {
+                log::info!("托盘图标离开: {:?}", position);
+            }
+            _ => (),
+        } //    右键点击会自动显示菜单，无需额外处理
     }
 }
 
@@ -118,7 +134,6 @@ pub fn get_tray_flash_state(app: AppHandle) -> bool {
     let state = state.lock().unwrap();
     state.is_running
 }
-
 
 /// 闪烁托盘图标
 #[cfg(target_os = "windows")]
