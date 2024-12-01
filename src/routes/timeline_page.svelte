@@ -2,7 +2,7 @@
     // 导入必要的依赖
     import { window, app } from "@tauri-apps/api";
     import { Window as TauriWindow } from "@tauri-apps/api/window";
-    import { listen } from "@tauri-apps/api/event";
+    import { emit, listen } from "@tauri-apps/api/event";
     import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
@@ -219,6 +219,16 @@
             event: 'tray_flash_did_click',
             handler: () => {
                 console.log("on tray_flash_did_click ...");
+                // 发送通知消息
+                console.log("send notification message ...");
+                emit("notification-message", {
+                    title: "Hello",
+                    description: "This is a test",
+                }).then(() => {
+                    console.log("notification message sent");
+                }).catch((error) => {
+                    console.error("Failed to send notification message:", error);
+                });
             }
         }
     ] as const;

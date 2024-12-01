@@ -13,10 +13,13 @@ use crate::tray::get_tray_flash_state;
 use std::sync::Arc;
 use std::{clone, fs};
 use tauri::{path::BaseDirectory, Manager};
+use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
+
+
 const APP_NAME: &str = "Fates";
 
 /// 保存时间线数据到 JSON 文件
@@ -146,6 +149,29 @@ pub fn run() {
             get_tray_flash_state
         ])
         .setup(|app| {
+
+            // 仅在构建 macOS 时设置背景颜色
+            #[cfg(target_os = "macos")]
+            {
+                // let win_builder = WebviewWindowBuilder::new(app, "cocoa_main", WebviewUrl::default());
+                // let win_builder = win_builder.title_bar_style(TitleBarStyle::Transparent);
+                // let win_builder = win_builder.decorations(false);
+                // let window = win_builder.build().unwrap();
+                // use cocoa::appkit::{NSColor, NSWindow};
+                // use cocoa::base::{id, nil};
+                // let ns_window = window.ns_window().unwrap() as id;
+                // unsafe {
+                //     let bg_color = NSColor::colorWithRed_green_blue_alpha_(
+                //         nil,
+                //         50.0 / 255.0,
+                //         158.0 / 255.0,
+                //         163.5 / 255.0,
+                //         1.0,
+                //     );
+                //     ns_window.setBackgroundColor_(bg_color);
+                // }
+            }
+
             // 注册托盘图标
             let _ = try_register_tray_icon(app);
 

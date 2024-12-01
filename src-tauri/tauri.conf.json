@@ -9,13 +9,13 @@
         "beforeBuildCommand": "pnpm build",
         "frontendDist": "../build"
     },
+
     "app": {
         "windows": [
             {
-                "title": "fates-app",
                 "width": 1200,
                 "height": 800,
-                "resizable": true
+                "resizable": false
             }
         ],
         "security": {

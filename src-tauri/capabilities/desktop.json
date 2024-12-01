@@ -6,7 +6,8 @@
     "linux"
   ],
   "windows": [
-    "main"
+    "main",
+    "message-box"
   ],
   "permissions": [
     "autostart:default",

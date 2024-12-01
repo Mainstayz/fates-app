@@ -7,15 +7,23 @@
     ],
     "permissions": [
         "core:default",
+        "core:event:allow-listen",
+        "core:event:allow-emit",
+        "core:event:allow-unlisten",
         "shell:allow-open",
         "dialog:default",
-        "log:default",
         "log:default",
         "notification:default",
         "store:default",
         "global-shortcut:allow-is-registered",
         "global-shortcut:allow-register",
         "global-shortcut:allow-unregister",
-        "updater:default"
+        "updater:default",
+        "core:window:default",
+        "core:window:allow-start-dragging",
+        "core:window:allow-create",
+        "core:webview:default",
+        "core:webview:allow-create-webview",
+        "core:webview:allow-create-webview-window"
     ]
 }

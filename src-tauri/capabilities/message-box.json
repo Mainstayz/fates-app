@@ -1,0 +1,15 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "message-box",
+    "description": "Capability for the message box window",
+    "windows": [
+        "message-box"
+    ],
+    "permissions": [
+        "core:default",
+        "notification:default",
+        "core:event:allow-listen",
+        "core:event:allow-emit",
+        "core:event:allow-unlisten"
+    ]
+}

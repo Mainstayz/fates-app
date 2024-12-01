@@ -112,18 +112,13 @@ fn show_main_window(app: AppHandle) {
     }
 }
 // 获取托盘图标状态
-#[cfg(target_os = "windows")]
 #[tauri::command]
 pub fn get_tray_flash_state(app: AppHandle) -> bool {
     let state = app.state::<Mutex<TrayState>>();
     let state = state.lock().unwrap();
     state.is_running
 }
-#[cfg(not(target_os = "windows"))]
-#[tauri::command]
-pub fn get_tray_flash_state(_app: AppHandle) -> bool {
-    false
-}
+
 
 /// 闪烁托盘图标
 #[cfg(target_os = "windows")]
@@ -181,6 +176,27 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn flash_tray_icon(_app: AppHandle, _flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let state = app.state::<Mutex<TrayState>>();
+
+    let mut state = state.lock().unwrap();
+
+    if flash == state.is_running {
+        return Ok(());
+    }
+
+    let tray_icon = app
+        .tray_by_id("tray")
+        .ok_or_else(|| "Tray icon not found")?;
+    if flash {
+        state.is_running = true;
+        log::info!("开始闪烁.. set_title(Some(\"1\")");
+        let _ = tray_icon.set_title(Some(" 1"));
+    } else {
+        state.is_running = false;
+        log::info!("停止闪烁.. set_title(Some(\"\")");
+        let _ = tray_icon.set_title(Some(""));
+    }
+
     Ok(())
 }
