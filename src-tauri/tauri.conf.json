@@ -53,6 +53,9 @@
             "endpoints": [
                 "https://github.com/Mainstayz/fates-app/releases/latest/download/latest.json"
             ]
+        },
+        "os": {
+            "enable": true
         }
     }
 }

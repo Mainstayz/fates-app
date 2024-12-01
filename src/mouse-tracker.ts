@@ -1,4 +1,4 @@
-import { Window } from '@tauri-apps/api/window';
+import { Window } from "@tauri-apps/api/window";
 
 interface MouseTrackerOptions {
     checkInterval?: number;
@@ -7,12 +7,18 @@ interface MouseTrackerOptions {
     tolerance?: number;
 }
 
-type MouseEventName = 'mouseleave' | 'mouseenter';
-type EventCallback = (data: MouseEventData) => void;
+export type MouseEventName = "mouseleave" | "mouseenter";
+export type EventCallback = (data: MouseEventData) => void;
 
-interface MouseEventData {
+export interface MouseEventData {
     position: { x: number; y: number };
     timestamp: number;
+}
+
+export enum TrackerState {
+    ACTIVE = "active",
+    PAUSED = "paused",
+    DESTROYED = "destroyed",
 }
 
 class MouseTracker {
@@ -21,78 +27,223 @@ class MouseTracker {
     protected options: Required<MouseTrackerOptions>;
     protected listeners: Map<MouseEventName, Set<EventCallback>>;
     protected intervalId?: number;
+    protected state: TrackerState;
+    protected boundEventHandlers: Map<string, EventListener>;
 
     constructor(options: MouseTrackerOptions = {}) {
+        console.log("Initializing MouseTracker with options:", options);
+
         this.options = {
             checkInterval: 100,
             debug: false,
             enableInterval: true,
             tolerance: 5,
-            ...options
+            ...options,
         };
 
         this.isInside = false;
         this.lastKnownPosition = { x: 0, y: 0 };
         this.listeners = new Map();
+        this.state = TrackerState.ACTIVE;
+        this.boundEventHandlers = new Map();
+
+        console.log("MouseTracker initialized with final options:", this.options);
 
         this.setupEventListeners();
 
         if (this.options.enableInterval) {
+            console.log("Starting interval check");
             this.startIntervalCheck();
         }
     }
 
+    // 获取当前跟踪器状态
+    getState(): TrackerState {
+        return this.state;
+    }
+
+    // 暂停跟踪
+    pause(): boolean {
+        if (this.state !== TrackerState.ACTIVE) {
+            console.log(`Cannot pause tracker in ${this.state} state`);
+            return false;
+        }
+
+        console.log("Pausing mouse tracker");
+        this.state = TrackerState.PAUSED;
+        this.stopIntervalCheck();
+
+        // 临时移除事件监听器
+        this.boundEventHandlers.forEach((handler, eventName) => {
+            document.removeEventListener(eventName, handler);
+        });
+
+        return true;
+    }
+
+    // 恢复跟踪
+    resume(): boolean {
+        if (this.state !== TrackerState.PAUSED) {
+            console.log(`Cannot resume tracker in ${this.state} state`);
+            return false;
+        }
+
+        console.log("Resuming mouse tracker");
+        this.state = TrackerState.ACTIVE;
+
+        // 重新添加事件监听器
+        this.boundEventHandlers.forEach((handler, eventName) => {
+            document.addEventListener(eventName, handler);
+        });
+
+        if (this.options.enableInterval) {
+            this.startIntervalCheck();
+        }
+
+        return true;
+    }
+
     on(eventName: MouseEventName, callback: EventCallback) {
+        if (this.state === TrackerState.DESTROYED) {
+            console.warn("Cannot add listener to destroyed tracker");
+            return;
+        }
+
+        if (this.options.debug) {
+            console.log(`Adding listener for event: ${eventName}`);
+        }
+
         if (!this.listeners.has(eventName)) {
             this.listeners.set(eventName, new Set());
         }
         this.listeners.get(eventName)?.add(callback);
+
+        if (this.options.debug) {
+            console.log(`Current listener count for ${eventName}:`, this.listeners.get(eventName)?.size);
+        }
     }
 
     off(eventName: MouseEventName, callback: EventCallback) {
-        this.listeners.get(eventName)?.delete(callback);
+        if (this.state === TrackerState.DESTROYED) {
+            console.warn("Cannot remove listener from destroyed tracker");
+            return;
+        }
+
+        if (this.options.debug) {
+            console.log(`Removing listener for event: ${eventName}`);
+        }
+
+        const success = this.listeners.get(eventName)?.delete(callback);
+
+        if (this.options.debug) {
+            console.log(`Listener removal ${success ? "successful" : "failed"}`);
+        }
     }
 
     protected emit(eventName: MouseEventName, data: MouseEventData) {
-        this.listeners.get(eventName)?.forEach(callback => callback(data));
+        if (this.state !== TrackerState.ACTIVE) {
+            return;
+        }
+
+        if (this.options.debug) {
+            console.log(`Emitting ${eventName} event:`, data);
+            console.log(`Number of listeners for ${eventName}:`, this.listeners.get(eventName)?.size);
+        }
+
+        this.listeners.get(eventName)?.forEach((callback) => {
+            try {
+                callback(data);
+            } catch (error) {
+                console.error(`Error in ${eventName} callback:`, error);
+            }
+        });
     }
 
     protected setupEventListeners() {
-        const events: Array<keyof DocumentEventMap> = ['mousemove', 'mouseleave', 'mouseout', 'mouseover'];
-        events.forEach(event => {
-            document.addEventListener(event, (e: Event) => this.handleMouseEvent(e as MouseEvent));
+        console.log("Setting up event listeners");
+
+        const events: Array<keyof DocumentEventMap> = ["mousemove", "mouseleave", "mouseout", "mouseover"];
+
+        events.forEach((event) => {
+            const handler = (e: Event) => {
+                if (this.state === TrackerState.ACTIVE) {
+                    if (this.options.debug) {
+                        console.log(`Handling ${event} event`);
+                    }
+                    this.handleMouseEvent(e as MouseEvent);
+                }
+            };
+
+            this.boundEventHandlers.set(event, handler);
+            document.addEventListener(event, handler);
         });
 
-        window.addEventListener('blur', () => {
-            this.checkMousePosition();
-        });
+        const blurHandler = () => {
+            if (this.state === TrackerState.ACTIVE) {
+                console.log("Window blur event detected");
+                this.checkMousePosition();
+            }
+        };
+
+        this.boundEventHandlers.set("blur", blurHandler);
+        window.addEventListener("blur", blurHandler);
+
+        console.log("Event listeners setup completed");
     }
 
     protected startIntervalCheck() {
+        if (this.state !== TrackerState.ACTIVE) {
+            return;
+        }
+
+        if (this.intervalId) {
+            console.warn("Interval check already running, clearing previous interval");
+            this.stopIntervalCheck();
+        }
+
         this.intervalId = window.setInterval(() => {
+            if (this.state === TrackerState.ACTIVE && this.options.debug) {
+                console.log("Running interval check");
+            }
             this.checkMousePosition();
         }, this.options.checkInterval);
     }
 
     protected stopIntervalCheck() {
         if (this.intervalId) {
+            console.log("Stopping interval check");
             clearInterval(this.intervalId);
+            this.intervalId = undefined;
         }
     }
 
     protected handleMouseEvent(event: MouseEvent) {
+        if (this.options.debug) {
+            console.log("Mouse event:", {
+                type: event.type,
+                x: event.clientX,
+                y: event.clientY,
+            });
+        }
+
         this.lastKnownPosition = {
             x: event.clientX,
-            y: event.clientY
+            y: event.clientY,
         };
 
         const rect = document.documentElement.getBoundingClientRect();
         const isOutside = this.isPositionOutside(this.lastKnownPosition, rect);
 
         if (this.isInside && isOutside) {
+            if (this.options.debug) {
+                console.log("Mouse transition: inside -> outside");
+            }
             this.isInside = false;
             this.onMouseLeave();
         } else if (!this.isInside && !isOutside) {
+            if (this.options.debug) {
+                console.log("Mouse transition: outside -> inside");
+            }
             this.isInside = true;
             this.onMouseEnter();
         }
@@ -100,19 +251,34 @@ class MouseTracker {
 
     protected isPositionOutside(position: { x: number; y: number }, rect: DOMRect): boolean {
         const { tolerance } = this.options;
-        return (
+        const result =
             position.x <= rect.left - tolerance ||
             position.x >= rect.right + tolerance ||
             position.y <= rect.top - tolerance ||
-            position.y >= rect.bottom + tolerance
-        );
+            position.y >= rect.bottom + tolerance;
+
+        if (this.options.debug) {
+            console.log("Position check:", {
+                position,
+                rect,
+                tolerance,
+                isOutside: result,
+            });
+        }
+
+        return result;
     }
 
     protected checkMousePosition() {
+        if (this.options.debug) {
+            console.log("Checking mouse position:", this.lastKnownPosition);
+        }
+
         const rect = document.documentElement.getBoundingClientRect();
         const isOutside = this.isPositionOutside(this.lastKnownPosition, rect);
 
         if (isOutside && this.isInside) {
+            console.log("Mouse position check detected leave condition");
             this.isInside = false;
             this.onMouseLeave();
         }
@@ -121,98 +287,143 @@ class MouseTracker {
     protected onMouseLeave() {
         const eventData: MouseEventData = {
             position: this.lastKnownPosition,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
-        if (this.options.debug) {
-            console.log('Mouse left window:', eventData);
-        }
-
-        this.emit('mouseleave', eventData);
+        console.log("Mouse left window:", eventData);
+        this.emit("mouseleave", eventData);
     }
 
     protected onMouseEnter() {
         const eventData: MouseEventData = {
             position: this.lastKnownPosition,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
-        if (this.options.debug) {
-            console.log('Mouse entered window:', eventData);
-        }
-
-        this.emit('mouseenter', eventData);
+        console.log("Mouse entered window:", eventData);
+        this.emit("mouseenter", eventData);
     }
 
     destroy() {
+        console.log("Destroying MouseTracker instance");
+        this.state = TrackerState.DESTROYED;
         this.stopIntervalCheck();
+
+        // 清除所有事件监听器
+        this.boundEventHandlers.forEach((handler, eventName) => {
+            document.removeEventListener(eventName, handler);
+        });
+        this.boundEventHandlers.clear();
+
         this.listeners.clear();
     }
 }
 
 class TauriMouseTracker extends MouseTracker {
     private tauriWindow: Window;
+    private unlisteners: Array<() => void>;
 
     constructor(options: MouseTrackerOptions = {}) {
         super(options);
+        console.log("Initializing TauriMouseTracker");
         this.tauriWindow = Window.getCurrent();
+        this.unlisteners = [];
         this.setupTauriEvents();
     }
 
+    pause(): boolean {
+        const paused = super.pause();
+        if (paused) {
+            // 暂停 Tauri 相关的监听
+            this.unlisteners.forEach(async (unlistener) => {
+                try {
+                    unlistener();
+                } catch (error) {
+                    console.error(`Failed to unlisten Tauri event:`, error);
+                }
+            });
+        }
+        return paused;
+    }
+
+    resume(): boolean {
+        const resumed = super.resume();
+        if (resumed) {
+            // 重新设置 Tauri 事件
+            this.setupTauriEvents();
+        }
+        return resumed;
+    }
+
     protected async setupTauriEvents() {
+        console.log("Setting up Tauri events");
+
         try {
-            await this.tauriWindow.listen('blur', () => {
+            const unlistener = await this.tauriWindow.listen("blur", () => {
+                console.log("Tauri window blur event detected");
                 this.checkMousePosition();
             });
+            this.unlisteners.push(unlistener);
 
-            await this.tauriWindow.listen('moved', () => {
+            const unlistener2 = await this.tauriWindow.listen("moved", () => {
+                console.log("Tauri window moved event detected");
                 this.checkMousePosition();
             });
-
-            if (this.options.debug) {
-                console.log('Tauri events setup completed');
-            }
+            this.unlisteners.push(unlistener2);
+            console.log("Tauri events setup completed successfully");
         } catch (error) {
-            console.error('Failed to setup Tauri events:', error);
+            console.error("Failed to setup Tauri events:", error);
+            throw error; // 重新抛出错误以便上层处理
         }
     }
 
     protected async onMouseLeave() {
         const eventData: MouseEventData = {
             position: this.lastKnownPosition,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
-        if (this.options.debug) {
-            console.log('Mouse left window:', eventData);
-        }
-
-        this.emit('mouseleave', eventData);
+        console.log("Tauri: Mouse left window:", eventData);
+        this.emit("mouseleave", eventData);
 
         try {
-            await this.tauriWindow.emit('mouse-left-window', eventData);
+            await this.tauriWindow.emit("mouse-left-window", eventData);
+            console.log("Successfully emitted Tauri mouse-left-window event");
         } catch (error) {
-            console.error('Failed to emit Tauri event:', error);
+            console.error("Failed to emit Tauri mouse-left-window event:", error);
+            throw error; // 重新抛出错误以便上层处理
         }
     }
 
     protected async onMouseEnter() {
         const eventData: MouseEventData = {
             position: this.lastKnownPosition,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
-        if (this.options.debug) {
-            console.log('Mouse entered window:', eventData);
-        }
-
-        this.emit('mouseenter', eventData);
+        console.log("Tauri: Mouse entered window:", eventData);
+        this.emit("mouseenter", eventData);
 
         try {
-            await this.tauriWindow.emit('mouse-entered-window', eventData);
+            await this.tauriWindow.emit("mouse-entered-window", eventData);
+            console.log("Successfully emitted Tauri mouse-entered-window event");
         } catch (error) {
-            console.error('Failed to emit Tauri event:', error);
+            console.error("Failed to emit Tauri mouse-entered-window event:", error);
+            throw error; // 重新抛出错误以便上层处理
         }
+    }
+
+    destroy() {
+        super.destroy();
+        // 清理 Tauri 特定的资源
+        this.unlisteners.forEach(async (unlistener) => {
+            try {
+                unlistener();
+            } catch (error) {
+                console.error(`Failed to unlisten Tauri event:`, error);
+            }
+        });
+        this.unlisteners = [];
     }
 }
 

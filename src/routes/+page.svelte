@@ -1,6 +1,6 @@
 <script lang="ts">
     import App from "./app.svelte";
-    import { platform } from '@tauri-apps/plugin-os';
+    import { platform } from "@tauri-apps/plugin-os";
     import { listen } from "@tauri-apps/api/event";
     import { createWindow, getWin } from "../windows";
     import { onMount } from "svelte";
@@ -26,8 +26,8 @@
         const unlisten = await listen("tray_mouseenter", async (event) => {
             console.log("tray_mouseenter", event);
             const mainWindow = await getWin("main");
-            if (mainWindow && (await mainWindow.isVisible())) {
-                console.log("main window is visible");
+            if (mainWindow && (await mainWindow.isFocused())) {
+                console.log("main window is focused");
                 return;
             }
             const win = await getWin("message-box");
@@ -43,11 +43,14 @@
             await win.setFocus();
             let x = (position.x - messageBoxWindowWidth / 2) / window.devicePixelRatio;
             // 判断是 Windows 还是 macOS
-
-            let y = position.y / window.devicePixelRatio;
-            if (y > 28 && y < 32) {
+            const platformName = await platform();
+            let y = 0;
+            if (platformName.toLowerCase() === "macos") {
                 y = 30;
+            } else {
+                y = (position.y - messageBoxWindowHeight / 2) / window.devicePixelRatio;
             }
+
             console.log("x, y", x, y);
             await win.setPosition(new LogicalPosition(x, y));
             await win.show();
@@ -76,6 +79,12 @@
         unlisteners.push(unlisten3);
     }
     onMount(() => {
+        // windows
+        // linux
+        // macos
+        // android
+        // ios
+        console.log("platform: ", platform());
         setupMessageBoxWin();
         return () => {
             unlisteners.forEach((unlisten) => unlisten?.());
