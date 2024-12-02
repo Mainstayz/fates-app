@@ -10,6 +10,7 @@
         "notification:default",
         "core:event:allow-listen",
         "core:event:allow-emit",
-        "core:event:allow-unlisten"
+        "core:event:allow-unlisten",
+        "core:window:allow-cursor-position"
     ]
 }

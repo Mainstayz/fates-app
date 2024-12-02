@@ -26,6 +26,11 @@ export class MouseTrackerState {
             this.position = data.position;
         });
 
+        // mousemove
+        tracker.on('mousemove', (data: MouseEventData) => {
+            this.position = data.position;
+        });
+
         this.tracker = tracker;
         this.state = TrackerState.ACTIVE;
     }

@@ -1,13 +1,21 @@
-import { Window } from "@tauri-apps/api/window";
+import { Window ,cursorPosition} from "@tauri-apps/api/window";
+
+interface WindowBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
 
 interface MouseTrackerOptions {
     checkInterval?: number;
     debug?: boolean;
     enableInterval?: boolean;
     tolerance?: number;
+    windowBounds?: WindowBounds;
 }
 
-export type MouseEventName = "mouseleave" | "mouseenter";
+export type MouseEventName = "mouseleave" | "mouseenter" | "mousemove";
 export type EventCallback = (data: MouseEventData) => void;
 
 export interface MouseEventData {
@@ -24,20 +32,27 @@ export enum TrackerState {
 class MouseTracker {
     protected isInside: boolean;
     protected lastKnownPosition: { x: number; y: number };
-    protected options: Required<MouseTrackerOptions>;
+    protected options: Required<MouseTrackerOptions> & { windowBounds: WindowBounds };
     protected listeners: Map<MouseEventName, Set<EventCallback>>;
     protected intervalId?: number;
     protected state: TrackerState;
-    protected boundEventHandlers: Map<string, EventListener>;
 
     constructor(options: MouseTrackerOptions = {}) {
         console.log("Initializing MouseTracker with options:", options);
+
+        const defaultBounds: WindowBounds = {
+            x: 0,
+            y: 0,
+            width: 800,
+            height: 600
+        };
 
         this.options = {
             checkInterval: 100,
             debug: false,
             enableInterval: true,
             tolerance: 5,
+            windowBounds: defaultBounds,
             ...options,
         };
 
@@ -45,7 +60,6 @@ class MouseTracker {
         this.lastKnownPosition = { x: 0, y: 0 };
         this.listeners = new Map();
         this.state = TrackerState.ACTIVE;
-        this.boundEventHandlers = new Map();
 
         console.log("MouseTracker initialized with final options:", this.options);
 
@@ -72,12 +86,6 @@ class MouseTracker {
         console.log("Pausing mouse tracker");
         this.state = TrackerState.PAUSED;
         this.stopIntervalCheck();
-
-        // 临时移除事件监听器
-        this.boundEventHandlers.forEach((handler, eventName) => {
-            document.removeEventListener(eventName, handler);
-        });
-
         return true;
     }
 
@@ -90,11 +98,6 @@ class MouseTracker {
 
         console.log("Resuming mouse tracker");
         this.state = TrackerState.ACTIVE;
-
-        // 重新添加事件监听器
-        this.boundEventHandlers.forEach((handler, eventName) => {
-            document.addEventListener(eventName, handler);
-        });
 
         if (this.options.enableInterval) {
             this.startIntervalCheck();
@@ -160,35 +163,11 @@ class MouseTracker {
     }
 
     protected setupEventListeners() {
-        console.log("Setting up event listeners");
+        console.log("Setting up cursor position monitoring");
 
-        const events: Array<keyof DocumentEventMap> = ["mousemove", "mouseleave", "mouseout", "mouseover"];
-
-        events.forEach((event) => {
-            const handler = (e: Event) => {
-                if (this.state === TrackerState.ACTIVE) {
-                    if (this.options.debug) {
-                        console.log(`Handling ${event} event`);
-                    }
-                    this.handleMouseEvent(e as MouseEvent);
-                }
-            };
-
-            this.boundEventHandlers.set(event, handler);
-            document.addEventListener(event, handler);
-        });
-
-        const blurHandler = () => {
-            if (this.state === TrackerState.ACTIVE) {
-                console.log("Window blur event detected");
-                this.checkMousePosition();
-            }
-        };
-
-        this.boundEventHandlers.set("blur", blurHandler);
-        window.addEventListener("blur", blurHandler);
-
-        console.log("Event listeners setup completed");
+        if (this.options.enableInterval) {
+            this.startIntervalCheck();
+        }
     }
 
     protected startIntervalCheck() {
@@ -217,70 +196,54 @@ class MouseTracker {
         }
     }
 
-    protected handleMouseEvent(event: MouseEvent) {
-        if (this.options.debug) {
-            console.log("Mouse event:", {
-                type: event.type,
-                x: event.clientX,
-                y: event.clientY,
-            });
+    protected async checkMousePosition() {
+        if (this.state !== TrackerState.ACTIVE) {
+            return;
         }
 
-        this.lastKnownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
+        try {
+            const position = await cursorPosition();
 
-        const rect = document.documentElement.getBoundingClientRect();
-        const isOutside = this.isPositionOutside(this.lastKnownPosition, rect);
-
-        if (this.isInside && isOutside) {
-            if (this.options.debug) {
-                console.log("Mouse transition: inside -> outside");
+            // 检查位置是否发生变化
+            if (position.x === this.lastKnownPosition.x &&
+                position.y === this.lastKnownPosition.y) {
+                if (this.options.debug) {
+                    console.log("Cursor position unchanged, skipping update");
+                }
+                return;
             }
-            this.isInside = false;
-            this.onMouseLeave();
-        } else if (!this.isInside && !isOutside) {
+
             if (this.options.debug) {
-                console.log("Mouse transition: outside -> inside");
+                console.log("Current cursor position:", position);
             }
-            this.isInside = true;
-            this.onMouseEnter();
-        }
-    }
 
-    protected isPositionOutside(position: { x: number; y: number }, rect: DOMRect): boolean {
-        const { tolerance } = this.options;
-        const result =
-            position.x <= rect.left - tolerance ||
-            position.x >= rect.right + tolerance ||
-            position.y <= rect.top - tolerance ||
-            position.y >= rect.bottom + tolerance;
+            const eventData: MouseEventData = {
+                position: {
+                    x: position.x,
+                    y: position.y
+                },
+                timestamp: Date.now()
+            };
+            this.emit("mousemove", eventData);
 
-        if (this.options.debug) {
-            console.log("Position check:", {
-                position,
-                rect,
-                tolerance,
-                isOutside: result,
-            });
-        }
+            this.lastKnownPosition = {
+                x: position.x,
+                y: position.y
+            };
 
-        return result;
-    }
+            const isOutside = this.isPositionOutside(this.lastKnownPosition);
 
-    protected checkMousePosition() {
-        if (this.options.debug) {
-            console.log("Checking mouse position:", this.lastKnownPosition);
-        }
-
-        const rect = document.documentElement.getBoundingClientRect();
-        const isOutside = this.isPositionOutside(this.lastKnownPosition, rect);
-
-        if (isOutside && this.isInside) {
-            console.log("Mouse position check detected leave condition");
-            this.isInside = false;
-            this.onMouseLeave();
+            if (isOutside && this.isInside) {
+                console.log("Mouse position check detected leave condition");
+                this.isInside = false;
+                this.onMouseLeave();
+            } else if (!isOutside && !this.isInside) {
+                console.log("Mouse position check detected enter condition");
+                this.isInside = true;
+                this.onMouseEnter();
+            }
+        } catch (error) {
+            console.error("Failed to get cursor position:", error);
         }
     }
 
@@ -308,14 +271,34 @@ class MouseTracker {
         console.log("Destroying MouseTracker instance");
         this.state = TrackerState.DESTROYED;
         this.stopIntervalCheck();
-
-        // 清除所有事件监听器
-        this.boundEventHandlers.forEach((handler, eventName) => {
-            document.removeEventListener(eventName, handler);
-        });
-        this.boundEventHandlers.clear();
-
         this.listeners.clear();
+    }
+
+    protected isPositionOutside(position: { x: number; y: number }): boolean {
+        const { tolerance, windowBounds } = this.options;
+        const result =
+            position.x <= windowBounds.x - tolerance ||
+            position.x >= windowBounds.x + windowBounds.width + tolerance ||
+            position.y <= windowBounds.y - tolerance ||
+            position.y >= windowBounds.y + windowBounds.height + tolerance;
+
+        if (this.options.debug) {
+            console.log("Position check:", {
+                position,
+                windowBounds,
+                tolerance,
+                isOutside: result,
+            });
+        }
+
+        return result;
+    }
+
+    updateWindowBounds(bounds: WindowBounds) {
+        this.options.windowBounds = bounds;
+        if (this.options.debug) {
+            console.log("Window bounds updated:", bounds);
+        }
     }
 }
 
@@ -329,6 +312,73 @@ class TauriMouseTracker extends MouseTracker {
         this.tauriWindow = Window.getCurrent();
         this.unlisteners = [];
         this.setupTauriEvents();
+        this.updateTauriWindowBounds();
+    }
+
+    private async updateTauriWindowBounds() {
+        try {
+            const outerPosition = await this.tauriWindow.outerPosition();
+            const size = await this.tauriWindow.innerSize();
+
+            this.updateWindowBounds({
+                x: outerPosition.x,
+                y: outerPosition.y,
+                width: size.width,
+                height: size.height
+            });
+        } catch (error) {
+            console.error("Failed to update Tauri window bounds:", error);
+        }
+    }
+
+    protected async setupTauriEvents() {
+        console.log("Setting up Tauri events");
+
+        try {
+            const unlistener = await this.tauriWindow.listen("blur", () => {
+                console.log("Tauri window blur event detected");
+                this.checkMousePosition();
+            });
+            this.unlisteners.push(unlistener);
+
+            const unlistener2 = await this.tauriWindow.listen("moved", async () => {
+                console.log("Tauri window moved event detected");
+                await this.updateTauriWindowBounds();
+                this.checkMousePosition();
+            });
+            this.unlisteners.push(unlistener2);
+
+            const unlistener3 = await this.tauriWindow.listen("resized", async () => {
+                console.log("Tauri window resized event detected");
+                await this.updateTauriWindowBounds();
+                this.checkMousePosition();
+            });
+            this.unlisteners.push(unlistener3);
+
+            const unlistener4 = await this.tauriWindow.listen("scaleChanged", async () => {
+                console.log("Tauri window scale changed event detected");
+                await this.updateTauriWindowBounds();
+                this.checkMousePosition();
+            });
+            this.unlisteners.push(unlistener4);
+
+            const unlistener5 = await this.tauriWindow.listen("maximize", async () => {
+                console.log("Tauri window maximized event detected");
+                await this.updateTauriWindowBounds();
+            });
+            this.unlisteners.push(unlistener5);
+
+            const unlistener6 = await this.tauriWindow.listen("unmaximize", async () => {
+                console.log("Tauri window unmaximized event detected");
+                await this.updateTauriWindowBounds();
+            });
+            this.unlisteners.push(unlistener6);
+
+            console.log("Tauri events setup completed successfully");
+        } catch (error) {
+            console.error("Failed to setup Tauri events:", error);
+            throw error;
+        }
     }
 
     pause(): boolean {
@@ -353,28 +403,6 @@ class TauriMouseTracker extends MouseTracker {
             this.setupTauriEvents();
         }
         return resumed;
-    }
-
-    protected async setupTauriEvents() {
-        console.log("Setting up Tauri events");
-
-        try {
-            const unlistener = await this.tauriWindow.listen("blur", () => {
-                console.log("Tauri window blur event detected");
-                this.checkMousePosition();
-            });
-            this.unlisteners.push(unlistener);
-
-            const unlistener2 = await this.tauriWindow.listen("moved", () => {
-                console.log("Tauri window moved event detected");
-                this.checkMousePosition();
-            });
-            this.unlisteners.push(unlistener2);
-            console.log("Tauri events setup completed successfully");
-        } catch (error) {
-            console.error("Failed to setup Tauri events:", error);
-            throw error; // 重新抛出错误以便上层处理
-        }
     }
 
     protected async onMouseLeave() {
