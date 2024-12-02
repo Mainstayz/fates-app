@@ -25,8 +25,9 @@ export class MouseTrackerState {
 
         // 默认不启用 interval 检查
         const tracker = new TauriMouseTracker({
-            debug: true,
+            debug: false,
             checkInterval: 100,
+            tolerance: 6,
             windowRect: [{
                 x: 0,
                 y: 0,

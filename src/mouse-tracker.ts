@@ -281,7 +281,7 @@ class MouseTracker {
         const result = !isInsideAnyRect;
 
         if (this.options.debug) {
-            console.log(`Position check result: ${result ? "outside" : "inside"}`);
+            console.log(`Position check result: ${result ? "outside" : "inside"} position: ${position.x}, ${position.y}, [${windowRect.map(rect => `${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}`).join(" | ")}]`);
         }
 
         return result;
@@ -426,16 +426,6 @@ class TauriMouseTracker extends MouseTracker {
             console.log("Tauri: Mouse left window:", eventData);
         }
         this.emit("mouseleave", eventData);
-
-        try {
-            await this.tauriWindow.emit("mouse-left-window", eventData);
-            if (this.options.debug) {
-                console.log("Successfully emitted Tauri mouse-left-window event");
-            }
-        } catch (error) {
-            console.error("Failed to emit Tauri mouse-left-window event:", error);
-            throw error; // 重新抛出错误以便上层处理
-        }
     }
 
     protected async onMouseEnter() {
@@ -448,16 +438,6 @@ class TauriMouseTracker extends MouseTracker {
             console.log("Tauri: Mouse entered window:", eventData);
         }
         this.emit("mouseenter", eventData);
-
-        try {
-            await this.tauriWindow.emit("mouse-entered-window", eventData);
-            if (this.options.debug) {
-                console.log("Successfully emitted Tauri mouse-entered-window event");
-            }
-        } catch (error) {
-            console.error("Failed to emit Tauri mouse-entered-window event:", error);
-            throw error; // 重新抛出错误以便上层处理
-        }
     }
 
     destroy() {
