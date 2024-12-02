@@ -5,8 +5,13 @@
     import { createWindow, getWin } from "../windows";
     import { onMount } from "svelte";
     import { LogicalPosition } from "@tauri-apps/api/window";
+    import { MouseTrackerState } from "../mouse-tracker.svelte";
+
     export let messageBoxWindowWidth = 280;
     export let messageBoxWindowHeight = 100;
+
+    // 初始化 MouseTrackerState
+    const mouseTrackerState = new MouseTrackerState();
 
     let unlisteners: Array<() => void> = [];
     async function setupMessageBoxWin() {
@@ -42,7 +47,6 @@
             await win.setAlwaysOnTop(true);
             await win.setFocus();
             let x = (position.x - messageBoxWindowWidth / 2) / window.devicePixelRatio;
-            // 判断是 Windows 还是 macOS
             const platformName = await platform();
             let y = 0;
             if (platformName.toLowerCase() === "macos") {
@@ -52,41 +56,40 @@
             }
 
             console.log("x, y", x, y);
-            await win.setPosition(new LogicalPosition(x, y));
+            const newPosition = new LogicalPosition(x, y);
+            await win.setPosition(newPosition);
             await win.show();
+
+            // 获取窗口的 bounds
+            const bounds = {
+                x: x,
+                y: y,
+                width: messageBoxWindowWidth,
+                height: messageBoxWindowHeight,
+            };
+            mouseTrackerState.updateWindowBounds(bounds);
+            mouseTrackerState.resume();
         });
         unlisteners.push(unlisten);
 
-        // 检测鼠标移出窗口
-
-        // const unlisten2 = await listen("tray_mouseleave", async (event) => {
-        //     console.log("tray_mouseleave", event);
-        //     const win = await getWin("message-box");
-        //     if (win) {
-        //         await win.hide();
-        //     }
-        // });
-        // unlisteners.push(unlisten2);
-
-        // tauri://blur
         const unlisten3 = await listen("tauri://blur", async (event) => {
             console.log("tauri://blur", event);
             const win = await getWin("message-box");
             if (win) {
                 await win.hide();
+                // 窗口隐藏时暂停 mouse-tracker
+                mouseTrackerState.pause();
             }
         });
         unlisteners.push(unlisten3);
     }
+
     onMount(() => {
-        // windows
-        // linux
-        // macos
-        // android
-        // ios
-        console.log("platform: ", platform());
+        mouseTrackerState.init();
         setupMessageBoxWin();
         return () => {
+            // 清理工作：销毁 mouse-tracker 和其他监听器
+            mouseTrackerState.destroy();
             unlisteners.forEach((unlisten) => unlisten?.());
         };
     });

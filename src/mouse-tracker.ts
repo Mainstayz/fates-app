@@ -1,6 +1,6 @@
-import { Window ,cursorPosition} from "@tauri-apps/api/window";
+import { Window, cursorPosition } from "@tauri-apps/api/window";
 
-interface WindowBounds {
+export interface WindowBounds {
     x: number;
     y: number;
     width: number;
@@ -44,7 +44,7 @@ class MouseTracker {
             x: 0,
             y: 0,
             width: 800,
-            height: 600
+            height: 600,
         };
 
         this.options = {
@@ -64,11 +64,6 @@ class MouseTracker {
         console.log("MouseTracker initialized with final options:", this.options);
 
         this.setupEventListeners();
-
-        if (this.options.enableInterval) {
-            console.log("Starting interval check");
-            this.startIntervalCheck();
-        }
     }
 
     // 获取当前跟踪器状态
@@ -200,13 +195,20 @@ class MouseTracker {
         if (this.state !== TrackerState.ACTIVE) {
             return;
         }
+        // 如果 windowBounds 为空或无效，则不进行检查
+        if (
+            !this.options.windowBounds ||
+            this.options.windowBounds.width == 0 ||
+            this.options.windowBounds.height == 0
+        ) {
+            return;
+        }
 
         try {
             const position = await cursorPosition();
 
             // 检查位置是否发生变化
-            if (position.x === this.lastKnownPosition.x &&
-                position.y === this.lastKnownPosition.y) {
+            if (position.x === this.lastKnownPosition.x && position.y === this.lastKnownPosition.y) {
                 if (this.options.debug) {
                     console.log("Cursor position unchanged, skipping update");
                 }
@@ -220,15 +222,15 @@ class MouseTracker {
             const eventData: MouseEventData = {
                 position: {
                     x: position.x,
-                    y: position.y
+                    y: position.y,
                 },
-                timestamp: Date.now()
+                timestamp: Date.now(),
             };
             this.emit("mousemove", eventData);
 
             this.lastKnownPosition = {
                 x: position.x,
-                y: position.y
+                y: position.y,
             };
 
             const isOutside = this.isPositionOutside(this.lastKnownPosition);
@@ -324,7 +326,7 @@ class TauriMouseTracker extends MouseTracker {
                 x: outerPosition.x,
                 y: outerPosition.y,
                 width: size.width,
-                height: size.height
+                height: size.height,
             });
         } catch (error) {
             console.error("Failed to update Tauri window bounds:", error);

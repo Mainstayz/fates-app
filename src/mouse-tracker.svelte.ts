@@ -1,4 +1,4 @@
-import { TauriMouseTracker, TrackerState, type MouseEventData } from './mouse-tracker';
+import { TauriMouseTracker, TrackerState, type MouseEventData, type WindowBounds } from './mouse-tracker';
 
 export class MouseTrackerState {
     tracker = $state<TauriMouseTracker | null>(null);
@@ -11,9 +11,17 @@ export class MouseTrackerState {
             this.tracker.destroy();
         }
 
+        // 默认不启用 interval 检查
         const tracker = new TauriMouseTracker({
             debug: true,
-            checkInterval: 100
+            checkInterval: 200,
+            enableInterval: false,
+            windowBounds: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+            },
         });
 
         tracker.on('mouseenter', (data: MouseEventData) => {
@@ -33,6 +41,12 @@ export class MouseTrackerState {
 
         this.tracker = tracker;
         this.state = TrackerState.ACTIVE;
+    }
+
+    updateWindowBounds(bounds: WindowBounds) {
+        if (this.tracker) {
+            this.tracker.updateWindowBounds(bounds);
+        }
     }
 
     pause() {
