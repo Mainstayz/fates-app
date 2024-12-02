@@ -1,5 +1,6 @@
 // https://github.com/eythaann/Seelen-UI/blob/master/src/background/tray.rs
 
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use std::{thread::sleep, time::Duration};
 use tauri::{
@@ -10,10 +11,18 @@ use tauri::{
 };
 use tokio::time::interval;
 
+
 #[derive(Default)]
 struct TrayState {
     timer: Option<async_runtime::JoinHandle<()>>,
     is_running: bool,
+}
+
+// 定义结构体，包含鼠标位置以及 Tray 矩形
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct TrayIconEventInfo {
+    mouse_position: (f64, f64),
+    tray_rect: (i32, i32, i32, i32),
 }
 
 /// 尝试注册系统托盘图标，最多重试 10 次
@@ -100,21 +109,43 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
             TrayIconEvent::Enter {
                 id: _,
                 position,
-                rect: _,
+                rect,
             } => {
                 if get_tray_flash_state(handle.clone()) {
-                    log::info!("托盘图标进入：{:?}", position);
-                    handle.emit("tray_mouseenter", position).unwrap();
+                    log::info!("托盘图标进入：{:?} {:?}", position, rect);
+                    let physical_position = rect.position.to_physical::<i32>(1.0);
+                    let physical_size = rect.size.to_physical::<i32>(1.0);
+                    let info = TrayIconEventInfo {
+                        mouse_position: (position.x, position.y),
+                        tray_rect: (
+                            physical_position.x,
+                            physical_position.y,
+                            physical_size.width,
+                            physical_size.height,
+                        ),
+                    };
+                    handle.emit("tray_mouseenter", info).unwrap();
                 }
             }
             TrayIconEvent::Leave {
                 id: _,
                 position,
-                rect: _,
+                rect,
             } => {
                 if get_tray_flash_state(handle.clone()) {
-                    log::info!("托盘图标离开：{:?}", position);
-                    handle.emit("tray_mouseleave", position).unwrap();
+                    log::info!("托盘图标离开：{:?} {:?}", position, rect);
+                    let physical_position = rect.position.to_physical::<i32>(1.0);
+                    let physical_size = rect.size.to_physical::<i32>(1.0);
+                    let info = TrayIconEventInfo {
+                        mouse_position: (position.x, position.y),
+                        tray_rect: (
+                            physical_position.x,
+                            physical_position.y,
+                            physical_size.width,
+                            physical_size.height,
+                        ),
+                    };
+                    handle.emit("tray_mouseleave", info).unwrap();
                 }
             }
             _ => (),

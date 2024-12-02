@@ -1,6 +1,6 @@
 import { Window, cursorPosition } from "@tauri-apps/api/window";
 
-export interface WindowBounds {
+export interface WindowRect {
     x: number;
     y: number;
     width: number;
@@ -11,7 +11,7 @@ interface MouseTrackerOptions {
     checkInterval?: number;
     debug?: boolean;
     tolerance?: number;
-    windowBounds?: WindowBounds;
+    windowRect?: WindowRect[];
 }
 
 export type MouseEventName = "mouseleave" | "mouseenter" | "mousemove";
@@ -31,7 +31,7 @@ export enum TrackerState {
 class MouseTracker {
     protected isInside: boolean;
     protected lastKnownPosition: { x: number; y: number };
-    protected options: Required<MouseTrackerOptions> & { windowBounds: WindowBounds };
+    protected options: Required<MouseTrackerOptions> & { windowRect: WindowRect[] };
     protected listeners: Map<MouseEventName, Set<EventCallback>>;
     protected intervalId?: number;
     protected state: TrackerState;
@@ -41,7 +41,7 @@ class MouseTracker {
             console.log("Initializing MouseTracker with options:", options);
         }
 
-        const defaultBounds: WindowBounds = {
+        const defaultRect: WindowRect = {
             x: 0,
             y: 0,
             width: 800,
@@ -52,7 +52,7 @@ class MouseTracker {
             checkInterval: 100,
             debug: false,
             tolerance: 5,
-            windowBounds: defaultBounds,
+            windowRect: options.windowRect || [defaultRect],
             ...options,
         };
 
@@ -176,14 +176,16 @@ class MouseTracker {
             }
             return;
         }
-        // 如果 windowBounds 为空或无效，则不进行检查
+        // 如果 windowRect 为空或无效，则不进行检查
         if (
-            !this.options.windowBounds ||
-            this.options.windowBounds.width == 0 ||
-            this.options.windowBounds.height == 0
+            !this.options.windowRect ||
+            this.options.windowRect.length === 0 ||
+            this.options.windowRect.some(rect =>
+                rect.width === 0 || rect.height === 0
+            )
         ) {
             if (this.options.debug) {
-                console.log("Window bounds are invalid, skipping check");
+                console.log("Window rects are invalid, skipping check");
             }
             return;
         }
@@ -263,12 +265,20 @@ class MouseTracker {
     }
 
     protected isPositionOutside(position: { x: number; y: number }): boolean {
-        const { tolerance, windowBounds } = this.options;
-        const result =
-            position.x <= windowBounds.x - tolerance ||
-            position.x >= windowBounds.x + windowBounds.width + tolerance ||
-            position.y <= windowBounds.y - tolerance ||
-            position.y >= windowBounds.y + windowBounds.height + tolerance;
+        const { tolerance, windowRect } = this.options;
+
+        // 检查是否在任意一个区域内
+        const isInsideAnyRect = windowRect.some(rect => {
+            const outside =
+                position.x <= rect.x - tolerance ||
+                position.x >= rect.x + rect.width + tolerance ||
+                position.y <= rect.y - tolerance ||
+                position.y >= rect.y + rect.height + tolerance;
+
+            return !outside;
+        });
+
+        const result = !isInsideAnyRect;
 
         if (this.options.debug) {
             console.log(`Position check result: ${result ? "outside" : "inside"}`);
@@ -277,10 +287,10 @@ class MouseTracker {
         return result;
     }
 
-    updateWindowBounds(bounds: WindowBounds) {
-        this.options.windowBounds = bounds;
+    updateWindowRect(rects: WindowRect[]) {
+        this.options.windowRect = rects;
         if (this.options.debug) {
-            console.log("Window bounds updated:", bounds);
+            console.log("Window rects updated:", this.options.windowRect);
         }
     }
 }
@@ -305,12 +315,12 @@ class TauriMouseTracker extends MouseTracker {
             const outerPosition = await this.tauriWindow.outerPosition();
             const size = await this.tauriWindow.innerSize();
 
-            this.updateWindowBounds({
+            this.updateWindowRect([{
                 x: outerPosition.x,
                 y: outerPosition.y,
                 width: size.width,
                 height: size.height,
-            });
+            }]);
         } catch (error) {
             console.error("Failed to update Tauri window bounds:", error);
         }
