@@ -6,6 +6,18 @@ export class MouseTrackerState {
     position = $state({ x: 0, y: 0 });
     state = $state<TrackerState>(TrackerState.DESTROYED);
 
+    // 添加一个回调属性
+    private onIsInsideChange?: (isInside: boolean) => void;
+
+    constructor() {
+        $effect(() => {
+            console.log("isInside", this.isInside);
+            if (this.onIsInsideChange) {
+                this.onIsInsideChange(this.isInside);
+            }
+        });
+    }
+
     init() {
         if (this.tracker) {
             this.tracker.destroy();
@@ -14,8 +26,7 @@ export class MouseTrackerState {
         // 默认不启用 interval 检查
         const tracker = new TauriMouseTracker({
             debug: true,
-            checkInterval: 200,
-            enableInterval: false,
+            checkInterval: 100,
             windowBounds: {
                 x: 0,
                 y: 0,
@@ -40,7 +51,7 @@ export class MouseTrackerState {
         });
 
         this.tracker = tracker;
-        this.state = TrackerState.ACTIVE;
+        this.state = TrackerState.PAUSED;
     }
 
     updateWindowBounds(bounds: WindowBounds) {
@@ -71,5 +82,10 @@ export class MouseTrackerState {
             this.isInside = false;
             this.position = { x: 0, y: 0 };
         }
+    }
+
+    // 添加设置回调的方法
+    setIsInsideCallback(callback: (isInside: boolean) => void) {
+        this.onIsInsideChange = callback;
     }
 }

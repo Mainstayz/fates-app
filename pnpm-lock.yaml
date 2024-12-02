@@ -47,6 +47,9 @@ importers:
       apexcharts:
         specifier: ^4.1.0
         version: 4.1.0
+      debounce:
+        specifier: ^2.2.0
+        version: 2.2.0
       handlebars:
         specifier: ^4.7.8
         version: 4.7.8
@@ -1114,6 +1117,10 @@ packages:
 
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
+
+  debounce@2.2.0:
+    resolution: {integrity: sha512-Xks6RUDLZFdz8LIdR6q0MTH44k7FikOmnh5xkSjMig6ch45afc8sjTjRQf3P6ax8dMgcQrYO/AR2RGWURrruqw==}
+    engines: {node: '>=18'}
 
   debug@4.3.7:
     resolution: {integrity: sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==}
@@ -2624,6 +2631,8 @@ snapshots:
 
   dayjs@1.11.13:
     optional: true
+
+  debounce@2.2.0: {}
 
   debug@4.3.7:
     dependencies:

@@ -13,7 +13,7 @@ use crate::tray::get_tray_flash_state;
 use std::sync::Arc;
 use std::{clone, fs};
 use tauri::{path::BaseDirectory, Manager};
-use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
+use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};

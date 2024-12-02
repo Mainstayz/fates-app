@@ -46,7 +46,7 @@ fn register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // 构建托盘图标
     TrayIconBuilder::with_id("tray")
         .icon(icon)
-        .tooltip("Fates")
+        // .tooltip("Fates")
         .menu(&menu)
         .on_menu_event(create_menu_handler(handle.clone()))
         .on_tray_icon_event(create_tray_handler(handle.clone()))
@@ -103,7 +103,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                 rect: _,
             } => {
                 if get_tray_flash_state(handle.clone()) {
-                    log::info!("托盘图标进入: {:?}", position);
+                    log::info!("托盘图标进入：{:?}", position);
                     handle.emit("tray_mouseenter", position).unwrap();
                 }
             }
@@ -113,7 +113,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                 rect: _,
             } => {
                 if get_tray_flash_state(handle.clone()) {
-                    log::info!("托盘图标离开: {:?}", position);
+                    log::info!("托盘图标离开：{:?}", position);
                     handle.emit("tray_mouseleave", position).unwrap();
                 }
             }
