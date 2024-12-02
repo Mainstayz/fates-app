@@ -8,89 +8,77 @@
     import { MouseTrackerState } from "../mouse-tracker.svelte";
     import debounce from "debounce";
 
-    export let messageBoxWindowWidth = 280;
-    export let messageBoxWindowHeight = 100;
+    // 配置常量
+    const CONFIG = {
+        messageBoxWidth: 280, // 消息框宽度
+        messageBoxHeight: 100, // 消息框高度
+        hideDelay: 200, // 隐藏延迟
+        showDelay: 200, // 显示延迟
+        macosYOffset: 30, // macOS 偏移量
+    } as const;
 
-    // 初始化 MouseTrackerState
+    // 状态管理
+    const state = {
+        atLeastOnceInside: false, // 至少进入一次
+        isInMessageBox: false, // 是否在消息框内
+        hoverInTray: false, // 是否在托盘上
+        unlisteners: [] as Array<() => void>, // 监听器列表
+    };
+
     const mouseTrackerState = new MouseTrackerState();
 
-    let unlisteners: Array<() => void> = [];
+    // 计算窗口位置
+    function calculateWindowPosition(x: number) {
+        const platformName = platform().toLowerCase();
+        const y =
+            platformName === "macos"
+                ? CONFIG.macosYOffset
+                : (window.screen.availHeight - CONFIG.messageBoxHeight) / window.devicePixelRatio;
 
-    // At least once inside.
-    let atLeastOnceInside = false;
-    let isInMessageBox = false;
-    let hoverInTray = false;
+        return {
+            x: (x - CONFIG.messageBoxWidth / 2) / window.devicePixelRatio,
+            y,
+        };
+    }
 
+    // 窗口显示逻辑
     async function showMessageBoxWin(event: any) {
-        // const mainWindow = await getWin("main");
-        // if (mainWindow && (await mainWindow.isVisible()) && (await mainWindow.isFocused())) {
-        //     console.log("main window is focused");
-        //     return;
-        // }
-
         const win = await getWin("message-box");
-        if (!win) {
-            console.error("message box window not found");
-            return;
-        }
-        if (await win.isVisible()) {
-            console.log("message box is visible");
-            return;
-        }
+        if (!win || (await win.isVisible())) return;
 
-        let position = event.payload as { x: number; y: number };
-        let x = (position.x - messageBoxWindowWidth / 2) / window.devicePixelRatio;
-        const platformName = platform();
-        let y = 0;
-        if (platformName.toLowerCase() === "macos") {
-            y = 30;
-        } else {
-            y = (window.screen.availHeight - messageBoxWindowHeight) / window.devicePixelRatio;
-            console.log(
-                "window.screen.availHeight",
-                window.screen.availHeight,
-                "messageBoxWindowHeight",
-                messageBoxWindowHeight,
-                "y",
-                y
-            );
-        }
+        const position = event.payload as { x: number; y: number };
+        const { x, y } = calculateWindowPosition(position.x);
 
         await win.setFocus();
-        const newPosition = new LogicalPosition(x, y);
-        await win.setPosition(newPosition);
+        await win.setPosition(new LogicalPosition(x, y));
         await win.show();
         await win.setFocus();
-        // 获取窗口的 bounds
-        const bounds = {
-            x: x,
-            y: y,
-            width: messageBoxWindowWidth,
-            height: messageBoxWindowHeight,
-        };
+
+        const bounds = { x, y, width: CONFIG.messageBoxWidth, height: CONFIG.messageBoxHeight };
         mouseTrackerState.updateWindowBounds(bounds);
         mouseTrackerState.resume();
     }
 
-    let debounceShowMessageBoxWin = debounce(showMessageBoxWin, 200);
-
+    // 窗口隐藏逻辑
     async function hideMessageBoxWin() {
-        isInMessageBox = false;
-        atLeastOnceInside = false;
+        state.atLeastOnceInside = false;
         const win = await getWin("message-box");
         if (win) {
             mouseTrackerState.pause();
             await win.hide();
         }
     }
-    let debounceHideMessageBoxWin = debounce(hideMessageBoxWin, 200);
 
+    const debounceShowMessageBoxWin = debounce(showMessageBoxWin, CONFIG.showDelay);
+    const debounceHideMessageBoxWin = debounce(hideMessageBoxWin, CONFIG.hideDelay);
+
+    // 初始化消息框窗口
     async function setupMessageBoxWin() {
-        const win = await createWindow("message-box", {
+        await createWindow("message-box", {
             title: "Message Box",
             url: "/message-box",
-            width: messageBoxWindowWidth,
-            height: messageBoxWindowHeight,
+            width: CONFIG.messageBoxWidth,
+            height: CONFIG.messageBoxHeight,
             decorations: false,
             resizable: false,
             alwaysOnTop: true,
@@ -99,58 +87,57 @@
             shadow: false,
         });
 
-        const unlisten = await listen("tray_mouseenter", async (event) => {
-            console.log("tray_mouseenter", event);
-            hoverInTray = true;
-            debounceShowMessageBoxWin(event);
-        });
-        unlisteners.push(unlisten);
+        // 注册事件监听器
+        const listeners = [
+            [
+                "tray_mouseenter",
+                (event: any) => {
+                    state.hoverInTray = true;
+                    debounceShowMessageBoxWin(event);
+                },
+            ],
+            [
+                "tray_mouseleave",
+                () => {
+                    state.hoverInTray = false;
+                    // 延迟 200ms 后隐藏窗口
+                    setTimeout(() => {
+                        if (!state.isInMessageBox) {
+                            hideMessageBoxWin();
+                        }
+                    }, CONFIG.hideDelay);
+                },
+            ],
+        ] as const;
 
-        const unlisten2 = await listen("tray_mouseleave", async (event) => {
-            // 延迟 100ms 后隐藏窗口
-            hoverInTray = false;
-            setTimeout(async () => {
-                console.log("tray_mouseleave, isInMessageBox: ", isInMessageBox);
-                if (!isInMessageBox) {
-                    debounceHideMessageBoxWin();
-                }
-            }, 200);
-        });
-        unlisteners.push(unlisten2);
-
-        // const unlisten3 = await listen("tauri://blur", async (event) => {
-        //     isInMessageBox = false;
-        //     const win = await getWin("message-box");
-        //     if (win) {
-        //         await win.hide();
-        //         mouseTrackerState.pause();
-        //     }
-        // });
-        // unlisteners.push(unlisten3);
+        // 注册所有监听器
+        for (const [event, handler] of listeners) {
+            const unlisten = await listen(event, handler);
+            state.unlisteners.push(unlisten);
+        }
     }
 
     onMount(() => {
         mouseTrackerState.init();
         mouseTrackerState.setIsInsideCallback((isInside) => {
-            isInMessageBox = isInside;
+            state.isInMessageBox = isInside;
 
-            // 至少进入一次后，进入时不再显示窗口
-            if (isInside && !atLeastOnceInside) {
-                atLeastOnceInside = true;
+            // 配置是否首次进入
+            if (isInside && !state.atLeastOnceInside) {
+                state.atLeastOnceInside = true;
                 return;
             }
 
-            if (atLeastOnceInside && !isInside && !hoverInTray) {
-                // 至少进入一次后，离开时延迟 200ms 后隐藏窗口
-                atLeastOnceInside = false;
+            if (state.atLeastOnceInside && !isInside && !state.hoverInTray) {
                 debounceHideMessageBoxWin();
             }
         });
+
         setupMessageBoxWin();
+
         return () => {
-            // 清理工作：销毁 mouse-tracker 和其他监听器
             mouseTrackerState.destroy();
-            unlisteners.forEach((unlisten) => unlisten?.());
+            state.unlisteners.forEach((unlisten) => unlisten?.());
         };
     });
 </script>
