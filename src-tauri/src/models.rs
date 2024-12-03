@@ -2,6 +2,18 @@ use serde::{Deserialize, Serialize};
 
 // settings.json
 pub const SETTINGS_FILE_NAME: &str = "settings.json";
+// message-box.json
+pub const MESSAGE_BOX_FILE_NAME: &str = "message-box.json";
+
+// notification-message
+pub const NOTIFICATION_MESSAGE: &str = "notification-message";
+
+// message-box
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MessageBoxData {
+    pub title: String,
+    pub description: String,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]

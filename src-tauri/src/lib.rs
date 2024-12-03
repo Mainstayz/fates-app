@@ -5,19 +5,22 @@ mod models;
 mod notification_manager;
 mod tray;
 use crate::models::{
-    NotificationConfig, Settings, TimelineData, SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,
+    MessageBoxData, NotificationConfig, Settings, TimelineData, NOTIFICATION_MESSAGE,
+    SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,MESSAGE_BOX_FILE_NAME
 };
 use crate::notification_manager::NotificationManager;
 use crate::tray::flash_tray_icon;
 use crate::tray::get_tray_flash_state;
+use std::fs;
 use std::sync::Arc;
-use std::{clone, fs};
-use tauri::{path::BaseDirectory, Manager};
+use tauri::Emitter;
+use tauri::Manager;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
+use tauri_plugin_store::StoreExt;
 
 const APP_NAME: &str = "Fates";
 
@@ -192,6 +195,7 @@ pub fn run() {
                     // 如果异常都返回 false
                     // 读取 SETTINGS_FILE_NAME
                     // 读取 settings.json 文件
+                    log::info!("执行通知条件检查");
                     let app_dir = match get_app_data_dir(app_handle_clone.clone()) {
                         Ok(dir) => dir,
                         Err(e) => {
@@ -203,7 +207,16 @@ pub fn run() {
 
                     // 如果文件不存在，返回 false
                     if !settings_path.exists() {
-                        return false;
+                         // 创建 settings.json 文件
+                         let default_settings = Settings {
+                            language: Some("zh-CN".to_string()),
+                            checkInterval: Some(2),
+                        };
+
+                        let _ = fs::write(
+                            &settings_path,
+                            serde_json::to_string(&default_settings).unwrap(),
+                        );
                     }
 
                     // 读取文件内容
@@ -246,7 +259,9 @@ pub fn run() {
                                 elapsed.as_secs(),
                                 check_interval * 3600
                             );
-                            false
+                            // TEST
+                            true
+                            // false
                         }
                     } else {
                         *last = Some(now);
@@ -289,10 +304,23 @@ pub fn run() {
                 move |notification| {
                     let title = notification.title.clone();
                     let body = notification.message.clone();
+
                     log::info!("发送通知 - title: {}, body: {}", title, body);
+                    let _store = app_handle_clone_3.store(MESSAGE_BOX_FILE_NAME).unwrap();
+                    _store.set("title", title.clone());
+                    _store.set("body", body.clone());
+                    _store.save().unwrap();
+
+                    // 发送消息盒子
+                    let message_box_data = MessageBoxData {
+                        title: title.clone(),
+                        description: body.clone(),
+                    };
+                    let _ = app_handle_clone_3.emit(NOTIFICATION_MESSAGE, message_box_data);
 
                     // 闪烁托盘图标
                     flash_tray_icon(app_handle_clone_3.clone(), true).unwrap();
+
                     // 在这里克隆 app_handle
                     if let Err(e) = NotificationManager::send_notification(
                         app_handle_clone_3.clone(),

@@ -49,6 +49,7 @@ impl NotificationManager {
             loop {
                 interval.tick().await;
                 if !check_handler() {
+                    log::info!("通知条件检查返回 false，跳过检查");
                     continue;
                 }
 

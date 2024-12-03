@@ -4,7 +4,7 @@
     import { listen } from "@tauri-apps/api/event";
     import { createWindow, getWindowByLabel } from "../windows";
     import { onMount } from "svelte";
-    import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+    import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
     import { MouseTrackerState } from "../mouse-tracker.svelte";
     import debounce from "debounce";
 
@@ -12,7 +12,7 @@
     // 消息框宽度，单位：逻辑像素
     const messageBoxWidth = 280;
     // 消息框高度，单位：逻辑像素
-    const messageBoxHeight = 100;
+    let messageBoxHeight = 100;
 
     // 配置常量
     const CONFIG = {
@@ -60,7 +60,7 @@
         // 使用物理单位
         const physicalWidth = messageBoxWidth * devicePixelRatio;
         const physicalHeight = messageBoxHeight * devicePixelRatio;
-
+        console.log("message box physical rect:", x, y, physicalWidth, physicalHeight);
         await win.setPosition(new PhysicalPosition(x, y));
         await win.setSize(new PhysicalSize(physicalWidth, physicalHeight));
         await win.show();
@@ -77,6 +77,8 @@
         mouseTrackerState.updateWindowRect([rect1, rect2]);
         mouseTrackerState.resume();
     }
+
+
 
     // 窗口隐藏逻辑
     async function hideMessageBoxWin() {
@@ -101,6 +103,7 @@
             decorations: false,
             resizable: false,
             alwaysOnTop: true,
+            transparent: true,
             center: false,
             visible: false,
             shadow: false,
@@ -134,6 +137,16 @@
         });
 
         state.unlisteners.push(unlistenBlur);
+
+        // 监听消息框高度
+        const unlistenMessageBoxHeight = await getCurrentWindow().listen("message-box-height", (event) => {
+            // 更新消息框高度
+            // 物理大小？
+            console.log("message box height:", event.payload);
+            messageBoxHeight = event.payload as number;
+        });
+
+        state.unlisteners.push(unlistenMessageBoxHeight);
     }
 
     onMount(() => {
