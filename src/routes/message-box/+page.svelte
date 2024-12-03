@@ -1,6 +1,7 @@
 <script lang="ts">
     import * as Alert from "$lib/components/ui/alert";
     import { load } from "@tauri-apps/plugin-store";
+    import { invoke } from "@tauri-apps/api/core";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
     import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -12,12 +13,21 @@
     let pageHeight: number = 0;
     let resizeObserver: ResizeObserver;
 
+    // invoke  flash_tray_icon
     function handleGlobalClick(event: MouseEvent) {
         console.log("Global click:", {
             x: event.clientX,
             y: event.clientY,
             target: event.target,
         });
+        invoke("flash_tray_icon", { flash: false }).then(() => {
+            console.log("disable flash tray icon success, emit hide-message-box");
+            return getCurrentWindow().emit("hide-message-box", {});
+        }).catch((error) => {
+            console.error("disable flash tray icon error:", error);
+        });
+
+
     }
 
     async function setupListenEvent() {

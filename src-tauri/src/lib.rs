@@ -9,8 +9,7 @@ use crate::models::{
     SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,MESSAGE_BOX_FILE_NAME
 };
 use crate::notification_manager::NotificationManager;
-use crate::tray::flash_tray_icon;
-use crate::tray::get_tray_flash_state;
+use crate::tray::{flash_tray_icon, get_tray_flash_state};
 use std::fs;
 use std::sync::Arc;
 use tauri::Emitter;
@@ -149,7 +148,8 @@ pub fn run() {
             load_timeline_data,
             update_timeline_data,
             auto_launch,
-            get_tray_flash_state
+            get_tray_flash_state,
+            flash_tray_icon,
         ])
         .setup(|app| {
             // 仅在构建 macOS 时设置背景颜色
@@ -319,7 +319,7 @@ pub fn run() {
                     let _ = app_handle_clone_3.emit(NOTIFICATION_MESSAGE, message_box_data);
 
                     // 闪烁托盘图标
-                    flash_tray_icon(app_handle_clone_3.clone(), true).unwrap();
+                    flash_tray_icon(app_handle_clone_3.clone(), true);
 
                     // 在这里克隆 app_handle
                     if let Err(e) = NotificationManager::send_notification(

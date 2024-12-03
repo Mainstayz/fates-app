@@ -138,6 +138,12 @@
 
         state.unlisteners.push(unlistenBlur);
 
+        // 监听隐藏消息框
+        const unlistenHideMessageBox = await messageBoxWin.listen("hide-message-box", () => {
+            hideMessageBoxWin();
+        });
+        state.unlisteners.push(unlistenHideMessageBox);
+
         // 监听消息框高度
         const unlistenMessageBoxHeight = await getCurrentWindow().listen("message-box-height", (event) => {
             // 更新消息框高度

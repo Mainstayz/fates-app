@@ -11,7 +11,6 @@ use tauri::{
 };
 use tokio::time::interval;
 
-
 #[derive(Default)]
 struct TrayState {
     timer: Option<async_runtime::JoinHandle<()>>,
@@ -85,8 +84,12 @@ fn create_menu_handler(_handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
     move |app: &AppHandle, event: MenuEvent| match event.id().as_ref() {
         "quit" => std::process::exit(0),
         "show" => show_main_window(app.clone()),
-        "flash" => flash_tray_icon(app.clone(), true).unwrap(),
-        "flash_off" => flash_tray_icon(app.clone(), false).unwrap(),
+        "flash" => {
+            let _ = flash_tray_icon(app.clone(), true);
+        }
+        "flash_off" => {
+            let _ = flash_tray_icon(app.clone(), false);
+        }
         _ => (),
     }
 }
@@ -101,7 +104,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                         // 发送 tray_flash_did_click 事件
                         log::info!("发送 tray_flash_did_click 事件");
                         handle.emit("tray_flash_did_click", ()).unwrap();
-                        flash_tray_icon(handle.clone(), false).unwrap();
+                        flash_tray_icon(handle.clone(), false);
                     }
                     show_main_window(handle.clone());
                 }
@@ -173,14 +176,15 @@ pub fn get_tray_flash_state(app: AppHandle) -> bool {
 }
 
 /// 闪烁托盘图标
+#[tauri::command]
 #[cfg(target_os = "windows")]
-pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
     let state = app.state::<Mutex<TrayState>>();
 
     let mut state = state.lock().unwrap();
 
     if flash == state.is_running {
-        return Ok(());
+        return true;
     }
 
     // 如果已有计时器在运行，先停止它
@@ -190,9 +194,7 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
         timer.abort();
     }
 
-    let tray_icon = app
-        .tray_by_id("tray")
-        .ok_or_else(|| "Tray icon not found")?;
+    let tray_icon = app.tray_by_id("tray").ok_or_else(|| false).unwrap();
     let app_handle = app.clone();
 
     if flash {
@@ -224,17 +226,18 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
             println!("设置托盘图标失败：{}", e);
         }
     }
-    Ok(())
+    true
 }
 
+#[tauri::command]
 #[cfg(not(target_os = "windows"))]
-pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
     let state = app.state::<Mutex<TrayState>>();
 
     let mut state = state.lock().unwrap();
 
     if flash == state.is_running {
-        return Ok(());
+        return true;
     }
 
     let tray_icon = app
@@ -250,5 +253,5 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> Result<(), Box<dyn std::e
         let _ = tray_icon.set_title(Some(""));
     }
 
-    Ok(())
+    true
 }
