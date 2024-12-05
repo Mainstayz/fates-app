@@ -242,7 +242,9 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
 
     let tray_icon = app
         .tray_by_id("tray")
-        .ok_or_else(|| "Tray icon not found")?;
+        .ok_or_else(|| false)
+        .unwrap();
+
     if flash {
         state.is_running = true;
         log::info!("开始闪烁.. set_title(Some(\"1\")");

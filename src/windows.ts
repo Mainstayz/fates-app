@@ -78,3 +78,20 @@ export async function getAllWindows(): Promise<WebviewWindow[]> {
         return [];
     }
 }
+
+export async function createTimeProgressBarWindow() {
+    return await createWindow("time-progress-bar", {
+        title: "Time Progress",
+        url: "/time-progress-bar-floating",
+        width: window.screen.width,
+        height: 4,
+        decorations: false,
+        resizable: false,
+        alwaysOnTop: true,
+        transparent: true,
+        center: false,
+        visible: false,
+        shadow: false,
+        y: 0, // 放置在屏幕顶部
+    });
+}

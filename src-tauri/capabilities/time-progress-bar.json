@@ -1,0 +1,15 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "time-progress-bar",
+    "description": "Capability for the time progress bar floating window",
+    "windows": [
+        "time-progress-bar"
+    ],
+    "permissions": [
+        "core:default",
+        "core:event:allow-listen",
+        "core:event:allow-emit",
+        "core:event:allow-unlisten",
+        "core:window:allow-set-always-on-top"
+    ]
+}
