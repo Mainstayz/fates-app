@@ -10,6 +10,8 @@
         "core:event:allow-listen",
         "core:event:allow-emit",
         "core:event:allow-unlisten",
-        "core:window:allow-set-always-on-top"
+        "core:window:allow-set-always-on-top",
+        "notification:default",
+        "store:default"
     ]
 }

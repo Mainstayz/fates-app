@@ -1,5 +1,5 @@
 import { Window } from "@tauri-apps/api/window";
-import { createTimeProgressBarWindow, getWindowByLabel } from "../windows";
+import { createWindow, getWindowByLabel } from "../windows";
 
 export class TimeProgressBarManager {
     private static instance: TimeProgressBarManager;
@@ -16,8 +16,25 @@ export class TimeProgressBarManager {
 
     public async initialize() {
         if (!this.window) {
-            this.window = await createTimeProgressBarWindow();
+            this.window = await this.createTimeProgressBarWindow();
         }
+    }
+
+    private async createTimeProgressBarWindow() {
+        return await createWindow("time-progress-bar", {
+            title: "Time Progress",
+            url: "/time-progress-bar-floating",
+            width: window.screen.width,
+            height: 4,
+            decorations: false,
+            resizable: false,
+            alwaysOnTop: true,
+            transparent: true,
+            center: false,
+            visible: false,
+            shadow: false,
+            y: 1, // 放置在屏幕顶部
+        });
     }
 
     public async show() {

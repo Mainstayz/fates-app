@@ -11,7 +11,7 @@
         cursorWidth = "2px",
         cursorColor = "#000",
         maskColor = "rgba(0, 0, 0, 0.3)",
-        backgroundColor = "#f0f0f0",
+        backgroundColor = "rgba(240, 240, 240, 0.8)",
         timeSegments = [] as TimeSegment[]
     } = $props<{
         height?: string;

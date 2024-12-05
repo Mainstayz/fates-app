@@ -1,5 +1,5 @@
 import type { WebviewOptions } from "@tauri-apps/api/webview";
-import { LogicalSize, type WindowOptions } from "@tauri-apps/api/window";
+import { LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, type WindowOptions } from "@tauri-apps/api/window";
 import { WebviewWindow, getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 
 interface WindowCreationOptions extends Omit<WebviewOptions, "x" | "y" | "width" | "height">, WindowOptions {}
@@ -17,6 +17,14 @@ export async function createWindow(
 ): Promise<WebviewWindow> {
     try {
         const existingWindow = await getWindowByLabel(label);
+        // 如果 options 包含 x , y, width, height ,则提取出来，进行赋值
+        if (options?.x || options?.y || options?.width || options?.height) {
+            const { x, y, width, height } = options;
+            await existingWindow?.setPosition(new LogicalPosition(x ?? 0, y ?? 0));
+            if (width && height) {
+                await existingWindow?.setSize(new LogicalSize(width, height));
+            }
+        }
         if (existingWindow) {
             return existingWindow;
         }
@@ -79,19 +87,4 @@ export async function getAllWindows(): Promise<WebviewWindow[]> {
     }
 }
 
-export async function createTimeProgressBarWindow() {
-    return await createWindow("time-progress-bar", {
-        title: "Time Progress",
-        url: "/time-progress-bar-floating",
-        width: window.screen.width,
-        height: 4,
-        decorations: false,
-        resizable: false,
-        alwaysOnTop: true,
-        transparent: true,
-        center: false,
-        visible: false,
-        shadow: false,
-        y: 0, // 放置在屏幕顶部
-    });
-}
+

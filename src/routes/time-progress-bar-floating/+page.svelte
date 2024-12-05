@@ -40,7 +40,7 @@
     });
 </script>
 
-<TimeProgressBar height="4px" />
+<TimeProgressBar />
 
 <style>
     :global(body) {
