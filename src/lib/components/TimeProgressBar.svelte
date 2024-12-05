@@ -1,13 +1,11 @@
 <!-- TimeProgressBar.svelte -->
 <script lang="ts">
-
     interface TimeSegment {
         start: number;
         end: number;
         color: string;
     }
 
-    // Props using $props
     const {
         height = "100%",
         cursorWidth = "2px",
@@ -40,25 +38,59 @@
         return (seconds / SECONDS_PER_DAY) * 100;
     }
 
+    // 处理时间重叠的函数
+    function handleTimeOverlap(segments: Array<{ seconds: { start: number; end: number } } & TimeSegment>) {
+        if (segments.length === 0) return [];
+
+        const result = [segments[0]];
+
+        for (let i = 1; i < segments.length; i++) {
+            const current = segments[i];
+            const previous = result[result.length - 1];
+
+            // 如果当前段的开始时间小于前一段的结束时间（重叠）
+            if (current.seconds.start < previous.seconds.end) {
+                // 如果当前段的结束时间大于前一段的结束时间
+                if (current.seconds.end > previous.seconds.end) {
+                    // 修改当前段的开始时间为前一段的结束时间
+                    result.push({
+                        ...current,
+                        start: new Date(previous.end).getTime(),
+                        seconds: {
+                            start: previous.seconds.end,
+                            end: current.seconds.end
+                        }
+                    });
+                }
+                // 如果当前段的结束时间小于等于前一段的结束时间，则忽略当前段
+            } else {
+                // 没有重叠，直接添加当前段
+                result.push(current);
+            }
+        }
+
+        return result;
+    }
+
     // Process timeSegments when they change
     $effect(() => {
         const converted = timeSegments
-            .map((segment: TimeSegment) => ({
+            .map((segment) => ({
                 ...segment,
                 seconds: {
                     start: getSecondsOfDay(segment.start),
                     end: getSecondsOfDay(segment.end),
                 },
             }))
-            .sort((a: any, b: any) => a.seconds.start - b.seconds.start);
+            .sort((a, b) => a.seconds.start - b.seconds.start);
+
+        // 处理时间重叠
+        const overlappingHandled = handleTimeOverlap(converted);
 
         const newValidSegments = [];
-        let lastEndSeconds = 0;
 
-        for (const segment of converted) {
+        for (const segment of overlappingHandled) {
             if (
-                segment.seconds.start >= lastEndSeconds &&
-                segment.seconds.start < segment.seconds.end &&
                 segment.seconds.start >= 0 &&
                 segment.seconds.end <= SECONDS_PER_DAY &&
                 segment.seconds.end > segment.seconds.start
@@ -70,7 +102,6 @@
                         end: secondsToPercentage(segment.seconds.end),
                     },
                 });
-                lastEndSeconds = segment.seconds.end;
             }
         }
 
