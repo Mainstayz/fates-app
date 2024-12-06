@@ -15,6 +15,11 @@ export const primaryRoutes: Route[] = [
         label: "timeline",
     },
     {
+        icon: Icons.Tags,
+        variant: "default",
+        label: "tags",
+    },
+    {
         icon: Icons.CharCombined,
         variant: "default",
         label: "statistics",

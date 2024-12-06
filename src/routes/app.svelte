@@ -5,6 +5,7 @@
     import TimelinePage from "./timeline_page.svelte";
     import StatisticsPage from "./statistics_page.svelte";
     import SettingsDialog from "./settings_dialog.svelte";
+    import TagsManagerPage from "./tags_manager_page.svelte";
     import { primaryRoutes } from "../config";
     import { check } from "@tauri-apps/plugin-updater";
     import { relaunch } from "@tauri-apps/plugin-process";
@@ -15,6 +16,7 @@
     let settingsOpen = $state(false);
     let statisticsComponent = $state<StatisticsPage | null>(null);
     let timelineComponent = $state<TimelinePage | null>(null);
+    let tagsComponent = $state<TagsManagerPage | null>(null);
     let timelineData = $state<TimelineData | null>(null);
 
     $inspect(navCollapsedSize);
@@ -93,6 +95,9 @@
             {/if}
             {#if selectedRoute === "statistics"}
                 <StatisticsPage bind:this={statisticsComponent} items={timelineData?.items ?? []} />
+            {/if}
+            {#if selectedRoute === "tags"}
+                <TagsManagerPage bind:this={tagsComponent} items={timelineData?.items ?? []} />
             {/if}
         </Resizable.Pane>
     </Resizable.PaneGroup>

@@ -54,15 +54,16 @@ async function setWindowProperties(window: WebviewWindow, options?: WindowCreati
         const { x, y, width, height } = options;
         const safeX = x ?? 0;
         const safeY = y ?? 0;
-
-        await window.setPosition(new LogicalPosition(safeX, safeY));
-
-        if (width && height) {
-            await window.setSize(new LogicalSize(width, height));
-            await window.setSizeConstraints({ maxWidth: width, maxHeight: height });
-        }
-
         console.log("Set window [", window.label, "] position and size:", { x: safeX, y: safeY, width, height });
+
+        const positionResult = await window.setPosition(new LogicalPosition(safeX, safeY));
+        console.log("Set window [", window.label, "] position:", positionResult);
+        if (width && height) {
+            const result = await window.setSizeConstraints({ maxWidth: width, maxHeight: height });
+            console.log("Set window [", window.label, "] size constraints:", result);
+            const sizeResult = await window.setSize(new LogicalSize(width, height));
+            console.log("Set window [", window.label, "] size:", sizeResult);
+        }
     }
 }
 

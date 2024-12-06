@@ -12,3 +12,5 @@ export { default as ChartGantt } from "lucide-svelte/icons/chart-no-axes-gantt";
 export { default as Settings } from "lucide-svelte/icons/settings";
 // circle-help
 export { default as CircleHelp } from "lucide-svelte/icons/circle-help";
+// tags
+export { default as Tags } from "lucide-svelte/icons/tags";
