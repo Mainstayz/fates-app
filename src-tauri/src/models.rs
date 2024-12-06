@@ -1,14 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-// settings.json
+// 常量定义
 pub const SETTINGS_FILE_NAME: &str = "settings.json";
-// message-box.json
-pub const MESSAGE_BOX_FILE_NAME: &str = "message-box.json";
-
-// notification-message
+pub const MESSAGE_BOX_FILE_NAME: &str = "message_box.json";
+pub const TIMELINE_DATA_FILE_NAME: &str = "timeline_data.json";
 pub const NOTIFICATION_MESSAGE: &str = "notification-message";
 
-// message-box
+// 结构体定义
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageBoxData {
     pub title: String,
@@ -23,9 +21,6 @@ pub struct Settings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub checkInterval: Option<i64>,
 }
-
-// timeline_data.json
-pub const TIMELINE_DATA_FILE_NAME: &str = "timeline_data.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineData {
@@ -72,6 +67,7 @@ pub struct Notification {
     pub notification_type: NotificationType,
 }
 
+// 枚举类型定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NotificationType {
     NoTask,    // 没有任务提醒
