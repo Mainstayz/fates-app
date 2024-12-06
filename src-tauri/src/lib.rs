@@ -260,8 +260,8 @@ pub fn run() {
                                 check_interval * 3600
                             );
                             // TEST
-                            true
-                            // false
+                            // true
+                            false
                         }
                     } else {
                         *last = Some(now);

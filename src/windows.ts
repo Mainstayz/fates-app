@@ -20,7 +20,7 @@ export async function createWindow(label: string, options?: WindowCreationOption
         const existingWindow = await getWindowByLabel(label);
 
         if (existingWindow) {
-            setWindowProperties(existingWindow, options);
+            await setWindowProperties(existingWindow, options);
             return existingWindow;
         }
 
@@ -31,6 +31,7 @@ export async function createWindow(label: string, options?: WindowCreationOption
             window.once("tauri://created", async () => {
                 const [position, size] = await Promise.all([window.innerPosition(), window.innerSize()]);
                 console.log("Window created:", { label, position, size });
+                await setWindowProperties(window, options);
                 resolve();
             });
 
@@ -40,8 +41,7 @@ export async function createWindow(label: string, options?: WindowCreationOption
             });
         });
 
-        setWindowProperties(window, options);
-
+        await setWindowProperties(window, options);
         return window;
     } catch (error) {
         console.error(`Error creating window '${label}':`, error);
