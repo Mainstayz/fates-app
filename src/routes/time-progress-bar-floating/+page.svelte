@@ -6,6 +6,32 @@
 
     let unlisten: UnlistenFn | void;
 
+    let resizeObserver: ResizeObserver | null = null;
+    let rootElement: HTMLElement;
+    const window = getCurrentWindow();
+
+    function setupResizeObserver() {
+        if (!rootElement) {
+            console.log("rootElement is null");
+            return;
+        }
+
+        resizeObserver = new ResizeObserver((entries) => updateHeight(true));
+        resizeObserver.observe(rootElement);
+        console.log("setupResizeObserver");
+    }
+
+    async function updateHeight(force: boolean = false) {
+        if (!rootElement) {
+            console.log("rootElement is null");
+            return;
+        }
+
+        const newHeight = rootElement.clientHeight;
+        await window.emit("time-progress-bar-height", newHeight);
+        console.log("update time-progress-bar-height:", newHeight);
+    }
+
     async function setupListeners() {
         // 监听显示/隐藏事件
         const unlistenVisibility = await listen("toggle-time-progress", async (event) => {
@@ -33,14 +59,18 @@
 
     onMount(async () => {
         unlisten = await setupListeners();
+        setupResizeObserver();
     });
 
     onDestroy(() => {
         unlisten?.();
+        resizeObserver?.disconnect();
     });
 </script>
 
-<TimeProgressBar />
+<div bind:this={rootElement} class="w-full h-full">
+    <TimeProgressBar />
+</div>
 
 <style>
     :global(body) {

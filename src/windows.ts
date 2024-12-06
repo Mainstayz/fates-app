@@ -17,31 +17,27 @@ interface WindowCreationOptions extends Omit<WebviewOptions, "x" | "y" | "width"
  */
 export async function createWindow(label: string, options?: WindowCreationOptions): Promise<WebviewWindow> {
     try {
+        console.log(`CreateWindow [${label}], check if window already exists ...`);
         const existingWindow = await getWindowByLabel(label);
-
         if (existingWindow) {
+            console.log(`Window already exists: [${label}], set window rect ...`);
             await setWindowProperties(existingWindow, options);
             return existingWindow;
         }
 
         const window = new WebviewWindow(label, options);
-
-        // Wait for window creation
         await new Promise<void>((resolve, reject) => {
             window.once("tauri://created", async () => {
                 const [position, size] = await Promise.all([window.innerPosition(), window.innerSize()]);
-                console.log("Window created:", { label, position, size });
+                console.log(`On window created: ${label} x:${position.x} y:${position.y} w:${size.width} h:${size.height}, Step 2 set window rect ...`);
                 await setWindowProperties(window, options);
                 resolve();
             });
-
             window.once("tauri://error", (error) => {
                 console.error("Window creation failed:", error);
                 reject(new Error(`Failed to create window '${label}': ${error}`));
             });
         });
-
-        await setWindowProperties(window, options);
         return window;
     } catch (error) {
         console.error(`Error creating window '${label}':`, error);
@@ -54,15 +50,12 @@ async function setWindowProperties(window: WebviewWindow, options?: WindowCreati
         const { x, y, width, height } = options;
         const safeX = x ?? 0;
         const safeY = y ?? 0;
-        console.log("Set window [", window.label, "] position and size:", { x: safeX, y: safeY, width, height });
 
-        const positionResult = await window.setPosition(new LogicalPosition(safeX, safeY));
-        console.log("Set window [", window.label, "] position:", positionResult);
+        console.log("Set window [", window.label, "] position and size:", { x: safeX, y: safeY, width, height });
+        await window.setPosition(new LogicalPosition(safeX, safeY));
         if (width && height) {
-            const result = await window.setSizeConstraints({ maxWidth: width, maxHeight: height });
-            console.log("Set window [", window.label, "] size constraints:", result);
-            const sizeResult = await window.setSize(new LogicalSize(width, height));
-            console.log("Set window [", window.label, "] size:", sizeResult);
+            await window.setSizeConstraints({ maxWidth: width, maxHeight: height });
+            await window.setSize(new LogicalSize(width, height));
         }
     }
 }

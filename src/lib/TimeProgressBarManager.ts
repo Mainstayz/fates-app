@@ -31,7 +31,7 @@ export class TimeProgressBarManager {
             alwaysOnTop: true,
             transparent: true,
             center: false,
-            visible: false,
+            visible: true,
             shadow: false,
             skipTaskbar: true,
             y: 0, // 放置在屏幕顶部
@@ -61,7 +61,7 @@ export class TimeProgressBarManager {
 
     private async getWindow(): Promise<Window | null> {
         if (!this.window) {
-            this.window = await getWindowByLabel("time-progress-bar");
+            this.window = await this.createTimeProgressBarWindow();
         }
         return this.window;
     }

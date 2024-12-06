@@ -23,7 +23,7 @@
             await timeProgressBarManager.initialize();
 
             // 默认显示时间进度条
-            await timeProgressBarManager.show();
+            // await timeProgressBarManager.show();
         };
 
         // 立即执行初始化
