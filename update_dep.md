@@ -12,3 +12,13 @@ pnpm update @tauri-apps/cli @tauri-apps/api --latest
 pnpm outdated @tauri-apps/cli
 ```
 
+## 更新 tauri 版本
+
+https://github.com/killercup/cargo-edit
+
+```bash
+cargo install cargo-edit
+cd src-tauri
+cargo-upgrade upgrade
+```
+
