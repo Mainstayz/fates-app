@@ -1,5 +1,9 @@
 import type { WebviewOptions } from "@tauri-apps/api/webview";
-import { LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, type WindowOptions } from "@tauri-apps/api/window";
+import {
+    LogicalPosition,
+    LogicalSize,
+    type WindowOptions,
+} from "@tauri-apps/api/window";
 import { WebviewWindow, getAllWebviewWindows } from "@tauri-apps/api/webviewWindow";
 
 interface WindowCreationOptions extends Omit<WebviewOptions, "x" | "y" | "width" | "height">, WindowOptions {}
@@ -11,21 +15,12 @@ interface WindowCreationOptions extends Omit<WebviewOptions, "x" | "y" | "width"
  * @returns Promise<WebviewWindow> The created or existing window instance
  * @throws Error if window creation fails
  */
-export async function createWindow(
-    label: string,
-    options?: WindowCreationOptions
-): Promise<WebviewWindow> {
+export async function createWindow(label: string, options?: WindowCreationOptions): Promise<WebviewWindow> {
     try {
         const existingWindow = await getWindowByLabel(label);
-        // 如果 options 包含 x , y, width, height ,则提取出来，进行赋值
-        if (options?.x || options?.y || options?.width || options?.height) {
-            const { x, y, width, height } = options;
-            await existingWindow?.setPosition(new LogicalPosition(x ?? 0, y ?? 0));
-            if (width && height) {
-                await existingWindow?.setSize(new LogicalSize(width, height));
-            }
-        }
+
         if (existingWindow) {
+            setWindowProperties(existingWindow, options);
             return existingWindow;
         }
 
@@ -34,16 +29,8 @@ export async function createWindow(
         // Wait for window creation
         await new Promise<void>((resolve, reject) => {
             window.once("tauri://created", async () => {
-                const [position, size] = await Promise.all([
-                    window.innerPosition(),
-                    window.innerSize()
-                ]);
-
-                console.log("Window created:", {
-                    label,
-                    position,
-                    size
-                });
+                const [position, size] = await Promise.all([window.innerPosition(), window.innerSize()]);
+                console.log("Window created:", { label, position, size });
                 resolve();
             });
 
@@ -53,10 +40,29 @@ export async function createWindow(
             });
         });
 
+        setWindowProperties(window, options);
+
         return window;
     } catch (error) {
         console.error(`Error creating window '${label}':`, error);
         throw error;
+    }
+}
+
+async function setWindowProperties(window: WebviewWindow, options?: WindowCreationOptions) {
+    if (options?.x || options?.y || options?.width || options?.height) {
+        const { x, y, width, height } = options;
+        const safeX = x ?? 0;
+        const safeY = y ?? 0;
+
+        await window.setPosition(new LogicalPosition(safeX, safeY));
+
+        if (width && height) {
+            await window.setSize(new LogicalSize(width, height));
+            await window.setSizeConstraints({ maxWidth: width, maxHeight: height });
+        }
+
+        console.log("Set window [", window.label, "] position and size:", { x: safeX, y: safeY, width, height });
     }
 }
 
@@ -86,5 +92,3 @@ export async function getAllWindows(): Promise<WebviewWindow[]> {
         return [];
     }
 }
-
-

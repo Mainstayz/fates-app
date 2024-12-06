@@ -33,7 +33,8 @@ export class TimeProgressBarManager {
             center: false,
             visible: false,
             shadow: false,
-            y: 1, // 放置在屏幕顶部
+            skipTaskbar: true,
+            y: 0, // 放置在屏幕顶部
         });
     }
 
@@ -66,10 +67,6 @@ export class TimeProgressBarManager {
     }
 
     public async destroy() {
-        const win = await this.getWindow();
-        if (win) {
-            await win.close();
-            this.window = null;
-        }
+        // 什么也不做
     }
 }

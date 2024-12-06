@@ -11,6 +11,10 @@
         "core:event:allow-emit",
         "core:event:allow-unlisten",
         "core:window:allow-set-always-on-top",
+        "core:window:allow-set-position",
+        "core:window:allow-set-size",
+        "core:window:allow-set-size-constraints",
+        "core:window:allow-close",
         "notification:default",
         "store:default"
     ]

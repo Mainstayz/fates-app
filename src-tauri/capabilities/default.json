@@ -31,6 +31,7 @@
         "core:window:allow-set-size",
         "core:window:allow-set-size-constraints",
         "core:window:allow-set-min-size",
+        "core:window:allow-close",
         "core:webview:default",
         "core:webview:allow-create-webview",
         "core:webview:allow-create-webview-window"

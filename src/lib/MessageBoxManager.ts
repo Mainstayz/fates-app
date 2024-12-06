@@ -5,6 +5,9 @@ import debounce from "debounce";
 import type { MouseTrackerState } from "../mouse-tracker.svelte";
 import { createWindow, getWindowByLabel } from "../windows";
 
+
+const OFFSET_Y = 4;
+
 export class MessageBoxManager {
     private devicePixelRatio: number;
     private messageBoxWidth: number;
@@ -25,7 +28,7 @@ export class MessageBoxManager {
     constructor(mouseTrackerState: MouseTrackerState) {
         this.devicePixelRatio = window.devicePixelRatio;
         this.messageBoxWidth = 280;
-        this.messageBoxHeight = 100;
+        this.messageBoxHeight = 59;
         this.unlisteners = [];
         this.mouseTrackerState = mouseTrackerState;
         this.atLeastOnceInside = false;
@@ -60,16 +63,27 @@ export class MessageBoxManager {
         const mouse_position = event.payload.mouse_position as [number, number];
         const tray_rect = event.payload.tray_rect as [number, number, number, number];
 
-        const { x, y } = this.calculatePhysicalPosition(mouse_position[0]);
+        let { x, y } = this.calculatePhysicalPosition(mouse_position[0]);
 
-        await win.setFocus();
+        const platformName = platform().toLowerCase();
+
+        if (platformName === "macos") {
+            y += OFFSET_Y;
+        } else {
+            y -= OFFSET_Y;
+        }
+
         const physicalWidth = this.messageBoxWidth * this.devicePixelRatio;
         const physicalHeight = this.messageBoxHeight * this.devicePixelRatio;
+
+        console.log("window available size:", { width: window.screen.availWidth, height: window.screen.availHeight });
+        console.log("message box position:", { x, y, physicalWidth, physicalHeight });
 
         await win.setPosition(new PhysicalPosition(x, y));
         await win.setSize(new PhysicalSize(physicalWidth, physicalHeight));
         await win.show();
         await win.setFocus();
+
 
         const rect1 = { x, y, width: physicalWidth, height: physicalHeight };
         const rect2 = {
@@ -110,6 +124,7 @@ export class MessageBoxManager {
             transparent: true,
             center: false,
             visible: false,
+            skipTaskbar: true,
             shadow: false,
         });
     }
@@ -132,6 +147,7 @@ export class MessageBoxManager {
         this.unlisteners.push(unlistenHideMessageBox);
 
         const unlistenMessageBoxHeight = await messageBoxWin.listen("message-box-height", (event) => {
+            console.log("on message-box-height event:", event.payload);
             this.messageBoxHeight = event.payload as number;
         });
         this.unlisteners.push(unlistenMessageBoxHeight);
