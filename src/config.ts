@@ -14,11 +14,11 @@ export const primaryRoutes: Route[] = [
         variant: "default",
         label: "timeline",
     },
-    {
-        icon: Icons.Tags,
-        variant: "default",
-        label: "tags",
-    },
+    // {
+    //     icon: Icons.Tags,
+    //     variant: "default",
+    //     label: "tags",
+    // },
     {
         icon: Icons.CharCombined,
         variant: "default",
