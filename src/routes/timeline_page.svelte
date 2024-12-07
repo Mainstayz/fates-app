@@ -20,11 +20,13 @@
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
+    import Input from "$lib/components/ui/input/input.svelte";
 
     // 组件状态管理
     let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
+    let switchAddTaskInput = $state(false);
 
     // 编辑状态管理
     let editingItem: TimelineItem | null = $state(null);
@@ -83,8 +85,8 @@
                 // 清除现有数据
                 clearTimelineData();
                 // 重新加载数据
-                result.groups?.forEach(group => timelineComponent.addGroup(group));
-                result.items?.forEach(item => timelineComponent.addItem(item));
+                result.groups?.forEach((group) => timelineComponent.addGroup(group));
+                result.items?.forEach((item) => timelineComponent.addItem(item));
             }
         } catch (e) {
             error(`加载时间线数据失败: ${e}`);
@@ -96,10 +98,10 @@
         if (!timelineComponent) return;
 
         const existingItems = timelineComponent.getAllItems() || [];
-        existingItems.forEach(item => timelineComponent.removeItem(item.id));
+        existingItems.forEach((item) => timelineComponent.removeItem(item.id));
 
         const existingGroups = timelineComponent.getAllGroups() || [];
-        existingGroups.forEach(group => timelineComponent.removeGroup(group.id));
+        existingGroups.forEach((group) => timelineComponent.removeGroup(group.id));
     }
 
     /**
@@ -140,13 +142,15 @@
      * 表单提交处理函数
      */
     // 处理新事件提交
-    function handleEventSubmit(event: CustomEvent<{
-        title: string;
-        startTime: Date;
-        endTime: Date;
-        tags: string[];
-        color: string;
-    }>) {
+    function handleEventSubmit(
+        event: CustomEvent<{
+            title: string;
+            startTime: Date;
+            endTime: Date;
+            tags: string[];
+            color: string;
+        }>
+    ) {
         const formData = event.detail;
         const newItem: TimelineItem = {
             id: Date.now().toString(),
@@ -162,13 +166,15 @@
     }
 
     // 处理编辑事件提交
-    function handleEditSubmit(event: CustomEvent<{
-        title: string;
-        startTime: Date;
-        endTime: Date;
-        tags: string[];
-        color: string;
-    }>) {
+    function handleEditSubmit(
+        event: CustomEvent<{
+            title: string;
+            startTime: Date;
+            endTime: Date;
+            tags: string[];
+            color: string;
+        }>
+    ) {
         if (!editingItem) return;
 
         const formData = event.detail;
@@ -209,14 +215,14 @@
     // 定义事件监听器配置
     const EVENT_LISTENERS = [
         {
-            event: 'reload_timeline_data',
+            event: "reload_timeline_data",
             handler: () => {
                 console.log("on reload_timeline_data ...");
                 loadTimelineData();
-            }
+            },
         },
         {
-            event: 'tray_flash_did_click',
+            event: "tray_flash_did_click",
             handler: () => {
                 console.log("on tray_flash_did_click ...");
                 // 发送通知消息
@@ -229,8 +235,8 @@
                 // }).catch((error) => {
                 //     console.error("Failed to send notification message:", error);
                 // });
-            }
-        }
+            },
+        },
     ] as const;
 
     // 统一管理事件监听器
@@ -248,7 +254,7 @@
     // 清理所有事件监听器
     function cleanupEventListeners() {
         console.log("清理事件监听器 ...");
-        unlisteners.forEach(unlisten => unlisten?.());
+        unlisteners.forEach((unlisten) => unlisten?.());
         unlisteners = [];
     }
 
@@ -279,10 +285,7 @@
                 msOffset = 1.5 * 24 * 60 * 60 * 1000;
         }
 
-        timelineComponent.setWindow(
-            new Date(now - msOffset),
-            new Date(now + msOffset)
-        );
+        timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
     }
 
     // 添加 effect 监听 selectedRange 的变化
@@ -332,8 +335,35 @@
                         </Select.Content>
                     </Select.Root>
                 </div>
+
                 <div class="flex gap-2">
+                    <!-- 比较宽 -->
+                    {#if switchAddTaskInput}
+                        <!-- 输入回车提交,自动获取焦点 -->
+                        <Input
+                            type="text"
+                            placeholder="请输入任务名称"
+                            class="w-[320px]"
+                            autofocus
+                            onkeydown={(e) => {
+                                if (e.key === "Enter") {
+                                    switchAddTaskInput = false;
+                                }
+                            }}
+                        />
+                    {:else}
+                        <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
+                            <Plus />
+                            快速添加任务
+                        </Button>
+                    {/if}
                     <AddEventForm on:submit={handleEventSubmit} />
+                    <!-- <Button variant="default">
+                        <Plus />
+                        添加模版任务
+                    </Button> -->
+
+                    <!-- 添加事件表单<AddEventForm on:submit={handleEventSubmit} />
                     {#if showClearAllDialog}
                         <AlertDialog.Root bind:open={alertClearAll}>
                             <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
@@ -358,7 +388,7 @@
                                 </AlertDialog.Footer>
                             </AlertDialog.Content>
                         </AlertDialog.Root>
-                    {/if}
+                    {/if} -->
                 </div>
             </div>
 
@@ -379,6 +409,7 @@
         </div>
     </div>
 
+    <!-- 编辑页面 -->
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
         <Dialog.Content class="sm:max-w-[425px]">
             <Dialog.Header>
