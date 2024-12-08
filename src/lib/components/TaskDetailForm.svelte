@@ -2,8 +2,8 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
-    import { Button } from "$lib/components/ui/button";
-    import { PanelTop, Plus, Circle, Leaf, Flame, Zap, CalendarRange } from "lucide-svelte";
+    import { Textarea } from "$lib/components/ui/textarea";
+    import { PanelTop, Plus, Circle, Leaf, Flame, Zap, Timer, Text } from "lucide-svelte";
     import TagsAddButton from "./TagsAddButton.svelte";
 
     const COLORS = [
@@ -14,6 +14,7 @@
     ] as const;
 
     let title = $state("");
+    let description = $state("");
     let color = $state("blue");
     let startDate = $state(formatDateForInput(new Date()));
     let startTime = $state(formatTimeForInput(new Date()));
@@ -59,7 +60,7 @@
             </div>
             <Input
                 type="text"
-                class="border-0 shadow-none font-bold text-xl"
+                class="bg-background border-0 shadow-none font-bold text-xl"
                 bind:value={title}
                 placeholder="任务标题"
             />
@@ -69,12 +70,6 @@
             <!-- Icon -->
             <div class="pt-[6px] w-[24px]"></div>
             <div class="flex flex-row pl-[12px] gap-2">
-                <div class="flex-col">
-                    <div class="text-sm text-gray-500">标签</div>
-                    <div class="text-sm text-gray-500">
-                        <TagsAddButton />
-                    </div>
-                </div>
                 <div class="flex-col">
                     <div class="text-sm text-gray-500">优先级</div>
                     <div class="h-[32px]">
@@ -124,42 +119,72 @@
                         </Select.Root>
                     </div>
                 </div>
+                <div class="flex-col">
+                    <div class="text-sm text-gray-500">标签</div>
+                    <div>
+                        <TagsAddButton />
+                    </div>
+                </div>
             </div>
         </div>
         <!-- 时间 -->
         <div class="flex flex-row gap-2 pt-[8px]">
             <div class="pt-[6px] w-[24px]">
-                <CalendarRange size={24} />
+                <Timer size={24} />
             </div>
-            <div class="flex pl-[12px] items-center">
-                <span class="text-gray-500">预计耗时</span>
-                <Input
-                    type="number"
-                    bind:value={estimatedTime}
-                    class="w-fit h-[32px] border-0 shadow-none "
-                    min="0"
-                    step="0.1"
-                    size={4}
-                />
-                <span class="text-gray-500">小时</span>
-            </div>
-            <!-- <div class="flex flex-col gap-2">
-
+            <div class="flex flex-row flex-1 gap-2">
                 <div class="flex-1 pl-[12px]">
                     <Label for="startDate" class="text-sm text-gray-500">开始时间</Label>
-                    <div class="flex gap-2">
-                        <Input type="date" id="startDate" bind:value={startDate} class="w-[120px] h-[32px]" />
-                        <Input type="time" id="startTime" bind:value={startTime} class="w-[80px] h-[32px]" />
+                    <div class="flex bg-secondary rounded-sm items-center w-[160px]">
+                        <Input
+                            type="date"
+                            id="startDate"
+                            bind:value={startDate}
+                            class="bg-secondary px-2 w-[102px] h-[32px] border-0 shadow-none "
+                        />
+                        <Input
+                            type="time"
+                            id="startTime"
+                            bind:value={startTime}
+                            class="bg-secondary px-2 w-[60px] h-[32px] border-0 shadow-none "
+                        />
                     </div>
                 </div>
                 <div class="flex-1 pl-[12px]">
                     <Label for="endDate" class="text-sm text-gray-500">结束时间</Label>
-                    <div class="flex gap-2">
-                        <Input type="date" id="endDate" bind:value={endDate} class="w-[120px] h-[32px]" />
-                        <Input type="time" id="endTime" bind:value={endTime} class="w-[80px] h-[32px]" />
+                    <div class="flex bg-secondary rounded-sm items-center w-[160px]">
+                        <Input
+                            type="date"
+                            id="endDate"
+                            bind:value={endDate}
+                            class="bg-secondary px-2 w-[102px] h-[32px] border-0 shadow-none "
+                        />
+                        <Input
+                            type="time"
+                            id="endTime"
+                            bind:value={endTime}
+                            class="bg-secondary px-2 w-[60px] h-[32px] border-0 shadow-none "
+                        />
                     </div>
                 </div>
-            </div> -->
+            </div>
+        </div>
+        <!-- 详情 -->
+        <div class="flex flex-row gap-2 pt-[8px]">
+            <div class="pt-[2px] w-[24px]">
+                <Text size={24} />
+            </div>
+            <div class="flex flex-col gap-1 flex-1 pl-[12px]">
+                <!-- 描述 -->
+                <Label for="description" class="text-lg text-gray-500">描述</Label>
+                <!-- 关闭自动高度 -->
+                <Textarea
+                    id="description"
+                    placeholder="添加详细描述..."
+                    bind:value={description}
+                    class="bg-secondary w-full h-[100px] border-0 shadow-none resize-none"
+                />
+            </div>
         </div>
     </div>
 </div>

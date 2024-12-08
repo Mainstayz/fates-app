@@ -11,7 +11,7 @@
     import { appDataDir } from "@tauri-apps/api/path";
     import { emit } from "@tauri-apps/api/event";
     import { Button } from "$lib/components/ui/button";
-    import { confirm } from '@tauri-apps/plugin-dialog';
+    import { confirm } from "@tauri-apps/plugin-dialog";
     let { open = $bindable(), ...props } = $props();
 
     let language = $state("zh"); // 默认中文
@@ -153,11 +153,7 @@
             <div class="grid grid-cols-4 items-center gap-4">
                 <Label for="autostart-switch" class="text-right">开机启动</Label>
                 <div class="col-span-3">
-                    <Switch.Root
-                        id="autostart-switch"
-                        checked={autoStart}
-                        onCheckedChange={handleAutoStartChange}
-                    />
+                    <Switch.Root id="autostart-switch" checked={autoStart} onCheckedChange={handleAutoStartChange} />
                 </div>
             </div>
             <div class="grid grid-cols-4 items-center gap-4">
@@ -175,15 +171,9 @@
             <div class="grid grid-cols-4 items-center gap-4">
                 <Label class="text-right">数据管理</Label>
                 <div class="col-span-3 space-x-2">
-                    <Button variant="secondary" size="sm" onclick={openDataFolder}>
-                        打开数据文件夹
-                    </Button>
-                    <Button variant="secondary" size="sm" onclick={reloadData}>
-                        重新加载数据
-                    </Button>
-                    <Button variant="destructive" size="sm" onclick={handleClearData}>
-                        清除所有数据
-                    </Button>
+                    <Button variant="secondary" size="sm" onclick={openDataFolder}>打开数据文件夹</Button>
+                    <Button variant="secondary" size="sm" onclick={reloadData}>重新加载数据</Button>
+                    <Button variant="destructive" size="sm" onclick={handleClearData}>清除所有数据</Button>
                     <p class="text-sm text-muted-foreground mt-2">
                         清除数据将永久删除所有事件记录和标签数据，此操作不可恢复。
                     </p>
@@ -197,10 +187,4 @@
 </Dialog.Root>
 
 <style>
-    :global([type="text"]),
-    :global([type="date"]),
-    :global([type="number"]),
-    :global([type="time"]) {
-        background-color: var(--background) !important;
-    }
 </style>

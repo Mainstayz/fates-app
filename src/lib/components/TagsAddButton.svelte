@@ -37,7 +37,7 @@
 
 <Popover bind:open>
     <PopoverTrigger>
-        <Button variant="outline" size="sm" class="h-8 border-dashed">
+        <Button variant="outline" size="sm" class="h-8">
             {#if tags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
                     {#each tags.slice(0, 3) as tag}
@@ -54,7 +54,7 @@
     <PopoverContent class="w-[200px] p-0" align="start" side="bottom">
         <div class="p-3">
             <Command>
-                <CommandInput placeholder="输入标签" />
+                <CommandInput placeholder="输入标签" class="bg-background" />
                 <CommandList>
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
@@ -94,7 +94,7 @@
                                     autofocus
                                     type="text"
                                     placeholder="输入新标签"
-                                    class="border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
+                                    class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
                                 />
                                 <!-- cancel button -->
                                 <Button variant="ghost" size="icon" onclick={() => (showCreateNewTag = false)}>
