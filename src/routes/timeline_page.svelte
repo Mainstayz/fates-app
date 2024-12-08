@@ -11,6 +11,7 @@
     import Timeline from "$lib/components/Timeline.svelte";
     import AddEventForm from "$lib/components/AddEventForm.svelte";
     import EventFormFields from "$lib/components/EventFormFields.svelte";
+    import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog/index";
@@ -27,6 +28,7 @@
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
     let switchAddTaskInput = $state(false);
+    let switchTaskDetailInput = $state(false);
 
     // 编辑状态管理
     let editingItem: TimelineItem | null = $state(null);
@@ -352,7 +354,7 @@
                             }}
                         />
                     {:else}
-                        <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
+                        <Button variant="default" onclick={() => (switchTaskDetailInput = true)} class="w-[320px]">
                             <Plus />
                             快速添加任务
                         </Button>
@@ -431,6 +433,11 @@
                     }}
                 />
             {/if}
+        </Dialog.Content>
+    </Dialog.Root>
+    <Dialog.Root bind:open={switchTaskDetailInput}>
+        <Dialog.Content class="w-[800px]">
+            <TaskDetailForm />
         </Dialog.Content>
     </Dialog.Root>
 
