@@ -4,6 +4,7 @@
     import * as Select from "$lib/components/ui/select";
     import { Button } from "$lib/components/ui/button";
     import { PanelTop, Plus } from "lucide-svelte";
+    import TagsAddButton from "./TagsAddButton.svelte";
     let title = $state("");
     let startDate = $state(new Date().toISOString().split("T")[0]);
     let endDate = $state(new Date().toISOString().split("T")[0]);
@@ -41,9 +42,7 @@
                 <div class="flex-col">
                     <div class="text-sm text-gray-500">标签</div>
                     <div class="text-sm text-gray-500">
-                        <Button variant="ghost" size="icon">
-                            <Plus size={16} />
-                        </Button>
+                        <TagsAddButton />
                     </div>
                 </div>
                 <div class="flex-col">
