@@ -40,7 +40,7 @@
         <Button variant="outline" size="sm" class="h-8 border-dashed">
             {#if tags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
-                    {#each tags as tag}
+                    {#each tags.slice(0, 3) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
                         </Badge>
@@ -84,7 +84,7 @@
                     <CommandGroup>
                         <!-- Create new tag -->
                         {#if !showCreateNewTag}
-                            <CommandItem class="justify-center text-center" onSelect={() => (showCreateNewTag = true)}>
+                            <CommandItem onSelect={() => (showCreateNewTag = true)}>
                                 <span>创建新标签</span>
                             </CommandItem>
                         {:else}
@@ -104,7 +104,6 @@
                         {/if}
                         {#if tags.length > 0}
                             <CommandItem
-                                class="justify-center text-center"
                                 onSelect={() => {
                                     tags = [];
                                 }}

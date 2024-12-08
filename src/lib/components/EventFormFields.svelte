@@ -304,7 +304,7 @@
                 </Tooltip.Root>
             </Tooltip.Provider> -->
         </div>
-        <Input type="text" autocomplete="off" bind:value={title} placeholder="输入任务标题" autofocus  />
+        <Input type="text" autocomplete="off" bind:value={title} placeholder="输入任务标题" autofocus />
         {#if errors.title}
             <span class="text-sm text-destructive">
                 {errors.title}
@@ -449,7 +449,7 @@
     :global(.tagify) {
         --placeholder-color: var(--muted-foreground);
         --placeholder-color-focus: var(--muted-foreground);
-        --tag-inset-shadow-size:10em;
+        --tag-inset-shadow-size: 10em;
         flex-wrap: nowrap;
 
         background-color: var(--background);
