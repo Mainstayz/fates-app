@@ -6,6 +6,7 @@
     import { Separator } from "$lib/components/ui/separator";
     import { Input } from "$lib/components/ui/input";
     import { cn } from "$lib/utils";
+    import { X } from "lucide-svelte";
     import {
         Command,
         CommandInput,
@@ -13,6 +14,7 @@
         CommandEmpty,
         CommandGroup,
         CommandItem,
+        CommandSeparator,
     } from "$lib/components/ui/command";
     import { onMount } from "svelte";
     import Checkbox from "./ui/checkbox/checkbox.svelte";
@@ -21,6 +23,7 @@
     let open = $state(false);
     let tags = $state<string[]>([]);
     let tagsList = $state<string[]>(["标签1", "标签2", "标签3", "标签4", "标签5"]);
+    let showCreateNewTag = $state(false);
 
     function addTag(tag: string) {
         tags = [...tags, tag];
@@ -55,7 +58,7 @@
                 <CommandList>
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
-                        {#each tagsList as tag}
+                        {#each tagsList.slice(0, 3) as tag}
                             <CommandItem value={tag} onSelect={() => addTag(tag)}>
                                 <!-- 如果标签在tags中，则显示勾选图标 -->
                                 <div
@@ -71,6 +74,44 @@
                                 <span>{tag}</span>
                             </CommandItem>
                         {/each}
+                        {#if tagsList.length > 3}
+                            <CommandItem disabled>
+                                <span> 更多标签被隐藏({tagsList.length - 3}) </span>
+                            </CommandItem>
+                        {/if}
+                    </CommandGroup>
+                    <CommandSeparator />
+                    <CommandGroup>
+                        <!-- Create new tag -->
+                        {#if !showCreateNewTag}
+                            <CommandItem class="justify-center text-center" onSelect={() => (showCreateNewTag = true)}>
+                                <span>创建新标签</span>
+                            </CommandItem>
+                        {:else}
+                            <!-- Create new tag input -->
+                            <div class="flex flex-row gap-2 h-[32px]">
+                                <Input
+                                    autofocus
+                                    type="text"
+                                    placeholder="输入新标签"
+                                    class="border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
+                                />
+                                <!-- cancel button -->
+                                <Button variant="ghost" size="icon" onclick={() => (showCreateNewTag = false)}>
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </div>
+                        {/if}
+                        {#if tags.length > 0}
+                            <CommandItem
+                                class="justify-center text-center"
+                                onSelect={() => {
+                                    tags = [];
+                                }}
+                            >
+                                清空标签
+                            </CommandItem>
+                        {/if}
                     </CommandGroup>
                 </CommandList>
             </Command>
