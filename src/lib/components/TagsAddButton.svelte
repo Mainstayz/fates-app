@@ -2,14 +2,25 @@
     import { Badge } from "$lib/components/ui/badge";
     import { Popover, PopoverTrigger, PopoverContent } from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
-    import { Plus, PlusCircle } from "lucide-svelte";
+    import { Check, Plus, PlusCircle } from "lucide-svelte";
     import { Separator } from "$lib/components/ui/separator";
     import { Input } from "$lib/components/ui/input";
+    import { cn } from "$lib/utils";
+    import {
+        Command,
+        CommandInput,
+        CommandList,
+        CommandEmpty,
+        CommandGroup,
+        CommandItem,
+    } from "$lib/components/ui/command";
     import { onMount } from "svelte";
+    import Checkbox from "./ui/checkbox/checkbox.svelte";
 
-    let { title = "添加标签", max = 2 }: { title?: string; max?: number } = $props();
+    let { title = "添加标签", maxSelected = 2 }: { title?: string; maxSelected?: number } = $props();
     let open = $state(false);
     let tags = $state<string[]>([]);
+    let tagsList = $state<string[]>(["标签1", "标签2", "标签3", "标签4", "标签5"]);
 
     function addTag(tag: string) {
         tags = [...tags, tag];
@@ -39,7 +50,30 @@
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0" align="start" side="bottom">
         <div class="p-3">
-            <Input placeholder="输入标签" />
+            <Command>
+                <CommandInput placeholder="输入标签" />
+                <CommandList>
+                    <CommandEmpty>没有找到标签</CommandEmpty>
+                    <CommandGroup>
+                        {#each tagsList as tag}
+                            <CommandItem value={tag} onSelect={() => addTag(tag)}>
+                                <!-- 如果标签在tags中，则显示勾选图标 -->
+                                <div
+                                    class={cn(
+                                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                                        tags.includes(tag)
+                                            ? "bg-primary text-primary-foreground"
+                                            : "opacity-50 [&_svg]:invisible"
+                                    )}
+                                >
+                                    <Check class={cn("h-4 w-4")} />
+                                </div>
+                                <span>{tag}</span>
+                            </CommandItem>
+                        {/each}
+                    </CommandGroup>
+                </CommandList>
+            </Command>
         </div>
     </PopoverContent>
 </Popover>
