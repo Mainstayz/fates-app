@@ -86,9 +86,9 @@
     Handlebars.registerHelper("formatDateRange", function (start: string, end: string) {
         const diff = new Date(end).getTime() - new Date(start).getTime();
         // 保留一位小数
-        const minutes = Math.round(diff / 1000 / 60 * 10) / 10;
-        const hours = Math.round(minutes / 60 * 10) / 10;
-        const days = Math.round(hours / 24 * 10) / 10;
+        const minutes = Math.round((diff / 1000 / 60) * 10) / 10;
+        const hours = Math.round((minutes / 60) * 10) / 10;
+        const days = Math.round((hours / 24) * 10) / 10;
         if (minutes < 60) return `${minutes}m`;
         if (hours < 24) return `${hours}h`;
         return `${days}d`;
@@ -147,7 +147,7 @@
 
         // Timeline 配置
         const options: TimelineOptions = {
-            height: "400px",
+            height: "100%",
             groupEditable: true,
             editable: {
                 add: false,
@@ -299,14 +299,9 @@
     });
 </script>
 
-<div bind:this={container}></div>
+<div class="w-full my-5 h-[270px]" bind:this={container}></div>
 
 <style>
-    div {
-        width: 100%;
-        height: 400px;
-        margin: 20px 0;
-    }
     /* 时间线容器样式 */
     :global(.vis-timeline) {
         border: 1px solid var(--border) !important;
@@ -524,4 +519,3 @@
         padding: 1px;
     }
 </style>
-
