@@ -250,7 +250,7 @@ const config: Config = {
         },
     },
     plugins: [
-        daisyui,
+        // daisyui,
         tailwindcssAnimate
     ],
 };

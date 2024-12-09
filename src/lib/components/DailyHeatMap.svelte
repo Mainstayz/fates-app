@@ -9,6 +9,7 @@
     // @ts-ignore
     import CalendarLabel from "cal-heatmap/plugins/CalendarLabel";
     import dayjs from "dayjs";
+    import "cal-heatmap/cal-heatmap.css";
 
     // 定义数据源的类型
     interface DataPoint {
@@ -21,30 +22,117 @@
 
     let cal: CalHeatmap;
 
+    type SubDomain = {
+        type: string;
+        gutter: number;
+        width: number;
+        height: number;
+        radius: number;
+        label: string | null | ((timestamp: number, value: number, element: SVGElement) => string);
+        color?: string | ((timestamp: number, value: number, backgroundColor: string) => string);
+    };
+
+    type TemplateResult = {
+        name: string;
+        allowedDomainType: CalHeatmap.DomainType[];
+        rowsCount: (ts: number) => number;
+        columnsCount: (ts: number) => number;
+        mapping: (startTimestamp: number, endTimestamp: number) => SubDomain[];
+        extractUnit: (ts: number) => number;
+    };
+
+    const yyTemplate = (DateHelper: any): TemplateResult => {
+        const ALLOWED_DOMAIN_TYPE: CalHeatmap.DomainType[] = ["month"];
+        return {
+            name: "yyDay",
+            allowedDomainType: ALLOWED_DOMAIN_TYPE,
+            rowsCount: () => 7, // 固定 7 行 (对应周一到周日)
+            columnsCount: (ts) => {
+                // 非当前月显示完整周数
+                if (DateHelper.date(ts).startOf("month").valueOf() !== DateHelper.date().startOf("month").valueOf()) {
+                    return DateHelper.getWeeksCountInMonth(ts);
+                } else {
+                    // 当前月只显示到今天所在的周
+                    let firstBlockDate = DateHelper.getFirstWeekOfMonth(ts);
+                    // 计算从今天到第一个块的时间间隔
+                    let interval = DateHelper.intervals("day", firstBlockDate, DateHelper.date()).length;
+                    // 计算需要规划几列
+                    let intervalCol = Math.ceil((interval + 1) / 7);
+                    return intervalCol;
+                }
+            },
+            mapping: (startTimestamp: number, endTimestamp: number) => {
+                // 将日期映射到网格坐标系统
+                // x: 表示周数
+                // y: 表示星期几 (0-6)
+                // t: 时间戳
+                const clampStart = DateHelper.getFirstWeekOfMonth(startTimestamp);
+                const clampEnd = dayjs()
+                    .startOf("day")
+                    .add(8 - dayjs().day(), "day");
+
+                let x = -1;
+                const pivotDay = clampStart.day();
+                return DateHelper.intervals("day", clampStart, clampEnd).map((ts: number) => {
+                    const weekday = DateHelper.date(ts).day();
+                    if (weekday === pivotDay) {
+                        x += 1;
+                    }
+
+                    return {
+                        t: ts,
+                        x,
+                        y: weekday,
+                    };
+                });
+            },
+            extractUnit: (ts: number) => {
+                // 将时间戳标准化到每天的开始时间
+                return DateHelper.date(ts).startOf("day").valueOf();
+            },
+        };
+    };
+
     onMount(() => {
         cal = new CalHeatmap();
+        cal.addTemplates(yyTemplate);
         cal.paint(
             {
+                theme: "light",
                 data: {
                     source: data,
                     x: "date",
                     y: (d: DataPoint) => d.value,
+                    groupY: "max",
                 },
-                date: { start: new Date(new Date().getFullYear(), 0, 1) },
-                range: 12,
+                date: {
+                    start: dayjs().subtract(12, "month").valueOf(),
+                    min: dayjs().startOf("year").valueOf(),
+                    max: dayjs(),
+                    locale: "zh",
+                    timezone: "Asia/Shanghai",
+                },
+                range: 13,
                 scale: {
                     color: {
                         type: "threshold",
                         range: ["#14432a", "#166b34", "#37a446", "#4dd05a"],
-                        domain: [1, 3, 5],
+                        domain: [1, 2, 3, 4],
                     },
                 },
                 domain: {
                     type: "month",
-                    gutter: 4,
-                    label: { text: "MMM", textAlign: "start", position: "top" },
+                    // dynamicDimension: false,
+                    gutter: 4, // 每个域之间的空间，以像素为单位
+                    label: { text: "M 月", textAlign: "middle", position: "bottom" },
                 },
-                subDomain: { type: "ghDay", radius: 2, width: 11, height: 11, gutter: 4 },
+                subDomain: {
+                    type: "yyDay", // 显示域类型中的所有天，但域的开始和结束四舍五入到该月的第一周和结束周，以便每列具有相同的天数。
+                    radius: 2,
+                    width: 15,
+                    height: 15,
+                    gutter: 4,
+                },
                 itemSelector: "#ex-ghDay",
             },
             [
@@ -68,18 +156,19 @@
                         includeBlank: true,
                         itemSelector: "#ex-ghDay-legend",
                         radius: 2,
-                        width: 11,
-                        height: 11,
+                        width: 15,
+                        height: 15,
                         gutter: 4,
                     },
                 ],
                 [
                     CalendarLabel,
                     {
-                        width: 30,
+                        width: 25,
                         textAlign: "start",
-                        text: () => ["", "一", "", "三", "", "五", ""].map(String),
-                        padding: [25, 0, 0, 0],
+                        text: function () {
+                            return ["", "一", "", "三", "", "五", ""];
+                        },
                     },
                 ],
             ]
@@ -87,55 +176,13 @@
     });
 </script>
 
-<div class="heatmap-container">
-    <div id="ex-ghDay"></div>
-    <div class="controls">
-        <div class="navigation">
-            <button on:click={() => cal.previous()}>← Previous</button>
-            <button on:click={() => cal.next()}>Next →</button>
-        </div>
-        <div class="legend">
-            <span>Less</span>
+<div class="bg-background">
+    <div class="w-full" id="ex-ghDay"></div>
+    <div class="flex justify-end">
+        <div class="flex items-center text-sm text-muted-foreground mt-2 gap-2">
+            <span class="mx-2">Less</span>
             <div id="ex-ghDay-legend"></div>
-            <span>More</span>
+            <span class="mx-2">More</span>
         </div>
     </div>
 </div>
-
-<style>
-    .heatmap-container {
-        background: #22272d;
-        color: #adbac7;
-        border-radius: 3px;
-        padding: 1rem;
-        overflow: hidden;
-    }
-
-    .controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-    }
-
-    button {
-        background: transparent;
-        border: 1px solid #adbac7;
-        color: #adbac7;
-        padding: 0.25rem 0.5rem;
-        border-radius: 3px;
-        cursor: pointer;
-        margin-right: 0.5rem;
-    }
-
-    .legend {
-        display: flex;
-        align-items: center;
-        font-size: 12px;
-    }
-
-    .legend span {
-        color: #768390;
-        margin: 0 0.5rem;
-    }
-</style>

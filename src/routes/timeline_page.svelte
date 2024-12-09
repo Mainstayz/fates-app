@@ -412,8 +412,23 @@
             <div>
                 <DailyHeatMap
                     data={[
-                        { date: "2024-01-01", value: 5 },
-                        { date: "2024-01-02", value: 3 },
+                        { date: "2024-12-01", value: 5 },
+                        { date: "2024-12-02", value: 3 },
+                        { date: "2024-12-03", value: 1 },
+                        { date: "2024-12-04", value: 2 },
+                        { date: "2024-12-05", value: 4 },
+                        { date: "2024-12-06", value: 1 },
+                        { date: "2024-12-07", value: 2 },
+                        { date: "2024-12-08", value: 4 },
+                        { date: "2024-12-09", value: 1 },
+                        { date: "2024-12-10", value: 2 },
+                        { date: "2024-12-11", value: 4 },
+                        { date: "2024-12-12", value: 1 },
+                        { date: "2024-12-13", value: 2 },
+                        { date: "2024-12-14", value: 4 },
+                        { date: "2024-12-15", value: 1 },
+                        { date: "2024-12-16", value: 2 },
+                        { date: "2024-12-17", value: 4 },
                         // ... 更多数据
                     ]}
                 />
