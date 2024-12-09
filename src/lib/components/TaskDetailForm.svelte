@@ -17,9 +17,7 @@
     let description = $state("");
     let color = $state("blue");
     let startDate = $state(formatDateForInput(new Date()));
-    let startTime = $state(formatTimeForInput(new Date()));
     let endDate = $state(formatDateForInput(new Date()));
-    let endTime = $state(formatTimeForInput(new Date()));
     let priority = $state("medium");
     let estimatedTime = $state(0);
     title = "今天似乎是个好日子";
@@ -39,7 +37,9 @@
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
     // 格式化时间为 HH:mm 格式
@@ -52,7 +52,7 @@
 
 <!-- 水平布局 -->
 <div class="flex flex-row">
-    <div class="flex-1 flex-col pr-[80px]">
+    <div class="flex-1 flex-col pr-[20px]">
         <!-- 标题 -->
         <div class="flex flex-row gap-2">
             <div class="pt-[6px]">
@@ -69,10 +69,11 @@
         <div class="flex flex-row gap-2 pt-[8px]">
             <!-- Icon -->
             <div class="pt-[6px] w-[24px]"></div>
-            <div class="flex flex-row pl-[12px] gap-2">
-                <div class="flex-col">
+            <div class="flex pl-[12px] gap-3">
+                <!--  -->
+                <div class="flex-1 ">
                     <div class="text-sm text-gray-500">优先级</div>
-                    <div class="h-[32px]">
+                    <div class="h-[32px] w-[160px]">
                         <Select.Root type="single" bind:value={color}>
                             <Select.Trigger class="w-full h-[32px]">
                                 {#if color}
@@ -119,7 +120,7 @@
                         </Select.Root>
                     </div>
                 </div>
-                <div class="flex-col">
+                <div class="flex-1">
                     <div class="text-sm text-gray-500">标签</div>
                     <div>
                         <TagsAddButton />
@@ -135,35 +136,22 @@
             <div class="flex flex-row flex-1 gap-2">
                 <div class="flex-1 pl-[12px]">
                     <Label for="startDate" class="text-sm text-gray-500">开始时间</Label>
-                    <div class="flex bg-secondary rounded-sm items-center w-[160px]">
+                    <div class="flex rounded-sm items-center w-[160px]">
                         <Input
-                            type="date"
-                            id="startDate"
+                            type="datetime-local"
                             bind:value={startDate}
-                            class="bg-secondary px-2 w-[102px] h-[32px] border-0 shadow-none "
-                        />
-                        <Input
-                            type="time"
-                            id="startTime"
-                            bind:value={startTime}
-                            class="bg-secondary px-2 w-[60px] h-[32px] border-0 shadow-none "
+                            class="bg-background h-[32px]"
                         />
                     </div>
                 </div>
-                <div class="flex-1 pl-[12px]">
+                <div class="flex-1">
                     <Label for="endDate" class="text-sm text-gray-500">结束时间</Label>
                     <div class="flex bg-secondary rounded-sm items-center w-[160px]">
                         <Input
-                            type="date"
+                            type="datetime-local"
                             id="endDate"
                             bind:value={endDate}
-                            class="bg-secondary px-2 w-[102px] h-[32px] border-0 shadow-none "
-                        />
-                        <Input
-                            type="time"
-                            id="endTime"
-                            bind:value={endTime}
-                            class="bg-secondary px-2 w-[60px] h-[32px] border-0 shadow-none "
+                            class="bg-background  h-[32px]"
                         />
                     </div>
                 </div>

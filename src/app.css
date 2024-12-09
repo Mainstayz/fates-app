@@ -22,7 +22,7 @@
         --destructive-foreground: #f8fafc;
         --border: #e2e8f0;
         --input: #e2e8f0;
-        --ring: #9F9FA8;
+        --ring: #9f9fa8;
         --chart-1: #e76e50;
         --chart-2: #2a9d90;
         --chart-3: #274754;
@@ -38,7 +38,6 @@
         --sidebar-accent-foreground: #18181b;
         --sidebar-border: #e4e4e7;
         --sidebar-ring: #3b82f6;
-
     }
 
     .dark {
@@ -60,7 +59,7 @@
         --destructive-foreground: #f8fafc;
         --border: #e2e8f0;
         --input: #e2e8f0;
-        --ring: #9F9FA8;
+        --ring: #9f9fa8;
         --chart-1: #e76e50;
         --chart-2: #2a9d90;
         --chart-3: #274754;
@@ -84,5 +83,12 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer components {
+    /* 隐藏 */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        @apply hidden;
     }
 }

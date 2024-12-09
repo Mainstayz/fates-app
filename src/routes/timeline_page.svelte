@@ -436,7 +436,7 @@
         </Dialog.Content>
     </Dialog.Root>
     <Dialog.Root bind:open={switchTaskDetailInput}>
-        <Dialog.Content class="w-[800px]">
+        <Dialog.Content>
             <TaskDetailForm />
         </Dialog.Content>
     </Dialog.Root>
