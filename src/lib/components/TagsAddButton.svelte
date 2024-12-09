@@ -22,7 +22,7 @@
     let { title = "添加标签", maxSelected = 2 }: { title?: string; maxSelected?: number } = $props();
     let open = $state(false);
     let tags = $state<string[]>([]);
-    let tagsList = $state<string[]>(["标签1", "标签2", "标签3", "标签4", "标签5"]);
+    let tagsList = $state<string[]>(["标签 1", "标签 2", "标签 3", "标签 4", "标签 5"]);
     let showCreateNewTag = $state(false);
 
     function addTag(tag: string) {
@@ -30,14 +30,14 @@
     }
 
     onMount(() => {
-        addTag("标签1");
-        addTag("标签2");
+        addTag("标签 1");
+        addTag("标签 2");
     });
 </script>
 
 <Popover bind:open>
     <PopoverTrigger>
-        <Button variant="outline" size="sm" class="h-8">
+        <Button variant="outline" size="sm" class="h-8 border-dashed">
             {#if tags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
                     {#each tags.slice(0, 3) as tag}
@@ -60,7 +60,7 @@
                     <CommandGroup>
                         {#each tagsList.slice(0, 3) as tag}
                             <CommandItem value={tag} onSelect={() => addTag(tag)}>
-                                <!-- 如果标签在tags中，则显示勾选图标 -->
+                                <!-- 如果标签在 tags 中，则显示勾选图标 -->
                                 <div
                                     class={cn(
                                         "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
@@ -76,7 +76,7 @@
                         {/each}
                         {#if tagsList.length > 3}
                             <CommandItem disabled>
-                                <span> 更多标签被隐藏({tagsList.length - 3}) </span>
+                                <span> 更多标签被隐藏 ({tagsList.length - 3}) </span>
                             </CommandItem>
                         {/if}
                     </CommandGroup>

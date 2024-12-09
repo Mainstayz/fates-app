@@ -5,6 +5,7 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { PanelTop, Plus, Circle, Leaf, Flame, Zap, Timer, Text } from "lucide-svelte";
     import TagsAddButton from "./TagsAddButton.svelte";
+    import DateRangePicker from "./DateRangePicker.svelte";
 
     const COLORS = [
         { value: "blue", label: "普通任务", icon: Circle },
@@ -55,25 +56,23 @@
     <div class="flex-1 flex-col pr-[20px]">
         <!-- 标题 -->
         <div class="flex flex-row gap-2">
-            <div class="pt-[6px]">
-                <PanelTop size={24} class="mb-2" />
+            <div class="w-[24px] pt-[6px]">
+                <PanelTop size={24} />
             </div>
             <Input
                 type="text"
-                class="bg-background border-0 shadow-none font-bold text-xl"
+                class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
                 bind:value={title}
                 placeholder="任务标题"
             />
         </div>
         <!-- Tags，以及 优先级 -->
-        <div class="flex flex-row gap-2 pt-[8px]">
-            <!-- Icon -->
-            <div class="pt-[6px] w-[24px]"></div>
-            <div class="flex pl-[12px] gap-3">
-                <!--  -->
-                <div class="flex-1 ">
-                    <div class="text-sm text-gray-500">优先级</div>
-                    <div class="h-[32px] w-[160px]">
+        <div class="flex flex-row gap-2">
+            <div class="w-[24px]"></div>
+            <div class="flex flex-1 gap-8 pl-[12px]">
+                <div class="w-[160px]">
+                    <div class="text-sm text-gray-500 mb-1">优先级</div>
+                    <div class="h-[32px]">
                         <Select.Root type="single" bind:value={color}>
                             <Select.Trigger class="w-full h-[32px]">
                                 {#if color}
@@ -121,7 +120,7 @@
                     </div>
                 </div>
                 <div class="flex-1">
-                    <div class="text-sm text-gray-500">标签</div>
+                    <div class="text-sm text-gray-500 mb-1">标签</div>
                     <div>
                         <TagsAddButton />
                     </div>
@@ -129,31 +128,17 @@
             </div>
         </div>
         <!-- 时间 -->
-        <div class="flex flex-row gap-2 pt-[8px]">
-            <div class="pt-[6px] w-[24px]">
+        <div class="flex flex-row gap-2">
+            <div class="w-[24px] pt-[6px]">
                 <Timer size={24} />
             </div>
-            <div class="flex flex-row flex-1 gap-2">
-                <div class="flex-1 pl-[12px]">
-                    <Label for="startDate" class="text-sm text-gray-500">开始时间</Label>
-                    <div class="flex rounded-sm items-center w-[160px]">
-                        <Input
-                            type="datetime-local"
-                            bind:value={startDate}
-                            class="bg-background h-[32px]"
-                        />
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <Label for="endDate" class="text-sm text-gray-500">结束时间</Label>
-                    <div class="flex bg-secondary rounded-sm items-center w-[160px]">
-                        <Input
-                            type="datetime-local"
-                            id="endDate"
-                            bind:value={endDate}
-                            class="bg-background  h-[32px]"
-                        />
-                    </div>
+            <div class="flex flex-1 pl-[12px]">
+                <div class="w-full">
+                    <Label class="text-sm text-gray-500 mb-1">时间</Label>
+                    <DateRangePicker
+                        startDate={startDate}
+                        endDate={endDate}
+                    />
                 </div>
             </div>
         </div>
