@@ -124,7 +124,7 @@
                     type: "month",
                     // dynamicDimension: false,
                     gutter: 4, // 每个域之间的空间，以像素为单位
-                    label: { text: "M 月", textAlign: "middle", position: "bottom" },
+                    label: { text: "M 月", textAlign: "middle", position: "top" },
                 },
                 subDomain: {
                     type: "yyDay", // 显示域类型中的所有天，但域的开始和结束四舍五入到该月的第一周和结束周，以便每列具有相同的天数。
@@ -166,6 +166,7 @@
                     {
                         width: 25,
                         textAlign: "start",
+                        padding: [25, 0, 0, 0],
                         text: function () {
                             return ["", "一", "", "三", "", "五", ""];
                         },
@@ -179,7 +180,7 @@
 <div class="bg-background">
     <div class="w-full" id="ex-ghDay"></div>
     <div class="flex justify-end">
-        <div class="flex items-center text-sm text-muted-foreground mt-2 gap-2">
+        <div class="flex items-center text-sm text-muted-foreground mt-2 mr-8 gap-2">
             <span class="mx-2">Less</span>
             <div id="ex-ghDay-legend"></div>
             <span class="mx-2">More</span>

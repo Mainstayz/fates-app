@@ -14,6 +14,7 @@
     import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
     import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button";
+    import { Label } from "$lib/components/ui/label";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog/index";
     import * as Select from "$lib/components/ui/select";
@@ -316,9 +317,9 @@
 
 <div class="flex flex-col h-full">
     <div class="p-6">
-        <div>
-            <h2 class="text-2xl font-bold tracking-tight">时间追踪</h2>
-            <p class="text-muted-foreground">用文字描绘每一个瞬间！</p>
+        <div class="flex flex-col gap-4">
+            <Label class="text-2xl font-bold tracking-tight">时间追踪</Label>
+            <Label class="text-base text-muted-foreground">用文字描绘每一个瞬间！</Label>
         </div>
         <div class="py-6">
             <div class="flex gap-2 justify-between">
@@ -395,21 +396,24 @@
                 </div>
             </div>
 
-            <Timeline
-                bind:this={timelineComponent}
-                zoomMin={1000 * 60 * 5}
-                zoomMax={1000 * 60 * 60 * 24 * 7}
-                {items}
-                {groups}
-                start={new Date(new Date().setHours(new Date().getHours() - 12))}
-                end={new Date(new Date().setHours(new Date().getHours() + 12))}
-                onAdd={handleAdd}
-                onUpdate={handleUpdate}
-                onRemove={handleRemove}
-                onMove={handleMove}
-                onMoving={handleMoving}
-            />
-            <div>
+            <div class="pt-4">
+                <Timeline
+                    bind:this={timelineComponent}
+                    zoomMin={1000 * 60 * 5}
+                    zoomMax={1000 * 60 * 60 * 24 * 7}
+                    {items}
+                    {groups}
+                    start={new Date(new Date().setHours(new Date().getHours() - 12))}
+                    end={new Date(new Date().setHours(new Date().getHours() + 12))}
+                    onAdd={handleAdd}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    onMove={handleMove}
+                    onMoving={handleMoving}
+                />
+            </div>
+            <div class="flex flex-col pt-4 gap-2">
+                <Label class="text-lg text-muted-foreground">日历</Label>
                 <DailyHeatMap
                     data={[
                         { date: "2024-12-01", value: 5 },
