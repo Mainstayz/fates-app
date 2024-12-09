@@ -50,6 +50,9 @@ importers:
       cal-heatmap:
         specifier: ^4.2.4
         version: 4.2.4
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.13
       debounce:
         specifier: ^2.2.0
         version: 2.2.0
@@ -78,6 +81,9 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2.1.0
         version: 2.1.0
+      '@types/cal-heatmap':
+        specifier: ^4.0.0
+        version: 4.0.0
       '@types/node':
         specifier: ^22.10.1
         version: 22.10.1
@@ -943,6 +949,10 @@ packages:
 
   '@tauri-apps/plugin-updater@2.0.0':
     resolution: {integrity: sha512-N0cl71g7RPr7zK2Fe5aoIwzw14NcdLcz7XMGFWZVjprsqgDRWoxbnUkknyCQMZthjhGkppCd/wN2MIsUz+eAhQ==}
+
+  '@types/cal-heatmap@4.0.0':
+    resolution: {integrity: sha512-pp7HgHqfUy+poqDRxPiDGdWtNDd2TXNRDDCfzMB46VfGcqICpXPznRrG0UwXFche4wC/CrBmBdh1pnRhKZElYw==}
+    deprecated: This is a stub types definition. cal-heatmap provides its own type definitions, so you do not need this installed.
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -2650,6 +2660,10 @@ snapshots:
   '@tauri-apps/plugin-updater@2.0.0':
     dependencies:
       '@tauri-apps/api': 2.1.1
+
+  '@types/cal-heatmap@4.0.0':
+    dependencies:
+      cal-heatmap: 4.2.4
 
   '@types/cookie@0.6.0': {}
 

@@ -12,6 +12,7 @@
     import AddEventForm from "$lib/components/AddEventForm.svelte";
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
+    import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog/index";
@@ -408,6 +409,15 @@
                 onMove={handleMove}
                 onMoving={handleMoving}
             />
+            <div>
+                <DailyHeatMap
+                    data={[
+                        { date: "2024-01-01", value: 5 },
+                        { date: "2024-01-02", value: 3 },
+                        // ... 更多数据
+                    ]}
+                />
+            </div>
         </div>
     </div>
 
