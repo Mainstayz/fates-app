@@ -27,6 +27,7 @@
     "@tauri-apps/plugin-updater": "~2.0.0",
     "@yaireo/tagify": "^4.32.1",
     "apexcharts": "^4.1.0",
+    "cal-heatmap": "^4.2.4",
     "debounce": "^2.2.0",
     "handlebars": "^4.7.8",
     "vis-data": "^7.1.9",
