@@ -1,11 +1,13 @@
 <script lang="ts">
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import * as Select from "$lib/components/ui/select";
+    import { Button } from "$lib/components/ui/button";
+    import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import { PanelTop, Plus, Circle, Leaf, Flame, Zap, Timer, Text } from "lucide-svelte";
     import TagsAddButton from "./TagsAddButton.svelte";
     import DateRangePicker from "./DateRangePicker.svelte";
+    import { onMount } from "svelte";
 
     const COLORS = [
         { value: "blue", label: "普通任务", icon: Circle },
@@ -49,55 +51,88 @@
         const minutes = String(date.getMinutes()).padStart(2, "0");
         return `${hours}:${minutes}`;
     }
+
+    // 阻止自动聚焦
+    function preventAutoFocus(node: HTMLElement) {
+        const handleFocus = (e: FocusEvent) => {
+            e.preventDefault();
+            (e.target as HTMLElement).blur();
+        };
+
+        node.addEventListener("focus", handleFocus);
+
+        return {
+            destroy() {
+                node.removeEventListener("focus", handleFocus);
+            },
+        };
+    }
+
+    onMount(() => {
+        // 获取输入框元素
+        const inputElement = document.querySelector('input[placeholder="任务标题"]');
+        if (inputElement) {
+            // 移除焦点
+            (inputElement as HTMLElement).blur();
+            // 防止自动获取焦点
+            (inputElement as HTMLElement).setAttribute("tabindex", "-1");
+        }
+    });
 </script>
 
-<!-- 水平布局 -->
-<div class="flex flex-row">
-    <div class="flex-1 flex-col pr-[20px]">
-        <!-- 标题 -->
-        <div class="flex flex-row gap-2">
-            <div class="w-[24px] pt-[6px]">
-                <PanelTop size={24} />
-            </div>
-            <Input
-                type="text"
-                class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
-                bind:value={title}
-                placeholder="任务标题"
-            />
+<div class="flex flex-1 flex-col pr-[20px] gap-4">
+    <!-- 标题 -->
+    <div class="flex flex-row gap-2">
+        <div class="w-[24px] pt-[6px]">
+            <PanelTop size={24} />
         </div>
-        <!-- Tags，以及 优先级 -->
-        <div class="flex flex-row gap-2">
-            <div class="w-[24px]"></div>
-            <div class="flex flex-1 gap-8 pl-[12px]">
-                <div class="w-[160px]">
-                    <div class="text-sm text-gray-500 mb-1">优先级</div>
-                    <div class="h-[32px]">
-                        <Select.Root type="single" bind:value={color}>
-                            <Select.Trigger class="w-full h-[32px]">
-                                {#if color}
-                                    <div class="flex items-center gap-2">
-                                        {#if color}
-                                            {@const Icon = COLORS.find((c) => c.value === color)?.icon}
-                                            <Icon
-                                                class={`w-4 h-4 ${
-                                                    color === "red"
-                                                        ? "text-red-500"
-                                                        : color === "yellow"
-                                                          ? "text-yellow-500"
-                                                          : color === "green"
-                                                            ? "text-green-500"
-                                                            : "text-blue-500"
-                                                }`}
-                                            />
-                                        {/if}
-                                        {getColorLabel(color)}
-                                    </div>
-                                {/if}
-                            </Select.Trigger>
-                            <Select.Content>
+        <!-- 关闭自动焦点 -->
+        <Input
+            type="text"
+            class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
+            bind:value={title}
+            placeholder="任务标题"
+            autofocus={false}
+            tabindex={-1}
+        />
+    </div>
+    <!-- Tags，以及 优先级 -->
+    <div class="flex flex-row gap-2">
+        <div class="w-[24px]"></div>
+        <div class="flex flex-1 gap-8 pl-[12px]">
+            <div class="w-[160px]">
+                <div class="text-xs text-gray-500 mb-1">优先级</div>
+                <div class="h-[32px]">
+                    <Popover.Root>
+                        <Popover.Trigger>
+                            <Button variant="outline" class="w-[160px] h-[32px] justify-start shadow-none">
+                                <div class="flex items-center gap-2">
+                                    {#if color}
+                                        {@const Icon = COLORS.find((c) => c.value === color)?.icon}
+                                        <Icon
+                                            class={`w-4 h-4 ${
+                                                color === "red"
+                                                    ? "text-red-500"
+                                                    : color === "yellow"
+                                                      ? "text-yellow-500"
+                                                      : color === "green"
+                                                        ? "text-green-500"
+                                                        : "text-blue-500"
+                                            }`}
+                                        />
+                                    {/if}
+                                    {getColorLabel(color)}
+                                </div>
+                            </Button>
+                        </Popover.Trigger>
+                        <Popover.Content class="w-[160px] p-0">
+                            <div class="flex flex-col">
                                 {#each COLORS as colorOption}
-                                    <Select.Item value={colorOption.value}>
+                                    <Button
+                                        variant="ghost"
+                                        class="w-full justify-start"
+                                        onclick={() => (color = colorOption.value)}
+                                    >
                                         {@const Icon = colorOption.icon}
                                         <div class="flex items-center gap-2">
                                             <Icon
@@ -113,51 +148,49 @@
                                             />
                                             {colorOption.label}
                                         </div>
-                                    </Select.Item>
+                                    </Button>
                                 {/each}
-                            </Select.Content>
-                        </Select.Root>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <div class="text-sm text-gray-500 mb-1">标签</div>
-                    <div>
-                        <TagsAddButton />
-                    </div>
+                            </div>
+                        </Popover.Content>
+                    </Popover.Root>
                 </div>
             </div>
-        </div>
-        <!-- 时间 -->
-        <div class="flex flex-row gap-2">
-            <div class="w-[24px] pt-[6px]">
-                <Timer size={24} />
-            </div>
-            <div class="flex flex-1 pl-[12px]">
-                <div class="w-full">
-                    <Label class="text-sm text-gray-500 mb-1">时间</Label>
-                    <DateRangePicker
-                        startDate={startDate}
-                        endDate={endDate}
-                    />
+            <div class="flex-1">
+                <div class="text-xs text-gray-500 mb-1">标签</div>
+                <div>
+                    <TagsAddButton />
                 </div>
             </div>
         </div>
-        <!-- 详情 -->
-        <div class="flex flex-row gap-2 pt-[8px]">
-            <div class="pt-[2px] w-[24px]">
-                <Text size={24} />
+    </div>
+    <!-- 时间 -->
+    <div class="flex flex-row gap-2">
+        <div class="w-[24px] pt-[6px]">
+            <!-- <Timer size={24} /> -->
+        </div>
+        <div class="flex flex-1 pl-[12px]">
+            <!-- 添加线框 -->
+            <div>
+                <Label class="text-xs text-gray-500 mb-1">日期</Label>
+                <DateRangePicker {startDate} {endDate} />
             </div>
-            <div class="flex flex-col gap-1 flex-1 pl-[12px]">
-                <!-- 描述 -->
-                <Label for="description" class="text-lg text-gray-500">描述</Label>
-                <!-- 关闭自动高度 -->
-                <Textarea
-                    id="description"
-                    placeholder="添加详细描述..."
-                    bind:value={description}
-                    class="bg-secondary w-full h-[100px] border-0 shadow-none resize-none"
-                />
-            </div>
+        </div>
+    </div>
+    <!-- 详情 -->
+    <div class="flex flex-row gap-2 pt-[8px]">
+        <div class="pt-[2px] w-[24px]">
+            <Text size={24} />
+        </div>
+        <div class="flex flex-col gap-1 flex-1 pl-[12px]">
+            <!-- 描述 -->
+            <Label for="description" class="text-lg text-gray-500">描述</Label>
+            <!-- 关闭自动高度 -->
+            <Textarea
+                id="description"
+                placeholder="添加详细描述..."
+                bind:value={description}
+                class="bg-secondary w-full h-[100px] border-0 shadow-none resize-none"
+            />
         </div>
     </div>
 </div>

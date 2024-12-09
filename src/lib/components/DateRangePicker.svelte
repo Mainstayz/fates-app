@@ -62,7 +62,11 @@
             </div>
         </div>
     {:else}
-        <Button variant="ghost" class="w-full justify-start px-2 font-normal h-[32px]" onclick={toggleEdit}>
+        <Button
+            variant="ghost"
+            class="border border-border rounded-md w-full justify-start px-2 font-normal h-[32px]"
+            onclick={toggleEdit}
+        >
             <div class="flex items-center gap-2">
                 <Calendar class="w-4 h-4" />
                 {#if isSameDay(startDate, endDate)}
