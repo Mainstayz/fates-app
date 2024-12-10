@@ -21,3 +21,37 @@ https://uicolorful.com/template/saas
 https://uicolors.app/create
 
 Tauri 2.0 Updater 自动更新指南[https://juejin.cn/post/7358446362575568906]
+
+数据库设计：
+
+```json
+{
+    "matter": {
+        "id": "uuid,primary_key",
+        "title": "string,not_null",
+        "description": "string,nullable,default:'',",
+        "tags": "string,nullable,default:'',",
+        "start_time": "timestamp,not_null",
+        "end_time": "timestamp,not_null",
+        "priority": "number,default:0",
+        "type": "number,default:0",
+        "created_at": "timestamp,not_null",
+        "updated_at": "timestamp,not_null",
+        "reserved_1": "string,nullable,default:'',",
+        "reserved_2": "string,nullable,default:'',",
+        "reserved_3": "string,nullable,default:'',",
+        "reserved_4": "string,nullable,default:'',",
+        "reserved_5": "string,nullable,default:'',",
+    },
+    "kvstore": {
+        "key": "string,not_null",
+        "value": "string,default:'',",
+        "created_at": "timestamp,not_null",
+        "updated_at": "timestamp,not_null"
+    },
+    "tags": {
+        "name": "string,not_null",
+        "created_at": "timestamp,not_null",
+    }
+}
+```
