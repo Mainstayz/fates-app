@@ -11,14 +11,11 @@ POST {{baseUrl}}/matter
 Content-Type: application/json
 
 {
-    "id": "",
     "title": "测试事项",
     "content": "这是一个测试内容",
     "status": 0,
     "priority": 1,
-    "tags": ["工作", "重要"],
-    "created_at": null,
-    "updated_at": null
+    "tags": "工作"
 }
 
 ### 获取单个 Matter
@@ -36,7 +33,7 @@ Content-Type: application/json
     "content": "这是更新后的内容",
     "status": 1,
     "priority": 2,
-    "tags": ["工作", "重要", "已更新"]
+    "tags": "工作"
 }
 
 ### 按时间范围获取 Matter
@@ -49,7 +46,6 @@ DELETE {{baseUrl}}/matter/{{matterId}}
 
 # 设置 KV
 PUT {{baseUrl}}/kv/{{kvKey}}
-Content-Type: application/json
 
 "测试值"
 

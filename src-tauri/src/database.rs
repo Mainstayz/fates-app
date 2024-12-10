@@ -311,7 +311,7 @@ impl KVStore {
 impl Tag {
     pub fn create(conn: &Connection, name: &str) -> Result<()> {
         conn.execute(
-            "INSERT INTO tags (name, created_at) VALUES (?1, ?2)",
+            "INSERT OR IGNORE INTO tags (name, created_at) VALUES (?1, ?2)",
             params![name, Utc::now()],
         )?;
         Ok(())

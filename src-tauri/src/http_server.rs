@@ -6,16 +6,15 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use once_cell::sync::OnceCell;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::sync::{oneshot, Mutex};
 use uuid::Uuid;
-use once_cell::sync::OnceCell;
-use std::sync::atomic::{AtomicU16, Ordering};
-use thiserror::Error;
-
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -42,7 +41,6 @@ impl<T> ApiResponse<T> {
     }
 }
 
-
 #[derive(Error, Debug)]
 pub enum ServerError {
     #[error("服务器启动失败：{0}")]
@@ -67,7 +65,6 @@ impl IntoResponse for ServerError {
         Json(ApiResponse::<()>::error(code, &message)).into_response()
     }
 }
-
 
 // 服务器状态结构体
 pub struct AppState {
@@ -202,7 +199,8 @@ async fn get_all_matters(
     State(state): State<Arc<Mutex<AppState>>>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    let matters = Matter::get_all(&state.db).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    let matters =
+        Matter::get_all(&state.db).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::success(matters)))
 }
