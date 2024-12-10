@@ -1,11 +1,11 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
 mod autostart;
+mod database;
 mod http_server;
 mod models;
 mod notification_manager;
 mod tray;
-mod database;
 mod utils;
 
 use crate::http_server::start_http_server;
@@ -25,8 +25,6 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tauri_plugin_store::StoreExt;
 use tray::try_register_tray_icon;
-
-
 
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
@@ -84,8 +82,6 @@ async fn auto_launch(app: tauri::AppHandle, enable: bool) {
     let _ = autostart::enable_autostart(app, enable);
 }
 
-
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let logger_builder = tauri_plugin_log::Builder::new()
@@ -103,6 +99,7 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())

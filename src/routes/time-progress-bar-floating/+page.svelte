@@ -3,6 +3,8 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
+    import { getAllMatters } from "../../store";
+    import { fetch } from "@tauri-apps/plugin-http";
 
     let unlisten: UnlistenFn | void;
 
@@ -32,6 +34,8 @@
         console.log("update time-progress-bar-height:", newHeight);
     }
 
+    let unlistens: UnlistenFn[] = [];
+
     async function setupListeners() {
         // 监听显示/隐藏事件
         const unlistenVisibility = await listen("toggle-time-progress", async (event) => {
@@ -43,6 +47,7 @@
                 await win.hide();
             }
         });
+        unlistens.push(unlistenVisibility);
 
         // 监听置顶状态变化
         const unlistenAlwaysOnTop = await listen("set-time-progress-always-on-top", async (event) => {
@@ -50,21 +55,25 @@
             const shouldBeOnTop = event.payload as boolean;
             await win.setAlwaysOnTop(shouldBeOnTop);
         });
-
-        return () => {
-            unlistenVisibility();
-            unlistenAlwaysOnTop();
-        };
+        unlistens.push(unlistenAlwaysOnTop);
     }
 
-    onMount(async () => {
-        unlisten = await setupListeners();
-        setupResizeObserver();
-    });
+    async function getTimeProgress() {
+        const matters = await fetch("http://localhost:8523/matter");
+        console.log("matters:", matters);
+    }
 
-    onDestroy(() => {
-        unlisten?.();
-        resizeObserver?.disconnect();
+    onMount(() => {
+        console.log("onMount");
+        getTimeProgress();
+        setupListeners();
+        setupResizeObserver();
+        return () => {
+            console.log("onMount return");
+            unlistens.forEach((unlisten) => unlisten());
+            unlistens = [];
+            resizeObserver?.disconnect();
+        };
     });
 </script>
 

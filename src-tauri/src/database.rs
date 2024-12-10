@@ -11,12 +11,10 @@ const CURRENT_DB_VERSION: u32 = 1;
 
 const DB_NAME: &str = "fates.db";
 
-
 // 添加默认时间函数
 fn default_datetime() -> DateTime<Utc> {
     Utc::now()
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Matter {
@@ -186,25 +184,27 @@ impl Matter {
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Matter>> {
         let mut stmt = conn.prepare("SELECT * FROM matter ORDER BY start_time")?;
-        let matters = stmt.query_map([], |row| {
-            Ok(Matter {
-                id: row.get(0)?,
-                title: row.get(1)?,
-                description: row.get(2)?,
-                tags: row.get(3)?,
-                start_time: row.get(4)?,
-                end_time: row.get(5)?,
-                priority: row.get(6)?,
-                type_: row.get(7)?,
-                created_at: row.get(8)?,
-                updated_at: row.get(9)?,
-                reserved_1: row.get(10)?,
-                reserved_2: row.get(11)?,
-                reserved_3: row.get(12)?,
-                reserved_4: row.get(13)?,
-                reserved_5: row.get(14)?,
-            })
-        })?.collect();
+        let matters = stmt
+            .query_map([], |row| {
+                Ok(Matter {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    tags: row.get(3)?,
+                    start_time: row.get(4)?,
+                    end_time: row.get(5)?,
+                    priority: row.get(6)?,
+                    type_: row.get(7)?,
+                    created_at: row.get(8)?,
+                    updated_at: row.get(9)?,
+                    reserved_1: row.get(10)?,
+                    reserved_2: row.get(11)?,
+                    reserved_3: row.get(12)?,
+                    reserved_4: row.get(13)?,
+                    reserved_5: row.get(14)?,
+                })
+            })?
+            .collect();
         matters
     }
 

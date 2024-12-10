@@ -1,76 +1,87 @@
-import { load, Store } from '@tauri-apps/plugin-store'
+import axios from "axios";
+import config from "./config";
 
-interface StoreData {
-    settings?: {
-        theme: string;
-        language: string;
-        autoStart: boolean;
-    };
-    mouseTracker?: {
-        enabled: boolean;
-        sensitivity: number;
-    };
-    timeline?: {
-        data: any[];
-        lastUpdate: string;
-    };
+const API_BASE_URL = config.apiBaseUrl;
+// 定义接口
+interface Matter {
+    id: string;
+    title: string;
+    description?: string;
+    tags?: string;
+    start_time: string;
+    end_time: string;
+    priority: number;
+    type_: number;
+    created_at: string;
+    updated_at: string;
+    reserved_1?: string;
+    reserved_2?: string;
+    reserved_3?: string;
+    reserved_4?: string;
+    reserved_5?: string;
 }
 
-class AppStore {
-    private static instance: AppStore;
-    private store: Store | null = null;
-    private readonly storePath = 'app.dat';
+// Matter API
+export const createMatter = async (matter: Matter) => {
+    const response = await axios.post(`${API_BASE_URL}/matter`, matter);
+    return response.data;
+};
 
-    private constructor() {}
+export const getMatterById = async (id: string) => {
+    const response = await axios.get(`${API_BASE_URL}/matter/${id}`);
+    return response.data;
+};
 
-    public static getInstance(): AppStore {
-        if (!AppStore.instance) {
-            AppStore.instance = new AppStore();
-        }
-        return AppStore.instance;
-    }
+export const getAllMatters = async () => {
+    const response = await axios.get(`${API_BASE_URL}/matter`);
+    return response.data;
+};
 
-    public async init(): Promise<void> {
-        try {
-            this.store = await load(this.storePath);
-        } catch (error) {
-            console.error('Failed to initialize store:', error);
-            throw error;
-        }
-    }
+export const updateMatter = async (id: string, matter: Matter) => {
+    const response = await axios.put(`${API_BASE_URL}/matter/${id}`, matter);
+    return response.data;
+};
 
-    public async get<T>(key: keyof StoreData): Promise<T | null> {
-        try {
-            if (!this.store) await this.init();
-            return await this.store!.get(key) as T;
-        } catch (error) {
-            console.error(`Failed to get ${String(key)}:`, error);
-            return null;
-        }
-    }
+export const deleteMatter = async (id: string) => {
+    const response = await axios.delete(`${API_BASE_URL}/matter/${id}`);
+    return response.data;
+};
 
-    public async set<T>(key: keyof StoreData, value: T): Promise<void> {
-        try {
-            if (!this.store) await this.init();
-            await this.store!.set(key, value);
-            await this.store!.save();
-        } catch (error) {
-            console.error(`Failed to set ${String(key)}:`, error);
-            throw error;
-        }
-    }
+export const getMattersByRange = async (start: string, end: string) => {
+    const response = await axios.get(`${API_BASE_URL}/matter/range`, {
+        params: { start, end },
+    });
+    return response.data;
+};
 
-    public async clear(): Promise<void> {
-        try {
-            if (!this.store) await this.init();
-            await this.store!.clear();
-            await this.store!.save();
-        } catch (error) {
-            console.error('Failed to clear store:', error);
-            throw error;
-        }
-    }
-}
+// KVStore API
+export const setKV = async (key: string, value: string) => {
+    const response = await axios.put(`${API_BASE_URL}/kv/${key}`, { value });
+    return response.data;
+};
 
-// 导出单例实例
-export const appStore = AppStore.getInstance();
+export const getKV = async (key: string) => {
+    const response = await axios.get(`${API_BASE_URL}/kv/${key}`);
+    return response.data;
+};
+
+export const deleteKV = async (key: string) => {
+    const response = await axios.delete(`${API_BASE_URL}/kv/${key}`);
+    return response.data;
+};
+
+// Tag API
+export const createTag = async (name: string) => {
+    const response = await axios.post(`${API_BASE_URL}/tags`, { name });
+    return response.data;
+};
+
+export const getAllTags = async () => {
+    const response = await axios.get(`${API_BASE_URL}/tags`);
+    return response.data;
+};
+
+export const deleteTag = async (name: string) => {
+    const response = await axios.delete(`${API_BASE_URL}/tags/${name}`);
+    return response.data;
+};

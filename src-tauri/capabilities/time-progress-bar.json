@@ -2,9 +2,7 @@
     "$schema": "../gen/schemas/desktop-schema.json",
     "identifier": "time-progress-bar",
     "description": "Capability for the time progress bar floating window",
-    "windows": [
-        "time-progress-bar"
-    ],
+    "windows": ["time-progress-bar"],
     "permissions": [
         "core:default",
         "core:event:allow-listen",
@@ -16,6 +14,14 @@
         "core:window:allow-set-size-constraints",
         "core:window:allow-close",
         "notification:default",
-        "store:default"
+        "store:default",
+        {
+            "identifier": "http:default",
+            "allow": [
+                {
+                    "url": "http://localhost:8523"
+                }
+            ]
+        }
     ]
 }

@@ -19,7 +19,7 @@
             }
         ],
         "security": {
-            "csp": null
+            "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost"
         },
         "macOSPrivateApi": true
     },
