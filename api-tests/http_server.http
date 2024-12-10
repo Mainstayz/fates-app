@@ -1,0 +1,74 @@
+### 变量设置
+@baseUrl = http://127.0.0.1:8523
+@matterId = your-matter-id
+@tagId = 1
+@kvKey = test-key
+
+### Matter 相关测试
+
+# 创建 Matter
+POST {{baseUrl}}/matter
+Content-Type: application/json
+
+{
+    "id": "",
+    "title": "测试事项",
+    "content": "这是一个测试内容",
+    "status": 0,
+    "priority": 1,
+    "tags": ["工作", "重要"],
+    "created_at": null,
+    "updated_at": null
+}
+
+### 获取单个 Matter
+GET {{baseUrl}}/matter/{{matterId}}
+
+### 获取所有 Matter
+GET {{baseUrl}}/matter
+
+### 更新 Matter
+PUT {{baseUrl}}/matter/{{matterId}}
+Content-Type: application/json
+
+{
+    "title": "更新后的测试事项",
+    "content": "这是更新后的内容",
+    "status": 1,
+    "priority": 2,
+    "tags": ["工作", "重要", "已更新"]
+}
+
+### 按时间范围获取 Matter
+GET {{baseUrl}}/matter/range?start=2024-01-01T00:00:00Z&end=2024-12-31T23:59:59Z
+
+### 删除 Matter
+DELETE {{baseUrl}}/matter/{{matterId}}
+
+### KV 存储相关测试
+
+# 设置 KV
+PUT {{baseUrl}}/kv/{{kvKey}}
+Content-Type: application/json
+
+"测试值"
+
+### 获�� KV
+GET {{baseUrl}}/kv/{{kvKey}}
+
+### 删除 KV
+DELETE {{baseUrl}}/kv/{{kvKey}}
+
+### Tag 相关测试
+
+# 创建 Tag
+POST {{baseUrl}}/tags
+Content-Type: application/json
+
+"新标签"
+
+### 获取所有 Tag
+GET {{baseUrl}}/tags
+
+### 删除 Tag
+DELETE {{baseUrl}}/tags/{{tagId}}
