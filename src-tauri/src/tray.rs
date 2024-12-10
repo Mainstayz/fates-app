@@ -240,10 +240,7 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
         return true;
     }
 
-    let tray_icon = app
-        .tray_by_id("tray")
-        .ok_or_else(|| false)
-        .unwrap();
+    let tray_icon = app.tray_by_id("tray").ok_or_else(|| false).unwrap();
 
     if flash {
         state.is_running = true;

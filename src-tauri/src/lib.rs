@@ -1,15 +1,16 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
 mod autostart;
+mod error;
+mod http_server;
 mod models;
 mod notification_manager;
 mod tray;
-mod http_server;
-mod error;
 
+use crate::http_server::start_http_server;
 use crate::models::{
-    MessageBoxData, NotificationConfig, Settings, TimelineData, NOTIFICATION_MESSAGE,
-    SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,MESSAGE_BOX_FILE_NAME
+    MessageBoxData, NotificationConfig, Settings, TimelineData, MESSAGE_BOX_FILE_NAME,
+    NOTIFICATION_MESSAGE, SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,
 };
 use crate::notification_manager::NotificationManager;
 use crate::tray::{flash_tray_icon, get_tray_flash_state};
@@ -21,9 +22,8 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
-use tray::try_register_tray_icon;
 use tauri_plugin_store::StoreExt;
-use crate::http_server::start_http_server;
+use tray::try_register_tray_icon;
 
 const APP_NAME: &str = "Fates";
 
@@ -133,6 +133,7 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -156,8 +157,8 @@ pub fn run() {
             flash_tray_icon,
         ])
         .setup(|app| {
-             // 开启 http 服务
-             start_http_server(8523);
+            // 开启 http 服务
+            start_http_server(8523);
             // 仅在构建 macOS 时设置背景颜色
             #[cfg(target_os = "macos")]
             {
@@ -198,9 +199,6 @@ pub fn run() {
             let notification_manager = NotificationManager::new(
                 config,
                 move || {
-
-
-
                     // 如果异常都返回 false
                     // 读取 SETTINGS_FILE_NAME
                     // 读取 settings.json 文件
@@ -216,8 +214,8 @@ pub fn run() {
 
                     // 如果文件不存在，返回 false
                     if !settings_path.exists() {
-                         // 创建 settings.json 文件
-                         let default_settings = Settings {
+                        // 创建 settings.json 文件
+                        let default_settings = Settings {
                             language: Some("zh-CN".to_string()),
                             checkInterval: Some(2),
                         };

@@ -2,13 +2,13 @@ use axum::{
     extract::State,
     response::IntoResponse,
     routing::{get, post},
-    Router,
-    Json,
+    Json, Router,
 };
+use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
-use serde::Deserialize;
+use tauri::async_runtime;
 
 use crate::error::ServerError;
 
@@ -42,9 +42,7 @@ pub struct HttpServer {
 
 impl HttpServer {
     pub fn new() -> Self {
-        let state = Arc::new(Mutex::new(AppState {
-            shutdown_tx: None,
-        }));
+        let state = Arc::new(Mutex::new(AppState { shutdown_tx: None }));
         Self { state }
     }
 
@@ -100,7 +98,7 @@ pub fn start_http_server(port: u16) -> Result<HttpServer, ServerError> {
     let server = HttpServer::new();
     let server_clone = server.clone();
 
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         if let Err(e) = server_clone.start(port).await {
             log::error!("HTTP server failed to start: {}", e);
         }

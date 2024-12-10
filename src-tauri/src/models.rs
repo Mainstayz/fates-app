@@ -26,7 +26,6 @@ pub struct Settings {
     pub checkInterval: Option<i64>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TimelineData {
     pub groups: Vec<TimelineGroup>,
