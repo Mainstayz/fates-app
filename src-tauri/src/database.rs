@@ -11,38 +11,60 @@ const CURRENT_DB_VERSION: u32 = 1;
 
 const DB_NAME: &str = "fates.db";
 
+
+// 添加默认时间函数
+fn default_datetime() -> DateTime<Utc> {
+    Utc::now()
+}
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Matter {
+    #[serde(default)]
     pub id: String, // UUID
     pub title: String,
+    #[serde(default)]
     pub description: Option<String>,
+    #[serde(default)]
     pub tags: Option<String>,
+    #[serde(default = "default_datetime")]
     pub start_time: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
     pub end_time: DateTime<Utc>,
+    #[serde(default)]
     pub priority: i32,
+    #[serde(default)]
     pub type_: i32, // type 是 Rust 关键字，所以使用 type_
+    #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
     pub updated_at: DateTime<Utc>,
+    #[serde(default)]
     pub reserved_1: Option<String>,
+    #[serde(default)]
     pub reserved_2: Option<String>,
+    #[serde(default)]
     pub reserved_3: Option<String>,
+    #[serde(default)]
     pub reserved_4: Option<String>,
+    #[serde(default)]
     pub reserved_5: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KVStore {
-    pub id: i64,
     pub key: String,
     pub value: String,
+    #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
     pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Tag {
-    pub id: i64,
     pub name: String,
+    #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
 }
 
@@ -76,8 +98,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
     // 创建 kvstore 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS kvstore (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            key TEXT NOT NULL UNIQUE,
+            key TEXT PRIMARY KEY,
             value TEXT DEFAULT '',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
@@ -88,8 +109,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
     // 创建 tags 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
+            name TEXT PRIMARY KEY,
             created_at DATETIME NOT NULL
         )",
         [],
@@ -302,18 +322,16 @@ impl Tag {
         let tags = stmt
             .query_map([], |row| {
                 Ok(Tag {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    created_at: row.get(2)?,
+                    name: row.get(0)?,
+                    created_at: row.get(1)?,
                 })
             })?
             .collect();
-
         tags
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> Result<()> {
-        conn.execute("DELETE FROM tags WHERE id = ?1", params![id])?;
+    pub fn delete(conn: &Connection, name: &str) -> Result<()> {
+        conn.execute("DELETE FROM tags WHERE name = ?1", params![name])?;
         Ok(())
     }
 }

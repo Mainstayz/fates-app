@@ -103,7 +103,7 @@ impl RouteConfig for ApiRoutes {
             .route("/kv/:key", delete(delete_kv))
             .route("/tags", post(create_tag))
             .route("/tags", get(get_all_tags))
-            .route("/tags/:id", delete(delete_tag))
+            .route("/tags/:name", delete(delete_tag))
             .with_state(state)
     }
 }
@@ -248,7 +248,7 @@ async fn get_matters_by_range(
 async fn set_kv(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(key): Path<String>,
-    Json(value): Json<String>,
+    value: String,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
     KVStore::set(&state.db, &key, &value).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
@@ -281,7 +281,7 @@ async fn delete_kv(
 // Tag 相关处理函数
 async fn create_tag(
     State(state): State<Arc<Mutex<AppState>>>,
-    Json(name): Json<String>,
+    name: String,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
     Tag::create(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
@@ -300,10 +300,10 @@ async fn get_all_tags(
 
 async fn delete_tag(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(id): Path<i64>,
+    Path(name): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Tag::delete(&state.db, id).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    Tag::delete(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
