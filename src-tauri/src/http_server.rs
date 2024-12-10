@@ -1,3 +1,4 @@
+use crate::error::ServerError;
 use axum::{
     extract::State,
     response::IntoResponse,
@@ -8,9 +9,6 @@ use serde::Deserialize;
 use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::{oneshot, Mutex};
-use tauri::async_runtime;
-
-use crate::error::ServerError;
 
 // 服务器状态结构体
 pub struct AppState {

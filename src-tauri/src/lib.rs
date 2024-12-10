@@ -6,6 +6,8 @@ mod http_server;
 mod models;
 mod notification_manager;
 mod tray;
+mod database;
+mod utils;
 
 use crate::http_server::start_http_server;
 use crate::models::{
@@ -25,7 +27,7 @@ use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tauri_plugin_store::StoreExt;
 use tray::try_register_tray_icon;
 
-const APP_NAME: &str = "Fates";
+
 
 /// 保存时间线数据到 JSON 文件
 #[tauri::command]
@@ -33,7 +35,7 @@ async fn save_timeline_data(
     app_handle: tauri::AppHandle,
     data: TimelineData,
 ) -> Result<(), String> {
-    let app_dir = get_app_data_dir(app_handle)?;
+    let app_dir = utils::get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
     let json_string =
         serde_json::to_string_pretty(&data).map_err(|e| format!("序列化数据失败：{}", e))?;
@@ -44,7 +46,7 @@ async fn save_timeline_data(
 /// 从 JSON 文件加载时间线数据
 #[tauri::command]
 async fn load_timeline_data(app_handle: tauri::AppHandle) -> Result<Option<TimelineData>, String> {
-    let app_dir = get_app_data_dir(app_handle)?;
+    let app_dir = utils::get_app_data_dir(app_handle)?;
     let file_path = app_dir.join("timeline_data.json");
 
     if !file_path.exists() {
@@ -83,38 +85,7 @@ async fn auto_launch(app: tauri::AppHandle, enable: bool) {
     let _ = autostart::enable_autostart(app, enable);
 }
 
-/// 获取应用数据目录
-fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    // 先检查 APP_NAME
-    if APP_NAME.is_empty() {
-        return Err("APP_NAME 不能为空".to_string());
-    }
 
-    // 获取基础目录
-    let base_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("获取应用数据目录失败：{}", e))?;
-
-    let app_dir = base_dir;
-
-    // 构造完整路径
-    // let app_dir = base_dir.join(APP_NAME);
-
-    // 检查目录是否可访问
-    // if app_dir.exists() && !app_dir.is_dir() {
-    //     return Err(format!("路径 {} 已存在但不是目录", app_dir.display()));
-    // }
-
-    // 创建目录
-    fs::create_dir_all(&app_dir)
-        .map_err(|e| format!("创建目录 {} 失败：{}", app_dir.display(), e))?;
-
-    Ok(app_dir)
-}
-// Target::new(TargetKind::Webview),
-//     ///         Target::new(TargetKind::LogDir { file_name: Some("webview".into()) }).filter(|metadata| metadata.target() == WEBVIEW_TARGET),
-///         Target::new(TargetKind::LogDir { file_name: Some("rust".into()) }).filter(|metadata| metadata.target() != WEBVIEW_TARGET),
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -133,7 +104,6 @@ pub fn run() {
         ])
         .build();
     let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -203,7 +173,7 @@ pub fn run() {
                     // 读取 SETTINGS_FILE_NAME
                     // 读取 settings.json 文件
                     log::info!("执行通知条件检查");
-                    let app_dir = match get_app_data_dir(app_handle_clone.clone()) {
+                    let app_dir = match utils::get_app_data_dir(app_handle_clone.clone()) {
                         Ok(dir) => dir,
                         Err(e) => {
                             log::error!("获取应用数据目录失败：{}", e);
@@ -277,7 +247,7 @@ pub fn run() {
                 },
                 // 获取时间线数据的回调函数
                 move || {
-                    let app_dir = get_app_data_dir(app_handle_clone_2.clone())
+                    let app_dir = utils::get_app_data_dir(app_handle_clone_2.clone())
                         .expect("Failed to get app data dir");
                     let file_path = app_dir.join(TIMELINE_DATA_FILE_NAME);
 
