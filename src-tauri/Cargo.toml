@@ -23,7 +23,7 @@ tauri = { version = "2", features = [
     "tray-icon",
     "custom-protocol",
 ] }
-rusqlite = { version = "0.32.1", features = ["chrono"] }
+rusqlite = { version = "0.32.1", features = ["bundled", "chrono"] }
 axum = { version = "0.7.1", features = ["tokio", "http1"] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
