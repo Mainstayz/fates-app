@@ -4,6 +4,9 @@ mod autostart;
 mod models;
 mod notification_manager;
 mod tray;
+mod http_server;
+mod error;
+
 use crate::models::{
     MessageBoxData, NotificationConfig, Settings, TimelineData, NOTIFICATION_MESSAGE,
     SETTINGS_FILE_NAME, TIMELINE_DATA_FILE_NAME,MESSAGE_BOX_FILE_NAME
@@ -20,6 +23,7 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 use tray::try_register_tray_icon;
 use tauri_plugin_store::StoreExt;
+use crate::http_server::start_http_server;
 
 const APP_NAME: &str = "Fates";
 
@@ -152,6 +156,8 @@ pub fn run() {
             flash_tray_icon,
         ])
         .setup(|app| {
+             // 开启 http 服务
+             start_http_server(8523);
             // 仅在构建 macOS 时设置背景颜色
             #[cfg(target_os = "macos")]
             {
@@ -192,6 +198,9 @@ pub fn run() {
             let notification_manager = NotificationManager::new(
                 config,
                 move || {
+
+
+
                     // 如果异常都返回 false
                     // 读取 SETTINGS_FILE_NAME
                     // 读取 settings.json 文件
