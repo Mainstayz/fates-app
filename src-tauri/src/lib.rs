@@ -1,7 +1,6 @@
 // Learn more about Tauri commands at https://v2.tauri.app/develop/calling-rust/
 
 mod autostart;
-mod error;
 mod http_server;
 mod models;
 mod notification_manager;
@@ -127,28 +126,12 @@ pub fn run() {
             flash_tray_icon,
         ])
         .setup(|app| {
+            // 初始化数据库
+            let db = database::initialize_database(&app.handle()).unwrap();
+
             // 开启 http 服务
-            start_http_server(8523);
-            // 仅在构建 macOS 时设置背景颜色
-            #[cfg(target_os = "macos")]
-            {
-                // let win_builder = WebviewWindowBuilder::new(app, "cocoa_main", WebviewUrl::default());
-                // let win_builder = win_builder.title_bar_style(TitleBarStyle::Transparent);
-                // let win_builder = win_builder.decorations(false);
-                // let window = win_builder.build().unwrap();
-                // use cocoa::appkit::{NSColor, NSWindow};
-                // use cocoa::base::{id, nil};
-                // let ns_window = window.ns_window().unwrap() as id;
-                // unsafe {
-                //     let bg_color = NSColor::colorWithRed_green_blue_alpha_(
-                //         nil,
-                //         50.0 / 255.0,
-                //         158.0 / 255.0,
-                //         163.5 / 255.0,
-                //         1.0,
-                //     );
-                //     ns_window.setBackgroundColor_(bg_color);
-                // }
+            if let Err(e) = start_http_server(8523, db) {
+                log::error!("Failed to start HTTP server: {}", e);
             }
 
             // 注册托盘图标
@@ -344,7 +327,16 @@ fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
 
 /// 处理运行时事件
 fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
-    if let tauri::RunEvent::ExitRequested { api, .. } = event {
-        api.prevent_exit();
+    match event {
+        tauri::RunEvent::ExitRequested { api, .. } => {
+            api.prevent_exit();
+        }
+        tauri::RunEvent::Exit => {
+            // 确保在应用退出时关闭 HTTP 服务器
+            if let Err(e) = http_server::stop_http_server() {
+                log::error!("Failed to stop HTTP server: {}", e);
+            }
+        }
+        _ => {}
     }
 }
