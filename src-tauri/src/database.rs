@@ -70,6 +70,8 @@ pub struct Tag {
     pub name: String,
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
+    pub last_used_at: DateTime<Utc>,
 }
 
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
@@ -114,7 +116,8 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tags (
             name TEXT PRIMARY KEY,
-            created_at DATETIME NOT NULL
+            created_at DATETIME NOT NULL,
+            last_used_at DATETIME NOT NULL
         )",
         [],
     )?;
@@ -317,8 +320,8 @@ impl KVStore {
 impl Tag {
     pub fn create(conn: &Connection, name: &str) -> Result<()> {
         conn.execute(
-            "INSERT OR IGNORE INTO tags (name, created_at) VALUES (?1, ?2)",
-            params![name, Utc::now()],
+            "INSERT OR IGNORE INTO tags (name, created_at, last_used_at) VALUES (?1, ?2, ?3)",
+            params![name, Utc::now(), Utc::now()],
         )?;
         Ok(())
     }
@@ -330,10 +333,19 @@ impl Tag {
                 Ok(Tag {
                     name: row.get(0)?,
                     created_at: row.get(1)?,
+                    last_used_at: row.get(2)?,
                 })
             })?
             .collect();
         tags
+    }
+
+    pub fn update_last_used_at(conn: &Connection, name: &str) -> Result<()> {
+        conn.execute(
+            "UPDATE tags SET last_used_at = ?1 WHERE name = ?2",
+            params![Utc::now(), name],
+        )?;
+        Ok(())
     }
 
     pub fn delete(conn: &Connection, name: &str) -> Result<()> {

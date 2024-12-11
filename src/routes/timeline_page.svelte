@@ -31,6 +31,11 @@
     } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
 
+    interface Tag {
+        name: string;
+        last_used_at: string;
+    }
+
     // 组件状态管理
     let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);
@@ -47,7 +52,8 @@
     let alertDelete = $state(false);
     let alertClearAll = $state(false);
     let showClearAllDialog = $state(false);
-    let tags = $state<string[]>([]);
+
+    let tags = $state<Tag[]>([]);
 
     // 时间范围选择状态管理
     let selectedRange = $state("1d"); // 默认选择 3 天
@@ -151,11 +157,12 @@
     // 加载标签
     async function loadTags() {
         try {
-            const tags = await getAllTags();
-            // 排序
-            tags.forEach((tag: { name: string }) => {
-                tags.push(tag.name);
+            tags.length = 0;
+            const allTags: Tag[] = await getAllTags();
+            allTags.forEach((tag: Tag) => {
+                tags.push(tag);
             });
+            tags.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime());
         } catch (e) {
             error(`加载标签失败: ${e}`);
         }
@@ -165,11 +172,6 @@
     async function loadTimelineData() {
         try {
             clearTimelineData();
-            const tags = await getAllTags();
-            tags.forEach((tag: { name: string }) => {
-                tags.push(tag.name);
-            });
-
             const matters = await getAllMatters();
             for (const matter of matters) {
                 let newTags: string[] = [];
@@ -289,14 +291,14 @@
         {
             event: "reload_timeline_data",
             handler: () => {
-                console.log("on reload_timeline_data ...");
+                loadTags();
                 loadTimelineData();
             },
         },
         {
             event: "tray_flash_did_click",
             handler: () => {
-                console.log("on tray_flash_did_click ...");
+                // console.log("on tray_flash_did_click ...");
                 // 发送通知消息
                 // console.log("send notification message ...");
                 // emit("notification-message", {
@@ -491,7 +493,7 @@
             {#if editingItem}
                 <TaskDetailForm
                     bind:item={editingItem}
-                    tagsList={tags}
+                    tagsList={tags.map((tag) => tag.name)}
                     onAddNewTag={(tags: string[]) => {
                         // 需要更新 tags 列表，调用 createTags
                         console.log("onAddNewTag: ", tags);

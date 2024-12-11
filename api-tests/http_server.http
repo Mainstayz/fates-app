@@ -68,10 +68,15 @@ DELETE {{baseUrl}}/kv/{{kvKey}}
 POST {{baseUrl}}/tags
 Content-Type: application/json
 
-"新标签"
+新标签
 
 ### 获取所有 Tag
 GET {{baseUrl}}/tags
+
+
+#### 更新 Tag
+@tagName = 新标签
+POST {{baseUrl}}/tags/update/{{tagName}}
 
 ### 删除 Tag
 DELETE {{baseUrl}}/tags/{{tagId}}

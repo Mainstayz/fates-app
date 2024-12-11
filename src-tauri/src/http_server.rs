@@ -101,6 +101,7 @@ impl RouteConfig for ApiRoutes {
             .route("/tags", post(create_tag))
             .route("/tags", get(get_all_tags))
             .route("/tags/:name", delete(delete_tag))
+            .route("/tags/update/:name", post(update_tag_last_used_at))
             .with_state(state)
     }
 }
@@ -301,6 +302,17 @@ async fn delete_tag(
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
     Tag::delete(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+async fn update_tag_last_used_at(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(name): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    Tag::update_last_used_at(&state.db, &name)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
