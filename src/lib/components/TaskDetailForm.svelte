@@ -40,7 +40,7 @@
         origianlTagsList.push(tag);
     }
 
-    let tagsList = $state(initialTagsList);
+    let localTagsList = $state([...initialTagsList]); // 创建本地副本
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
     let description = $state(item.description || "");
@@ -50,22 +50,24 @@
     let selectedTags = $state(item.tags || []);
 
     // 监听变化并更新 item
-    $effect(() => {
-        item.content = content;
-        item.description = description;
-        item.priority = priority;
-        item.start = new Date(startDate);
-        item.tags = selectedTags;
-        if (endDate) {
-            item.end = new Date(endDate);
-        }
-    });
+    function updateItem() {
+        const updatedItem = {
+            ...item,
+            content,
+            description,
+            priority,
+            start: new Date(startDate),
+            tags: selectedTags,
+            end: endDate ? new Date(endDate) : undefined,
+        };
+        return updatedItem;
+    }
 
     function getPriorityLabel(value: number) {
         return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
     }
 
-    // 格式化日期为 YYYY-MM-DD 格式
+    // 格式化日期为 YYYY-MM-DD
     export function formatDateForInput(date: Date): string {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -94,15 +96,19 @@
         if (selectedTags.length > 0) {
             let revTags = selectedTags.reverse();
             for (let tag of revTags) {
-                if (!tagsList.includes(tag)) {
-                    tagsList.unshift(tag);
+                if (!localTagsList.includes(tag)) {
+                    localTagsList.unshift(tag);
                 }
             }
         }
         return () => {
             let diffTags = selectedTags.filter((tag) => !origianlSelectedTags.includes(tag));
             let outputTags = [...selectedTags];
-            callback(item, diffTags, outputTags);
+            const updatedItem = updateItem();
+            console.log("Before callback - updatedItem:", updatedItem);
+            console.log("Before callback - diffTags:", diffTags);
+            console.log("Before callback - outputTags:", outputTags);
+            callback(updatedItem, diffTags, outputTags);
         };
     });
 </script>
@@ -182,12 +188,10 @@
                 <div class="text-xs text-gray-500 mb-1">标签</div>
                 <div>
                     <TagsAddButton
-                        {tagsList}
+                        tagsList={localTagsList}
                         {selectedTags}
                         onAddNewTag={(tags: string[]) => {
-                            // 逆序遍历
-                            let revTags = tags.reverse();
-                            tagsList = [...revTags, ...tagsList.filter((t) => !revTags.includes(t))];
+                            localTagsList = [...tags, ...localTagsList.filter((t) => !tags.includes(t))];
                         }}
                         onUseTag={(tags: string[]) => {
                             selectedTags = tags;

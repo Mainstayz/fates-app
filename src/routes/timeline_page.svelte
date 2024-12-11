@@ -513,15 +513,15 @@
                     tagsList={tags.map((tag) => tag.name)}
                     callback={(item: TimelineItem, newTags: string[], selectedTags: string[]) => {
                         console.log("edit finish, save timeline item ...", item);
-                        // saveTimelineItem(item).then(() => {
-                        //     console.log("edit finish, save timeline item success");
-                        // });
-                        createTags(newTags)
+                        Promise.all([createTags(newTags), saveTimelineItem(item)])
                             .then(() => {
-                                updateTags(selectedTags);
+                                return updateTags(selectedTags);
                             })
                             .then(() => {
                                 loadTags();
+                            })
+                            .catch((error) => {
+                                console.error("Failed to save changes:", error);
                             });
                     }}
                 />
