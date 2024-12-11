@@ -11,13 +11,13 @@
     import type { TimelineItem } from "$lib/types";
 
     let {
-        item = $bindable(),
+        item,
         tagsList: initialTagsList,
-        tagDiff,
+        callback,
     }: {
         item: TimelineItem;
         tagsList: string[];
-        tagDiff: (newTags: string[], selectedTags: string[]) => void;
+        callback: (item: TimelineItem, newTags: string[], selectedTags: string[]) => void;
     } = $props();
 
     const Priority = {
@@ -102,7 +102,7 @@
         return () => {
             let diffTags = selectedTags.filter((tag) => !origianlSelectedTags.includes(tag));
             let outputTags = [...selectedTags];
-            tagDiff(diffTags, outputTags);
+            callback(item, diffTags, outputTags);
         };
     });
 </script>
@@ -187,14 +187,9 @@
                         onAddNewTag={(tags: string[]) => {
                             // 逆序遍历
                             let revTags = tags.reverse();
-                            for (let tag of revTags) {
-                                if (!tagsList.includes(tag)) {
-                                    tagsList.unshift(tag);
-                                }
-                            }
+                            tagsList = [...revTags, ...tagsList.filter((t) => !revTags.includes(t))];
                         }}
                         onUseTag={(tags: string[]) => {
-                            // 逆序遍历
                             selectedTags = tags;
                         }}
                     />

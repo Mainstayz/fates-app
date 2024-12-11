@@ -32,66 +32,83 @@
         onUseTag: (tag: string[]) => void;
     } = $props();
 
-    let tagsList = $state(initialTagsList);
-    let selectedTags = $state(initialSelectedTags);
+    let localTagsList = $state([...initialTagsList]);
+    let localSelectedTags = $state([...initialSelectedTags]);
 
-    let origianlTagsList: string[] = [];
-    // 将 tagsList 添加到 origianlTagsList
-    for (let tag of tagsList) {
-        origianlTagsList.push(tag);
-    }
+    let origianlTagsList = [...initialTagsList];
 
     let firstOpen = $state(false);
     let open = $state(false);
     let showCreateNewTag = $state(false);
     let newTag = $state("");
+    let shouldTriggerCallback = $state(false);
 
     $effect(() => {
-        if (firstOpen === false && open === true) {
-            firstOpen = true;
+        if (shouldTriggerCallback) {
+            const newTags = localTagsList.filter((tag) => !origianlTagsList.includes(tag));
+            if (newTags.length > 0) {
+                onAddNewTag(newTags);
+            }
+            if (localSelectedTags.length > 0) {
+                onUseTag(localSelectedTags);
+            }
+            shouldTriggerCallback = false;
         }
-        if (firstOpen && open === false) {
-            let diffTags = tagsList.filter((tag) => !origianlTagsList.includes(tag));
-            if (diffTags.length > 0) {
-                onAddNewTag(diffTags);
-            }
-            if (selectedTags.length > 0) {
-                onUseTag(selectedTags);
-            }
+    });
+
+    $effect(() => {
+        if (open === false && firstOpen) {
+            shouldTriggerCallback = true;
+        } else if (!firstOpen && open) {
+            firstOpen = true;
         }
     });
 
     onMount(() => {});
 
     function addTag(tag: string) {
-        if (selectedTags.includes(tag)) {
+        if (localSelectedTags.includes(tag)) {
             return;
         }
-        selectedTags.push(tag);
+        localSelectedTags = [...localSelectedTags, tag];
     }
 
     function removeTag(tag: string) {
-        const index = selectedTags.indexOf(tag);
-        if (index > -1) {
-            selectedTags.splice(index, 1);
-        }
+        localSelectedTags = localSelectedTags.filter((t) => t !== tag);
     }
 
     function toggleTag(tag: string) {
-        if (selectedTags.includes(tag)) {
+        if (localSelectedTags.includes(tag)) {
             removeTag(tag);
         } else {
             addTag(tag);
         }
+    }
+
+    function handleNewTagKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && newTag.trim()) {
+            handleCreateNewTag(newTag.trim());
+            newTag = "";
+            showCreateNewTag = false;
+        }
+    }
+
+    function handleCreateNewTag(tag: string) {
+        localSelectedTags = [tag, ...localSelectedTags];
+        localTagsList = [tag, ...localTagsList];
+    }
+
+    function clearTags() {
+        localSelectedTags = [];
     }
 </script>
 
 <Popover bind:open>
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
-            {#if selectedTags.length > 0}
+            {#if localSelectedTags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
-                    {#each selectedTags.slice(0, MAX_TAGS_COUNT) as tag}
+                    {#each localSelectedTags.slice(0, MAX_TAGS_COUNT) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
                         </Badge>
@@ -109,12 +126,12 @@
                 <CommandList>
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
-                        {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
+                        {#each localTagsList.slice(0, MAX_TAGS_COUNT) as tag}
                             <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
                                 <div
                                     class={cn(
                                         "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                                        selectedTags.includes(tag)
+                                        localSelectedTags.includes(tag)
                                             ? "bg-primary text-primary-foreground"
                                             : "opacity-50 [&_svg]:invisible"
                                     )}
@@ -124,9 +141,9 @@
                                 <span>{tag}</span>
                             </CommandItem>
                         {/each}
-                        {#if tagsList.length > MAX_TAGS_COUNT}
+                        {#if localTagsList.length > MAX_TAGS_COUNT}
                             <CommandItem disabled>
-                                <span> 更多标签被隐藏 ({tagsList.length - MAX_TAGS_COUNT}) </span>
+                                <span> 更多标签被隐藏 ({localTagsList.length - MAX_TAGS_COUNT}) </span>
                             </CommandItem>
                         {/if}
                     </CommandGroup>
@@ -145,15 +162,7 @@
                                     type="text"
                                     placeholder="输入新标签"
                                     bind:value={newTag}
-                                    onkeydown={(e) => {
-                                        if (e.key === "Enter") {
-                                            // 插入第一位
-                                            selectedTags.unshift(newTag);
-                                            tagsList.unshift(newTag);
-                                            newTag = "";
-                                            showCreateNewTag = false;
-                                        }
-                                    }}
+                                    onkeydown={handleNewTagKeydown}
                                     class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
                                 />
                                 <!-- cancel button -->
@@ -162,15 +171,8 @@
                                 </Button>
                             </div>
                         {/if}
-                        {#if selectedTags.length > 0}
-                            <CommandItem
-                                onSelect={() => {
-                                    // 清空 selectedTags
-                                    selectedTags.length = 0;
-                                }}
-                            >
-                                清空标签
-                            </CommandItem>
+                        {#if localSelectedTags.length > 0}
+                            <CommandItem onSelect={clearTags}>清空标签</CommandItem>
                         {/if}
                     </CommandGroup>
                 </CommandList>

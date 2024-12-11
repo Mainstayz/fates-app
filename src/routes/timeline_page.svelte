@@ -509,9 +509,13 @@
         <Dialog.Content>
             {#if editingItem}
                 <TaskDetailForm
-                    bind:item={editingItem}
+                    item={editingItem}
                     tagsList={tags.map((tag) => tag.name)}
-                    tagDiff={(newTags: string[], selectedTags: string[]) => {
+                    callback={(item: TimelineItem, newTags: string[], selectedTags: string[]) => {
+                        console.log("edit finish, save timeline item ...", item);
+                        // saveTimelineItem(item).then(() => {
+                        //     console.log("edit finish, save timeline item success");
+                        // });
                         createTags(newTags)
                             .then(() => {
                                 updateTags(selectedTags);
