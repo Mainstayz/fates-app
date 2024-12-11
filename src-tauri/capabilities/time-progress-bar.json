@@ -13,15 +13,6 @@
         "core:window:allow-set-size",
         "core:window:allow-set-size-constraints",
         "core:window:allow-close",
-        "notification:default",
-        "store:default",
-        {
-            "identifier": "http:default",
-            "allow": [
-                {
-                    "url": "http://localhost:8523"
-                }
-            ]
-        }
+        "notification:default"
     ]
 }

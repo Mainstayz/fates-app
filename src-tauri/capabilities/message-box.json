@@ -11,7 +11,7 @@
         "core:event:allow-listen",
         "core:event:allow-emit",
         "core:event:allow-unlisten",
-        "core:window:allow-cursor-position",
-        "store:default"
+        "core:window:allow-cursor-position"
+
     ]
 }

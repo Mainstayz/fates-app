@@ -1,7 +1,12 @@
 <script lang="ts">
     import Handlebars from "handlebars";
     import { onMount, onDestroy } from "svelte";
-    import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
+    import {
+        Timeline,
+        DataSet,
+        type TimelineOptions,
+        type TimelineItem as VisTimelineItem,
+    } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
     import type { TimelineItem, TimelineGroup, TimelineItemInternal } from "$lib/types";
 
@@ -15,7 +20,7 @@
         start?: Date;
         end?: Date;
         items?: TimelineItem[];
-        groups?: TimelineGroup[];
+        // groups?: TimelineGroup[];
         onAdd?: TimelineHandler;
         onMove?: TimelineHandler;
         onMoving?: TimelineHandler;
@@ -36,7 +41,7 @@
     let container: HTMLElement;
     let resetTimeout: number | undefined;
     let itemsDataSet: DataSet<TimelineItemInternal>;
-    let groupsDataSet: DataSet<TimelineGroup> | undefined;
+    // let groupsDataSet: DataSet<TimelineGroup>;
 
     // Handlebars 模板
     const template = Handlebars.compile(`
@@ -120,12 +125,14 @@
         }
         return {
             id: item.id,
-            group: item.group,
-            content: item._raw.content,
+            group: "",
+            content: item.content,
+            description: item.description,
             start: item.start,
             end: item.end,
             tags: item._raw.tags,
             className: item.className,
+            created_at: item.created_at,
         };
     }
 
@@ -143,7 +150,7 @@
     onMount(() => {
         // 初始化数据集
         itemsDataSet = new DataSet((props.items || []).map(convertToInternalItem));
-        groupsDataSet = props.groups?.length ? new DataSet(props.groups) : undefined;
+        // groupsDataSet = props.groups?.length ? new DataSet(props.groups) : new DataSet([]);
 
         // Timeline 配置
         const options: TimelineOptions = {
@@ -193,18 +200,28 @@
                 },
             },
             // 事件处理
-            onAdd: createEventHandler(props.onAdd),
-            onMove: createEventHandler(props.onMove),
-            onMoving: createEventHandler(props.onMoving),
-            onUpdate: createEventHandler(props.onUpdate),
-            onRemove: createEventHandler(props.onRemove),
+            onAdd: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
+                // createEventHandler(props.onAdd),
+            },
+            onMove: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
+                // createEventHandler(props.onMove),
+            },
+            onMoving: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
+                // createEventHandler(props.onMoving),
+            },
+            onUpdate: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
+                // createEventHandler(props.onUpdate),
+            },
+            onRemove: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
+                // createEventHandler(props.onRemove),
+            },
             xss: {
                 disabled: true,
             },
         };
 
         // 初始化 Timeline
-        timeline = new Timeline(container, itemsDataSet, groupsDataSet, options);
+        timeline = new Timeline(container, itemsDataSet, options);
 
         // 添加时间窗口重置
         timeline.on("rangechanged", () => {
@@ -230,25 +247,13 @@
         if (!itemsDataSet || !props.items) return;
 
         const currentIds = new Set(itemsDataSet.getIds());
-        props.items.forEach((item) => {
+        props.items.forEach((item: TimelineItem) => {
             const internalItem = convertToInternalItem(item);
             currentIds.has(item.id) ? itemsDataSet.update(internalItem) : itemsDataSet.add(internalItem);
             currentIds.delete(item.id);
         });
 
         currentIds.forEach((id) => itemsDataSet.remove(id));
-    });
-
-    $effect(() => {
-        if (!groupsDataSet || !props.groups) return;
-
-        const currentIds = new Set(groupsDataSet.getIds());
-        props.groups.forEach((group) => {
-            currentIds.has(group.id) ? groupsDataSet.update(group) : groupsDataSet.add(group);
-            currentIds.delete(group.id);
-        });
-
-        currentIds.forEach((id) => groupsDataSet.remove(id));
     });
 
     // 导出的方法 - 直接导出而不是通过对象
@@ -258,7 +263,6 @@
 
     export function clearAll() {
         itemsDataSet?.clear();
-        groupsDataSet?.clear();
     }
 
     export function addItem(item: TimelineItem) {
@@ -273,24 +277,8 @@
         itemsDataSet?.update(convertToInternalItem(item));
     }
 
-    export function addGroup(group: TimelineGroup) {
-        groupsDataSet?.add(group);
-    }
-
-    export function removeGroup(id: string) {
-        groupsDataSet?.remove(id);
-    }
-
-    export function updateGroup(group: Partial<TimelineGroup> & { id: string }) {
-        groupsDataSet?.update(group);
-    }
-
     export function getAllItems(): TimelineItem[] {
         return itemsDataSet?.get().map(convertToExternalItem) ?? [];
-    }
-
-    export function getAllGroups(): TimelineGroup[] {
-        return groupsDataSet?.get() ?? [];
     }
 
     onDestroy(() => {

@@ -2,5 +2,18 @@
     "identifier": "desktop-capability",
     "platforms": ["macOS", "windows", "linux"],
     "windows": ["main", "message-box", "time-progress-bar-floating"],
-    "permissions": ["autostart:default", "global-shortcut:default", "updater:default", "process:default"]
+    "permissions": [
+        "autostart:default",
+        "global-shortcut:default",
+        "updater:default",
+        "process:default",
+        {
+            "identifier": "http:default",
+            "allow": [
+                {
+                    "url": "http://localhost:8523"
+                }
+            ]
+        }
+    ]
 }

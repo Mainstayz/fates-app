@@ -15,7 +15,9 @@ Content-Type: application/json
     "content": "这是一个测试内容",
     "status": 0,
     "priority": 1,
-    "tags": "工作"
+    "tags": "工作",
+    "start_time": "2024-12-11T04:00:00Z",
+    "end_time": "2024-12-11T12:00:00Z"
 }
 
 ### 获取单个 Matter
@@ -33,7 +35,9 @@ Content-Type: application/json
     "content": "这是更新后的内容",
     "status": 1,
     "priority": 2,
-    "tags": "工作"
+    "tags": "工作",
+    "start_time": "2024-12-11T08:00:00Z",
+    "end_time": "2024-12-11T12:00:00Z"
 }
 
 ### 按时间范围获取 Matter

@@ -61,23 +61,21 @@
     async function saveTimelineData() {
         if (!timelineComponent) return;
 
-        const timelineData = {
-            groups: timelineComponent.getAllGroups() || [],
-            items: timelineComponent.getAllItems() || [],
-        };
-        try {
-            await invoke("save_timeline_data", { data: timelineData });
-        } catch (e) {
-            error(`保存时间线数据失败: ${e}`);
-        }
+        // const timelineData = {
+        //     groups: [],
+        //     items: timelineComponent.getAllItems() || [],
+        // };
+        // try {
+        //     await invoke("save_timeline_data", { data: timelineData });
+        // } catch (e) {
+        //     error(`保存时间线数据失败: ${e}`);
+        // }
     }
 
     // 从本地存储加载时间线数据
     async function loadTimelineData() {
         try {
-            debug("try load timeline data ...");
             const matters = await getAllMatters();
-            debug(`load ${matters.length} matters ...`);
             clearTimelineData();
             for (const matter of matters) {
                 timelineComponent.addItem({
@@ -86,12 +84,12 @@
                     content: matter.title,
                     description: matter.description,
                     priority: matter.priority,
-                    type: matter.type_,
-                    start: matter.start_time,
-                    end: matter.end_time,
+                    matter_type: matter.type_,
+                    start: new Date(matter.start_time),
+                    end: matter.end_time ? new Date(matter.end_time) : undefined,
                     className: matter.reserved_1,
                     tags: matter.tags?.split(",") || [],
-                    created_at: matter.created_at,
+                    created_at: new Date(matter.created_at),
                 });
             }
         } catch (e) {
@@ -105,9 +103,6 @@
 
         const existingItems = timelineComponent.getAllItems() || [];
         existingItems.forEach((item) => timelineComponent.removeItem(item.id));
-
-        const existingGroups = timelineComponent.getAllGroups() || [];
-        existingGroups.forEach((group) => timelineComponent.removeGroup(group.id));
     }
 
     /**
@@ -160,8 +155,8 @@
         const updatedItem: TimelineItem = {
             ...editingItem,
             content: formData.title,
-            start: formData.startTime.toISOString(),
-            end: formData.endTime.toISOString(),
+            start: formData.startTime,
+            end: formData.endTime,
             className: formData.color,
             tags: formData.tags,
         };
@@ -183,10 +178,9 @@
         if (!timelineComponent) {
             return { groups: [], items: [] };
         }
-        const allGroups = timelineComponent.getAllGroups() || [];
         const allItems = timelineComponent.getAllItems() || [];
         return {
-            groups: allGroups,
+            groups: [],
             items: allItems,
         };
     }
@@ -376,7 +370,6 @@
                     zoomMin={1000 * 60 * 5}
                     zoomMax={1000 * 60 * 60 * 24 * 7}
                     {items}
-                    {groups}
                     start={new Date(new Date().setHours(new Date().getHours() - 12))}
                     end={new Date(new Date().setHours(new Date().getHours() + 12))}
                     onAdd={handleAdd}

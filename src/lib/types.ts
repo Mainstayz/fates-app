@@ -2,24 +2,19 @@ export interface TimelineItem {
     id: string;
     group?: string;
     content: string;
-    description?: string;
-    priority?: number;
-    type?: number;
-    start: string;
-    end: string;
-    created_at: string;
-    tags?: string[];
+    start: Date;
+    end?: Date;
     className?: string;
+    // extra fields
+    created_at: Date;
+    priority?: number;
+    matter_type?: number;
+    description?: string;
+    tags?: string[];
 }
 
-export interface TimelineItemInternal {
-    id: string;
-    group?: string;
-    content: string;
-    start: string;
-    end?: string;
-    className?: string;
-    _raw?: {
+export interface TimelineItemInternal extends TimelineItem {
+    _raw: {
         content: string;
         tags?: string[];
     };
