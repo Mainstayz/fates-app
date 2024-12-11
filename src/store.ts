@@ -3,7 +3,7 @@ import config from "./config";
 
 const API_BASE_URL = config.apiBaseUrl;
 // 定义接口
-interface Matter {
+export interface Matter {
     id: string;
     title: string;
     description?: string;
@@ -14,7 +14,7 @@ interface Matter {
     type_: number;
     created_at: string;
     updated_at: string;
-    reserved_1?: string;
+    reserved_1?: string; // 用于 className
     reserved_2?: string;
     reserved_3?: string;
     reserved_4?: string;
@@ -78,7 +78,7 @@ export const getMatterById = async (id: string) => {
     return processResponse(url, response);
 };
 
-export const getAllMatters = async () => {
+export const getAllMatters = async (): Promise<Matter[]> => {
     const url = `${API_BASE_URL}/matter`;
     const response = await get(url);
     return processResponse(url, response);

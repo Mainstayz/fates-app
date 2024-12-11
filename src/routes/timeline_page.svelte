@@ -1,7 +1,5 @@
 <script lang="ts">
     // 导入必要的依赖
-    import { window, app } from "@tauri-apps/api";
-    import { Window as TauriWindow } from "@tauri-apps/api/window";
     import { emit, listen } from "@tauri-apps/api/event";
     import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
     import { invoke } from "@tauri-apps/api/core";
@@ -13,16 +11,18 @@
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
     import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
-    import { Button, buttonVariants } from "$lib/components/ui/button";
+    import { Button } from "$lib/components/ui/button";
     import { Label } from "$lib/components/ui/label";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog/index";
     import * as Select from "$lib/components/ui/select";
+    import { v4 as uuidv4 } from "uuid";
 
     // 导入类型和工具函数
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
-    import { Settings, Moon, Sun, Plus, Trash2 } from "lucide-svelte";
+    import { Plus } from "lucide-svelte";
+    import { getAllMatters, type Matter } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
 
     // 组件状态管理
@@ -75,22 +75,24 @@
     // 从本地存储加载时间线数据
     async function loadTimelineData() {
         try {
-            console.log("尝试加载时间线数据 ...");
-            const result = await invoke<{ groups: any[]; items: any[] } | null>("load_timeline_data");
-            if (!result) {
-                console.log("加载时间线数据失败：没有数据");
-                return;
-            }
-            console.log("加载时间线数据：", result);
-            groups = result.groups || [];
-            items = result.items || [];
-
-            if (timelineComponent) {
-                // 清除现有数据
-                clearTimelineData();
-                // 重新加载数据
-                result.groups?.forEach((group) => timelineComponent.addGroup(group));
-                result.items?.forEach((item) => timelineComponent.addItem(item));
+            debug("try load timeline data ...");
+            const matters = await getAllMatters();
+            debug(`load ${matters.length} matters ...`);
+            clearTimelineData();
+            for (const matter of matters) {
+                timelineComponent.addItem({
+                    id: matter.id,
+                    group: "",
+                    content: matter.title,
+                    description: matter.description,
+                    priority: matter.priority,
+                    type: matter.type_,
+                    start: matter.start_time,
+                    end: matter.end_time,
+                    className: matter.reserved_1,
+                    tags: matter.tags?.split(",") || [],
+                    created_at: matter.created_at,
+                });
             }
         } catch (e) {
             error(`加载时间线数据失败: ${e}`);
@@ -141,33 +143,6 @@
         alertDelete = true;
         callback(null);
     };
-
-    /**
-     * 表单提交处理函数
-     */
-    // 处理新事件提交
-    function handleEventSubmit(
-        event: CustomEvent<{
-            title: string;
-            startTime: Date;
-            endTime: Date;
-            tags: string[];
-            color: string;
-        }>
-    ) {
-        const formData = event.detail;
-        const newItem: TimelineItem = {
-            id: Date.now().toString(),
-            content: formData.title,
-            start: formData.startTime.toISOString(),
-            end: formData.endTime.toISOString(),
-            className: formData.color,
-            tags: formData.tags,
-        };
-
-        timelineComponent.addItem(newItem);
-        saveTimelineData();
-    }
 
     // 处理编辑事件提交
     function handleEditSubmit(
@@ -361,13 +336,12 @@
                             快速添加任务
                         </Button>
                     {/if}
-                    <AddEventForm on:submit={handleEventSubmit} />
                     <!-- <Button variant="default">
                         <Plus />
                         添加模版任务
                     </Button> -->
 
-                    <!-- 添加事件表单<AddEventForm on:submit={handleEventSubmit} />
+                    <!--
                     {#if showClearAllDialog}
                         <AlertDialog.Root bind:open={alertClearAll}>
                             <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>

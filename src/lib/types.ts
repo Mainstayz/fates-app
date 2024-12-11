@@ -2,8 +2,12 @@ export interface TimelineItem {
     id: string;
     group?: string;
     content: string;
+    description?: string;
+    priority?: number;
+    type?: number;
     start: string;
     end: string;
+    created_at: string;
     tags?: string[];
     className?: string;
 }

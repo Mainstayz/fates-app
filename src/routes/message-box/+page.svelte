@@ -1,6 +1,6 @@
 <script lang="ts">
     import * as Alert from "$lib/components/ui/alert";
-    import { load } from "@tauri-apps/plugin-store";
+    // import { load } from "@tauri-apps/plugin-store";
     import { invoke } from "@tauri-apps/api/core";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
@@ -67,15 +67,11 @@
 
     async function setupEventListeners() {
         try {
-            const notificationUnlisten = await listen<NotificationPayload>(
-                "notification-message",
-                (event) => handleNotificationMessage(event.payload)
+            const notificationUnlisten = await listen<NotificationPayload>("notification-message", (event) =>
+                handleNotificationMessage(event.payload)
             );
 
-            const heightQueryUnlisten = await listen(
-                "query-message-box-height",
-                (event) => updateHeight(true)
-            );
+            const heightQueryUnlisten = await listen("query-message-box-height", (event) => updateHeight(true));
 
             unlistens.push(notificationUnlisten, heightQueryUnlisten);
         } catch (error) {
@@ -85,9 +81,9 @@
 
     async function loadMessageBoxData() {
         try {
-            const store = await load("message-box.json", { autoSave: false });
-            title = await store.get<string>("title") || "";
-            description = await store.get<string>("body") || "";
+            // const store = await load("message-box.json", { autoSave: false });
+            title = "";
+            description = "";
         } catch (error) {
             console.error("Failed to load message box data:", error);
         }
@@ -108,7 +104,7 @@
     });
 
     onDestroy(() => {
-        unlistens.forEach(unlisten => unlisten());
+        unlistens.forEach((unlisten) => unlisten());
         resizeObserver?.disconnect();
         document.removeEventListener("click", handleGlobalClick);
     });

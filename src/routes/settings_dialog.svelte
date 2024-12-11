@@ -5,7 +5,6 @@
     import { Label } from "$lib/components/ui/label";
     import * as Switch from "$lib/components/ui/switch";
     import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
-    import { load } from "@tauri-apps/plugin-store";
     import { onMount, onDestroy } from "svelte";
     import { open as openPath } from "@tauri-apps/plugin-shell";
     import { appDataDir } from "@tauri-apps/api/path";
@@ -45,9 +44,9 @@
     async function initSettings() {
         try {
             autoStart = await isEnabled();
-            let settings = await load("settings.json", { autoSave: false });
-            language = (await settings.get<string>("language")) || "zh";
-            checkInterval = (await settings.get<number>("checkInterval")) || 2;
+            // let settings = await load("settings.json", { autoSave: false });
+            language = "zh";
+            checkInterval = 2;
         } catch (error) {
             console.error("Failed to get autostart status:", error);
         }
@@ -56,10 +55,10 @@
     async function saveSettings() {
         try {
             console.log("保存设置：", language, checkInterval);
-            let settings = await load("settings.json", { autoSave: false });
-            settings.set("language", language);
-            settings.set("checkInterval", checkInterval);
-            await settings.save();
+            // let settings = await load("settings.json", { autoSave: false });
+            // settings.set("language", language);
+            // settings.set("checkInterval", checkInterval);
+            // await settings.save();
         } catch (error) {
             console.error("保存设置失败：", error);
         }
@@ -82,12 +81,12 @@
         });
         if (confirmed) {
             try {
-                const timelineData = await load("timeline_data.json");
-                const tags = await load("tags.json");
-                await timelineData.clear();
-                await tags.clear();
-                await timelineData.save();
-                await tags.save();
+                // const timelineData = await load("timeline_data.json");
+                // const tags = await load("tags.json");
+                // await timelineData.clear();
+                // await tags.clear();
+                // await timelineData.save();
+                // await tags.save();
                 console.log("数据已清除");
                 await reloadData();
             } catch (error) {

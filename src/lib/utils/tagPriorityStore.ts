@@ -1,4 +1,4 @@
-import { load } from '@tauri-apps/plugin-store';
+// import { load } from '@tauri-apps/plugin-store';
 
 interface TagPriority {
     tag: string;
@@ -11,7 +11,7 @@ interface TagPriorityData {
 }
 
 // 存储实例
-let store: Awaited<ReturnType<typeof load>>;
+// let store: Awaited<ReturnType<typeof load>>;
 
 class TagPriorityStore {
     // 初始化加载标签优先级
@@ -19,39 +19,40 @@ class TagPriorityStore {
         try {
             console.log('🚀 初始化标签优先级存储...');
             // 加载或创建存储
-            store = await load('tag-priorities.json', { autoSave: false });
+            // store = await load('tag-priorities.json', { autoSave: false });
             console.log('✅ 标签优先级存储加载成功');
 
             // 检查是否需要初始化数据
-            const data = await store.get<TagPriorityData>('priorities');
-            if (!data) {
-                console.log('📝 首次初始化标签优先级数据');
-                await store.set('priorities', { priorities: [] });
-                await store.save();
-                console.log('✅ 初始化数据保存成功');
-            } else {
-                console.log(`📊 当前存储的优先级数据：${JSON.stringify(data.priorities.length)} 条记录`);
-            }
+            // const data = await store.get<TagPriorityData>('priorities');
+            // if (!data) {
+            //     console.log('📝 首次初始化标签优先级数据');
+            //     await store.set('priorities', { priorities: [] });
+            //     await store.save();
+            //     console.log('✅ 初始化数据保存成功');
+            // } else {
+            //     console.log(`📊 当前存储的优先级数据：${JSON.stringify(data.priorities.length)} 条记录`);
+            // }
         } catch (error) {
             console.error('❌ 初始化标签优先级存储失败：', error);
         }
     }
 
     async getPriorities(): Promise<TagPriority[]> {
-        if (!store) {
-            console.log('⚠️ 存储未初始化，正在初始化...');
-            await this.initialize();
-        }
-        const data = await store.get<TagPriorityData>('priorities');
-        console.log(`📖 获取优先级数据：${data?.priorities?.length ?? 0} 条记录`);
-        return data?.priorities || [];
+        // if (!store) {
+        //     console.log('⚠️ 存储未初始化，正在初始化...');
+        //     await this.initialize();
+        // }
+        // const data = await store.get<TagPriorityData>('priorities');
+        // console.log(`📖 获取优先级数据：${data?.priorities?.length ?? 0} 条记录`);
+        // return data?.priorities || [];
+        return [];
     }
 
     async addPriority(tag: string, color: string): Promise<void> {
-        if (!store) {
-            console.log('⚠️ 存储未初始化，正在初始化...');
-            await this.initialize();
-        }
+        // if (!store) {
+        //     console.log('⚠️ 存储未初始化，正在初始化...');
+        //     await this.initialize();
+        // }
 
         try {
             console.log(`📝 添加/更新标签优先级 - 标签："${tag}", 颜色："${color}"`);
@@ -69,8 +70,8 @@ class TagPriorityStore {
                 priorities.push({ tag, color, count: 1 });
             }
 
-            await store.set('priorities', { priorities });
-            await store.save();
+            // await store.set('priorities', { priorities });
+            // await store.save();
             console.log('✅ 优先级数据保存成功');
         } catch (error) {
             console.error('❌ 保存标签优先级失败：', error);

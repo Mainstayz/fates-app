@@ -10,8 +10,8 @@
 
     // Third-party libraries
     import { z } from "zod";
-    import Tagify from "@yaireo/tagify";
-    import "@yaireo/tagify/dist/tagify.css";
+    // import Tagify from "@yaireo/tagify";
+    // import "@yaireo/tagify/dist/tagify.css";
 
     // Utils & Stores
     import { updateDateTime, formatDateForInput, formatTimeForInput } from "$lib/utils";
@@ -171,7 +171,7 @@
     }
 
     let tagifyInput: HTMLInputElement;
-    let tagify: Tagify;
+    let tagify: any;
 
     // 修改订阅标签存储部分
     let historicalTags: string[] = [];
@@ -194,77 +194,77 @@
 
     $effect(() => {
         console.log("🏗️ Tagify 初始化开始");
-        if (tagifyInput) {
-            tagify = new Tagify(tagifyInput, TAGIFY_CONFIG);
-            console.log("📋 Tagify 配置：", TAGIFY_CONFIG);
+        // if (tagifyInput) {
+        //     tagify = new Tagify(tagifyInput, TAGIFY_CONFIG);
+        //     console.log("📋 Tagify 配置：", TAGIFY_CONFIG);
 
-            // 同步 tags 值并保存新标签
-            tagify.on("add", async (e) => {
-                console.log("➕ Tagify 添加标签：", e.detail);
-                const tagifyValue = tagify.value;
-                const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log("📌 当前所有标签：", newTags);
-                tags = newTags.join(",");
+        //     // 同步 tags 值并保存新标签
+        //     tagify.on("add", async (e) => {
+        //         console.log("➕ Tagify 添加标签：", e.detail);
+        //         const tagifyValue = tagify.value;
+        //         const newTags = tagifyValue.map((tag: { value: string }) => tag.value);
+        //         console.log("📌 当前所有标签：", newTags);
+        //         tags = newTags.join(",");
 
-                // 保存新标签到存储并更新建议列表
-                const updatedTags = await tagStore.addTags(newTags);
-                historicalTags = updatedTags;
-                tagify.whitelist = updatedTags;
+        //         // 保存新标签到存储并更新建议列表
+        //         const updatedTags = await tagStore.addTags(newTags);
+        //         historicalTags = updatedTags;
+        //         tagify.whitelist = updatedTags;
 
-                // 如果只有一个标签，检查是否有相关的优先级
-                if (newTags.length === 1) {
-                    const suggestedColor = await tagPriorityStore.getMostUsedColorForTag(newTags[0]);
-                    if (suggestedColor) {
-                        color = suggestedColor;
-                    }
-                }
+        //         // 如果只有一个标签，检查是否有相关的优先级
+        //         if (newTags.length === 1) {
+        //             const suggestedColor = await tagPriorityStore.getMostUsedColorForTag(newTags[0]);
+        //             if (suggestedColor) {
+        //                 color = suggestedColor;
+        //             }
+        //         }
 
-                // 如果标签数量达到最大值，禁用输入但保持可删除
-                if (tagify.value.length >= (tagify.settings?.maxTags ?? 3)) {
-                    tagify.DOM.input.style.display = "none";
-                }
-            });
+        //         // 如果标签数量达到最大值，禁用输入但保持可删除
+        //         if (tagify.value.length >= (tagify.settings?.maxTags ?? 3)) {
+        //             tagify.DOM.input.style.display = "none";
+        //         }
+        //     });
 
-            // 修改 remove 事件处理
-            tagify.on("remove", (e) => {
-                console.log("➖ Tagify 移除标签：", e.detail);
-                const tagifyValue = tagify.value;
-                const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
-                console.log("📌 剩余标签：", currentTags);
-                tags = currentTags.join(",");
+        // 修改 remove 事件处理
+        // tagify.on("remove", (e) => {
+        //     console.log("➖ Tagify 移除标签：", e.detail);
+        //     const tagifyValue = tagify.value;
+        //     const currentTags = tagifyValue.map((tag: { value: string }) => tag.value);
+        //     console.log("📌 剩余标签：", currentTags);
+        //     tags = currentTags.join(",");
 
-                // 如果标签数量减少，重新显示输入框
-                if (tagify.value.length < (tagify.settings?.maxTags ?? 3)) {
-                    tagify.DOM.input.style.display = ""; // 恢复输入框显示
-                }
-            });
+        //     // 如果标签数量减少，重新显示输入框
+        //     if (tagify.value.length < (tagify.settings?.maxTags ?? 3)) {
+        //         tagify.DOM.input.style.display = ""; // 恢复输入框显示
+        //     }
+        // });
 
-            // 初始化已有的标签
-            if (tags) {
-                console.log("🔄 初始化现有标签:", tags);
-                const initialTags = tags
-                    .split(",")
-                    .map((tag: string) => tag.trim())
-                    .filter(Boolean);
+        // 初始化已有的标签
+        // if (tags) {
+        //     console.log("🔄 初始化现有标签:", tags);
+        //     const initialTags = tags
+        //         .split(",")
+        //         .map((tag: string) => tag.trim())
+        //         .filter(Boolean);
 
-                tagify.removeAllTags();
-                tagify.addTags(initialTags);
-                // 保存初始标签到存储
-                tagStore.addTags(initialTags).then((updatedTags) => {
-                    historicalTags = updatedTags;
-                    tagify.whitelist = updatedTags;
-                });
-            }
-        }
+        //     tagify.removeAllTags();
+        //     tagify.addTags(initialTags);
+        //     // 保存初始标签到存储
+        //     tagStore.addTags(initialTags).then((updatedTags) => {
+        //         historicalTags = updatedTags;
+        //         tagify.whitelist = updatedTags;
+        //     });
+        // }
+        // }
 
         return () => {
             console.log("🧹 清理 Tagify 实例");
-            if (tagify) {
-                // 移除事件监听
-                tagify.off("add");
-                tagify.off("remove");
-                tagify.destroy();
-            }
+            // if (tagify) {
+            //     // 移除事件监听
+            //     tagify.off("add");
+            //     tagify.off("remove");
+            //     tagify.destroy();
+            // }
         };
     });
 </script>
