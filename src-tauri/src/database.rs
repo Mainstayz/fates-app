@@ -1,7 +1,7 @@
 // https://github.com/RandomEngy/tauri-sqlite/blob/main/src-tauri/src/database.rs
 
 use crate::utils;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use rusqlite::{named_params, params, Connection, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
@@ -13,8 +13,13 @@ const DB_NAME: &str = "fates.db";
 
 // 添加默认时间函数
 fn default_datetime() -> DateTime<Utc> {
-    // 1970-01-01 00:00:00 UTC
-    DateTime::<Utc>::from_timestamp(0, 0).unwrap()
+    // 使用新的 with_ymd_and_hms API
+    Utc.with_ymd_and_hms(1970, 1, 1, 0, 0, 0).unwrap()
+}
+
+fn check_is_default_datetime(datetime: DateTime<Utc>) -> bool {
+    // 比较时间戳更可靠，避免时区问题
+    datetime.timestamp() == 0 && datetime.timestamp_subsec_nanos() == 0
 }
 
 #[derive(Debug, Serialize, Deserialize)]
