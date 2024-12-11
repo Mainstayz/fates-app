@@ -9,30 +9,26 @@
     import DateRangePicker from "./DateRangePicker.svelte";
     import { onMount } from "svelte";
 
-    const COLORS = [
-        { value: "blue", label: "普通任务", icon: Circle },
-        { value: "green", label: "低优先级", icon: Leaf },
-        { value: "red", label: "高优先级", icon: Flame },
-        { value: "yellow", label: "中优先级", icon: Zap },
+    const Priority = {
+        Low: -1,
+        Medium: 0,
+        High: 1,
+    } as const;
+
+    const PRIORITY_COLORS = [
+        { value: Priority.Low, label: "低优先级", icon: Leaf },
+        { value: Priority.Medium, label: "中优先级", icon: Zap },
+        { value: Priority.High, label: "高优先级", icon: Flame },
     ] as const;
 
     let title = $state("");
     let description = $state("");
-    let color = $state("blue");
+    let priority = $state<number>(Priority.Medium); // 优先级
     let startDate = $state(formatDateForInput(new Date()));
     let endDate = $state(formatDateForInput(new Date()));
-    let priority = $state("medium");
-    let estimatedTime = $state(0);
-    title = "今天似乎是个好日子";
 
-    const PRIORITY_OPTIONS = [
-        { value: "high", label: "高优先级" },
-        { value: "medium", label: "中优先级" },
-        { value: "low", label: "低优先级" },
-    ];
-
-    function getColorLabel(value: string) {
-        return COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
+    function getPriorityLabel(value: number) {
+        return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
     }
 
     // 格式化日期为 YYYY-MM-DD 格式
@@ -107,46 +103,42 @@
                         <Popover.Trigger>
                             <Button variant="outline" class="w-[160px] h-[32px] justify-start shadow-none">
                                 <div class="flex items-center gap-2">
-                                    {#if color}
-                                        {@const Icon = COLORS.find((c) => c.value === color)?.icon}
+                                    {#if priority}
+                                        {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
                                         <Icon
                                             class={`w-4 h-4 ${
-                                                color === "red"
+                                                priority === Priority.High
                                                     ? "text-red-500"
-                                                    : color === "yellow"
+                                                    : priority === Priority.Medium
                                                       ? "text-yellow-500"
-                                                      : color === "green"
-                                                        ? "text-green-500"
-                                                        : "text-blue-500"
+                                                      : "text-green-500"
                                             }`}
                                         />
                                     {/if}
-                                    {getColorLabel(color)}
+                                    {getPriorityLabel(priority)}
                                 </div>
                             </Button>
                         </Popover.Trigger>
                         <Popover.Content class="w-[160px] p-0">
                             <div class="flex flex-col">
-                                {#each COLORS as colorOption}
+                                {#each PRIORITY_COLORS as priorityOption}
                                     <Button
                                         variant="ghost"
                                         class="w-full justify-start"
-                                        onclick={() => (color = colorOption.value)}
+                                        onclick={() => (priority = priorityOption.value)}
                                     >
-                                        {@const Icon = colorOption.icon}
+                                        {@const Icon = priorityOption.icon}
                                         <div class="flex items-center gap-2">
                                             <Icon
                                                 class={`w-4 h-4 ${
-                                                    colorOption.value === "red"
+                                                    priorityOption.value === Priority.High
                                                         ? "text-red-500"
-                                                        : colorOption.value === "yellow"
+                                                        : priorityOption.value === Priority.Medium
                                                           ? "text-yellow-500"
-                                                          : colorOption.value === "green"
-                                                            ? "text-green-500"
-                                                            : "text-blue-500"
+                                                          : "text-green-500"
                                                 }`}
                                             />
-                                            {colorOption.label}
+                                            {priorityOption.label}
                                         </div>
                                     </Button>
                                 {/each}

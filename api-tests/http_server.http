@@ -11,11 +11,11 @@ POST {{baseUrl}}/matter
 Content-Type: application/json
 
 {
-    "title": "测试事项",
-    "content": "这是一个测试内容",
+    "title": "今天天气不错",
+    "description": "这是一个测试内容",
     "status": 0,
     "priority": 1,
-    "tags": "工作",
+    "tags": "学习",
     "start_time": "2024-12-11T04:00:00Z",
     "end_time": "2024-12-11T12:00:00Z"
 }
@@ -27,12 +27,14 @@ GET {{baseUrl}}/matter/{{matterId}}
 GET {{baseUrl}}/matter
 
 ### 更新 Matter
+
+@matterId = df7b6110-15e3-4e8a-8a15-06c8045d9d34
 PUT {{baseUrl}}/matter/{{matterId}}
 Content-Type: application/json
 
 {
     "title": "更新后的测试事项",
-    "content": "这是更新后的内容",
+    "description": "这是更新后的内容",
     "status": 1,
     "priority": 2,
     "tags": "工作",
@@ -44,6 +46,7 @@ Content-Type: application/json
 GET {{baseUrl}}/matter/range?start=2024-01-01T00:00:00Z&end=2024-12-31T23:59:59Z
 
 ### 删除 Matter
+@matterId = 429d976b-b9a0-4cbd-9c51-e33b032975b8
 DELETE {{baseUrl}}/matter/{{matterId}}
 
 ### KV 存储相关测试

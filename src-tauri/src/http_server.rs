@@ -172,7 +172,6 @@ async fn create_matter(
     State(state): State<Arc<Mutex<AppState>>>,
     Json(mut matter): Json<Matter>,
 ) -> Result<impl IntoResponse, ServerError> {
-    matter.id = Uuid::new_v4().to_string();
     matter.created_at = Utc::now();
     matter.updated_at = Utc::now();
 

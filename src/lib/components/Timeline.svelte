@@ -1,12 +1,7 @@
 <script lang="ts">
     import Handlebars from "handlebars";
     import { onMount, onDestroy } from "svelte";
-    import {
-        Timeline,
-        DataSet,
-        type TimelineOptions,
-        type TimelineItem as VisTimelineItem,
-    } from "vis-timeline/standalone";
+    import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
     import type { TimelineItem, TimelineGroup, TimelineItemInternal } from "$lib/types";
 
@@ -123,24 +118,20 @@
         if (!item._raw) {
             throw new Error("Internal item missing _raw data");
         }
-        return {
-            id: item.id,
-            group: "",
-            content: item.content,
-            description: item.description,
-            start: item.start,
-            end: item.end,
+        // 将 _raw 中的 content 和 tags 转换为 item 的 content 和 tags
+        let ret: TimelineItem = {
+            ...item,
+            content: item._raw.content,
             tags: item._raw.tags,
-            className: item.className,
-            created_at: item.created_at,
         };
+        return ret;
     }
 
     // 创建事件处理器
     function createEventHandler(handler?: TimelineHandler) {
         if (!handler) return undefined;
 
-        return (item: TimelineItemInternal, callback: TimelineCallback<TimelineItemInternal>) => {
+        return (item: any, callback: TimelineCallback<any>) => {
             handler(convertToExternalItem(item), (resultItem: TimelineItem | null) =>
                 callback(resultItem ? convertToInternalItem(resultItem) : null)
             );
@@ -200,21 +191,11 @@
                 },
             },
             // 事件处理
-            onAdd: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
-                // createEventHandler(props.onAdd),
-            },
-            onMove: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
-                // createEventHandler(props.onMove),
-            },
-            onMoving: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
-                // createEventHandler(props.onMoving),
-            },
-            onUpdate: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
-                // createEventHandler(props.onUpdate),
-            },
-            onRemove: (item: VisTimelineItem, callback: (item: VisTimelineItem | null) => void) => {
-                // createEventHandler(props.onRemove),
-            },
+            onAdd: createEventHandler(props.onAdd),
+            onMove: createEventHandler(props.onMove),
+            onMoving: createEventHandler(props.onMoving),
+            onUpdate: createEventHandler(props.onUpdate),
+            onRemove: createEventHandler(props.onRemove),
             xss: {
                 disabled: true,
             },

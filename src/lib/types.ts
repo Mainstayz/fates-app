@@ -6,7 +6,7 @@ export interface TimelineItem {
     end?: Date;
     className?: string;
     // extra fields
-    created_at: Date;
+    created_at?: Date;
     priority?: number;
     matter_type?: number;
     description?: string;
@@ -14,7 +14,7 @@ export interface TimelineItem {
 }
 
 export interface TimelineItemInternal extends TimelineItem {
-    _raw: {
+    _raw?: {
         content: string;
         tags?: string[];
     };

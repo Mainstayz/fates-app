@@ -2,12 +2,10 @@
     // 导入必要的依赖
     import { emit, listen } from "@tauri-apps/api/event";
     import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
-    import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
 
     // 导入组件
     import Timeline from "$lib/components/Timeline.svelte";
-    import AddEventForm from "$lib/components/AddEventForm.svelte";
     import EventFormFields from "$lib/components/EventFormFields.svelte";
     import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
     import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
@@ -22,7 +20,7 @@
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Plus } from "lucide-svelte";
-    import { getAllMatters, type Matter } from "../store";
+    import { getAllMatters, updateMatter, getMatterById, createMatter, deleteMatter, type Matter } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
 
     // 组件状态管理
@@ -54,22 +52,74 @@
         { value: "7d", label: "最近 7 天" },
     ] as const;
 
-    /**
-     * 数据持久化相关函数
-     */
-    // 保存时间线数据到本地存储
-    async function saveTimelineData() {
+    // 添加任务输入框
+    let newTaskTitle = $state("");
+    async function saveTimelineItem(item: TimelineItem) {
+        try {
+            let matter = await getMatterById(item.id);
+            if (matter) {
+                let newMatter = {
+                    ...matter,
+                    title: item.content,
+                    tags: item.tags?.join(","),
+                    start_time: item.start.toISOString(),
+                    end_time: item.end?.toISOString(),
+                    type_: item.matter_type,
+                    updated_at: new Date().toISOString(),
+                    reserved_1: item.className,
+                };
+                console.log("update matter: ", newMatter);
+                await updateMatter(item.id, newMatter);
+            } else {
+            }
+        } catch (e) {
+            error(`保存时间线数据失败: ${e}`);
+        }
+    }
+
+    async function deleteTimelineItem(id: string) {
+        try {
+            console.log("delete matter: ", id);
+            await deleteMatter(id);
+        } catch (e) {
+            error(`删除时间线数据失败: ${e}`);
+        }
+    }
+
+    async function createTimelineItem(title: string) {
         if (!timelineComponent) return;
 
-        // const timelineData = {
-        //     groups: [],
-        //     items: timelineComponent.getAllItems() || [],
-        // };
-        // try {
-        //     await invoke("save_timeline_data", { data: timelineData });
-        // } catch (e) {
-        //     error(`保存时间线数据失败: ${e}`);
-        // }
+        let nowDate = new Date();
+        let endDate = new Date(nowDate.getTime() + 2 * 60 * 60 * 1000);
+        let item: TimelineItem = {
+            id: uuidv4(),
+            content: title,
+            start: nowDate,
+            end: endDate,
+        };
+
+        let createTime = nowDate.toISOString();
+        let newMatter: Matter = {
+            id: item.id,
+            title: item.content,
+            description: item.description,
+            tags: "",
+            start_time: item.start.toISOString(),
+            end_time: item.end!.toISOString(),
+            priority: 0,
+            type_: 0,
+            created_at: createTime,
+            updated_at: createTime,
+            reserved_1: item.className,
+        };
+
+        try {
+            await createMatter(newMatter);
+            timelineComponent.addItem(item);
+            console.log("create matter: ", newMatter);
+        } catch (e) {
+            error(`创建时间线数据失败: ${e}`);
+        }
     }
 
     // 从本地存储加载时间线数据
@@ -105,19 +155,20 @@
         existingItems.forEach((item) => timelineComponent.removeItem(item.id));
     }
 
-    /**
-     * Timeline 事件处理函数
-     */
-    // 处理添加事件
+    // 理论上不会走这个分支
     const handleAdd = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
         callback(item);
-        await saveTimelineData();
     };
 
     // 处理移动事件
     const handleMove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        callback(item);
-        await saveTimelineData();
+        try {
+            await saveTimelineItem(item);
+            callback(item);
+        } catch (e) {
+            error(`保存时间线数据失败: ${e}`);
+            callback(null);
+        }
     };
 
     // 处理正在移动的事件（可以添加移动限制逻辑）
@@ -164,7 +215,7 @@
         timelineComponent.updateItem(updatedItem);
         editingItem = null;
         editDialogOpen = false;
-        saveTimelineData();
+        saveTimelineItem(updatedItem);
     }
 
     // 对话框相关处理函数
@@ -218,7 +269,7 @@
     // 设置所有事件监听器
     async function setupEventListeners() {
         for (const { event, handler } of EVENT_LISTENERS) {
-            console.log("设置事件监听器：", event);
+            console.log("add event listener: ", event);
             const unlisten = await listen(event, handler);
             unlisteners.push(unlisten);
         }
@@ -226,14 +277,14 @@
 
     // 清理所有事件监听器
     function cleanupEventListeners() {
-        console.log("清理事件监听器 ...");
+        console.log("cleanup all event listeners ...");
         unlisteners.forEach((unlisten) => unlisten?.());
         unlisteners = [];
     }
 
     // 添加处理时间范围变化的函数
     function handleTimeRangeChange(value: string) {
-        console.log("handleTimeRangeChange: ", value);
+        console.log("timeline range: ", value);
         selectedRange = value;
         const now = Date.now();
         let msOffset: number;
@@ -270,15 +321,12 @@
 
     // 组件生命周期
     onMount(() => {
-        debug("时间线组件已挂载");
+        console.log("timeline page onMount ...");
         setupEventListeners();
         loadTimelineData();
-        const autoSaveInterval = setInterval(saveTimelineData, 60 * 1000);
         handleTimeRangeChange(selectedRange);
         return () => {
-            debug("时间线组件即将卸载");
-            clearInterval(autoSaveInterval);
-            saveTimelineData();
+            console.log("timeline page onUnmount ...");
             cleanupEventListeners();
         };
     });
@@ -316,16 +364,21 @@
                         <Input
                             type="text"
                             placeholder="请输入任务名称"
-                            class="w-[320px]"
+                            class="bg-background w-[320px]"
+                            bind:value={newTaskTitle}
                             autofocus
-                            onkeydown={(e) => {
+                            onkeydown={async (e) => {
                                 if (e.key === "Enter") {
+                                    // 过滤空字符串
                                     switchAddTaskInput = false;
+                                    if (newTaskTitle.trim() === "") return;
+                                    await createTimelineItem(newTaskTitle);
+                                    newTaskTitle = "";
                                 }
                             }}
                         />
                     {:else}
-                        <Button variant="default" onclick={() => (switchTaskDetailInput = true)} class="w-[320px]">
+                        <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
                             <Plus />
                             快速添加任务
                         </Button>
@@ -334,33 +387,6 @@
                         <Plus />
                         添加模版任务
                     </Button> -->
-
-                    <!--
-                    {#if showClearAllDialog}
-                        <AlertDialog.Root bind:open={alertClearAll}>
-                            <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-                                <Trash2 />
-                            </AlertDialog.Trigger>
-                            <AlertDialog.Content>
-                                <AlertDialog.Header>
-                                    <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                                    <AlertDialog.Description>
-                                        This action cannot be undone. This will permanently delete your all records.
-                                    </AlertDialog.Description>
-                                </AlertDialog.Header>
-                                <AlertDialog.Footer>
-                                    <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-                                    <AlertDialog.Action
-                                        onclick={async () => {
-                                            timelineComponent.clearAll();
-                                            await saveTimelineData();
-                                            alertClearAll = false;
-                                        }}>Confirm</AlertDialog.Action
-                                    >
-                                </AlertDialog.Footer>
-                            </AlertDialog.Content>
-                        </AlertDialog.Root>
-                    {/if} -->
                 </div>
             </div>
 
@@ -452,8 +478,8 @@
                         onclick={async () => {
                             alertDelete = false;
                             if (deleteItem) {
+                                await deleteTimelineItem(deleteItem.id);
                                 timelineComponent.removeItem(deleteItem.id);
-                                await saveTimelineData(); // 删除后保存
                                 deleteItem = null;
                             }
                         }}>Confirm</AlertDialog.Action
