@@ -78,6 +78,7 @@
                 let newMatter = {
                     ...matter,
                     title: item.content,
+                    description: item.description,
                     tags: item.tags?.join(","),
                     start_time: item.start.toISOString(),
                     end_time: item.end?.toISOString(),
@@ -515,10 +516,15 @@
                         console.log("edit finish, save timeline item ...", item);
                         Promise.all([createTags(newTags), saveTimelineItem(item)])
                             .then(() => {
+                                // 更新 tags
+                                // Bug ,移除后，重新添加，会导致位置变换
+                                timelineComponent.removeItem(item.id);
+                                timelineComponent.addItem(item);
+                                editingItem = null;
                                 return updateTags(selectedTags);
                             })
                             .then(() => {
-                                loadTags();
+                                // loadTags();
                             })
                             .catch((error) => {
                                 console.error("Failed to save changes:", error);

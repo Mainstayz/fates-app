@@ -7,7 +7,7 @@
     import { PanelTop, Plus, Circle, Leaf, Flame, Zap, Timer, Text } from "lucide-svelte";
     import TagsAddButton from "./TagsAddButton.svelte";
     import DateRangePicker from "./DateRangePicker.svelte";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import type { TimelineItem } from "$lib/types";
 
     let {
@@ -40,6 +40,7 @@
         origianlTagsList.push(tag);
     }
 
+    let localItem = $state(item);
     let localTagsList = $state([...initialTagsList]); // 创建本地副本
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
@@ -51,13 +52,33 @@
 
     // 监听变化并更新 item
     function updateItem() {
+        let className = "";
+        let priorityNumber = 0;
+        switch (priority) {
+            case Priority.Low:
+                className = "green";
+                priorityNumber = -1;
+                break;
+            case Priority.Medium:
+                className = "blue";
+                priorityNumber = 0;
+                break;
+            case Priority.High:
+                className = "red";
+                priorityNumber = 1;
+                break;
+        }
+
+        let newTags = selectedTags.filter((tag) => tag !== "");
+        // 过滤空字符串
         const updatedItem = {
-            ...item,
+            ...localItem,
             content,
             description,
-            priority,
+            priority: priorityNumber,
+            className,
             start: new Date(startDate),
-            tags: selectedTags,
+            tags: newTags,
             end: endDate ? new Date(endDate) : undefined,
         };
         return updatedItem;
@@ -111,6 +132,8 @@
             callback(updatedItem, diffTags, outputTags);
         };
     });
+
+    onDestroy(() => {});
 </script>
 
 <div class="flex flex-1 flex-col pr-[20px] gap-4">
