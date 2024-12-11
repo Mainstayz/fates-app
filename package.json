@@ -29,7 +29,6 @@
     "@tauri-apps/plugin-updater": "~2.0.0",
     "@yaireo/tagify": "^4.32.1",
     "apexcharts": "^4.1.0",
-    "axios": "^1.7.9",
     "cal-heatmap": "^4.2.4",
     "dayjs": "^1.11.13",
     "debounce": "^2.2.0",
