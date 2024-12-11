@@ -20,7 +20,15 @@
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
     import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Plus } from "lucide-svelte";
-    import { getAllMatters, updateMatter, getMatterById, createMatter, deleteMatter, type Matter } from "../store";
+    import {
+        getAllMatters,
+        updateMatter,
+        getMatterById,
+        createMatter,
+        deleteMatter,
+        getAllTags,
+        type Matter,
+    } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
 
     // 组件状态管理
@@ -39,6 +47,7 @@
     let alertDelete = $state(false);
     let alertClearAll = $state(false);
     let showClearAllDialog = $state(false);
+    let tags = $state<string[]>([]);
 
     // 时间范围选择状态管理
     let selectedRange = $state("1d"); // 默认选择 3 天
@@ -122,12 +131,51 @@
         }
     }
 
+    async function createTags(tags: string[]) {
+        try {
+            // TODO: 创建标签
+        } catch (e) {
+            error(`创建标签失败: ${e}`);
+        }
+    }
+
+    // 更新标签使用时间戳
+    async function updateTags(tags: string[]) {
+        try {
+            // TODO: 更新标签使用时间戳
+        } catch (e) {
+            error(`更新标签使用时间戳失败: ${e}`);
+        }
+    }
+
+    // 加载标签
+    async function loadTags() {
+        try {
+            const tags = await getAllTags();
+            // 排序
+            tags.forEach((tag: { name: string }) => {
+                tags.push(tag.name);
+            });
+        } catch (e) {
+            error(`加载标签失败: ${e}`);
+        }
+    }
+
     // 从本地存储加载时间线数据
     async function loadTimelineData() {
         try {
-            const matters = await getAllMatters();
             clearTimelineData();
+            const tags = await getAllTags();
+            tags.forEach((tag: { name: string }) => {
+                tags.push(tag.name);
+            });
+
+            const matters = await getAllMatters();
             for (const matter of matters) {
+                let newTags: string[] = [];
+                if (matter.tags && matter.tags.trim() !== "") {
+                    newTags = matter.tags.split(",");
+                }
                 timelineComponent.addItem({
                     id: matter.id,
                     group: "",
@@ -138,7 +186,7 @@
                     start: new Date(matter.start_time),
                     end: matter.end_time ? new Date(matter.end_time) : undefined,
                     className: matter.reserved_1,
-                    tags: matter.tags?.split(",") || [],
+                    tags: newTags,
                     created_at: new Date(matter.created_at),
                 });
             }
@@ -435,31 +483,25 @@
 
     <!-- 编辑页面 -->
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
-        <Dialog.Content class="sm:max-w-[425px]">
+        <Dialog.Content>
             <Dialog.Header>
                 <Dialog.Title>编辑事件</Dialog.Title>
                 <Dialog.Description>修改事件的详细信息</Dialog.Description>
             </Dialog.Header>
             {#if editingItem}
-                <EventFormFields
-                    title={editingItem.content}
-                    tags={editingItem.tags?.join(", ")}
-                    color={editingItem.className as "blue" | "green" | "red" | "yellow"}
-                    startDateInput={formatDateForInput(new Date(editingItem.start))}
-                    startTimeInput={formatTimeForInput(new Date(editingItem.start))}
-                    endDateInput={formatDateForInput(new Date(editingItem.end || ""))}
-                    endTimeInput={formatTimeForInput(new Date(editingItem.end || ""))}
-                    onSubmit={(formData: any) => {
-                        if (!editingItem) return;
-                        handleEditSubmit(new CustomEvent("submit", { detail: formData }));
+                <TaskDetailForm
+                    bind:item={editingItem}
+                    tagsList={tags}
+                    onAddNewTag={(tags: string[]) => {
+                        // 需要更新 tags 列表，调用 createTags
+                        console.log("onAddNewTag: ", tags);
+                    }}
+                    onUseTag={(tags: string[]) => {
+                        // 更新 tags 的使用时间戳
+                        console.log("onUseTag: ", tags);
                     }}
                 />
             {/if}
-        </Dialog.Content>
-    </Dialog.Root>
-    <Dialog.Root bind:open={switchTaskDetailInput}>
-        <Dialog.Content>
-            <TaskDetailForm />
         </Dialog.Content>
     </Dialog.Root>
 
@@ -467,13 +509,11 @@
         <AlertDialog.Root bind:open={alertDelete}>
             <AlertDialog.Content>
                 <AlertDialog.Header>
-                    <AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
-                    <AlertDialog.Description>
-                        This action cannot be undone. This will permanently delete your event.
-                    </AlertDialog.Description>
+                    <AlertDialog.Title>确定删除吗？</AlertDialog.Title>
+                    <AlertDialog.Description>删除后将无法恢复，请谨慎操作！</AlertDialog.Description>
                 </AlertDialog.Header>
                 <AlertDialog.Footer>
-                    <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                    <AlertDialog.Cancel>取消</AlertDialog.Cancel>
                     <AlertDialog.Action
                         onclick={async () => {
                             alertDelete = false;
@@ -482,8 +522,10 @@
                                 timelineComponent.removeItem(deleteItem.id);
                                 deleteItem = null;
                             }
-                        }}>Confirm</AlertDialog.Action
+                        }}
                     >
+                        确定删除
+                    </AlertDialog.Action>
                 </AlertDialog.Footer>
             </AlertDialog.Content>
         </AlertDialog.Root>

@@ -3,7 +3,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Calendar, Clock, Check } from "lucide-svelte";
 
-    let { startDate, endDate } = $props();
+    let { startDate = $bindable(), endDate = $bindable() } = $props();
 
     function isSameDay(date1: string, date2: string): boolean {
         const d1 = new Date(date1);
@@ -11,9 +11,6 @@
         return (
             d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate()
         );
-    }
-    function formatDateForInput(date: Date): string {
-        return date.toISOString().slice(0, 16);
     }
 
     function formatDisplayDate(dateStr: string) {

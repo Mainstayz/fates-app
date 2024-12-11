@@ -8,6 +8,19 @@
     import TagsAddButton from "./TagsAddButton.svelte";
     import DateRangePicker from "./DateRangePicker.svelte";
     import { onMount } from "svelte";
+    import type { TimelineItem } from "$lib/types";
+
+    let {
+        item = $bindable(),
+        tagsList,
+        onAddNewTag,
+        onUseTag,
+    }: {
+        item: TimelineItem;
+        tagsList: string[];
+        onAddNewTag: (tag: string[]) => void;
+        onUseTag: (tag: string[]) => void;
+    } = $props();
 
     const Priority = {
         Low: -1,
@@ -21,11 +34,32 @@
         { value: Priority.High, label: "高优先级", icon: Flame },
     ] as const;
 
-    let title = $state("");
-    let description = $state("");
-    let priority = $state<number>(Priority.Medium); // 优先级
-    let startDate = $state(formatDateForInput(new Date()));
-    let endDate = $state(formatDateForInput(new Date()));
+    let origianlTagsList: string[] = [];
+    let origianlSelectedTags: string[] = [];
+    // 将 tagsList 添加到 origianlTagsList
+    for (let tag of tagsList) {
+        origianlTagsList.push(tag);
+    }
+
+    // 使用 $state 绑定到 item 的属性
+    let content = $state(item.content);
+    let description = $state(item.description || "");
+    let priority = $state<number>(item.priority || Priority.Medium);
+    let startDate = $state(formatDateForInput(item.start));
+    let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
+    let selectedTags = $state(item.tags || []);
+
+    // 监听变化并更新 item
+    $effect(() => {
+        item.content = content;
+        item.description = description;
+        item.priority = priority;
+        item.start = new Date(startDate);
+        item.tags = selectedTags;
+        if (endDate) {
+            item.end = new Date(endDate);
+        }
+    });
 
     function getPriorityLabel(value: number) {
         return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
@@ -48,22 +82,6 @@
         return `${hours}:${minutes}`;
     }
 
-    // 阻止自动聚焦
-    function preventAutoFocus(node: HTMLElement) {
-        const handleFocus = (e: FocusEvent) => {
-            e.preventDefault();
-            (e.target as HTMLElement).blur();
-        };
-
-        node.addEventListener("focus", handleFocus);
-
-        return {
-            destroy() {
-                node.removeEventListener("focus", handleFocus);
-            },
-        };
-    }
-
     onMount(() => {
         // 获取输入框元素
         const inputElement = document.querySelector('input[placeholder="任务标题"]');
@@ -73,6 +91,24 @@
             // 防止自动获取焦点
             (inputElement as HTMLElement).setAttribute("tabindex", "-1");
         }
+        if (selectedTags.length > 0) {
+            let revTags = selectedTags.reverse();
+            for (let tag of revTags) {
+                if (!tagsList.includes(tag)) {
+                    tagsList.unshift(tag);
+                }
+            }
+        }
+        return () => {
+            let diffTags = selectedTags.filter((tag) => !origianlSelectedTags.includes(tag));
+            if (diffTags.length > 0) {
+                onAddNewTag(diffTags);
+            }
+            if (selectedTags.length > 0) {
+                let outputTags = [...selectedTags];
+                onUseTag(outputTags);
+            }
+        };
     });
 </script>
 
@@ -86,7 +122,7 @@
         <Input
             type="text"
             class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
-            bind:value={title}
+            bind:value={content}
             placeholder="任务标题"
             autofocus={false}
             tabindex={-1}
@@ -103,7 +139,7 @@
                         <Popover.Trigger>
                             <Button variant="outline" class="w-[160px] h-[32px] justify-start shadow-none">
                                 <div class="flex items-center gap-2">
-                                    {#if priority}
+                                    {#if priority !== undefined}
                                         {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
                                         <Icon
                                             class={`w-4 h-4 ${
@@ -150,7 +186,23 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">标签</div>
                 <div>
-                    <TagsAddButton />
+                    <TagsAddButton
+                        {tagsList}
+                        {selectedTags}
+                        onAddNewTag={(tags: string[]) => {
+                            // 逆序遍历
+                            let revTags = tags.reverse();
+                            for (let tag of revTags) {
+                                if (!selectedTags.includes(tag)) {
+                                    selectedTags.unshift(tag);
+                                }
+                            }
+                        }}
+                        onUseTag={(tags: string[]) => {
+                            // 逆序遍历
+                            selectedTags = tags;
+                        }}
+                    />
                 </div>
             </div>
         </div>
@@ -164,7 +216,7 @@
             <!-- 添加线框 -->
             <div>
                 <Label class="text-xs text-gray-500 mb-1">日期</Label>
-                <DateRangePicker {startDate} {endDate} />
+                <DateRangePicker bind:startDate bind:endDate />
             </div>
         </div>
     </div>

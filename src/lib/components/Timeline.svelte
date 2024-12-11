@@ -96,9 +96,10 @@
 
     // 数据转换函数
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
+        console.log(">>>>> item", item);
         const renderedContent = template({
             content: item.content,
-            tags: item.tags,
+            tags: item.tags?.length ? item.tags : null,
             className: item.className,
             start: item.start,
             end: item.end,

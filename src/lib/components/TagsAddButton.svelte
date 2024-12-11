@@ -7,6 +7,7 @@
     import { Input } from "$lib/components/ui/input";
     import { cn } from "$lib/utils";
     import { X } from "lucide-svelte";
+    import { onMount } from "svelte";
     import {
         Command,
         CommandInput,
@@ -16,31 +17,60 @@
         CommandItem,
         CommandSeparator,
     } from "$lib/components/ui/command";
-    import { onMount } from "svelte";
-    import Checkbox from "./ui/checkbox/checkbox.svelte";
 
-    let { title = "添加标签", maxSelected = 2 }: { title?: string; maxSelected?: number } = $props();
-    let open = $state(false);
-    let tags = $state<string[]>([]);
-    let tagsList = $state<string[]>(["标签 1", "标签 2", "标签 3", "标签 4", "标签 5"]);
-    let showCreateNewTag = $state(false);
+    const MAX_TAGS_COUNT = 5;
 
-    function addTag(tag: string) {
-        tags = [...tags, tag];
+    let {
+        tagsList,
+        selectedTags,
+        onAddNewTag,
+        onUseTag,
+    }: {
+        tagsList: string[];
+        selectedTags: string[];
+        onAddNewTag: (tag: string[]) => void;
+        onUseTag: (tag: string[]) => void;
+    } = $props();
+
+    let origianlTagsList: string[] = [];
+    // 将 tagsList 添加到 origianlTagsList
+    for (let tag of tagsList) {
+        origianlTagsList.push(tag);
     }
 
-    onMount(() => {
-        addTag("标签 1");
-        addTag("标签 2");
+    let firstOpen = $state(false);
+    let open = $state(false);
+    let showCreateNewTag = $state(false);
+    let newTag = $state("");
+
+    $effect(() => {
+        if (firstOpen === false && open === true) {
+            firstOpen = true;
+        }
+        if (firstOpen && open === false) {
+            let diffTags = tagsList.filter((tag) => !origianlTagsList.includes(tag));
+            if (diffTags.length > 0) {
+                onAddNewTag(diffTags);
+            }
+            if (selectedTags.length > 0) {
+                onUseTag(selectedTags);
+            }
+        }
     });
+
+    onMount(() => {});
+
+    function addTag(tag: string) {
+        selectedTags.push(tag);
+    }
 </script>
 
 <Popover bind:open>
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
-            {#if tags.length > 0}
+            {#if selectedTags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
-                    {#each tags.slice(0, 3) as tag}
+                    {#each selectedTags.slice(0, MAX_TAGS_COUNT) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
                         </Badge>
@@ -58,13 +88,13 @@
                 <CommandList>
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
-                        {#each tagsList.slice(0, 3) as tag}
+                        {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
                             <CommandItem value={tag} onSelect={() => addTag(tag)}>
                                 <!-- 如果标签在 tags 中，则显示勾选图标 -->
                                 <div
                                     class={cn(
                                         "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                                        tags.includes(tag)
+                                        selectedTags.includes(tag)
                                             ? "bg-primary text-primary-foreground"
                                             : "opacity-50 [&_svg]:invisible"
                                     )}
@@ -74,9 +104,9 @@
                                 <span>{tag}</span>
                             </CommandItem>
                         {/each}
-                        {#if tagsList.length > 3}
+                        {#if tagsList.length > MAX_TAGS_COUNT}
                             <CommandItem disabled>
-                                <span> 更多标签被隐藏 ({tagsList.length - 3}) </span>
+                                <span> 更多标签被隐藏 ({tagsList.length - MAX_TAGS_COUNT}) </span>
                             </CommandItem>
                         {/if}
                     </CommandGroup>
@@ -94,6 +124,16 @@
                                     autofocus
                                     type="text"
                                     placeholder="输入新标签"
+                                    bind:value={newTag}
+                                    onkeydown={(e) => {
+                                        if (e.key === "Enter") {
+                                            // 插入第一位
+                                            selectedTags.unshift(newTag);
+                                            tagsList.unshift(newTag);
+                                            newTag = "";
+                                            showCreateNewTag = false;
+                                        }
+                                    }}
                                     class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
                                 />
                                 <!-- cancel button -->
@@ -102,10 +142,11 @@
                                 </Button>
                             </div>
                         {/if}
-                        {#if tags.length > 0}
+                        {#if selectedTags.length > 0}
                             <CommandItem
                                 onSelect={() => {
-                                    tags = [];
+                                    // 清空 selectedTags
+                                    selectedTags.length = 0;
                                 }}
                             >
                                 清空标签
