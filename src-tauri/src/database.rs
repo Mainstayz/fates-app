@@ -13,7 +13,8 @@ const DB_NAME: &str = "fates.db";
 
 // 添加默认时间函数
 fn default_datetime() -> DateTime<Utc> {
-    Utc::now()
+    // 1970-01-01 00:00:00 UTC
+    DateTime::<Utc>::from_timestamp(0, 0).unwrap()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

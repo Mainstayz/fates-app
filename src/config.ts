@@ -38,12 +38,12 @@ interface Config {
 
 // 开发环境配置
 const devConfig: Config = {
-    apiBaseUrl: "http://127.0.0.1:8523",
+    apiBaseUrl: "http://localhost:8523",
 };
 
 // 生产环境配置
 const prodConfig: Config = {
-    apiBaseUrl: "http://127.0.0.1:8523", // 可以根据需要修改生产环境的URL
+    apiBaseUrl: "http://localhost:8523",
 };
 
 // 根据环境变量选择配置

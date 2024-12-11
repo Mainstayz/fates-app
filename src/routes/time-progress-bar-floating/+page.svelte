@@ -4,7 +4,6 @@
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
     import { getAllMatters } from "../../store";
-    import { fetch } from "@tauri-apps/plugin-http";
 
     let unlisten: UnlistenFn | void;
 
@@ -59,7 +58,7 @@
     }
 
     async function getTimeProgress() {
-        const matters = await fetch("http://localhost:8523/matter");
+        const matters = await getAllMatters();
         console.log("matters:", matters);
     }
 
