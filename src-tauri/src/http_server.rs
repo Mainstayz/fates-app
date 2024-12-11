@@ -101,7 +101,7 @@ impl RouteConfig for ApiRoutes {
             .route("/tags", post(create_tag))
             .route("/tags", get(get_all_tags))
             .route("/tags/:name", delete(delete_tag))
-            .route("/tags/update/:name", post(update_tag_last_used_at))
+            .route("/tags/update/:name", put(update_tag_last_used_at))
             .with_state(state)
     }
 }
@@ -123,7 +123,8 @@ impl HttpServer {
     pub async fn start(&self, port: u16) -> Result<(), ServerError> {
         let app = ApiRoutes.configure(self.state.clone());
         log::info!("HTTP server starting on port {}", port);
-        let addr = format!("127.0.0.1:{}", port);
+        // localhost
+        let addr = format!("localhost:{}", port);
         let listener = tokio::net::TcpListener::bind(&addr)
             .await
             .map_err(|e| ServerError::StartupError(e.to_string()))?;
@@ -277,12 +278,34 @@ async fn delete_kv(
 }
 
 // Tag 相关处理函数
+#[derive(Deserialize)]
+struct TagsRequest {
+    names: String,
+}
+
 async fn create_tag(
     State(state): State<Arc<Mutex<AppState>>>,
-    name: String,
+    Json(payload): Json<TagsRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Tag::create(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    // 分割字符串并去重
+    let names: Vec<String> = payload.names
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    if names.is_empty() {
+        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+    }
+
+    // 批量创建标签
+    for name in names {
+        Tag::create(&state.db, &name)
+            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    }
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
@@ -298,21 +321,54 @@ async fn get_all_tags(
 
 async fn delete_tag(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(name): Path<String>,
+    Path(names): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Tag::delete(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    // 分割字符串并去重
+    let names: Vec<String> = names
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    if names.is_empty() {
+        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+    }
+
+    // 批量删除标签
+    for name in names {
+        Tag::delete(&state.db, &name)
+            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    }
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
 
 async fn update_tag_last_used_at(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(name): Path<String>,
+    Path(names): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Tag::update_last_used_at(&state.db, &name)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    // 分割字符串并去重
+    let names: Vec<String> = names
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    if names.is_empty() {
+        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+    }
+
+    // 批量更新标签的最后使用时间
+    for name in names {
+        Tag::update_last_used_at(&state.db, &name)
+            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    }
 
     Ok(Json(ApiResponse::<()>::success(())))
 }

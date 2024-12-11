@@ -73,7 +73,11 @@
     }
 
     onMount(() => {
-        checkForUpdates();
+        try {
+            checkForUpdates();
+        } catch (error) {
+            console.error("Error checking for updates", error);
+        }
     });
 </script>
 

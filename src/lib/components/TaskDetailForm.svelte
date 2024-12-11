@@ -12,14 +12,12 @@
 
     let {
         item = $bindable(),
-        tagsList,
-        onAddNewTag,
-        onUseTag,
+        tagsList: initialTagsList,
+        tagDiff,
     }: {
         item: TimelineItem;
         tagsList: string[];
-        onAddNewTag: (tag: string[]) => void;
-        onUseTag: (tag: string[]) => void;
+        tagDiff: (newTags: string[], selectedTags: string[]) => void;
     } = $props();
 
     const Priority = {
@@ -36,11 +34,13 @@
 
     let origianlTagsList: string[] = [];
     let origianlSelectedTags: string[] = [];
+
     // 将 tagsList 添加到 origianlTagsList
-    for (let tag of tagsList) {
+    for (let tag of initialTagsList) {
         origianlTagsList.push(tag);
     }
 
+    let tagsList = $state(initialTagsList);
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
     let description = $state(item.description || "");
@@ -101,13 +101,8 @@
         }
         return () => {
             let diffTags = selectedTags.filter((tag) => !origianlSelectedTags.includes(tag));
-            if (diffTags.length > 0) {
-                onAddNewTag(diffTags);
-            }
-            if (selectedTags.length > 0) {
-                let outputTags = [...selectedTags];
-                onUseTag(outputTags);
-            }
+            let outputTags = [...selectedTags];
+            tagDiff(diffTags, outputTags);
         };
     });
 </script>
@@ -193,8 +188,8 @@
                             // 逆序遍历
                             let revTags = tags.reverse();
                             for (let tag of revTags) {
-                                if (!selectedTags.includes(tag)) {
-                                    selectedTags.unshift(tag);
+                                if (!tagsList.includes(tag)) {
+                                    tagsList.unshift(tag);
                                 }
                             }
                         }}

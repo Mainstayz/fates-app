@@ -79,4 +79,5 @@ GET {{baseUrl}}/tags
 POST {{baseUrl}}/tags/update/{{tagName}}
 
 ### 删除 Tag
-DELETE {{baseUrl}}/tags/{{tagId}}
+@tagName={\"names\":\"你尽快\"}
+DELETE {{baseUrl}}/tags/{{tagName}}

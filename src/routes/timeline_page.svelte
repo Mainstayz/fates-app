@@ -27,6 +27,8 @@
         createMatter,
         deleteMatter,
         getAllTags,
+        createTag,
+        updateTagLastUsedAt,
         type Matter,
     } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
@@ -139,7 +141,14 @@
 
     async function createTags(tags: string[]) {
         try {
-            // TODO: 创建标签
+            if (tags.length === 0) return;
+            console.log("create tags: ", tags);
+            if (tags.length === 1) {
+                await createTag(tags[0]);
+            } else {
+                let tagsStr = tags.join(",");
+                await createTag(tagsStr);
+            }
         } catch (e) {
             error(`创建标签失败: ${e}`);
         }
@@ -148,7 +157,14 @@
     // 更新标签使用时间戳
     async function updateTags(tags: string[]) {
         try {
-            // TODO: 更新标签使用时间戳
+            if (tags.length === 0) return;
+            console.log("update tags: ", tags);
+            if (tags.length === 1) {
+                await updateTagLastUsedAt(tags[0]);
+            } else {
+                let tagsStr = tags.join(",");
+                await updateTagLastUsedAt(tagsStr);
+            }
         } catch (e) {
             error(`更新标签使用时间戳失败: ${e}`);
         }
@@ -157,12 +173,16 @@
     // 加载标签
     async function loadTags() {
         try {
-            tags.length = 0;
+            console.log("load tags ...");
+            if (tags.length > 0) {
+                tags.splice(0, tags.length);
+            }
             const allTags: Tag[] = await getAllTags();
             allTags.forEach((tag: Tag) => {
                 tags.push(tag);
             });
             tags.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime());
+            console.log(`load tags: ${tags.length}`);
         } catch (e) {
             error(`加载标签失败: ${e}`);
         }
@@ -173,6 +193,7 @@
         try {
             clearTimelineData();
             const matters = await getAllMatters();
+            console.log("matters: ", matters);
             for (const matter of matters) {
                 let newTags: string[] = [];
                 if (matter.tags && matter.tags.trim() !== "") {
@@ -486,21 +507,18 @@
     <!-- 编辑页面 -->
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
         <Dialog.Content>
-            <Dialog.Header>
-                <Dialog.Title>编辑事件</Dialog.Title>
-                <Dialog.Description>修改事件的详细信息</Dialog.Description>
-            </Dialog.Header>
             {#if editingItem}
                 <TaskDetailForm
                     bind:item={editingItem}
                     tagsList={tags.map((tag) => tag.name)}
-                    onAddNewTag={(tags: string[]) => {
-                        // 需要更新 tags 列表，调用 createTags
-                        console.log("onAddNewTag: ", tags);
-                    }}
-                    onUseTag={(tags: string[]) => {
-                        // 更新 tags 的使用时间戳
-                        console.log("onUseTag: ", tags);
+                    tagDiff={(newTags: string[], selectedTags: string[]) => {
+                        createTags(newTags)
+                            .then(() => {
+                                updateTags(selectedTags);
+                            })
+                            .then(() => {
+                                loadTags();
+                            });
                     }}
                 />
             {/if}

@@ -21,8 +21,8 @@
     const MAX_TAGS_COUNT = 5;
 
     let {
-        tagsList,
-        selectedTags,
+        tagsList: initialTagsList,
+        selectedTags: initialSelectedTags,
         onAddNewTag,
         onUseTag,
     }: {
@@ -31,6 +31,9 @@
         onAddNewTag: (tag: string[]) => void;
         onUseTag: (tag: string[]) => void;
     } = $props();
+
+    let tagsList = $state(initialTagsList);
+    let selectedTags = $state(initialSelectedTags);
 
     let origianlTagsList: string[] = [];
     // 将 tagsList 添加到 origianlTagsList
@@ -61,7 +64,25 @@
     onMount(() => {});
 
     function addTag(tag: string) {
+        if (selectedTags.includes(tag)) {
+            return;
+        }
         selectedTags.push(tag);
+    }
+
+    function removeTag(tag: string) {
+        const index = selectedTags.indexOf(tag);
+        if (index > -1) {
+            selectedTags.splice(index, 1);
+        }
+    }
+
+    function toggleTag(tag: string) {
+        if (selectedTags.includes(tag)) {
+            removeTag(tag);
+        } else {
+            addTag(tag);
+        }
     }
 </script>
 
@@ -89,8 +110,7 @@
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
                         {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
-                            <CommandItem value={tag} onSelect={() => addTag(tag)}>
-                                <!-- 如果标签在 tags 中，则显示勾选图标 -->
+                            <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
                                 <div
                                     class={cn(
                                         "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",

@@ -22,6 +22,7 @@ export interface Matter {
 }
 
 const post = async (url: string, body: any) => {
+    console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
         method: "POST",
         body: JSON.stringify(body),
@@ -29,15 +30,21 @@ const post = async (url: string, body: any) => {
             "Content-Type": "application/json",
         },
     });
-    return response.json();
+    const responseText = await response.text();
+    console.log(`<==== POST ${url} , response: ${responseText}`);
+    return JSON.parse(responseText);
 };
 
 const get = async (url: string) => {
+    console.log(`=====> GET ${url}`);
     const response = await fetch(url);
-    return response.json();
+    const responseText = await response.text();
+    console.log(`<==== GET ${url} , response: ${responseText}`);
+    return JSON.parse(responseText);
 };
 
 const put = async (url: string, body: any) => {
+    console.log(`=====> PUT ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
         method: "PUT",
         body: JSON.stringify(body),
@@ -45,14 +52,19 @@ const put = async (url: string, body: any) => {
             "Content-Type": "application/json",
         },
     });
-    return response.json();
+    const responseText = await response.text();
+    console.log(`<==== PUT ${url} , response: ${responseText}`);
+    return JSON.parse(responseText);
 };
 
 const delete_ = async (url: string) => {
+    console.log(`=====> DELETE ${url}`);
     const response = await fetch(url, {
         method: "DELETE",
     });
-    return response.json();
+    const responseText = await response.text();
+    console.log(`<==== DELETE ${url} , response: ${responseText}`);
+    return JSON.parse(responseText);
 };
 
 const processResponse = async (url: string, response: { code: number; msg: string; data: any }) => {
@@ -122,9 +134,11 @@ export const deleteKV = async (key: string) => {
 };
 
 // Tag API
-export const createTag = async (name: string) => {
+export const createTag = async (names: string) => {
     const url = `${API_BASE_URL}/tags`;
-    const response = await post(url, { name });
+    const response = await post(url, {
+        names: names
+    });
     return processResponse(url, response);
 };
 
@@ -134,8 +148,14 @@ export const getAllTags = async () => {
     return processResponse(url, response);
 };
 
-export const deleteTag = async (name: string) => {
-    const url = `${API_BASE_URL}/tags/${name}`;
+export const deleteTag = async (names: string) => {
+    const url = `${API_BASE_URL}/tags/${names}`;
     const response = await delete_(url);
+    return processResponse(url, response);
+};
+
+export const updateTagLastUsedAt = async (names: string) => {
+    const url = `${API_BASE_URL}/tags/update/${names}`;
+    const response = await put(url, {});
     return processResponse(url, response);
 };
