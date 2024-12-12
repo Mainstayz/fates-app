@@ -120,6 +120,7 @@
                 console.log("update matter: ", newMatter);
                 await updateMatter(item.id, newMatter);
                 await updateHeatMapData();
+                await emit("refresh-time-progress");
             }
         } catch (e) {
             error(`保存时间线数据失败: ${e}`);
@@ -132,6 +133,7 @@
             console.log("delete matter: ", id);
             await deleteMatter(id);
             await updateHeatMapData();
+            await emit("refresh-time-progress");
         } catch (e) {
             error(`删除时间线数据失败: ${e}`);
         }
@@ -170,6 +172,7 @@
             timelineComponent.addItem(item);
             console.log("create matter: ", newMatter);
             await updateHeatMapData();
+            await emit("refresh-time-progress");
         } catch (e) {
             error(`创建时间线数据失败: ${e}`);
         }

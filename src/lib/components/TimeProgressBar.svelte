@@ -12,7 +12,7 @@
         cursorColor = "#000",
         maskColor = "rgba(0, 0, 0, 0.3)",
         backgroundColor = "rgba(240, 240, 240, 0.8)",
-        timeSegments = [] as TimeSegment[]
+        timeSegments = [] as TimeSegment[],
     } = $props<{
         height?: string;
         cursorWidth?: string;
@@ -58,8 +58,8 @@
                         start: new Date(previous.end).getTime(),
                         seconds: {
                             start: previous.seconds.end,
-                            end: current.seconds.end
-                        }
+                            end: current.seconds.end,
+                        },
                     });
                 }
                 // 如果当前段的结束时间小于等于前一段的结束时间，则忽略当前段
@@ -75,14 +75,14 @@
     // Process timeSegments when they change
     $effect(() => {
         const converted = timeSegments
-            .map((segment) => ({
+            .map((segment: TimeSegment) => ({
                 ...segment,
                 seconds: {
                     start: getSecondsOfDay(segment.start),
                     end: getSecondsOfDay(segment.end),
                 },
             }))
-            .sort((a, b) => a.seconds.start - b.seconds.start);
+            .sort((a: any, b: any) => a.seconds.start - b.seconds.start);
 
         // 处理时间重叠
         const overlappingHandled = handleTimeOverlap(converted);
