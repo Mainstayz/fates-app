@@ -41,44 +41,34 @@
         extractUnit: (ts: number) => number;
     };
 
+    // https://github.com/yqchilde/yqchilde.github.io/blob/8b4edcc7fc222f4e0cb9838625e7506b36e15b69/.vitepress/theme/components/heatmap.vue#L54
     const yyTemplate = (DateHelper: any): TemplateResult => {
         const ALLOWED_DOMAIN_TYPE: CalHeatmap.DomainType[] = ["month"];
         return {
             name: "yyDay",
             allowedDomainType: ALLOWED_DOMAIN_TYPE,
-            rowsCount: () => 7, // 固定 7 行 (对应周一到周日)
+            rowsCount: (ts: number) => {
+                return 7;
+            },
             columnsCount: (ts) => {
-                // 非当前月显示完整周数
-                if (DateHelper.date(ts).startOf("month").valueOf() !== DateHelper.date().startOf("month").valueOf()) {
-                    return DateHelper.getWeeksCountInMonth(ts);
-                } else {
-                    // 当前月只显示到今天所在的周
-                    let firstBlockDate = DateHelper.getFirstWeekOfMonth(ts);
-                    // 计算从今天到第一个块的时间间隔
-                    let interval = DateHelper.intervals("day", firstBlockDate, DateHelper.date()).length;
-                    // 计算需要规划几列
-                    let intervalCol = Math.ceil((interval + 1) / 7);
-                    return intervalCol;
-                }
+                return DateHelper.getWeeksCountInMonth(ts);
             },
             mapping: (startTimestamp: number, endTimestamp: number) => {
-                // 将日期映射到网格坐标系统
-                // x: 表示周数
-                // y: 表示星期几 (0-6)
-                // t: 时间戳
                 const clampStart = DateHelper.getFirstWeekOfMonth(startTimestamp);
-                const clampEnd = dayjs()
-                    .startOf("day")
-                    .add(8 - dayjs().day(), "day");
-
+                const tomorrowStart = DateHelper.date().add(1, "day").startOf("day").valueOf();
+                let clampEnd;
+                if (endTimestamp > tomorrowStart) {
+                    clampEnd = DateHelper.date(tomorrowStart);
+                } else {
+                    clampEnd = DateHelper.getFirstWeekOfMonth(endTimestamp);
+                }
                 let x = -1;
-                const pivotDay = clampStart.day();
+                const pivotDay = clampStart.weekday();
                 return DateHelper.intervals("day", clampStart, clampEnd).map((ts: number) => {
-                    const weekday = DateHelper.date(ts).day();
+                    const weekday = DateHelper.date(ts).weekday();
                     if (weekday === pivotDay) {
                         x += 1;
                     }
-
                     return {
                         t: ts,
                         x,
@@ -87,7 +77,6 @@
                 });
             },
             extractUnit: (ts: number) => {
-                // 将时间戳标准化到每天的开始时间
                 return DateHelper.date(ts).startOf("day").valueOf();
             },
         };
@@ -106,18 +95,16 @@
                     groupY: "max",
                 },
                 date: {
-                    start: dayjs().subtract(12, "month").valueOf(),
+                    start: dayjs().startOf("year").valueOf(),
                     min: dayjs().startOf("year").valueOf(),
                     max: dayjs(),
-                    locale: "zh",
-                    timezone: "Asia/Shanghai",
                 },
                 range: 13,
                 scale: {
                     color: {
                         type: "threshold",
-                        range: ["#14432a", "#166b34", "#37a446", "#4dd05a"],
-                        domain: [1, 2, 3, 4],
+                        range: ["#9be9a8", "#40c463", "#30a14e", "#216e39"],
+                        domain: [2, 3, 5],
                     },
                 },
                 domain: {
