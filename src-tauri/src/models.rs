@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+// SettingKey
+pub const SETTING_KEY_NOTIFICATION_MESSAGE_DATA: &str = "notificationMessageData";
+// SettingKey - 工作时间
+pub const SETTING_KEY_WORK_START_TIME: &str = "workStartTime";
+pub const SETTING_KEY_WORK_END_TIME: &str = "workEndTime";
+// SettingKey - 检查间隔
+pub const SETTING_KEY_CHECK_INTERVAL: &str = "checkInterval";
+// SettingKey - 提前通知时间（分钟）
+pub const SETTING_KEY_NOTIFY_BEFORE_MINUTES: &str = "notifyBeforeMinutes";
+
 // 常量定义
 pub const NOTIFICATION_MESSAGE: &str = "notification-message";
 

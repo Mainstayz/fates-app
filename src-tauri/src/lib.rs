@@ -10,7 +10,10 @@ mod utils;
 
 use crate::database::{KVStore, Matter};
 use crate::http_server::start_http_server;
-use crate::models::{MessageBoxData, NotificationConfig, NOTIFICATION_MESSAGE};
+use crate::models::{
+    MessageBoxData, NotificationConfig, NOTIFICATION_MESSAGE, SETTING_KEY_CHECK_INTERVAL,
+    SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
+};
 use crate::notification_manager::NotificationManager;
 use crate::tray::{flash_tray_icon, get_tray_flash_state};
 use std::fs;
@@ -91,13 +94,14 @@ pub fn run() {
             let db_clone_3 = db.clone();
             let app_handle_clone = app.handle().clone();
 
-
             // 创建通知管理器
             let notification_manager = NotificationManager::new(
                 config,
                 move || {
                     // 从数据库读取设置
-                    if let Ok(Some(check_interval)) = KVStore::get(&db_clone, "checkInterval") {
+                    if let Ok(Some(check_interval)) =
+                        KVStore::get(&db_clone, SETTING_KEY_CHECK_INTERVAL)
+                    {
                         if let Ok(interval) = check_interval.parse::<i64>() {
                             static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> =
                                 std::sync::Mutex::new(None);
@@ -132,7 +136,7 @@ pub fn run() {
                         description: body.clone(),
                     };
                     let json = serde_json::to_string(&message_box).unwrap();
-                    let _ = KVStore::set(&db_clone_3, "message_box", &json);
+                    let _ = KVStore::set(&db_clone_3, SETTING_KEY_NOTIFICATION_MESSAGE_DATA, &json);
 
                     // 发送通知消息
                     let _ = app_handle_clone.emit(NOTIFICATION_MESSAGE, message_box);
