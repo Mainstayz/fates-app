@@ -554,7 +554,7 @@
                                 return updateTags(selectedTags);
                             })
                             .then(() => {
-                                // loadTags();
+                                loadTags();
                             })
                             .catch((error) => {
                                 console.error("Failed to save changes:", error);

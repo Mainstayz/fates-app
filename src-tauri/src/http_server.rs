@@ -7,7 +7,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use once_cell::sync::OnceCell;
-use rusqlite::Connection;
+use crate::database::SafeConnection;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -47,7 +47,7 @@ pub enum ServerError {
     StartupError(String),
     #[error("数据库错误：{0}")]
     DatabaseError(String),
-    #[error("无效请求：{0}")]
+    #[error("效请求：{0}")]
     BadRequest(String),
     #[error("未找到资源：{0}")]
     NotFound(String),
@@ -69,7 +69,7 @@ impl IntoResponse for ServerError {
 // 服务器状态结构体
 pub struct AppState {
     shutdown_tx: Option<oneshot::Sender<()>>,
-    db: Connection,
+    db: Arc<SafeConnection>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -112,7 +112,7 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub fn new(db: Connection) -> Self {
+    pub fn new(db: Arc<SafeConnection>) -> Self {
         let state = Arc::new(Mutex::new(AppState {
             shutdown_tx: None,
             db,
@@ -227,8 +227,8 @@ async fn delete_matter(
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Matter::delete(&state.db, &id).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
-
+    Matter::delete(&state.db, &id)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
     Ok(Json(ApiResponse::<()>::success(())))
 }
 
@@ -337,7 +337,7 @@ async fn delete_tag(
         return Err(ServerError::BadRequest("No valid tag names provided".into()));
     }
 
-    // 批量删除标签
+    // 批量删除��签
     for name in names {
         Tag::delete(&state.db, &name)
             .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
@@ -377,17 +377,17 @@ async fn update_tag_last_used_at(
 static HTTP_SERVER: OnceCell<HttpServer> = OnceCell::new();
 static SERVER_PORT: AtomicU16 = AtomicU16::new(0);
 
-pub fn start_http_server(port: u16, db: Connection) -> Result<&'static HttpServer, ServerError> {
+pub fn start_http_server(port: u16, db: Arc<SafeConnection>) -> Result<(), String> {
     // 如果服务器已经在运行，检查端口是否相同
     if let Some(server) = HTTP_SERVER.get() {
         let current_port = SERVER_PORT.load(Ordering::Relaxed);
         if current_port == port {
-            return Ok(server);
+            return Ok(());
         } else {
-            return Err(ServerError::StartupError(format!(
+            return Err(format!(
                 "HTTP server already running on port {}",
                 current_port
-            )));
+            ));
         }
     }
 
@@ -405,12 +405,12 @@ pub fn start_http_server(port: u16, db: Connection) -> Result<&'static HttpServe
         }
     });
 
-    // 存储服务器实例
+    // 存储服务实例
     match HTTP_SERVER.set(server) {
-        Ok(_) => Ok(HTTP_SERVER.get().unwrap()),
-        Err(_) => Err(ServerError::StartupError(
+        Ok(_) => Ok(()),
+        Err(_) => Err(
             "Failed to store HTTP server instance".into(),
-        )),
+        ),
     }
 }
 

@@ -1,57 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-// settings.json
-pub const SETTINGS_FILE_NAME: &str = "settings.json";
-// message-box.json
-pub const MESSAGE_BOX_FILE_NAME: &str = "message-box.json";
-// timeline_data.json
-pub const TIMELINE_DATA_FILE_NAME: &str = "timeline_data.json";
-
-// notification-message
+// 常量定义
 pub const NOTIFICATION_MESSAGE: &str = "notification-message";
 
-// message-box
+// 消息盒子数据结构
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageBoxData {
     pub title: String,
     pub description: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[allow(non_snake_case)]
-pub struct Settings {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub language: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub checkInterval: Option<i64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TimelineData {
-    pub groups: Vec<TimelineGroup>,
-    pub items: Vec<TimelineItem>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TimelineGroup {
-    pub id: String,
-    pub content: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[allow(non_snake_case)]
-pub struct TimelineItem {
-    pub id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub group: Option<String>,
-    pub content: String,
-    pub start: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub className: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

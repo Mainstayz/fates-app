@@ -2,10 +2,11 @@
 
 use crate::utils;
 use chrono::{DateTime, TimeZone, Utc};
-use rusqlite::{named_params, params, Connection, OptionalExtension, Result};
+use rusqlite::{params, Connection, OpenFlags, Result, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
-use uuid::Uuid;
+use std::sync::Arc;
+use std::sync::RwLock;
 
 const CURRENT_DB_VERSION: u32 = 1;
 
@@ -74,10 +75,32 @@ pub struct Tag {
     pub last_used_at: DateTime<Utc>,
 }
 
-pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
+// 创建一个线程安全的数据库连接包装器
+pub struct SafeConnection {
+    conn: RwLock<Connection>
+}
+
+impl SafeConnection {
+    pub fn new(conn: Connection) -> Self {
+        Self {
+            conn: RwLock::new(conn)
+        }
+    }
+}
+
+// 为 SafeConnection 实现 Send 和 Sync
+unsafe impl Send for SafeConnection {}
+unsafe impl Sync for SafeConnection {}
+
+pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>> {
     let app_dir = utils::get_app_data_dir(app_handle.clone()).unwrap();
     let db_path = app_dir.join(DB_NAME);
-    let conn = Connection::open(db_path)?;
+
+    let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+        | OpenFlags::SQLITE_OPEN_CREATE
+        | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+
+    let conn = Connection::open_with_flags(db_path, flags)?;
 
     // 创建 matter 表
     conn.execute(
@@ -128,12 +151,13 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection> {
         [],
     )?;
 
-    Ok(conn)
+    Ok(Arc::new(SafeConnection::new(conn)))
 }
 
 // Matter 相关操作
 impl Matter {
-    pub fn create(conn: &Connection, matter: &Matter) -> Result<()> {
+    pub fn create(conn: &Arc<SafeConnection>, matter: &Matter) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute(
             "INSERT INTO matter (
                 id, title, description, tags, start_time, end_time,
@@ -163,7 +187,8 @@ impl Matter {
         Ok(())
     }
 
-    pub fn get_by_id(conn: &Connection, id: &str) -> Result<Option<Matter>> {
+    pub fn get_by_id(conn: &Arc<SafeConnection>, id: &str) -> Result<Option<Matter>> {
+        let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM matter WHERE id = ?1")?;
 
         let matter = stmt
@@ -191,7 +216,8 @@ impl Matter {
         Ok(matter)
     }
 
-    pub fn get_all(conn: &Connection) -> Result<Vec<Matter>> {
+    pub fn get_all(conn: &Arc<SafeConnection>) -> Result<Vec<Matter>> {
+        let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM matter ORDER BY start_time")?;
         let matters = stmt
             .query_map([], |row| {
@@ -218,10 +244,11 @@ impl Matter {
     }
 
     pub fn get_by_time_range(
-        conn: &Connection,
+        conn: &Arc<SafeConnection>,
         start: DateTime<Utc>,
         end: DateTime<Utc>,
     ) -> Result<Vec<Matter>> {
+        let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare(
             "SELECT * FROM matter
             WHERE (start_time BETWEEN ?1 AND ?2)
@@ -255,7 +282,8 @@ impl Matter {
         matters
     }
 
-    pub fn update(&self, conn: &Connection) -> Result<()> {
+    pub fn update(&self, conn: &Arc<SafeConnection>) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute(
             "UPDATE matter SET
                 title = ?1, description = ?2, tags = ?3,
@@ -284,7 +312,8 @@ impl Matter {
         Ok(())
     }
 
-    pub fn delete(conn: &Connection, id: &str) -> Result<()> {
+    pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM matter WHERE id = ?1", params![id])?;
         Ok(())
     }
@@ -292,7 +321,8 @@ impl Matter {
 
 // KVStore 相关操作
 impl KVStore {
-    pub fn set(conn: &Connection, key: &str, value: &str) -> Result<()> {
+    pub fn set(conn: &Arc<SafeConnection>, key: &str, value: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         let now = Utc::now();
         conn.execute(
             "INSERT INTO kvstore (key, value, created_at, updated_at)
@@ -304,13 +334,15 @@ impl KVStore {
         Ok(())
     }
 
-    pub fn get(conn: &Connection, key: &str) -> Result<Option<String>> {
+    pub fn get(conn: &Arc<SafeConnection>, key: &str) -> Result<Option<String>> {
+        let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare("SELECT value FROM kvstore WHERE key = ?1")?;
         let value = stmt.query_row(params![key], |row| row.get(0)).optional()?;
         Ok(value)
     }
 
-    pub fn delete(conn: &Connection, key: &str) -> Result<()> {
+    pub fn delete(conn: &Arc<SafeConnection>, key: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM kvstore WHERE key = ?1", params![key])?;
         Ok(())
     }
@@ -318,7 +350,8 @@ impl KVStore {
 
 // Tag 相关操作
 impl Tag {
-    pub fn create(conn: &Connection, name: &str) -> Result<()> {
+    pub fn create(conn: &Arc<SafeConnection>, name: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute(
             "INSERT OR IGNORE INTO tags (name, created_at, last_used_at) VALUES (?1, ?2, ?3)",
             params![name, Utc::now(), Utc::now()],
@@ -326,7 +359,8 @@ impl Tag {
         Ok(())
     }
 
-    pub fn get_all(conn: &Connection) -> Result<Vec<Tag>> {
+    pub fn get_all(conn: &Arc<SafeConnection>) -> Result<Vec<Tag>> {
+        let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM tags ORDER BY name")?;
         let tags = stmt
             .query_map([], |row| {
@@ -340,7 +374,8 @@ impl Tag {
         tags
     }
 
-    pub fn update_last_used_at(conn: &Connection, name: &str) -> Result<()> {
+    pub fn update_last_used_at(conn: &Arc<SafeConnection>, name: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute(
             "UPDATE tags SET last_used_at = ?1 WHERE name = ?2",
             params![Utc::now(), name],
@@ -348,7 +383,8 @@ impl Tag {
         Ok(())
     }
 
-    pub fn delete(conn: &Connection, name: &str) -> Result<()> {
+    pub fn delete(conn: &Arc<SafeConnection>, name: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM tags WHERE name = ?1", params![name])?;
         Ok(())
     }

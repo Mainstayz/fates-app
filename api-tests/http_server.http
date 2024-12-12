@@ -1,5 +1,5 @@
 ### 变量设置
-@baseUrl = http://127.0.0.1:8523
+@baseUrl = http://localhost:8523
 @matterId = your-matter-id
 @tagId = 1
 @kvKey = test-key
