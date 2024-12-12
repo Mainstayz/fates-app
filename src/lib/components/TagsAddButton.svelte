@@ -7,7 +7,6 @@
     import { Input } from "$lib/components/ui/input";
     import { cn } from "$lib/utils";
     import { X } from "lucide-svelte";
-    import { onMount } from "svelte";
     import {
         Command,
         CommandInput,
@@ -19,6 +18,12 @@
     } from "$lib/components/ui/command";
 
     const MAX_TAGS_COUNT = 5;
+    const EMPTY_TAG_MESSAGE = "没有找到标签";
+    const NEW_TAG_PLACEHOLDER = "新建标签";
+    const CREATE_NEW_TAG_TEXT = "新建标签";
+    const CLEAR_TAGS_TEXT = "清空标签";
+    const MORE_TAGS_HIDDEN_TEXT = (count: number) => `更多标签被隐藏 (${count})`;
+    const INPUT_TAG_PLACEHOLDER = "搜索标签";
 
     let {
         tagsList = $bindable(),
@@ -28,10 +33,15 @@
         selectedTags: string[];
     } = $props();
 
-    let origianlTagsList = [...tagsList];
     let open = $state(false);
     let showCreateNewTag = $state(false);
     let newTag = $state("");
+
+    $effect(() => {
+        if (tagsList.length === 0) {
+            showCreateNewTag = true;
+        }
+    });
 
     function addTag(tag: string) {
         if (selectedTags.includes(tag)) {
@@ -93,60 +103,63 @@
     <PopoverContent class="w-[200px] p-0" align="start" side="bottom">
         <div class="p-3">
             <Command>
-                <CommandInput placeholder="输入标签" class="bg-background" />
-                <CommandList>
-                    <CommandEmpty>没有找到标签</CommandEmpty>
-                    <CommandGroup>
-                        {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
-                            <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
-                                <div
-                                    class={cn(
-                                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                                        selectedTags.includes(tag)
-                                            ? "bg-primary text-primary-foreground"
-                                            : "opacity-50 [&_svg]:invisible"
-                                    )}
-                                >
-                                    <Check class={cn("h-4 w-4")} />
-                                </div>
-                                <span>{tag}</span>
-                            </CommandItem>
-                        {/each}
-                        {#if tagsList.length > MAX_TAGS_COUNT}
-                            <CommandItem disabled>
-                                <span> 更多标签被隐藏 ({tagsList.length - MAX_TAGS_COUNT}) </span>
-                            </CommandItem>
-                        {/if}
-                    </CommandGroup>
-                    <CommandSeparator />
-                    <CommandGroup>
-                        <!-- Create new tag -->
-                        {#if !showCreateNewTag}
-                            <CommandItem onSelect={() => (showCreateNewTag = true)}>
-                                <span>创建新标签</span>
-                            </CommandItem>
-                        {:else}
-                            <!-- Create new tag input -->
-                            <div class="flex flex-row gap-2 h-[32px]">
-                                <Input
-                                    autofocus
-                                    type="text"
-                                    placeholder="输入新标签"
-                                    bind:value={newTag}
-                                    onkeydown={handleNewTagKeydown}
-                                    class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
-                                />
-                                <!-- cancel button -->
+                {#if tagsList.length > 0}
+                    {#if tagsList.length > MAX_TAGS_COUNT}
+                        <CommandInput placeholder={INPUT_TAG_PLACEHOLDER} class="bg-background" />
+                    {/if}
+                    <CommandList>
+                        <CommandEmpty>{EMPTY_TAG_MESSAGE}</CommandEmpty>
+                        <CommandGroup>
+                            {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
+                                <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
+                                    <div
+                                        class={cn(
+                                            "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                                            selectedTags.includes(tag)
+                                                ? "bg-primary text-primary-foreground"
+                                                : "opacity-50 [&_svg]:invisible"
+                                        )}
+                                    >
+                                        <Check class={cn("h-4 w-4")} />
+                                    </div>
+                                    <span>{tag}</span>
+                                </CommandItem>
+                            {/each}
+                            {#if tagsList.length > MAX_TAGS_COUNT}
+                                <CommandItem disabled>
+                                    <span>{MORE_TAGS_HIDDEN_TEXT(tagsList.length - MAX_TAGS_COUNT)}</span>
+                                </CommandItem>
+                            {/if}
+                        </CommandGroup>
+                        <CommandSeparator />
+                    </CommandList>
+                {/if}
+                <CommandGroup>
+                    {#if !showCreateNewTag}
+                        <CommandItem onSelect={() => (showCreateNewTag = true)}>
+                            <span>{CREATE_NEW_TAG_TEXT}</span>
+                        </CommandItem>
+                    {:else}
+                        <div class="flex flex-row gap-2 h-[32px]">
+                            <Input
+                                autofocus
+                                type="text"
+                                placeholder={NEW_TAG_PLACEHOLDER}
+                                bind:value={newTag}
+                                onkeydown={handleNewTagKeydown}
+                                class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
+                            />
+                            {#if tagsList.length > 0}
                                 <Button variant="ghost" size="icon" onclick={() => (showCreateNewTag = false)}>
                                     <X class="h-4 w-4" />
                                 </Button>
-                            </div>
-                        {/if}
-                        {#if selectedTags.length > 0}
-                            <CommandItem onSelect={clearTags}>清空标签</CommandItem>
-                        {/if}
-                    </CommandGroup>
-                </CommandList>
+                            {/if}
+                        </div>
+                    {/if}
+                    {#if selectedTags.length > 0}
+                        <CommandItem onSelect={clearTags}>{CLEAR_TAGS_TEXT}</CommandItem>
+                    {/if}
+                </CommandGroup>
             </Command>
         </div>
     </PopoverContent>
