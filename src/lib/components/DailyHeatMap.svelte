@@ -82,6 +82,13 @@
         };
     };
 
+    // 添加重绘方法
+    export function redraw(newData: DataPoint[]) {
+        if (cal) {
+            cal.fill(newData);
+        }
+    }
+
     onMount(() => {
         cal = new CalHeatmap();
         cal.addTemplates(yyTemplate);

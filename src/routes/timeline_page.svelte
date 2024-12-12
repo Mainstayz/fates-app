@@ -33,6 +33,9 @@
     } from "../store";
     import Input from "$lib/components/ui/input/input.svelte";
 
+    // 导入 dayjs
+    import dayjs from "dayjs";
+
     interface Tag {
         name: string;
         last_used_at: string;
@@ -71,6 +74,33 @@
 
     // 添加任务输入框
     let newTaskTitle = $state("");
+
+    // 添加更新热力图数据的函数
+    async function updateHeatMapData() {
+        try {
+            const matters = await getAllMatters();
+            const dailyCounts = new Map<string, number>();
+
+            matters.forEach((matter) => {
+                // 使用 dayjs 处理日期，格式化为 YYYY-MM-DD
+                const dateKey = dayjs(matter.start_time).format("YYYY-MM-DD");
+                dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
+            });
+
+            heatmapData = Array.from(dailyCounts.entries()).map(([date, value]) => ({
+                date,
+                value,
+            }));
+
+            if (heatmapComponent) {
+                heatmapComponent.redraw(heatmapData);
+            }
+        } catch (e) {
+            error(`更新热力图数据失败: ${e}`);
+        }
+    }
+
+    // 修改 saveTimelineItem
     async function saveTimelineItem(item: TimelineItem) {
         try {
             let matter = await getMatterById(item.id);
@@ -89,22 +119,25 @@
                 };
                 console.log("update matter: ", newMatter);
                 await updateMatter(item.id, newMatter);
-            } else {
+                await updateHeatMapData();
             }
         } catch (e) {
             error(`保存时间线数据失败: ${e}`);
         }
     }
 
+    // 修改 deleteTimelineItem
     async function deleteTimelineItem(id: string) {
         try {
             console.log("delete matter: ", id);
             await deleteMatter(id);
+            await updateHeatMapData();
         } catch (e) {
             error(`删除时间线数据失败: ${e}`);
         }
     }
 
+    // 修改 createTimelineItem
     async function createTimelineItem(title: string) {
         if (!timelineComponent) return;
 
@@ -136,6 +169,7 @@
             await createMatter(newMatter);
             timelineComponent.addItem(item);
             console.log("create matter: ", newMatter);
+            await updateHeatMapData();
         } catch (e) {
             error(`创建时间线数据失败: ${e}`);
         }
@@ -190,17 +224,28 @@
         }
     }
 
-    // 从本地存储加载时间线数据
+    // 添加热力图数据类型和状态
+    interface HeatMapData {
+        date: string;
+        value: number;
+    }
+
+    let heatmapComponent: DailyHeatMap;
+    let heatmapData: HeatMapData[] = $state([]);
+
+    // 修改 loadTimelineData，使用新的 updateHeatMapData 函数
     async function loadTimelineData() {
         try {
             clearTimelineData();
             const matters = await getAllMatters();
             console.log("matters: ", matters);
+
             for (const matter of matters) {
                 let newTags: string[] = [];
                 if (matter.tags && matter.tags.trim() !== "") {
                     newTags = matter.tags.split(",");
                 }
+
                 timelineComponent.addItem({
                     id: matter.id,
                     group: "",
@@ -215,6 +260,8 @@
                     created_at: new Date(matter.created_at),
                 });
             }
+
+            await updateHeatMapData();
         } catch (e) {
             error(`加载时间线数据失败: ${e}`);
         }
@@ -482,29 +529,8 @@
                 />
             </div>
             <div class="flex flex-col pt-4 gap-2">
-                <Label class="text-lg text-muted-foreground">日历</Label>
-                <DailyHeatMap
-                    data={[
-                        { date: "2024-12-01", value: 5 },
-                        { date: "2024-12-02", value: 3 },
-                        { date: "2024-12-03", value: 1 },
-                        { date: "2024-12-04", value: 2 },
-                        { date: "2024-12-05", value: 4 },
-                        { date: "2024-12-06", value: 1 },
-                        { date: "2024-12-07", value: 2 },
-                        { date: "2024-12-08", value: 4 },
-                        { date: "2024-12-09", value: 1 },
-                        { date: "2024-12-10", value: 2 },
-                        { date: "2024-12-11", value: 4 },
-                        { date: "2024-12-12", value: 1 },
-                        { date: "2024-12-13", value: 2 },
-                        { date: "2024-12-14", value: 4 },
-                        { date: "2024-12-15", value: 1 },
-                        { date: "2024-12-16", value: 2 },
-                        { date: "2024-12-17", value: 4 },
-                        // ... 更多数据
-                    ]}
-                />
+                <Label class="text-lg text-muted-foreground">���历</Label>
+                <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />
             </div>
         </div>
     </div>
