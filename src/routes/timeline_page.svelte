@@ -440,13 +440,16 @@
                             class="bg-background w-[320px]"
                             bind:value={newTaskTitle}
                             autofocus
+                            onfocusout={() => {
+                                switchAddTaskInput = false;
+                                newTaskTitle = "";
+                            }}
                             onkeydown={async (e) => {
                                 if (e.key === "Enter") {
                                     // 过滤空字符串
                                     switchAddTaskInput = false;
                                     if (newTaskTitle.trim() === "") return;
                                     await createTimelineItem(newTaskTitle);
-                                    newTaskTitle = "";
                                 }
                             }}
                         />
@@ -517,10 +520,7 @@
                         console.log("edit finish, save timeline item ...", item);
                         Promise.all([createTags(newTags), saveTimelineItem(item)])
                             .then(() => {
-                                // 更新 tags
-                                // Bug ,移除后，重新添加，会导致位置变换
-                                timelineComponent.removeItem(item.id);
-                                timelineComponent.addItem(item);
+                                timelineComponent.updateItem(item);
                                 editingItem = null;
                                 return updateTags(selectedTags);
                             })

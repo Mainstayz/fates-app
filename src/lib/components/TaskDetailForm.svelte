@@ -44,6 +44,9 @@
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
     let selectedTags = $state(item.tags || []);
 
+    // 优先级 open 状态管理
+    let priorityOpen = $state(false);
+
     // 监听变化并更新 item
     function updateItem() {
         let className = "";
@@ -153,9 +156,15 @@
             <div class="w-[160px]">
                 <div class="text-xs text-gray-500 mb-1">优先级</div>
                 <div class="h-[32px]">
-                    <Popover.Root>
+                    <Popover.Root bind:open={priorityOpen}>
                         <Popover.Trigger>
-                            <Button variant="outline" class="w-[160px] h-[32px] justify-start shadow-none">
+                            <Button
+                                variant="outline"
+                                class="w-[160px] h-[32px] justify-start shadow-none"
+                                onclick={() => {
+                                    priorityOpen = true;
+                                }}
+                            >
                                 <div class="flex items-center gap-2">
                                     {#if priority !== undefined}
                                         {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
@@ -179,7 +188,12 @@
                                     <Button
                                         variant="ghost"
                                         class="w-full justify-start"
-                                        onclick={() => (priority = priorityOption.value)}
+                                        onclick={() => {
+                                            priority = priorityOption.value;
+                                            console.log("priority changed:", priority);
+                                            // close popover
+                                            priorityOpen = false;
+                                        }}
                                     >
                                         {@const Icon = priorityOption.icon}
                                         <div class="flex items-center gap-2">
