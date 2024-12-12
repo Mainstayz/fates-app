@@ -21,64 +21,35 @@
     const MAX_TAGS_COUNT = 5;
 
     let {
-        tagsList: initialTagsList,
-        selectedTags: initialSelectedTags,
-        onAddNewTag,
-        onUseTag,
+        tagsList = $bindable(),
+        selectedTags = $bindable(),
     }: {
         tagsList: string[];
         selectedTags: string[];
-        onAddNewTag: (tag: string[]) => void;
-        onUseTag: (tag: string[]) => void;
     } = $props();
 
-    let localTagsList = $state([...initialTagsList]);
-    let localSelectedTags = $state([...initialSelectedTags]);
-
-    let origianlTagsList = [...initialTagsList];
-
-    let firstOpen = $state(false);
+    let origianlTagsList = [...tagsList];
     let open = $state(false);
     let showCreateNewTag = $state(false);
     let newTag = $state("");
-    let shouldTriggerCallback = $state(false);
-
-    $effect(() => {
-        if (shouldTriggerCallback) {
-            const newTags = localTagsList.filter((tag) => !origianlTagsList.includes(tag));
-            if (newTags.length > 0) {
-                onAddNewTag(newTags);
-            }
-            if (localSelectedTags.length > 0) {
-                onUseTag(localSelectedTags);
-            }
-            shouldTriggerCallback = false;
-        }
-    });
-
-    $effect(() => {
-        if (open === false && firstOpen) {
-            shouldTriggerCallback = true;
-        } else if (!firstOpen && open) {
-            firstOpen = true;
-        }
-    });
-
-    onMount(() => {});
 
     function addTag(tag: string) {
-        if (localSelectedTags.includes(tag)) {
+        if (selectedTags.includes(tag)) {
             return;
         }
-        localSelectedTags = [...localSelectedTags, tag];
+        // 头部插入
+        selectedTags.unshift(tag);
     }
 
     function removeTag(tag: string) {
-        localSelectedTags = localSelectedTags.filter((t) => t !== tag);
+        let index = selectedTags.indexOf(tag);
+        if (index !== -1) {
+            selectedTags.splice(index, 1);
+        }
     }
 
     function toggleTag(tag: string) {
-        if (localSelectedTags.includes(tag)) {
+        if (selectedTags.includes(tag)) {
             removeTag(tag);
         } else {
             addTag(tag);
@@ -94,21 +65,21 @@
     }
 
     function handleCreateNewTag(tag: string) {
-        localSelectedTags = [tag, ...localSelectedTags];
-        localTagsList = [tag, ...localTagsList];
+        selectedTags.unshift(tag);
+        tagsList.unshift(tag);
     }
 
     function clearTags() {
-        localSelectedTags = [];
+        selectedTags.length = 0;
     }
 </script>
 
 <Popover bind:open>
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
-            {#if localSelectedTags.length > 0}
+            {#if selectedTags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
-                    {#each localSelectedTags.slice(0, MAX_TAGS_COUNT) as tag}
+                    {#each selectedTags.slice(0, MAX_TAGS_COUNT) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
                         </Badge>
@@ -126,12 +97,12 @@
                 <CommandList>
                     <CommandEmpty>没有找到标签</CommandEmpty>
                     <CommandGroup>
-                        {#each localTagsList.slice(0, MAX_TAGS_COUNT) as tag}
+                        {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
                             <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
                                 <div
                                     class={cn(
                                         "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                                        localSelectedTags.includes(tag)
+                                        selectedTags.includes(tag)
                                             ? "bg-primary text-primary-foreground"
                                             : "opacity-50 [&_svg]:invisible"
                                     )}
@@ -141,9 +112,9 @@
                                 <span>{tag}</span>
                             </CommandItem>
                         {/each}
-                        {#if localTagsList.length > MAX_TAGS_COUNT}
+                        {#if tagsList.length > MAX_TAGS_COUNT}
                             <CommandItem disabled>
-                                <span> 更多标签被隐藏 ({localTagsList.length - MAX_TAGS_COUNT}) </span>
+                                <span> 更多标签被隐藏 ({tagsList.length - MAX_TAGS_COUNT}) </span>
                             </CommandItem>
                         {/if}
                     </CommandGroup>
@@ -171,7 +142,7 @@
                                 </Button>
                             </div>
                         {/if}
-                        {#if localSelectedTags.length > 0}
+                        {#if selectedTags.length > 0}
                             <CommandItem onSelect={clearTags}>清空标签</CommandItem>
                         {/if}
                     </CommandGroup>

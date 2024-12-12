@@ -80,6 +80,7 @@
                     title: item.content,
                     description: item.description,
                     tags: item.tags?.join(","),
+                    priority: item.priority,
                     start_time: item.start.toISOString(),
                     end_time: item.end?.toISOString(),
                     type_: item.matter_type,

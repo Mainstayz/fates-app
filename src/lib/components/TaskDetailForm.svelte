@@ -32,15 +32,9 @@
         { value: Priority.High, label: "高优先级", icon: Flame },
     ] as const;
 
-    let origianlTagsList: string[] = [];
     let origianlSelectedTags: string[] = [];
 
-    // 将 tagsList 添加到 origianlTagsList
-    for (let tag of initialTagsList) {
-        origianlTagsList.push(tag);
-    }
-
-    let localItem = $state(item);
+    let localItem = $state({ ...item }); // 创建本地副本
     let localTagsList = $state([...initialTagsList]); // 创建本地副本
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
@@ -210,16 +204,7 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">标签</div>
                 <div>
-                    <TagsAddButton
-                        tagsList={localTagsList}
-                        {selectedTags}
-                        onAddNewTag={(tags: string[]) => {
-                            localTagsList = [...tags, ...localTagsList.filter((t) => !tags.includes(t))];
-                        }}
-                        onUseTag={(tags: string[]) => {
-                            selectedTags = tags;
-                        }}
-                    />
+                    <TagsAddButton bind:tagsList={localTagsList} bind:selectedTags />
                 </div>
             </div>
         </div>
