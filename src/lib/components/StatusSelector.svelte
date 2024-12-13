@@ -11,15 +11,21 @@
     export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
 
     const STATUS_CONFIGS = [
-        { value: TaskStatus.Active, label: "激活", icon: Play },
-        { value: TaskStatus.Stopped, label: "停止", icon: Pause },
-        { value: TaskStatus.Archived, label: "归档", icon: Archive },
+        { value: "激活" as TaskStatus, label: "激活", icon: Play },
+        { value: "停止" as TaskStatus, label: "停止", icon: Pause },
+        { value: "归档" as TaskStatus, label: "归档", icon: Archive },
     ];
 
     let open = false;
 
     function getStatusLabel(value: TaskStatus) {
         return STATUS_CONFIGS.find((c) => c.value === value)?.label ?? "选择状态";
+    }
+
+    function getStatusIcon(value: TaskStatus) {
+        const config = STATUS_CONFIGS.find((c) => c.value === value);
+        console.log("Current status:", value, "Found config:", config); // 调试日志
+        return config?.icon ?? Play;
     }
 
     function handleStatusChange(newStatus: TaskStatus) {
@@ -33,17 +39,8 @@
     <Popover.Trigger>
         <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
             <div class="flex items-center gap-2">
-                {#if status !== undefined}
-                    {@const Icon = STATUS_CONFIGS.find((c) => c.value === status)?.icon}
-                    <Icon
-                        class={`w-4 h-4 ${
-                            status === TaskStatus.Active
-                                ? "text-green-500"
-                                : status === TaskStatus.Stopped
-                                  ? "text-yellow-500"
-                                  : "text-gray-500"
-                        }`}
-                    />
+                {#if status}
+                    <svelte:component this={getStatusIcon(status)} class="w-4 h-4" />
                 {/if}
                 {getStatusLabel(status)}
             </div>
@@ -57,17 +54,8 @@
                     class="w-full justify-start"
                     onclick={() => handleStatusChange(statusOption.value)}
                 >
-                    {@const Icon = statusOption.icon}
                     <div class="flex items-center gap-2">
-                        <Icon
-                            class={`w-4 h-4 ${
-                                statusOption.value === TaskStatus.Active
-                                    ? "text-green-500"
-                                    : statusOption.value === TaskStatus.Stopped
-                                      ? "text-yellow-500"
-                                      : "text-gray-500"
-                            }`}
-                        />
+                        <svelte:component this={statusOption.icon} class="w-4 h-4" />
                         {statusOption.label}
                     </div>
                 </Button>
