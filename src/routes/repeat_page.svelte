@@ -22,6 +22,7 @@
     import DataTableStatusCell from "./data_table_status_cell.svelte";
     import { TaskStatus } from "$lib/types";
     import DataTableActionCell from "./data_table_action_cell.svelte";
+    import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -247,6 +248,9 @@
                     {/if}
                 </TableBody>
             </Table>
+        </div>
+        <div class="p-4 w-[200px] h-[200px]">
+            <RepeatTimeSelector />
         </div>
     </div>
 </div>
