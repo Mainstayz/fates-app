@@ -45,7 +45,7 @@
             status: TaskStatus.Active,
         },
     ]);
-    const tableHeader = ["标题", "标签", "添加的时间段", "优先级", "状态", "操作"];
+    const tableHeader = ["标题", "标签", "添加的时间段", "优先级", "操作"];
 
     let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
         const index = parseInt(rowDataId);
@@ -106,7 +106,7 @@
             // 单个表上不允许有重复的 id。
             id: "title",
             //  columnDef.cell?: (dataCell, state) => RenderConfig
-            // 定义用于数据列的正文单元格的组件。默认返回 dataCell. value。
+            // 定义用于数据列的正文单元格的组件。默认返回 dataCell.value。
             cell: ({ column, row, value }) => {
                 return createRender(DataTableTextInputCell, {
                     row,
@@ -164,29 +164,19 @@
                 });
             },
         }),
-        table.column({
-            accessor: "status",
-            header: () => {
-                return tableHeader[4];
-            },
-            id: "status",
-            cell: ({ column, row, value }) => {
-                return createRender(DataTableStatusCell, {
-                    row,
-                    column,
-                    value,
-                    onUpdateValue,
-                });
-            },
-        }),
         table.display({
             id: "actions",
-            header: () => tableHeader[5],
+            header: () => "操作",
             cell: ({ row }) => {
-                return createRender(DataTableActionCell, {
-                    row,
-                    onDelete: handleDelete,
-                });
+                if (row.isData()) {
+                    return createRender(DataTableActionCell, {
+                        row,
+                        original: row.original,
+                        onDelete: handleDelete,
+                        onUpdateValue,
+                    });
+                }
+                return "";
             },
         }),
     ]);

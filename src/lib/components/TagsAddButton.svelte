@@ -25,23 +25,30 @@
     const MORE_TAGS_HIDDEN_TEXT = (count: number) => `更多标签被隐藏 (${count})`;
     const INPUT_TAG_PLACEHOLDER = "搜索标签";
 
-    export let tagsList: string[] = [];
+    const maxSelectedTags: number = 2;
+
     export let selectedTags: string[] = [];
+    export let tagsList: string[] = [];
+
+    // tagsList 始终包含 selectedTags 中的标签
+    tagsList = [...new Set([...selectedTags, ...tagsList])];
 
     let open = false;
     let showCreateNewTag = false;
     let newTag = "";
+    let selectedTagsCount = 0;
 
     $: if (tagsList.length === 0) {
         showCreateNewTag = true;
     }
 
+    $: selectedTagsCount = selectedTags.length;
+
     function addTag(tag: string) {
         if (selectedTags.includes(tag)) {
             return;
         }
-        selectedTags = [...selectedTags];
-        selectedTags.unshift(tag);
+        selectedTags = [...selectedTags, tag];
     }
 
     function removeTag(tag: string) {
@@ -69,11 +76,16 @@
     }
 
     function handleCreateNewTag(tag: string) {
-        selectedTags = [...selectedTags];
-        tagsList = [...tagsList];
-
-        selectedTags.unshift(tag);
-        tagsList.unshift(tag);
+        if (selectedTagsCount < maxSelectedTags) {
+            selectedTags = [...selectedTags, tag];
+            const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
+            tagsList = [...new Set([...selectedTags, ...excludeSelectedTags])];
+        } else {
+            // 为了保证新增的 tag 可见，需要将新增的 tag 添加到 selectedTags 后
+            const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
+            tagsList = [...new Set([...selectedTags, tag, ...excludeSelectedTags])];
+        }
+        console.log(`tagsList: ${tagsList}   selectedTags: ${selectedTags}`);
     }
 
     function clearTags() {
@@ -108,7 +120,11 @@
                         <CommandEmpty>{EMPTY_TAG_MESSAGE}</CommandEmpty>
                         <CommandGroup>
                             {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
-                                <CommandItem value={tag} onSelect={() => toggleTag(tag)}>
+                                <CommandItem
+                                    value={tag}
+                                    onSelect={() => toggleTag(tag)}
+                                    disabled={selectedTagsCount >= maxSelectedTags && !selectedTags.includes(tag)}
+                                >
                                     <div
                                         class={cn(
                                             "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
