@@ -19,6 +19,8 @@
     import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "$lib/components/ui/table";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
     import { Priority } from "$lib/types";
+    import DataTableStatusCell from "./data_table_status_cell.svelte";
+    import { TaskStatus } from "$lib/types";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -26,7 +28,7 @@
         tags: z.array(z.string()),
         period: z.string(),
         priority: z.nativeEnum(Priority),
-        status: z.string(),
+        status: z.nativeEnum(TaskStatus),
     });
 
     type RepeatTask = z.infer<typeof RepeatScheme>;
@@ -36,10 +38,10 @@
             tags: ["喝水", "健康"],
             period: "每天",
             priority: Priority.High,
-            status: "未完成",
+            status: TaskStatus.Active,
         },
     ];
-    const tableHeader = ["标题", "标签", "周期", "优先级", "动作"];
+    const tableHeader = ["标题", "标签", "周期", "优先级", "状态"];
 
     let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
         // 获取索引，第几行
@@ -49,6 +51,8 @@
             item.title = newValue;
         } else if (columnId === "priority") {
             item.priority = newValue;
+        } else if (columnId === "status") {
+            item.status = newValue;
         }
         console.log(localItems);
     };
@@ -138,14 +142,19 @@
                 });
             },
         }),
-        // Action, And Display
-        table.display({
-            id: "actions",
+        table.column({
+            accessor: "status",
             header: () => {
                 return tableHeader[4];
             },
-            cell: ({ row }) => {
-                return "";
+            id: "status",
+            cell: ({ column, row, value }) => {
+                return createRender(DataTableStatusCell, {
+                    row,
+                    column,
+                    value,
+                    onUpdateValue,
+                });
             },
         }),
     ]);
