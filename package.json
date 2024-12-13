@@ -53,6 +53,7 @@
     "paneforge": "1.0.0-next.1",
     "svelte": "^5.10.1",
     "svelte-check": "^4.1.1",
+    "svelte-headless-table": "^0.18.3",
     "sveltekit-superforms": "^2.21.1",
     "tailwind-merge": "^2.5.5",
     "tailwind-variants": "^0.3.0",

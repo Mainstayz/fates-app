@@ -14,3 +14,5 @@ export { default as Settings } from "lucide-svelte/icons/settings";
 export { default as CircleHelp } from "lucide-svelte/icons/circle-help";
 // tags
 export { default as Tags } from "lucide-svelte/icons/tags";
+// repeat
+export { default as Repeat } from "lucide-svelte/icons/repeat";
