@@ -44,6 +44,13 @@
             priority: Priority.High,
             status: TaskStatus.Active,
         },
+        {
+            title: "谢谢",
+            tags: ["谢谢", "健康"],
+            repeatTime: "62|08:00|12:00",
+            priority: Priority.High,
+            status: TaskStatus.Active,
+        },
     ]);
     const tableHeader = ["标题", "标签", "添加的时间段", "优先级", "操作"];
 
@@ -182,14 +189,15 @@
     ]);
     let tableModel = table.createViewModel(columns);
     console.log(tableModel);
-    const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = tableModel;
+    const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } = tableModel;
     console.log("headerRows", headerRows);
     console.log("pageRows", pageRows);
     console.log("tableAttrs", tableAttrs);
     console.log("tableBodyAttrs", tableBodyAttrs);
 
     // 过滤器
-    let filterValue = $state("");
+    let { filterValue } = pluginStates.filter;
+    // let filterValue = $state("");
 </script>
 
 <div class="flex flex-col h-full">
@@ -198,15 +206,15 @@
         <Label class="text-base text-muted-foreground">重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。</Label
         >
     </div>
-    <div class="flex flex-col flex-1 p-6 gap-4">
+    <div class="flex flex-col flex-1 p-6 gap-2">
         <!-- ToolBar -->
         <div class="flex items-center justify-between">
             <div class="flex flex-1 items-center space-x-2">
                 <Input
-                    placeholder="Filter tasks..."
+                    placeholder="搜索任务标题..."
                     class="bg-background h-8 w-[150px] lg:w-[250px]"
                     type="search"
-                    bind:value={filterValue}
+                    bind:value={$filterValue}
                 />
             </div>
         </div>
@@ -235,8 +243,8 @@
                             <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
                                 <TableRow {...rowAttrs}>
                                     {#each row.cells as cell (cell.id)}
-                                        <Subscribe attrs={cell.attrs()} let:attrs>
-                                            <TableCell {...attrs}>
+                                        <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+                                            <TableCell {...attrs} class={props.filter.matches ? "matches" : ""}>
                                                 <Render of={cell.render()} />
                                             </TableCell>
                                         </Subscribe>
