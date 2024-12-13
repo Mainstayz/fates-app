@@ -23,6 +23,7 @@
     import { TaskStatus } from "$lib/types";
     import DataTableActionCell from "./data_table_action_cell.svelte";
     import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
+    import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -38,7 +39,7 @@
         {
             title: "喝水",
             tags: ["喝水", "健康"],
-            period: "每天",
+            period: "工作日 08:00-12:00",
             priority: Priority.High,
             status: TaskStatus.Active,
         },
@@ -55,9 +56,12 @@
                 item.priority = newValue;
             } else if (columnId === "status") {
                 item.status = newValue;
+            } else if (columnId === "period") {
+                item.period = newValue;
             }
             return items;
         });
+        console.log("Updated store:", get(itemsStore));
     };
 
     let onTagsChange = (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
@@ -135,6 +139,14 @@
                 return tableHeader[2];
             },
             id: "period",
+            cell: ({ column, row, value }) => {
+                return createRender(DataTableRepeatTimeCell, {
+                    row,
+                    column,
+                    value,
+                    onUpdateValue,
+                });
+            },
         }),
         table.column({
             accessor: "priority",

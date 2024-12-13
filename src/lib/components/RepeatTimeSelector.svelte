@@ -2,6 +2,7 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
+    import { createEventDispatcher } from "svelte";
 
     export let startTime: string = "08:00";
     export let endTime: string = "12:00";
@@ -18,6 +19,8 @@
         { value: 5, label: "五" },
         { value: 6, label: "六" },
     ];
+
+    const dispatch = createEventDispatcher();
 
     function toggleDay(day: number) {
         if (selectedDays.includes(day)) {
@@ -47,6 +50,13 @@
 
         return excludeHolidays ? `${dayLabels} 除节假日` : dayLabels;
     })();
+
+    $: {
+        description;
+        startTime;
+        endTime;
+        dispatch("change");
+    }
 </script>
 
 <div class="w-[300px] rounded-lg border bg-white p-4 shadow-sm">
