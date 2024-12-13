@@ -21,6 +21,7 @@
     import { Priority } from "$lib/types";
     import DataTableStatusCell from "./data_table_status_cell.svelte";
     import { TaskStatus } from "$lib/types";
+    import DataTableActionCell from "./data_table_action_cell.svelte";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -32,7 +33,7 @@
     });
 
     type RepeatTask = z.infer<typeof RepeatScheme>;
-    let localItems: RepeatTask[] = [
+    let itemsStore = writable<RepeatTask[]>([
         {
             title: "喝水",
             tags: ["喝水", "健康"],
@@ -40,21 +41,22 @@
             priority: Priority.High,
             status: TaskStatus.Active,
         },
-    ];
-    const tableHeader = ["标题", "标签", "周期", "优先级", "状态"];
+    ]);
+    const tableHeader = ["标题", "标签", "周期", "优先级", "状态", "操作"];
 
     let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
-        // 获取索引，第几行
-        let index = parseInt(rowDataId);
-        let item = localItems[index];
-        if (columnId === "title") {
-            item.title = newValue;
-        } else if (columnId === "priority") {
-            item.priority = newValue;
-        } else if (columnId === "status") {
-            item.status = newValue;
-        }
-        console.log(localItems);
+        const index = parseInt(rowDataId);
+        itemsStore.update((items) => {
+            const item = items[index];
+            if (columnId === "title") {
+                item.title = newValue;
+            } else if (columnId === "priority") {
+                item.priority = newValue;
+            } else if (columnId === "status") {
+                item.status = newValue;
+            }
+            return items;
+        });
     };
 
     let onTagsChange = (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
@@ -65,7 +67,7 @@
 
     // data 是一个 Svelte 存储，包含要在表上显示的数据数组。如果需要更新数据（例如，编辑表或从服务器延迟获取数据时），请使用 Writable 存储。
     // https://svelte-headless-table.bryanmylee.com/docs/api/create-table
-    let table = createTable(writable(localItems), {
+    let table = createTable(itemsStore, {
         select: addSelectedRows(),
         sort: addSortBy({
             // https://svelte-headless-table.bryanmylee.com/docs/plugins/add-sort-by
@@ -81,6 +83,12 @@
         }),
         colFilter: addColumnFilters(),
     });
+
+    const handleDelete = (rowId: string) => {
+        console.log("handleDelete", rowId);
+        const index = parseInt(rowId);
+        itemsStore.update((items) => items.filter((_, i) => i !== index));
+    };
 
     const columns = table.createColumns([
         table.column({
@@ -154,6 +162,16 @@
                     column,
                     value,
                     onUpdateValue,
+                });
+            },
+        }),
+        table.display({
+            id: "actions",
+            header: () => tableHeader[5],
+            cell: ({ row }) => {
+                return createRender(DataTableActionCell, {
+                    row,
+                    onDelete: handleDelete,
                 });
             },
         }),
