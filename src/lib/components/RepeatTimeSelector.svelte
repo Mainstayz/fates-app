@@ -3,60 +3,49 @@
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
     import { createEventDispatcher } from "svelte";
+    import { WEEKDAY_LABELS, EXCLUDE_HOLIDAYS_BIT, generateDescription } from "$lib/utils/repeatTime";
+    import type { RepeatTimeValue } from "$lib/utils/repeatTime";
 
-    export let startTime: string = "08:00";
-    export let endTime: string = "12:00";
-    export let selectedDays: number[] = [1, 2, 3, 4, 5];
-    export let excludeHolidays: boolean = true;
-    export let description: string;
+    export let value: string;
 
-    const weekDays = [
-        { value: 0, label: "日" },
-        { value: 1, label: "一" },
-        { value: 2, label: "二" },
-        { value: 3, label: "三" },
-        { value: 4, label: "四" },
-        { value: 5, label: "五" },
-        { value: 6, label: "六" },
-    ];
+    const dispatch = createEventDispatcher<{
+        change: string;
+    }>();
 
-    const dispatch = createEventDispatcher();
-
-    function toggleDay(day: number) {
-        if (selectedDays.includes(day)) {
-            selectedDays = selectedDays.filter((d) => d !== day);
-        } else {
-            selectedDays = [...selectedDays, day].sort();
-        }
-    }
-
-    $: description = (() => {
-        const isWorkDays =
-            selectedDays.length === 5 &&
-            [1, 2, 3, 4, 5].every((day) => selectedDays.includes(day)) &&
-            ![0, 6].some((day) => selectedDays.includes(day));
-
-        const isEveryDay = selectedDays.length === 7;
-
-        if (isWorkDays) {
-            return excludeHolidays ? "工作日" : "周一至周五";
-        }
-
-        if (isEveryDay) {
-            return excludeHolidays ? "每天 除节假日" : "每天";
-        }
-
-        const dayLabels = selectedDays.map((day) => `周${weekDays.find((d) => d.value === day)?.label}`).join(" ");
-
-        return excludeHolidays ? `${dayLabels} 除节假日` : dayLabels;
-    })();
+    let weekdaysBits: number;
+    let startTime: string;
+    let endTime: string;
+    let excludeHolidays: boolean;
 
     $: {
-        description;
-        startTime;
-        endTime;
-        dispatch("change");
+        const [bits, start, end] = value.split("|");
+        weekdaysBits = parseInt(bits);
+        startTime = start;
+        endTime = end;
+        excludeHolidays = !!(weekdaysBits & EXCLUDE_HOLIDAYS_BIT);
     }
+
+    $: if (excludeHolidays !== undefined) {
+        updateValue();
+    }
+
+    function toggleDay(dayIndex: number) {
+        const bit = 1 << dayIndex;
+        weekdaysBits = weekdaysBits & bit ? weekdaysBits & ~bit : weekdaysBits | bit;
+        updateValue();
+    }
+
+    function updateValue() {
+        let newBits = weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT;
+        if (excludeHolidays) {
+            newBits |= EXCLUDE_HOLIDAYS_BIT;
+        }
+        const newValue = `${newBits}|${startTime}|${endTime}`;
+        value = newValue;
+        dispatch("change", newValue);
+    }
+
+    $: description = generateDescription(weekdaysBits);
 </script>
 
 <div class="w-[300px] rounded-lg border bg-white p-4 shadow-sm">
@@ -71,27 +60,27 @@
                 <Input
                     type="time"
                     bind:value={startTime}
-                    class="bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[42px]"
+                    class="bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[48px]"
                 />
 
                 <span class="text-gray-500">至</span>
                 <Input
                     type="time"
                     bind:value={endTime}
-                    class="bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[42px]"
+                    class="bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[48px]"
                 />
             </div>
         </div>
 
         <div class="flex gap-1">
-            {#each weekDays as day}
+            {#each WEEKDAY_LABELS as label, index}
                 <button
-                    class="h-8 w-8 rounded-full text-sm {selectedDays.includes(day.value)
+                    class="h-8 w-8 rounded-full text-sm {!!(weekdaysBits & (1 << index))
                         ? 'bg-blue-500 text-[#fff]'
                         : 'bg-gray-100 '}"
-                    on:click={() => toggleDay(day.value)}
+                    on:click={() => toggleDay(index)}
                 >
-                    {day.label}
+                    {label}
                 </button>
             {/each}
         </div>

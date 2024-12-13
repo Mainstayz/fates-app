@@ -24,12 +24,13 @@
     import DataTableActionCell from "./data_table_action_cell.svelte";
     import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
     import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
+    import { parseRepeatTimeString, formatRepeatTimeValue } from "$lib/utils/repeatTime";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
         title: z.string(),
         tags: z.array(z.string()),
-        period: z.string(),
+        repeatTime: z.string(),
         priority: z.nativeEnum(Priority),
         status: z.nativeEnum(TaskStatus),
     });
@@ -39,7 +40,7 @@
         {
             title: "喝水",
             tags: ["喝水", "健康"],
-            period: "工作日 08:00-12:00",
+            repeatTime: "62|08:00|12:00",
             priority: Priority.High,
             status: TaskStatus.Active,
         },
@@ -56,8 +57,8 @@
                 item.priority = newValue;
             } else if (columnId === "status") {
                 item.status = newValue;
-            } else if (columnId === "period") {
-                item.period = newValue;
+            } else if (columnId === "repeatTime") {
+                item.repeatTime = newValue;
             }
             return items;
         });
@@ -134,11 +135,11 @@
             },
         }),
         table.column({
-            accessor: "period",
+            accessor: "repeatTime",
             header: () => {
                 return tableHeader[2];
             },
-            id: "period",
+            id: "repeatTime",
             cell: ({ column, row, value }) => {
                 return createRender(DataTableRepeatTimeCell, {
                     row,
