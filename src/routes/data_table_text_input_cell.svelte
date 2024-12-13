@@ -18,7 +18,7 @@
 
 <Input
     type="text"
-    class="bg-background border-0 shadow-none h-[24px]"
+    class="bg-background border-0 shadow-none h-[24px] truncate font-bold"
     bind:value
     placeholder=""
     autofocus={false}
