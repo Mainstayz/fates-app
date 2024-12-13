@@ -1,20 +1,29 @@
 <script lang="ts">
-    import { Badge } from "$lib/components/ui/badge";
-    import { Label } from "$lib/components/ui/label";
+    // 未支持 svelte 5
+    import { DataColumn, BodyRow } from "svelte-headless-table";
+    import TagsAddButton from "$lib/components/TagsAddButton.svelte";
     // https://svelte.dev/playground/44e2a26454ad478aa27e92b89e82e680?version=3.49.0
 
-    export let tags: string[];
-    // trim,filter value, remove duplicate,
-    let filteredTags = tags.map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
-    let uniqueTags = [...new Set(filteredTags)];
+    export let row: BodyRow<any>;
+    export let column: DataColumn<any>;
+
+    export let allTags: string[];
+    export let selectedTags: string[];
+
+    export let onTagsChange: (row: string, col: string, allTags: string[], selectedTags: string[]) => void;
+
+    let localAllTags = [...allTags];
+    let localTags = [...selectedTags];
+
+    $: {
+        if (row.isData()) {
+            onTagsChange(row.dataId, column.id, localAllTags, localTags);
+        } else {
+            console.error("Row is not DataBodyRow type");
+        }
+    }
 </script>
 
 <div>
-    {#if uniqueTags.length > 0}
-        {#each uniqueTags as tag}
-            <Badge>{tag}</Badge>
-        {/each}
-    {:else}
-        <Label class="text-muted-foreground">-</Label>
-    {/if}
+    <TagsAddButton bind:tagsList={localAllTags} bind:selectedTags={localTags} />
 </div>

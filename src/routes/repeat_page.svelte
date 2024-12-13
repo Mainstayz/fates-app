@@ -4,6 +4,7 @@
     import { Input } from "$lib/components/ui/input";
     import { get, readable, writable } from "svelte/store";
     import DataTableTagsCell from "./data_table_tags_cell.svelte";
+    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
     import { z } from "zod";
 
     import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
@@ -38,6 +39,22 @@
     ];
     const tableHeader = ["标题", "标签", "周期", "优先级", "动作"];
 
+    let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
+        // 获取索引，第几行
+        let index = parseInt(rowDataId);
+        let item = localItems[index];
+        if (columnId === "title") {
+            item.title = newValue;
+        }
+        console.log(localItems);
+    };
+
+    let onTagsChange = (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
+        console.log(rowDataId, columnId, allTags, selectedTags);
+    };
+
+    let allTags = $state<string[]>([]);
+
     // data 是一个 Svelte 存储，包含要在表上显示的数据数组。如果需要更新数据（例如，编辑表或从服务器延迟获取数据时），请使用 Writable 存储。
     // https://svelte-headless-table.bryanmylee.com/docs/api/create-table
     let table = createTable(writable(localItems), {
@@ -56,6 +73,7 @@
         }),
         colFilter: addColumnFilters(),
     });
+
     const columns = table.createColumns([
         table.column({
             // 如果 accessor 是字符串，则该属性必须作为每个数据项上的直接属性存在。如果需要嵌套或计算属性，请传递函数访问器。
@@ -67,7 +85,14 @@
             id: "title",
             //  columnDef.cell?: (dataCell, state) => RenderConfig
             // 定义用于数据列的正文单元格的组件。默认返回 dataCell. value。
-            cell: ({ value }) => `${value}`,
+            cell: ({ column, row, value }) => {
+                return createRender(DataTableTextInputCell, {
+                    row,
+                    column,
+                    value,
+                    onUpdateValue,
+                });
+            },
         }),
         table.column({
             accessor: "tags",
@@ -76,10 +101,14 @@
             },
             id: "tags",
             // https://svelte-headless-table.bryanmylee.com/docs/api/body-cell#databodycell
-            cell: ({ value }) => {
+            cell: ({ column, row, value }) => {
                 // value = ["喝水", "健康"]
                 return createRender(DataTableTagsCell, {
-                    tags: value,
+                    row,
+                    column,
+                    allTags,
+                    selectedTags: value,
+                    onTagsChange,
                 });
             },
         }),
@@ -111,6 +140,10 @@
     let tableModel = table.createViewModel(columns);
     console.log(tableModel);
     const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = tableModel;
+    console.log("headerRows", headerRows);
+    console.log("pageRows", pageRows);
+    console.log("tableAttrs", tableAttrs);
+    console.log("tableBodyAttrs", tableBodyAttrs);
 
     // 过滤器
     let filterValue = $state("");

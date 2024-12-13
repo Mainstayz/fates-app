@@ -1,24 +1,13 @@
 <script lang="ts">
-    // 未支持 svelte 5
-    import { DataColumn } from "svelte-headless-table";
-    // https://svelte-headless-table.bryanmylee.com/docs/api/body-row
-    export let row; /*: BodyRow<Item>*/
-    export let column; /*: DataColumn<Item>*/
-    export let value; /*: unknown;*/
-    export let onUpdateValue; /*: (rowDataId: string, columnId: string, newValue: unknown) => void*/
+    import { DataColumn, BodyRow } from "svelte-headless-table";
+    import { Input } from "$lib/components/ui/input";
 
-    let isEditing = false;
-    let inputElement: HTMLInputElement | undefined;
-
-    $: if (isEditing) {
-        inputElement?.focus();
-    }
-    const handleCancel = () => {
-        isEditing = false;
-    };
+    export let row: BodyRow<any>;
+    export let column: DataColumn<any>;
+    export let value: string;
+    export let onUpdateValue: (rowDataId: string, columnId: string, newValue: unknown) => void;
 
     const handleSubmit = () => {
-        isEditing = false;
         if (row.isData()) {
             onUpdateValue(row.dataId, column.id, value);
         } else {
@@ -26,3 +15,19 @@
         }
     };
 </script>
+
+<Input
+    type="text"
+    class="bg-background border-0 shadow-none h-[24px]"
+    bind:value
+    placeholder=""
+    autofocus={false}
+    tabindex={-1}
+    onkeydown={(e) => {
+        if (e.key === "Enter") {
+            handleSubmit();
+            // 移除焦点
+            (e.target as HTMLElement).blur();
+        }
+    }}
+/>

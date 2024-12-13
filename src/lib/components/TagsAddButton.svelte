@@ -25,35 +25,29 @@
     const MORE_TAGS_HIDDEN_TEXT = (count: number) => `更多标签被隐藏 (${count})`;
     const INPUT_TAG_PLACEHOLDER = "搜索标签";
 
-    let {
-        tagsList = $bindable(),
-        selectedTags = $bindable(),
-    }: {
-        tagsList: string[];
-        selectedTags: string[];
-    } = $props();
+    export let tagsList: string[] = [];
+    export let selectedTags: string[] = [];
 
-    let open = $state(false);
-    let showCreateNewTag = $state(false);
-    let newTag = $state("");
+    let open = false;
+    let showCreateNewTag = false;
+    let newTag = "";
 
-    $effect(() => {
-        if (tagsList.length === 0) {
-            showCreateNewTag = true;
-        }
-    });
+    $: if (tagsList.length === 0) {
+        showCreateNewTag = true;
+    }
 
     function addTag(tag: string) {
         if (selectedTags.includes(tag)) {
             return;
         }
-        // 头部插入
+        selectedTags = [...selectedTags];
         selectedTags.unshift(tag);
     }
 
     function removeTag(tag: string) {
-        let index = selectedTags.indexOf(tag);
+        const index = selectedTags.indexOf(tag);
         if (index !== -1) {
+            selectedTags = [...selectedTags];
             selectedTags.splice(index, 1);
         }
     }
@@ -75,12 +69,15 @@
     }
 
     function handleCreateNewTag(tag: string) {
+        selectedTags = [...selectedTags];
+        tagsList = [...tagsList];
+
         selectedTags.unshift(tag);
         tagsList.unshift(tag);
     }
 
     function clearTags() {
-        selectedTags.length = 0;
+        selectedTags = [];
     }
 </script>
 
