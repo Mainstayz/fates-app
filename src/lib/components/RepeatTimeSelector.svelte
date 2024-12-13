@@ -3,9 +3,11 @@
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
 
-    export let value: string = "08:00 - 12:00";
+    export let startTime: string = "08:00";
+    export let endTime: string = "12:00";
     export let selectedDays: number[] = [1, 2, 3, 4, 5];
     export let excludeHolidays: boolean = true;
+    export let description: string;
 
     const weekDays = [
         { value: 0, label: "日" },
@@ -38,7 +40,7 @@
         }
 
         if (isEveryDay) {
-            return excludeHolidays ? "每天，除节假日" : "每天";
+            return excludeHolidays ? "每天 除节假日" : "每天";
         }
 
         const dayLabels = selectedDays.map((day) => `周${weekDays.find((d) => d.value === day)?.label}`).join(" ");
@@ -58,22 +60,14 @@
             <div class="flex items-center gap-4">
                 <Input
                     type="time"
-                    value={value.split(" - ")[0]}
-                    oninput={(e) => {
-                        const endTime = value.split(" - ")[1];
-                        value = `${e.currentTarget.value} - ${endTime}`;
-                    }}
+                    bind:value={startTime}
                     class="bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[42px]"
                 />
 
-                <span class=" text-gray-500"> 至 </span>
+                <span class="text-gray-500">至</span>
                 <Input
                     type="time"
-                    value={value.split(" - ")[1]}
-                    oninput={(e) => {
-                        const startTime = value.split(" - ")[0];
-                        value = `${startTime} - ${e.currentTarget.value}`;
-                    }}
+                    bind:value={endTime}
                     class="bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[42px]"
                 />
             </div>

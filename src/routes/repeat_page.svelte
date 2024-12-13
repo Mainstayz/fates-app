@@ -43,7 +43,7 @@
             status: TaskStatus.Active,
         },
     ]);
-    const tableHeader = ["标题", "标签", "周期", "优先级", "状态", "操作"];
+    const tableHeader = ["标题", "标签", "添加的时间段", "优先级", "状态", "操作"];
 
     let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
         const index = parseInt(rowDataId);
@@ -249,8 +249,6 @@
                 </TableBody>
             </Table>
         </div>
-        <div class="p-4 w-[200px] h-[200px]">
-            <RepeatTimeSelector />
-        </div>
+        <div class="p-4 w-[200px] h-[200px]"></div>
     </div>
 </div>
