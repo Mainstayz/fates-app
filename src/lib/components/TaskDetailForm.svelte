@@ -9,6 +9,7 @@
     import DateRangePicker from "./DateRangePicker.svelte";
     import { onMount, onDestroy } from "svelte";
     import type { TimelineItem } from "$lib/types";
+    import PrioritySelector from "./PrioritySelector.svelte";
 
     let {
         item,
@@ -26,12 +27,6 @@
         High: 1,
     } as const;
 
-    const PRIORITY_COLORS = [
-        { value: Priority.Low, label: "低优先级", icon: Leaf },
-        { value: Priority.Medium, label: "中优先级", icon: Zap },
-        { value: Priority.High, label: "高优先级", icon: Flame },
-    ] as const;
-
     let origianlSelectedTags: string[] = [];
 
     let localItem = $state({ ...item }); // 创建本地副本
@@ -43,9 +38,6 @@
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
     let selectedTags = $state(item.tags || []);
-
-    // 优先级 open 状态管理
-    let priorityOpen = $state(false);
 
     // 监听变化并更新 item
     function updateItem() {
@@ -79,10 +71,6 @@
             end: endDate ? new Date(endDate) : undefined,
         };
         return updatedItem;
-    }
-
-    function getPriorityLabel(value: number) {
-        return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
     }
 
     // 格式化日期为 YYYY-MM-DD
@@ -156,63 +144,7 @@
             <div class="w-[160px]">
                 <div class="text-xs text-gray-500 mb-1">优先级</div>
                 <div class="h-[32px]">
-                    <Popover.Root bind:open={priorityOpen}>
-                        <Popover.Trigger>
-                            <Button
-                                variant="outline"
-                                class="w-[160px] h-[32px] justify-start shadow-none"
-                                onclick={() => {
-                                    priorityOpen = true;
-                                }}
-                            >
-                                <div class="flex items-center gap-2">
-                                    {#if priority !== undefined}
-                                        {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
-                                        <Icon
-                                            class={`w-4 h-4 ${
-                                                priority === Priority.High
-                                                    ? "text-red-500"
-                                                    : priority === Priority.Medium
-                                                      ? "text-yellow-500"
-                                                      : "text-green-500"
-                                            }`}
-                                        />
-                                    {/if}
-                                    {getPriorityLabel(priority)}
-                                </div>
-                            </Button>
-                        </Popover.Trigger>
-                        <Popover.Content class="w-[160px] p-0">
-                            <div class="flex flex-col">
-                                {#each PRIORITY_COLORS as priorityOption}
-                                    <Button
-                                        variant="ghost"
-                                        class="w-full justify-start"
-                                        onclick={() => {
-                                            priority = priorityOption.value;
-                                            console.log("priority changed:", priority);
-                                            // close popover
-                                            priorityOpen = false;
-                                        }}
-                                    >
-                                        {@const Icon = priorityOption.icon}
-                                        <div class="flex items-center gap-2">
-                                            <Icon
-                                                class={`w-4 h-4 ${
-                                                    priorityOption.value === Priority.High
-                                                        ? "text-red-500"
-                                                        : priorityOption.value === Priority.Medium
-                                                          ? "text-yellow-500"
-                                                          : "text-green-500"
-                                                }`}
-                                            />
-                                            {priorityOption.label}
-                                        </div>
-                                    </Button>
-                                {/each}
-                            </div>
-                        </Popover.Content>
-                    </Popover.Root>
+                    <PrioritySelector bind:priority class="w-[160px]" />
                 </div>
             </div>
             <div class="flex-1">
