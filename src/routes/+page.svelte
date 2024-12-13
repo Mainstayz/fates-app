@@ -4,7 +4,6 @@
     import { MouseTrackerState } from "../mouse-tracker.svelte";
     import { MessageBoxManager } from "$lib/MessageBoxManager";
     import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";
-
     const mouseTrackerState = new MouseTrackerState();
     let messageBoxManager: MessageBoxManager;
     let timeProgressBarManager: TimeProgressBarManager;

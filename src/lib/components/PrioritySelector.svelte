@@ -1,16 +1,14 @@
-<script>
+<script lang="ts">
     import * as Popover from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
     import { Leaf, Zap, Flame } from "lucide-svelte";
+    import { createEventDispatcher } from "svelte";
+    import { Priority } from "$lib/types";
 
-    export let priority;
-    export let variant = "outline";
+    const dispatch = createEventDispatcher();
 
-    const Priority = {
-        Low: -1,
-        Medium: 0,
-        High: 1,
-    };
+    export let priority: Priority;
+    export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
 
     const PRIORITY_COLORS = [
         { value: Priority.Low, label: "低优先级", icon: Leaf },
@@ -20,14 +18,20 @@
 
     let open = false;
 
-    function getPriorityLabel(value) {
+    function getPriorityLabel(value: any) {
         return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
+    }
+
+    function handlePriorityChange(newPriority: any) {
+        priority = newPriority;
+        dispatch("change", { priority: newPriority });
+        open = false;
     }
 </script>
 
 <Popover.Root bind:open>
     <Popover.Trigger>
-        <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" on:click={() => (open = true)}>
+        <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
             <div class="flex items-center gap-2">
                 {#if priority !== undefined}
                     {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
@@ -51,10 +55,7 @@
                 <Button
                     variant="ghost"
                     class="w-full justify-start"
-                    on:click={() => {
-                        priority = priorityOption.value;
-                        open = false;
-                    }}
+                    onclick={() => handlePriorityChange(priorityOption.value)}
                 >
                     {@const Icon = priorityOption.icon}
                     <div class="flex items-center gap-2">

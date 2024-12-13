@@ -17,13 +17,15 @@
         addTableFilter,
     } from "svelte-headless-table/plugins";
     import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "$lib/components/ui/table";
+    import DataTablePriorityCell from "./data_table_priority_cell.svelte";
+    import { Priority } from "$lib/types";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
         title: z.string(),
         tags: z.array(z.string()),
         period: z.string(),
-        priority: z.string(),
+        priority: z.nativeEnum(Priority),
         status: z.string(),
     });
 
@@ -33,7 +35,7 @@
             title: "喝水",
             tags: ["喝水", "健康"],
             period: "每天",
-            priority: "高",
+            priority: Priority.High,
             status: "未完成",
         },
     ];
@@ -45,6 +47,8 @@
         let item = localItems[index];
         if (columnId === "title") {
             item.title = newValue;
+        } else if (columnId === "priority") {
+            item.priority = newValue;
         }
         console.log(localItems);
     };
@@ -125,6 +129,14 @@
                 return tableHeader[3];
             },
             id: "priority",
+            cell: ({ column, row, value }) => {
+                return createRender(DataTablePriorityCell, {
+                    row,
+                    column,
+                    value,
+                    onUpdateValue,
+                });
+            },
         }),
         // Action, And Display
         table.display({

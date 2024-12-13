@@ -6,7 +6,9 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: vitePreprocess(),
+  preprocess: vitePreprocess({
+    script: true  // 确保启用 script 预处理
+  }),
   kit: {
     adapter: adapter(),
   },

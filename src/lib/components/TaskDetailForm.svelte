@@ -1,14 +1,13 @@
 <script lang="ts">
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Button } from "$lib/components/ui/button";
-    import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
-    import { PanelTop, Plus, Circle, Leaf, Flame, Zap, Timer, Text } from "lucide-svelte";
+    import { PanelTop, Text } from "lucide-svelte";
     import TagsAddButton from "./TagsAddButton.svelte";
     import DateRangePicker from "./DateRangePicker.svelte";
     import { onMount, onDestroy } from "svelte";
     import type { TimelineItem } from "$lib/types";
+    import { Priority } from "$lib/types";
     import PrioritySelector from "./PrioritySelector.svelte";
 
     let {
@@ -21,12 +20,6 @@
         callback: (item: TimelineItem, newTags: string[], selectedTags: string[]) => void;
     } = $props();
 
-    const Priority = {
-        Low: -1,
-        Medium: 0,
-        High: 1,
-    } as const;
-
     let origianlSelectedTags: string[] = [];
 
     let localItem = $state({ ...item }); // 创建本地副本
@@ -34,7 +27,8 @@
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
     let description = $state(item.description || "");
-    let priority = $state<number>(item.priority || Priority.Medium);
+    // 声明可选值范围
+    let priority = $state<Priority>(item.priority || Priority.Medium);
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
     let selectedTags = $state(item.tags || []);
@@ -46,15 +40,15 @@
         switch (priority) {
             case Priority.Low:
                 className = "green";
-                priorityNumber = -1;
+                priorityNumber = Priority.Low;
                 break;
             case Priority.Medium:
                 className = "blue";
-                priorityNumber = 0;
+                priorityNumber = Priority.Medium;
                 break;
             case Priority.High:
                 className = "red";
-                priorityNumber = 1;
+                priorityNumber = Priority.High;
                 break;
         }
 
@@ -137,14 +131,21 @@
             tabindex={-1}
         />
     </div>
-    <!-- Tags，以及 优先级 -->
+    <!-- Tags，以及 ��先级 -->
     <div class="flex flex-row gap-2">
         <div class="w-[24px]"></div>
         <div class="flex flex-1 gap-8 pl-[12px]">
             <div class="w-[160px]">
                 <div class="text-xs text-gray-500 mb-1">优先级</div>
                 <div class="h-[32px]">
-                    <PrioritySelector bind:priority class="w-[160px]" />
+                    <PrioritySelector
+                        bind:priority
+                        variant="outline"
+                        class="w-[160px]"
+                        on:change={({ detail }) => {
+                            console.log("priority changed:", detail.priority);
+                        }}
+                    />
                 </div>
             </div>
             <div class="flex-1">
