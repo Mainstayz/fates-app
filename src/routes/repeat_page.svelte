@@ -16,7 +16,15 @@
         addSortBy,
         addTableFilter,
     } from "svelte-headless-table/plugins";
-    import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "$lib/components/ui/table";
+    import {
+        Table,
+        TableHeader,
+        TableBody,
+        TableRow,
+        TableHead,
+        TableCell,
+        TableFooter,
+    } from "$lib/components/ui/table";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
     import { Priority } from "$lib/types";
     import DataTableStatusCell from "./data_table_status_cell.svelte";
@@ -25,6 +33,7 @@
     import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
     import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
     import { parseRepeatTimeString, formatRepeatTimeValue } from "$lib/utils/repeatTime";
+    import { Button } from "$lib/components/ui/button";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -198,6 +207,65 @@
     // 过滤器
     let { filterValue } = pluginStates.filter;
     // let filterValue = $state("");
+
+    const handleCreate = () => {
+        const defaultTask: RepeatTask = {
+            title: "新任务",
+            tags: [],
+            repeatTime: "127|08:00|10:00",
+            priority: Priority.Medium,
+            status: TaskStatus.Active,
+        };
+
+        itemsStore.update((items) => {
+            return [defaultTask, ...items];
+        });
+    };
+
+    const invoices = [
+        {
+            invoice: "INV001",
+            paymentStatus: "Paid",
+            totalAmount: "$250.00",
+            paymentMethod: "Credit Card",
+        },
+        {
+            invoice: "INV002",
+            paymentStatus: "Pending",
+            totalAmount: "$150.00",
+            paymentMethod: "PayPal",
+        },
+        {
+            invoice: "INV003",
+            paymentStatus: "Unpaid",
+            totalAmount: "$350.00",
+            paymentMethod: "Bank Transfer",
+        },
+        {
+            invoice: "INV004",
+            paymentStatus: "Paid",
+            totalAmount: "$450.00",
+            paymentMethod: "Credit Card",
+        },
+        {
+            invoice: "INV005",
+            paymentStatus: "Paid",
+            totalAmount: "$550.00",
+            paymentMethod: "PayPal",
+        },
+        {
+            invoice: "INV006",
+            paymentStatus: "Pending",
+            totalAmount: "$200.00",
+            paymentMethod: "Bank Transfer",
+        },
+        {
+            invoice: "INV007",
+            paymentStatus: "Unpaid",
+            totalAmount: "$300.00",
+            paymentMethod: "Credit Card",
+        },
+    ];
 </script>
 
 <div class="flex flex-col h-full">
@@ -216,6 +284,9 @@
                     type="search"
                     bind:value={$filterValue}
                 />
+            </div>
+            <div class="flex items-center space-x-2">
+                <Button onclick={handleCreate}>创建任务</Button>
             </div>
         </div>
         <div class="rounded-md border">
@@ -262,4 +333,30 @@
         </div>
         <div class="p-4 w-[200px] h-[200px]"></div>
     </div>
+    <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead class="w-[100px]">Invoice</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead class="text-right">Amount</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {#each invoices as invoice, i (i)}
+                <TableRow>
+                    <TableCell class="font-medium">{invoice.invoice}</TableCell>
+                    <TableCell>{invoice.paymentStatus}</TableCell>
+                    <TableCell>{invoice.paymentMethod}</TableCell>
+                    <TableCell class="text-right">{invoice.totalAmount}</TableCell>
+                </TableRow>
+            {/each}
+        </TableBody>
+        <TableFooter>
+            <TableRow>
+                <TableCell colspan={3}>Total</TableCell>
+                <TableCell class="text-right">$2,500.00</TableCell>
+            </TableRow>
+        </TableFooter>
+    </Table>
 </div>
