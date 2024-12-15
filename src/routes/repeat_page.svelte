@@ -25,6 +25,7 @@
         TableHead,
         TableCell,
         TableFooter,
+        Row,
     } from "$lib/components/ui/table";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
     import { Priority } from "$lib/types";
@@ -56,7 +57,12 @@
     });
 
     type RepeatTask = z.infer<typeof RepeatScheme>;
-    let itemsStore = writable<RepeatTask[]>([]);
+
+    let data: RepeatTask[] = [];
+
+    let itemsStore = writable(data);
+
+    $: itemsStore.set(data);
 
     // 加载数据
     onMount(async () => {
@@ -159,12 +165,31 @@
                 console.error("task not found ", rowId);
                 return;
             }
-            const task = get(itemsStore)[index];
+            let task = get(itemsStore)[index];
             const taskID = task.id;
             await deleteRepeatTask(taskID);
-            itemsStore.update((items) => items.filter((item) => item.id !== taskID));
+            data = get(itemsStore).filter((item, i) => i !== index);
         } catch (error) {
             console.error("Failed to delete task:", error);
+        }
+    };
+
+    const handleCreate = async () => {
+        const defaultTask: Partial<RepeatTask> = {
+            id: uuidv4(),
+            title: "新任务",
+            tags: "",
+            repeat_time: "127|08:00|10:00",
+            priority: Priority.Medium,
+            status: 1,
+            description: "",
+        };
+
+        try {
+            const newTask = await createRepeatTask(defaultTask as RepeatTask);
+            data = [newTask, ...get(itemsStore)];
+        } catch (error) {
+            console.error("Failed to create task:", error);
         }
     };
 
@@ -196,7 +221,12 @@
             id: "tags",
             // https://svelte-headless-table.bryanmylee.com/docs/api/body-cell#databodycell
             cell: ({ column, row, value }) => {
-                console.log("---- TagsCell", row, column, value);
+                if (row.isData()) {
+                    console.log(
+                        `行：${row.id} title:${row.original.title} tags:${row.original.tags} || value:${value}`
+                    );
+                }
+
                 return createRender(DataTableTagsCell, {
                     row,
                     column,
@@ -263,29 +293,6 @@
     // 过滤器
     let { filterValue } = pluginStates.filter;
     // let filterValue = $state("");
-
-    const handleCreate = async () => {
-        const defaultTask: Partial<RepeatTask> = {
-            id: uuidv4(),
-            title: "新任务",
-            tags: "",
-            repeat_time: "127|08:00|10:00",
-            priority: Priority.Medium,
-            status: 1,
-            description: "",
-        };
-
-        try {
-            const newTask = await createRepeatTask(defaultTask as RepeatTask);
-            // 修改更新方式，确保触发响应式更新
-            itemsStore.update((items) => {
-                const newItems = [newTask, ...items];
-                return newItems;
-            });
-        } catch (error) {
-            console.error("Failed to create task:", error);
-        }
-    };
 
     onDestroy(() => {
         // 清理订阅

@@ -7,6 +7,7 @@
     export let row: BodyRow<any>;
     export let column: DataColumn<any>;
 
+    // 标签
     export let allTags: string[];
     export let selectedTags: string[];
 
