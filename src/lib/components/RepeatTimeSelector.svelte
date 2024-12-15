@@ -2,50 +2,49 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
-    import { createEventDispatcher } from "svelte";
     import { WEEKDAY_LABELS, EXCLUDE_HOLIDAYS_BIT, generateDescription } from "$lib/utils/repeatTime";
-    import type { RepeatTimeValue } from "$lib/utils/repeatTime";
 
     export let value: string;
-
-    const dispatch = createEventDispatcher<{
-        change: string;
-    }>();
+    export let onUpdateValue: (newValue: string) => void;
 
     let weekdaysBits: number;
     let startTime: string;
     let endTime: string;
     let excludeHolidays: boolean;
+    let lastBits: number;
 
-    $: {
+    function initializeValues() {
         const [bits, start, end] = value.split("|");
         weekdaysBits = parseInt(bits);
-        startTime = start;
-        endTime = end;
+        startTime = start.trim();
+        endTime = end.trim();
         excludeHolidays = !!(weekdaysBits & EXCLUDE_HOLIDAYS_BIT);
+        lastBits = weekdaysBits;
     }
 
-    $: if (excludeHolidays !== undefined) {
-        updateValue();
-    }
+    initializeValues();
 
-    function toggleDay(dayIndex: number) {
+    const toggleDay = (dayIndex: number) => {
         const bit = 1 << dayIndex;
         weekdaysBits = weekdaysBits & bit ? weekdaysBits & ~bit : weekdaysBits | bit;
         updateValue();
-    }
+    };
 
     function updateValue() {
-        let newBits = weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT;
-        if (excludeHolidays) {
-            newBits |= EXCLUDE_HOLIDAYS_BIT;
+        const newBits = (weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT) | (excludeHolidays ? EXCLUDE_HOLIDAYS_BIT : 0);
+        if (newBits !== lastBits) {
+            value = `${newBits}|${startTime}|${endTime}`;
+            onUpdateValue(value);
+            lastBits = newBits;
         }
-        const newValue = `${newBits}|${startTime}|${endTime}`;
-        value = newValue;
-        dispatch("change", newValue);
     }
 
-    $: description = generateDescription(weekdaysBits);
+    function handleSwitchChange(checked: boolean) {
+        excludeHolidays = checked;
+        updateValue();
+    }
+
+    $: description = generateDescription(lastBits);
 </script>
 
 <div class="w-[300px] rounded-lg border bg-white p-4 shadow-sm">
@@ -55,29 +54,26 @@
             <Label class="text-sm text-gray-500">{description}</Label>
         </div>
 
-        <div>
-            <div class="flex items-center gap-4">
-                <Input
-                    type="time"
-                    bind:value={startTime}
-                    class="bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[48px]"
-                />
-
-                <span class="text-gray-500">至</span>
-                <Input
-                    type="time"
-                    bind:value={endTime}
-                    class="bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-[48px]"
-                />
-            </div>
+        <div class="flex items-center gap-4">
+            <Input
+                type="time"
+                bind:value={startTime}
+                class="w-[48px] bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+            <span class="text-gray-500">至</span>
+            <Input
+                type="time"
+                bind:value={endTime}
+                class="w-[48px] bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
         </div>
 
         <div class="flex gap-1">
             {#each WEEKDAY_LABELS as label, index}
                 <button
-                    class="h-8 w-8 rounded-full text-sm {!!(weekdaysBits & (1 << index))
+                    class="h-8 w-8 rounded-full text-sm {weekdaysBits & (1 << index)
                         ? 'bg-blue-500 text-[#fff]'
-                        : 'bg-gray-100 '}"
+                        : 'bg-gray-100'}"
                     on:click={() => toggleDay(index)}
                 >
                     {label}
@@ -87,7 +83,7 @@
 
         <div class="flex items-center justify-between">
             <Label for="exclude-holidays" class="font-bold">忽略法定节假日</Label>
-            <Switch id="exclude-holidays" bind:checked={excludeHolidays} />
+            <Switch id="exclude-holidays" checked={excludeHolidays} onCheckedChange={handleSwitchChange} />
         </div>
     </div>
 </div>

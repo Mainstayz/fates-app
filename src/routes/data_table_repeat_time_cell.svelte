@@ -31,8 +31,8 @@
         }
     }
 
-    function handleChange(event: CustomEvent<string>) {
-        repeatTimeValue = event.detail;
+    function handleChange(newValue: string) {
+        repeatTimeValue = newValue;
     }
 
     function handleOpenChange(open: boolean) {
@@ -57,6 +57,6 @@
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-[300px] p-0">
-        <RepeatTimeSelector value={repeatTimeValue} on:change={handleChange} />
+        <RepeatTimeSelector value={repeatTimeValue} onUpdateValue={handleChange} />
     </Popover.Content>
 </Popover.Root>
