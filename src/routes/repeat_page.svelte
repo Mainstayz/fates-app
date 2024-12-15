@@ -333,30 +333,4 @@
         </div>
         <div class="p-4 w-[200px] h-[200px]"></div>
     </div>
-    <Table>
-        <TableHeader>
-            <TableRow>
-                <TableHead class="w-[100px]">Invoice</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead class="text-right">Amount</TableHead>
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            {#each invoices as invoice, i (i)}
-                <TableRow>
-                    <TableCell class="font-medium">{invoice.invoice}</TableCell>
-                    <TableCell>{invoice.paymentStatus}</TableCell>
-                    <TableCell>{invoice.paymentMethod}</TableCell>
-                    <TableCell class="text-right">{invoice.totalAmount}</TableCell>
-                </TableRow>
-            {/each}
-        </TableBody>
-        <TableFooter>
-            <TableRow>
-                <TableCell colspan={3}>Total</TableCell>
-                <TableCell class="text-right">$2,500.00</TableCell>
-            </TableRow>
-        </TableFooter>
-    </Table>
 </div>

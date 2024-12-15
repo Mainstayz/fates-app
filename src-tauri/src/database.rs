@@ -57,6 +57,22 @@ pub struct Matter {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct RepeatTask {
+    pub id: String,  // UUID 作为主键更合适
+    pub title: String,
+    pub tags: Option<String>,  // 用逗号分隔的标签字符串
+    pub repeat_time: String,   // 重复时间段值
+    pub status: i32,          // 使用枚举: 1=Active, 2=Paused, 3=Archived
+    #[serde(default = "default_datetime")]
+    pub created_at: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
+    pub updated_at: DateTime<Utc>,
+    pub priority: i32,        // 与 Matter 保持一致的优先级
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct KVStore {
     pub key: String,
     pub value: String,
@@ -148,6 +164,22 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
     // 创建索引
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_matter_time ON matter(start_time, end_time)",
+        [],
+    )?;
+
+    // 创建 repeat_task 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS repeat_task (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            tags TEXT DEFAULT '',
+            repeat_time TEXT NOT NULL,
+            status INTEGER DEFAULT 1,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            priority INTEGER DEFAULT 0,
+            description TEXT DEFAULT ''
+        )",
         [],
     )?;
 
@@ -386,6 +418,139 @@ impl Tag {
     pub fn delete(conn: &Arc<SafeConnection>, name: &str) -> Result<()> {
         let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM tags WHERE name = ?1", params![name])?;
+        Ok(())
+    }
+}
+
+// RepeatTask 相关操作
+impl RepeatTask {
+    pub fn create(conn: &Arc<SafeConnection>, task: &RepeatTask) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "INSERT INTO repeat_task (
+                id, title, tags, repeat_time, status,
+                created_at, updated_at, priority, description
+            ) VALUES (
+                ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
+            )",
+            params![
+                task.id,
+                task.title,
+                task.tags,
+                task.repeat_time,
+                task.status,
+                task.created_at,
+                task.updated_at,
+                task.priority,
+                task.description,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_by_id(conn: &Arc<SafeConnection>, id: &str) -> Result<Option<RepeatTask>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM repeat_task WHERE id = ?1")?;
+
+        let task = stmt
+            .query_row(params![id], |row| {
+                Ok(RepeatTask {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    tags: row.get(2)?,
+                    repeat_time: row.get(3)?,
+                    status: row.get(4)?,
+                    created_at: row.get(5)?,
+                    updated_at: row.get(6)?,
+                    priority: row.get(7)?,
+                    description: row.get(8)?,
+                })
+            })
+            .optional()?;
+
+        Ok(task)
+    }
+
+    pub fn get_all(conn: &Arc<SafeConnection>) -> Result<Vec<RepeatTask>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM repeat_task ORDER BY created_at DESC")?;
+        let tasks = stmt
+            .query_map([], |row| {
+                Ok(RepeatTask {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    tags: row.get(2)?,
+                    repeat_time: row.get(3)?,
+                    status: row.get(4)?,
+                    created_at: row.get(5)?,
+                    updated_at: row.get(6)?,
+                    priority: row.get(7)?,
+                    description: row.get(8)?,
+                })
+            })?
+            .collect();
+        tasks
+    }
+
+    pub fn get_active_tasks(conn: &Arc<SafeConnection>) -> Result<Vec<RepeatTask>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM repeat_task WHERE status = 1 ORDER BY created_at DESC")?;
+        let tasks = stmt
+            .query_map([], |row| {
+                Ok(RepeatTask {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    tags: row.get(2)?,
+                    repeat_time: row.get(3)?,
+                    status: row.get(4)?,
+                    created_at: row.get(5)?,
+                    updated_at: row.get(6)?,
+                    priority: row.get(7)?,
+                    description: row.get(8)?,
+                })
+            })?
+            .collect();
+        tasks
+    }
+
+    pub fn update(&self, conn: &Arc<SafeConnection>) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE repeat_task SET
+                title = ?1,
+                tags = ?2,
+                repeat_time = ?3,
+                status = ?4,
+                updated_at = ?5,
+                priority = ?6,
+                description = ?7
+            WHERE id = ?8",
+            params![
+                self.title,
+                self.tags,
+                self.repeat_time,
+                self.status,
+                self.updated_at,
+                self.priority,
+                self.description,
+                self.id
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute("DELETE FROM repeat_task WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    pub fn update_status(conn: &Arc<SafeConnection>, id: &str, new_status: i32) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE repeat_task SET status = ?1, updated_at = ?2 WHERE id = ?3",
+            params![new_status, Utc::now(), id],
+        )?;
         Ok(())
     }
 }

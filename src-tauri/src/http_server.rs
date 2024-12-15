@@ -1,4 +1,4 @@
-use crate::database::{KVStore, Matter, Tag};
+use crate::database::{KVStore, Matter, Tag, RepeatTask};
 use axum::{
     extract::{Path, Query, State},
     response::IntoResponse,
@@ -102,6 +102,13 @@ impl RouteConfig for ApiRoutes {
             .route("/tags", get(get_all_tags))
             .route("/tags/:name", delete(delete_tag))
             .route("/tags/update/:name", put(update_tag_last_used_at))
+            .route("/repeat-task", post(create_repeat_task))
+            .route("/repeat-task/:id", get(get_repeat_task))
+            .route("/repeat-task/:id", put(update_repeat_task))
+            .route("/repeat-task/:id", delete(delete_repeat_task))
+            .route("/repeat-task", get(get_all_repeat_tasks))
+            .route("/repeat-task/active", get(get_active_repeat_tasks))
+            .route("/repeat-task/:id/status/:status", put(update_repeat_task_status))
             .with_state(state)
     }
 }
@@ -337,7 +344,7 @@ async fn delete_tag(
         return Err(ServerError::BadRequest("No valid tag names provided".into()));
     }
 
-    // 批量删除��签
+    // 批量删除标签
     for name in names {
         Tag::delete(&state.db, &name)
             .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
@@ -369,6 +376,90 @@ async fn update_tag_last_used_at(
         Tag::update_last_used_at(&state.db, &name)
             .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
     }
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+// RepeatTask 相关处理函数
+async fn create_repeat_task(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Json(mut task): Json<RepeatTask>,
+) -> Result<impl IntoResponse, ServerError> {
+    task.created_at = Utc::now();
+    task.updated_at = Utc::now();
+
+    let state = state.lock().await;
+    RepeatTask::create(&state.db, &task)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(task)))
+}
+
+async fn get_repeat_task(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let task = RepeatTask::get_by_id(&state.db, &id)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?
+        .ok_or_else(|| ServerError::NotFound("RepeatTask not found".into()))?;
+
+    Ok(Json(ApiResponse::success(task)))
+}
+
+async fn get_all_repeat_tasks(
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let tasks = RepeatTask::get_all(&state.db)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(tasks)))
+}
+
+async fn get_active_repeat_tasks(
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let tasks = RepeatTask::get_active_tasks(&state.db)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(tasks)))
+}
+
+async fn update_repeat_task(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+    Json(mut task): Json<RepeatTask>,
+) -> Result<impl IntoResponse, ServerError> {
+    task.id = id;
+    task.updated_at = Utc::now();
+
+    let state = state.lock().await;
+    task.update(&state.db)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(task)))
+}
+
+async fn delete_repeat_task(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    RepeatTask::delete(&state.db, &id)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+async fn update_repeat_task_status(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path((id, status)): Path<(String, i32)>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    RepeatTask::update_status(&state.db, &id, status)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
