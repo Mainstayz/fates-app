@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@tanstack/svelte-table':
+        specifier: ^8.20.5
+        version: 8.20.5(svelte@5.10.1)
       '@tauri-apps/api':
         specifier: ^2.1.1
         version: 2.1.1
@@ -856,6 +859,16 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@tanstack/svelte-table@8.20.5':
+    resolution: {integrity: sha512-sFqrA6zAt0mzreg3HWlcPeIwrfKp25tMDTrhkeq5GDzWthv/sW9bRFR3YGRcoxmtmHk3mS1wLQfJrotDXu7eDg==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      svelte: ^4.0.0 || ^3.49.0
+
+  '@tanstack/table-core@8.20.5':
+    resolution: {integrity: sha512-P9dF7XbibHph2PFRz8gfBKEXEY/HJPOhym8CHmjF8y3q5mWpKx9xtZapXQUWCgkqvsK0R46Azuz+VaxD4Xl+Tg==}
+    engines: {node: '>=12'}
 
   '@tauri-apps/api@2.1.1':
     resolution: {integrity: sha512-fzUfFFKo4lknXGJq8qrCidkUcKcH2UHhfaaCNt4GzgzGaW2iS26uFOg4tS3H4P8D6ZEeUxtiD5z0nwFF0UN30A==}
@@ -2570,6 +2583,13 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@tanstack/svelte-table@8.20.5(svelte@5.10.1)':
+    dependencies:
+      '@tanstack/table-core': 8.20.5
+      svelte: 5.10.1
+
+  '@tanstack/table-core@8.20.5': {}
 
   '@tauri-apps/api@2.1.1': {}
 
