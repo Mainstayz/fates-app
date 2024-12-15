@@ -2,17 +2,17 @@
     import { DataColumn, BodyRow } from "svelte-headless-table";
     import { Input } from "$lib/components/ui/input";
 
-    export let row: BodyRow<any>;
-    export let column: DataColumn<any>;
+    // export let row: BodyRow<any>;
+    // export let column: DataColumn<any>;
     export let value: string;
     export let onUpdateValue: (rowDataId: string, columnId: string, newValue: unknown) => void;
 
     const handleSubmit = () => {
-        if (row.isData()) {
-            onUpdateValue(row.dataId, column.id, value);
-        } else {
-            console.error("Row is not DataBodyRow type");
-        }
+        // if (row.isData()) {
+        //     onUpdateValue(row.dataId, column.id, value);
+        // } else {
+        //     console.error("Row is not DataBodyRow type");
+        // }
     };
 </script>
 
