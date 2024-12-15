@@ -21,6 +21,18 @@ export interface Matter {
     reserved_5?: string;
 }
 
+export interface RepeatTask {
+    id: string;
+    title: string;
+    tags?: string;
+    repeat_time: string;
+    status: number;
+    created_at: string;
+    updated_at: string;
+    priority: number;
+    description?: string;
+}
+
 const post = async (url: string, body: any) => {
     console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
@@ -156,6 +168,49 @@ export const deleteTag = async (names: string) => {
 
 export const updateTagLastUsedAt = async (names: string) => {
     const url = `${API_BASE_URL}/tags/update/${names}`;
+    const response = await put(url, {});
+    return processResponse(url, response);
+};
+
+// RepeatTask API
+export const createRepeatTask = async (task: RepeatTask) => {
+    const url = `${API_BASE_URL}/repeat-task`;
+    const response = await post(url, task);
+    return processResponse(url, response);
+};
+
+export const getRepeatTaskById = async (id: string) => {
+    const url = `${API_BASE_URL}/repeat-task/${id}`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const getAllRepeatTasks = async (): Promise<RepeatTask[]> => {
+    const url = `${API_BASE_URL}/repeat-task`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const getActiveRepeatTasks = async (): Promise<RepeatTask[]> => {
+    const url = `${API_BASE_URL}/repeat-task/active`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const updateRepeatTask = async (id: string, task: RepeatTask) => {
+    const url = `${API_BASE_URL}/repeat-task/${id}`;
+    const response = await put(url, task);
+    return processResponse(url, response);
+};
+
+export const deleteRepeatTask = async (id: string) => {
+    const url = `${API_BASE_URL}/repeat-task/${id}`;
+    const response = await delete_(url);
+    return processResponse(url, response);
+};
+
+export const updateRepeatTaskStatus = async (id: string, status: number) => {
+    const url = `${API_BASE_URL}/repeat-task/${id}/status/${status}`;
     const response = await put(url, {});
     return processResponse(url, response);
 };

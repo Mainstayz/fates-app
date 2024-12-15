@@ -6,6 +6,7 @@
     import DataTableTagsCell from "./data_table_tags_cell.svelte";
     import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
     import { z } from "zod";
+    import { v4 as uuidv4 } from "uuid";
 
     import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
     import {
@@ -34,58 +35,104 @@
     import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
     import { parseRepeatTimeString, formatRepeatTimeValue } from "$lib/utils/repeatTime";
     import { Button } from "$lib/components/ui/button";
+    import {
+        getAllRepeatTasks,
+        createRepeatTask,
+        updateRepeatTask,
+        deleteRepeatTask,
+        updateRepeatTaskStatus,
+        createTag,
+        getAllTags,
+    } from "../store";
+    import { onMount } from "svelte";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
+        id: z.string(),
         title: z.string(),
-        tags: z.array(z.string()),
-        repeatTime: z.string(),
-        priority: z.nativeEnum(Priority),
-        status: z.nativeEnum(TaskStatus),
+        tags: z.string().optional(),
+        repeat_time: z.string(),
+        priority: z.number(),
+        status: z.number(),
+        description: z.string().optional(),
+        created_at: z.string(),
+        updated_at: z.string(),
     });
 
     type RepeatTask = z.infer<typeof RepeatScheme>;
-    let itemsStore = writable<RepeatTask[]>([
-        {
-            title: "喝水",
-            tags: ["喝水", "健康"],
-            repeatTime: "62|08:00|12:00",
-            priority: Priority.High,
-            status: TaskStatus.Active,
-        },
-        {
-            title: "谢谢",
-            tags: ["谢谢", "健康"],
-            repeatTime: "62|08:00|12:00",
-            priority: Priority.High,
-            status: TaskStatus.Active,
-        },
-    ]);
+    let itemsStore = writable<RepeatTask[]>([]);
+
+    // 加载数据
+    onMount(async () => {
+        try {
+            const tasks = await getAllRepeatTasks();
+            itemsStore.set(tasks);
+        } catch (error) {
+            console.error("Failed to load repeat tasks:", error);
+        }
+    });
+
     const tableHeader = ["标题", "标签", "添加的时间段", "优先级", "操作"];
 
-    let onUpdateValue = (rowDataId: string, columnId: string, newValue: any) => {
-        const index = parseInt(rowDataId);
-        itemsStore.update((items) => {
-            const item = items[index];
-            if (columnId === "title") {
-                item.title = newValue;
-            } else if (columnId === "priority") {
-                item.priority = newValue;
-            } else if (columnId === "status") {
-                item.status = newValue;
-            } else if (columnId === "repeatTime") {
-                item.repeatTime = newValue;
-            }
-            return items;
-        });
-        console.log("Updated store:", get(itemsStore));
+    let onUpdateValue = async (rowDataId: string, columnId: string, newValue: any) => {
+        let index = parseInt(rowDataId);
+        if (index < 0 || index >= get(itemsStore).length) {
+            console.error("task not found ", rowDataId, columnId, newValue);
+            return;
+        }
+
+        let task = get(itemsStore)[index];
+        const taskID = task.id;
+        const updatedTask = { ...task };
+        if (columnId === "title") {
+            updatedTask.title = newValue;
+        } else if (columnId === "priority") {
+            updatedTask.priority = newValue;
+        } else if (columnId === "status") {
+            await updateRepeatTaskStatus(taskID, newValue);
+            updatedTask.status = newValue;
+        } else if (columnId === "repeat_time") {
+            updatedTask.repeat_time = newValue;
+        }
+
+        try {
+            await updateRepeatTask(taskID, updatedTask);
+            itemsStore.update((items) => items.map((item) => (item.id === taskID ? updatedTask : item)));
+        } catch (error) {
+            console.error("Failed to update task:", error);
+        }
     };
 
-    let onTagsChange = (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
+    let onTagsChange = async (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
         console.log(rowDataId, columnId, allTags, selectedTags);
+        let index = parseInt(rowDataId);
+        if (index < 0 || index >= get(itemsStore).length) {
+            console.error("task not found ", rowDataId, columnId, selectedTags);
+            return;
+        }
+        const task = get(itemsStore)[index];
+        const taskID = task.id;
+        const updatedTask = { ...task };
+        updatedTask.tags = selectedTags.join(",");
+        try {
+            if (allTags.length > 0) {
+                let newTags = localAllTags.filter((tag) => allTags.includes(tag));
+                localAllTags = [...new Set([...localAllTags, ...newTags])];
+                await createTag(newTags.join(","));
+            }
+            await updateRepeatTask(taskID, updatedTask);
+            itemsStore.update((items) => items.map((item) => (item.id === taskID ? updatedTask : item)));
+        } catch (error) {
+            console.error("Failed to update task:", error);
+        }
     };
 
-    let allTags = $state<string[]>([]);
+    let localAllTags: string[] = [];
+    // 加载所有标签
+    onMount(async () => {
+        const tags = await getAllTags();
+        localAllTags = tags;
+    });
 
     // data 是一个 Svelte 存储，包含要在表上显示的数据数组。如果需要更新数据（例如，编辑表或从服务器延迟获取数据时），请使用 Writable 存储。
     // https://svelte-headless-table.bryanmylee.com/docs/api/create-table
@@ -106,10 +153,13 @@
         colFilter: addColumnFilters(),
     });
 
-    const handleDelete = (rowId: string) => {
-        console.log("handleDelete", rowId);
-        const index = parseInt(rowId);
-        itemsStore.update((items) => items.filter((_, i) => i !== index));
+    const handleDelete = async (rowId: string) => {
+        try {
+            await deleteRepeatTask(rowId);
+            itemsStore.update((items) => items.filter((item) => item.id !== rowId));
+        } catch (error) {
+            console.error("Failed to delete task:", error);
+        }
     };
 
     const columns = table.createColumns([
@@ -140,22 +190,21 @@
             id: "tags",
             // https://svelte-headless-table.bryanmylee.com/docs/api/body-cell#databodycell
             cell: ({ column, row, value }) => {
-                // value = ["喝水", "健康"]
                 return createRender(DataTableTagsCell, {
                     row,
                     column,
-                    allTags,
-                    selectedTags: value,
+                    allTags: localAllTags,
+                    selectedTags: value ? value.split(",") : [],
                     onTagsChange,
                 });
             },
         }),
         table.column({
-            accessor: "repeatTime",
+            accessor: "repeat_time",
             header: () => {
                 return tableHeader[2];
             },
-            id: "repeatTime",
+            id: "repeat_time",
             cell: ({ column, row, value }) => {
                 return createRender(DataTableRepeatTimeCell, {
                     row,
@@ -208,64 +257,24 @@
     let { filterValue } = pluginStates.filter;
     // let filterValue = $state("");
 
-    const handleCreate = () => {
-        const defaultTask: RepeatTask = {
+    const handleCreate = async () => {
+        const defaultTask: Partial<RepeatTask> = {
+            id: uuidv4(),
             title: "新任务",
-            tags: [],
-            repeatTime: "127|08:00|10:00",
+            tags: "",
+            repeat_time: "127|08:00|10:00",
             priority: Priority.Medium,
-            status: TaskStatus.Active,
+            status: 1,
+            description: "",
         };
 
-        itemsStore.update((items) => {
-            return [defaultTask, ...items];
-        });
+        try {
+            const newTask = await createRepeatTask(defaultTask as RepeatTask);
+            itemsStore.update((items) => [newTask, ...items]);
+        } catch (error) {
+            console.error("Failed to create task:", error);
+        }
     };
-
-    const invoices = [
-        {
-            invoice: "INV001",
-            paymentStatus: "Paid",
-            totalAmount: "$250.00",
-            paymentMethod: "Credit Card",
-        },
-        {
-            invoice: "INV002",
-            paymentStatus: "Pending",
-            totalAmount: "$150.00",
-            paymentMethod: "PayPal",
-        },
-        {
-            invoice: "INV003",
-            paymentStatus: "Unpaid",
-            totalAmount: "$350.00",
-            paymentMethod: "Bank Transfer",
-        },
-        {
-            invoice: "INV004",
-            paymentStatus: "Paid",
-            totalAmount: "$450.00",
-            paymentMethod: "Credit Card",
-        },
-        {
-            invoice: "INV005",
-            paymentStatus: "Paid",
-            totalAmount: "$550.00",
-            paymentMethod: "PayPal",
-        },
-        {
-            invoice: "INV006",
-            paymentStatus: "Pending",
-            totalAmount: "$200.00",
-            paymentMethod: "Bank Transfer",
-        },
-        {
-            invoice: "INV007",
-            paymentStatus: "Unpaid",
-            totalAmount: "$300.00",
-            paymentMethod: "Credit Card",
-        },
-    ];
 </script>
 
 <div class="flex flex-col h-full">
