@@ -8,6 +8,8 @@
     import { z } from "zod";
     import { v4 as uuidv4 } from "uuid";
 
+    // FIXME： 需要优化，不支持动态更新
+    // https://github.com/TanStack/table/blob/main/examples/svelte/basic/src/App.svelte
     import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
     import {
         addColumnFilters,
