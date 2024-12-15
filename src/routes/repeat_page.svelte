@@ -40,7 +40,7 @@
         createTag,
         getAllTags,
     } from "../store";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
 
     // 重复任务的 schema
     const RepeatScheme = z.object({
@@ -80,7 +80,7 @@
         let task = get(itemsStore)[index];
         const taskID = task.id;
         const updatedTask = { ...task };
-        console.log("onUpdateValue ------- ", rowDataId, columnId, newValue);
+
         if (columnId === "title") {
             updatedTask.title = newValue;
         } else if (columnId === "priority") {
@@ -90,6 +90,7 @@
         } else if (columnId === "repeat_time") {
             updatedTask.repeat_time = newValue;
         }
+
         try {
             await updateRepeatTask(taskID, updatedTask);
             itemsStore.update((items) => items.map((item) => (item.id === taskID ? updatedTask : item)));
@@ -276,11 +277,20 @@
 
         try {
             const newTask = await createRepeatTask(defaultTask as RepeatTask);
-            itemsStore.update((items) => [newTask, ...items]);
+            // 修改更新方式，确保触发响应式更新
+            itemsStore.update((items) => {
+                const newItems = [newTask, ...items];
+                return newItems;
+            });
         } catch (error) {
             console.error("Failed to create task:", error);
         }
     };
+
+    onDestroy(() => {
+        // 清理订阅
+        itemsStore.set([]);
+    });
 </script>
 
 <div class="flex flex-col h-full">
