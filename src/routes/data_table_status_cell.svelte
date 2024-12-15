@@ -9,9 +9,14 @@
 
     export let onUpdateValue: (row: string, col: string, value: TaskStatus) => void;
 
-    function handleStatusChange(event: CustomEvent) {
+    function handleStatusChange(newStatus: TaskStatus) {
+        console.log("Received status change:", {
+            newStatus,
+            rowId: row.id,
+            columnId: column.id,
+        });
         if (row.isData()) {
-            onUpdateValue(row.dataId, column.id, event.detail.status);
+            onUpdateValue(row.dataId, column.id, newStatus);
         } else {
             console.error("Row is not DataBodyRow type");
         }
@@ -19,5 +24,5 @@
 </script>
 
 <div>
-    <StatusSelector status={value} on:change={handleStatusChange} />
+    <StatusSelector status={value} onStatusValueChange={handleStatusChange} />
 </div>

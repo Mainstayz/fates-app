@@ -84,17 +84,16 @@
         let task = get(itemsStore)[index];
         const taskID = task.id;
         const updatedTask = { ...task };
+        console.log("onUpdateValue ------- ", rowDataId, columnId, newValue);
         if (columnId === "title") {
             updatedTask.title = newValue;
         } else if (columnId === "priority") {
             updatedTask.priority = newValue;
         } else if (columnId === "status") {
-            await updateRepeatTaskStatus(taskID, newValue);
             updatedTask.status = newValue;
         } else if (columnId === "repeat_time") {
             updatedTask.repeat_time = newValue;
         }
-
         try {
             await updateRepeatTask(taskID, updatedTask);
             itemsStore.update((items) => items.map((item) => (item.id === taskID ? updatedTask : item)));
@@ -104,7 +103,7 @@
     };
 
     let onTagsChange = async (rowDataId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
-        console.log(rowDataId, columnId, allTags, selectedTags);
+        console.log("onTagsChange ------- ", rowDataId, columnId, allTags, selectedTags);
         let index = parseInt(rowDataId);
         if (index < 0 || index >= get(itemsStore).length) {
             console.error("task not found ", rowDataId, columnId, selectedTags);

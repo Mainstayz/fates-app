@@ -15,15 +15,16 @@
     let localAllTags = [...allTags];
     let localTags = [...selectedTags];
 
-    $: {
+    // 改为使用事件处理函数，只在用户操作时触发
+    const handleTagsChange = () => {
         if (row.isData()) {
             onTagsChange(row.dataId, column.id, localAllTags, localTags);
         } else {
             console.error("Row is not DataBodyRow type");
         }
-    }
+    };
 </script>
 
 <div>
-    <TagsAddButton bind:tagsList={localAllTags} bind:selectedTags={localTags} />
+    <TagsAddButton bind:tagsList={localAllTags} bind:selectedTags={localTags} on:tagsChange={handleTagsChange} />
 </div>

@@ -20,7 +20,7 @@
 </script>
 
 <div class="flex items-center gap-2">
-    <StatusSelector {status} variant="ghost" onValueChange={handleStatusChange} />
+    <StatusSelector {status} variant="ghost" onStatusValueChange={handleStatusChange} />
     <Button variant="ghost" size="icon" onclick={handleDelete}>
         <Trash2 class="h-4 w-4" />
     </Button>

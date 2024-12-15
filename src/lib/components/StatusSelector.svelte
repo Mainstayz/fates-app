@@ -2,18 +2,15 @@
     import * as Popover from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
     import { Archive, Pause, Play } from "lucide-svelte";
-    import { createEventDispatcher } from "svelte";
     import { TaskStatus } from "$lib/types";
-
-    const dispatch = createEventDispatcher();
-
-    export let status: TaskStatus;
-    export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
+    export let status: number;
+    export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined = "outline";
+    export let onStatusValueChange: (status: number) => void;
 
     const STATUS_CONFIGS = [
-        { value: "激活" as TaskStatus, label: "激活", icon: Play },
-        { value: "停止" as TaskStatus, label: "停止", icon: Pause },
-        { value: "归档" as TaskStatus, label: "归档", icon: Archive },
+        { value: TaskStatus.Active, label: "激活", icon: Play },
+        { value: TaskStatus.Stopped, label: "停止", icon: Pause },
+        { value: TaskStatus.Archived, label: "归档", icon: Archive },
     ];
 
     let open = false;
@@ -24,13 +21,18 @@
 
     function getStatusIcon(value: TaskStatus) {
         const config = STATUS_CONFIGS.find((c) => c.value === value);
-        console.log("Current status:", value, "Found config:", config); // 调试日志
         return config?.icon ?? Play;
     }
 
     function handleStatusChange(newStatus: TaskStatus) {
         status = newStatus;
-        dispatch("change", { status: newStatus });
+        console.log("StatusSelector calling onStatusChange with status:", newStatus);
+        console.log("onStatusChange:", onStatusValueChange);
+        if (typeof onStatusValueChange === "function") {
+            onStatusValueChange(newStatus);
+        } else {
+            console.error("onStatusChange is not a function");
+        }
         open = false;
     }
 </script>

@@ -37,7 +37,7 @@ export enum Priority {
 }
 
 export enum TaskStatus {
-    Active = "激活",
-    Stopped = "停止",
-    Archived = "归档"
+    Active = 1,
+    Stopped = 0,
+    Archived = -1,
 }

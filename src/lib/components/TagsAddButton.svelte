@@ -16,6 +16,8 @@
         CommandItem,
         CommandSeparator,
     } from "$lib/components/ui/command";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     const MAX_TAGS_COUNT = 5;
     const EMPTY_TAG_MESSAGE = "没有找到标签";
@@ -49,6 +51,7 @@
             return;
         }
         selectedTags = [...selectedTags, tag];
+        handleTagChange();
     }
 
     function removeTag(tag: string) {
@@ -56,6 +59,7 @@
         if (index !== -1) {
             selectedTags = [...selectedTags];
             selectedTags.splice(index, 1);
+            handleTagChange();
         }
     }
 
@@ -81,15 +85,21 @@
             const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
             tagsList = [...new Set([...selectedTags, ...excludeSelectedTags])];
         } else {
-            // 为了保证新增的 tag 可见，需要将新增的 tag 添加到 selectedTags 后
             const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
             tagsList = [...new Set([...selectedTags, tag, ...excludeSelectedTags])];
         }
+        handleTagChange();
         console.log(`tagsList: ${tagsList}   selectedTags: ${selectedTags}`);
     }
 
     function clearTags() {
         selectedTags = [];
+        handleTagChange();
+    }
+
+    function handleTagChange() {
+        // 在标签实际改变时派发事件
+        dispatch("tagsChange");
     }
 </script>
 
