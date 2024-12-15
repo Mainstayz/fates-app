@@ -16,8 +16,6 @@
         CommandItem,
         CommandSeparator,
     } from "$lib/components/ui/command";
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
 
     const MAX_TAGS_COUNT = 5;
     const EMPTY_TAG_MESSAGE = "没有找到标签";
@@ -31,7 +29,9 @@
 
     export let selectedTags: string[] = [];
     export let tagsList: string[] = [];
+    export let onTagsChange: (tagsList: string[], selectedTags: string[]) => void;
 
+    console.log(`第四步 ==> tagsList: ${tagsList} selectedTags: ${selectedTags}`);
     // tagsList 始终包含 selectedTags 中的标签
     tagsList = [...new Set([...selectedTags, ...tagsList])];
 
@@ -40,10 +40,7 @@
     let newTag = "";
     let selectedTagsCount = 0;
 
-    $: if (tagsList.length === 0) {
-        showCreateNewTag = true;
-    }
-
+    $: showCreateNewTag = tagsList.length === 0;
     $: selectedTagsCount = selectedTags.length;
 
     function addTag(tag: string) {
@@ -89,7 +86,6 @@
             tagsList = [...new Set([...selectedTags, tag, ...excludeSelectedTags])];
         }
         handleTagChange();
-        console.log(`tagsList: ${tagsList}   selectedTags: ${selectedTags}`);
     }
 
     function clearTags() {
@@ -99,7 +95,8 @@
 
     function handleTagChange() {
         // 在标签实际改变时派发事件
-        dispatch("tagsChange");
+        console.log(`tagsList: ${tagsList} selectedTags: ${selectedTags}`);
+        onTagsChange(tagsList, selectedTags);
     }
 </script>
 

@@ -34,7 +34,7 @@ export interface RepeatTask {
 }
 
 const post = async (url: string, body: any) => {
-    console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
+    // console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
         method: "POST",
         body: JSON.stringify(body),
@@ -43,20 +43,20 @@ const post = async (url: string, body: any) => {
         },
     });
     const responseText = await response.text();
-    console.log(`<==== POST ${url} , response: ${responseText}`);
+    // console.log(`<==== POST ${url} , response: ${responseText}`);
     return JSON.parse(responseText);
 };
 
 const get = async (url: string) => {
-    console.log(`=====> GET ${url}`);
+    // console.log(`=====> GET ${url}`);
     const response = await fetch(url);
     const responseText = await response.text();
-    console.log(`<==== GET ${url} , response: ${responseText}`);
+    // console.log(`<==== GET ${url} , response: ${responseText}`);
     return JSON.parse(responseText);
 };
 
 const put = async (url: string, body: any) => {
-    console.log(`=====> PUT ${url} , body: ${JSON.stringify(body)}`);
+    // console.log(`=====> PUT ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
         method: "PUT",
         body: JSON.stringify(body),
@@ -65,17 +65,17 @@ const put = async (url: string, body: any) => {
         },
     });
     const responseText = await response.text();
-    console.log(`<==== PUT ${url} , response: ${responseText}`);
+    // console.log(`<==== PUT ${url} , response: ${responseText}`);
     return JSON.parse(responseText);
 };
 
 const delete_ = async (url: string) => {
-    console.log(`=====> DELETE ${url}`);
+    // console.log(`=====> DELETE ${url}`);
     const response = await fetch(url, {
         method: "DELETE",
     });
     const responseText = await response.text();
-    console.log(`<==== DELETE ${url} , response: ${responseText}`);
+    // console.log(`<==== DELETE ${url} , response: ${responseText}`);
     return JSON.parse(responseText);
 };
 

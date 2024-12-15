@@ -61,9 +61,6 @@
     let data: RepeatTask[] = [];
 
     let itemsStore = writable(data);
-
-    $: itemsStore.set(data);
-
     // 加载数据
     onMount(async () => {
         try {
@@ -214,19 +211,20 @@
             },
         }),
         table.column({
-            accessor: "tags",
+            accessor: (item) => {
+                // console.log(`第一步 ==> item tags: ${item.tags}`);
+                return item.tags;
+            },
             header: () => {
                 return tableHeader[1];
             },
-            id: "tags",
             // https://svelte-headless-table.bryanmylee.com/docs/api/body-cell#databodycell
             cell: ({ column, row, value }) => {
                 if (row.isData()) {
-                    console.log(
-                        `行：${row.id} title:${row.original.title} tags:${row.original.tags} || value:${value}`
-                    );
+                    // console.log(
+                    //     `第二步 ==> ${row.id} title:${row.original.title} selectedTags:${row.original.tags} || value:${value} allTags:${localAllTags}`
+                    // );
                 }
-
                 return createRender(DataTableTagsCell, {
                     row,
                     column,
@@ -282,17 +280,34 @@
             },
         }),
     ]);
+
     let tableModel = table.createViewModel(columns);
-    console.log(tableModel);
-    const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } = tableModel;
+    let headerRows = tableModel.headerRows;
+    let pageRows = tableModel.pageRows;
+    let tableAttrs = tableModel.tableAttrs;
+    let tableBodyAttrs = tableModel.tableBodyAttrs;
+    let pluginStates = tableModel.pluginStates;
+    let filterValue = pluginStates.filter.filterValue;
+
     console.log("headerRows", headerRows);
     console.log("pageRows", pageRows);
     console.log("tableAttrs", tableAttrs);
     console.log("tableBodyAttrs", tableBodyAttrs);
 
-    // 过滤器
-    let { filterValue } = pluginStates.filter;
-    // let filterValue = $state("");
+    $: {
+        // 清空 itemsStore
+        itemsStore.set([]);
+        // 设置 itemsStore
+        itemsStore.set(data);
+        // 重新创建 tableModel
+        tableModel = table.createViewModel(columns);
+        headerRows = tableModel.headerRows;
+        pageRows = tableModel.pageRows;
+        tableAttrs = tableModel.tableAttrs;
+        tableBodyAttrs = tableModel.tableBodyAttrs;
+        pluginStates = tableModel.pluginStates;
+        filterValue = pluginStates.filter.filterValue;
+    }
 
     onDestroy(() => {
         // 清理订阅

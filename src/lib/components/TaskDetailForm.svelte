@@ -84,6 +84,17 @@
         return `${hours}:${minutes}`;
     }
 
+    function handleTagsChange(tagsList: string[], selectedTags: string[]) {
+        // 不改变引用， 清空 localTagsList，并添加 tagsList
+        let filteredTagsList = tagsList.filter((tag) => tag !== "");
+        localTagsList.splice(0, localTagsList.length);
+        localTagsList.push(...filteredTagsList);
+
+        // 不改变引用， 清空 selectedTags，并添加 selectedTags
+        selectedTags.splice(0, selectedTags.length);
+        selectedTags.push(...selectedTags);
+    }
+
     onMount(() => {
         // 获取输入框元素
         const inputElement = document.querySelector('input[placeholder="任务标题"]');
@@ -151,7 +162,7 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">标签</div>
                 <div>
-                    <TagsAddButton bind:tagsList={localTagsList} bind:selectedTags />
+                    <TagsAddButton tagsList={localTagsList} {selectedTags} onTagsChange={handleTagsChange} />
                 </div>
             </div>
         </div>
