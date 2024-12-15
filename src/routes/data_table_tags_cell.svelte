@@ -12,8 +12,9 @@
 
     export let onTagsChange: (row: string, col: string, allTags: string[], selectedTags: string[]) => void;
 
-    let localAllTags = [...allTags];
     let localTags = [...selectedTags];
+    let localAllTags = [...allTags];
+    console.log("new selectedTags:", localTags);
 
     // 改为使用事件处理函数，只在用户操作时触发
     const handleTagsChange = () => {

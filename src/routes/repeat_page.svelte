@@ -28,12 +28,8 @@
     } from "$lib/components/ui/table";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
     import { Priority } from "$lib/types";
-    import DataTableStatusCell from "./data_table_status_cell.svelte";
-    import { TaskStatus } from "$lib/types";
     import DataTableActionCell from "./data_table_action_cell.svelte";
-    import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
     import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
-    import { parseRepeatTimeString, formatRepeatTimeValue } from "$lib/utils/repeatTime";
     import { Button } from "$lib/components/ui/button";
     import {
         getAllRepeatTasks,
@@ -117,6 +113,7 @@
             if (allTags.length > 0) {
                 let newTags = localAllTags.filter((tag) => allTags.includes(tag));
                 localAllTags = [...new Set([...localAllTags, ...newTags])];
+                console.log("---- newTags", newTags);
                 await createTag(newTags.join(","));
             }
             await updateRepeatTask(taskID, updatedTask);
@@ -130,7 +127,8 @@
     // 加载所有标签
     onMount(async () => {
         const tags = await getAllTags();
-        localAllTags = tags;
+        localAllTags = tags.map((tag: { name: string }) => tag.name).filter((tag: string) => tag !== "");
+        console.log("---- localAllTags", localAllTags);
     });
 
     // data 是一个 Svelte 存储，包含要在表上显示的数据数组。如果需要更新数据（例如，编辑表或从服务器延迟获取数据时），请使用 Writable 存储。
@@ -154,8 +152,16 @@
 
     const handleDelete = async (rowId: string) => {
         try {
-            await deleteRepeatTask(rowId);
-            itemsStore.update((items) => items.filter((item) => item.id !== rowId));
+            console.log("---- handleDelete", rowId);
+            let index = parseInt(rowId);
+            if (index < 0 || index >= get(itemsStore).length) {
+                console.error("task not found ", rowId);
+                return;
+            }
+            const task = get(itemsStore)[index];
+            const taskID = task.id;
+            await deleteRepeatTask(taskID);
+            itemsStore.update((items) => items.filter((item) => item.id !== taskID));
         } catch (error) {
             console.error("Failed to delete task:", error);
         }
@@ -189,6 +195,7 @@
             id: "tags",
             // https://svelte-headless-table.bryanmylee.com/docs/api/body-cell#databodycell
             cell: ({ column, row, value }) => {
+                console.log("---- TagsCell", row, column, value);
                 return createRender(DataTableTagsCell, {
                     row,
                     column,
