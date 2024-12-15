@@ -26,8 +26,6 @@
 
     function handleStatusChange(newStatus: TaskStatus) {
         status = newStatus;
-        console.log("StatusSelector calling onStatusChange with status:", newStatus);
-        console.log("onStatusChange:", onStatusValueChange);
         if (typeof onStatusValueChange === "function") {
             onStatusValueChange(newStatus);
         } else {

@@ -5,10 +5,9 @@
     import * as Popover from "$lib/components/ui/popover";
     import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
 
-    export let row: any;
-    export let column: any;
+    export let rowId: string;
     export let value = "62|08:00|12:00"; // 默认周一到周五
-    export let onUpdateValue: (rowId: string, columnId: string, value: string) => void;
+    export let onUpdateValue: (rowId: string, value: string) => void;
 
     let repeatTimeValue = value;
     let bageValues: string[] = [];
@@ -37,7 +36,7 @@
 
     function handleOpenChange(open: boolean) {
         if (!open) {
-            onUpdateValue(row.id, column.id, repeatTimeValue);
+            onUpdateValue(rowId, repeatTimeValue);
         }
     }
 </script>

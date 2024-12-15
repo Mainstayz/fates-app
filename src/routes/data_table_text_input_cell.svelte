@@ -1,18 +1,12 @@
 <script lang="ts">
-    import { DataColumn, BodyRow } from "svelte-headless-table";
     import { Input } from "$lib/components/ui/input";
 
-    // export let row: BodyRow<any>;
-    // export let column: DataColumn<any>;
+    export let rowId: string;
     export let value: string;
-    export let onUpdateValue: (rowDataId: string, columnId: string, newValue: unknown) => void;
+    export let onUpdateValue: (rowId: string, newValue: unknown) => void;
 
     const handleSubmit = () => {
-        // if (row.isData()) {
-        //     onUpdateValue(row.dataId, column.id, value);
-        // } else {
-        //     console.error("Row is not DataBodyRow type");
-        // }
+        onUpdateValue(rowId, value);
     };
 </script>
 
@@ -26,7 +20,6 @@
     onkeydown={(e) => {
         if (e.key === "Enter") {
             handleSubmit();
-            // 移除焦点
             (e.target as HTMLElement).blur();
         }
     }}
