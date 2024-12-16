@@ -30,13 +30,53 @@
         updateValue();
     };
 
+    function isValidTimeRange(start: string, end: string): boolean {
+        if (!start || !end) return false;
+
+        try {
+            // 使用固定日期来创建 Date 对象，只比较时间部分
+            const startDate = new Date(`2000-01-01T${start}`);
+            const endDate = new Date(`2000-01-01T${end}`);
+
+            // 检查是否为有效的 Date 对象
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                return false;
+            }
+
+            // 转换为分钟进行比较，避免毫秒级的误差
+            const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
+            const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
+
+            return startMinutes < endMinutes;
+        } catch (error) {
+            console.error("时间格式验证错误：", error);
+            return false;
+        }
+    }
+
+    $: if (startTime) handleTimeChange();
+    $: if (endTime) handleTimeChange();
+
+    function handleTimeChange() {
+        if (startTime && endTime) {
+            if (!isValidTimeRange(startTime, endTime)) {
+                const startDate = new Date(`2000-01-01T${startTime}`);
+                startDate.setHours(startDate.getHours() + 1);
+                const newEndTime = startDate.toTimeString().slice(0, 5);
+                endTime = newEndTime;
+                updateValue();
+            } else {
+                updateValue();
+            }
+        }
+    }
+
     function updateValue() {
         const newBits = (weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT) | (excludeHolidays ? EXCLUDE_HOLIDAYS_BIT : 0);
-        if (newBits !== lastBits) {
-            value = `${newBits}|${startTime}|${endTime}`;
-            onUpdateValue(value);
-            lastBits = newBits;
-        }
+        value = `${newBits}|${startTime}|${endTime}`;
+        console.log("repeatTimeSelector new value", value);
+        onUpdateValue(value);
+        lastBits = newBits;
     }
 
     function handleSwitchChange(checked: boolean) {
