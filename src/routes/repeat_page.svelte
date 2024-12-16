@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Label } from "$lib/components/ui/label";
     import { Input } from "$lib/components/ui/input";
-    import { get, writable } from "svelte/store";
     import { Button } from "$lib/components/ui/button";
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
@@ -17,13 +16,15 @@
     import { Priority } from "$lib/types";
     import { onMount, onDestroy } from "svelte";
     import { repeatTaskAPI } from "../repeat-task.svelte";
+    import { ChevronLeft, ChevronRight } from "lucide-svelte";
 
-    let globalFilter = $state("");
     let localAllTags = $state<string[]>([]);
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
+    const search = table.createSearch();
 
     $effect(() => {
         repeatTaskAPI.data;
+        repeatTaskAPI.allTags;
         table.setRows(repeatTaskAPI.data);
     });
 
@@ -68,8 +69,8 @@
 
     onMount(() => {
         new Promise(async (resolve, reject) => {
-            await repeatTaskAPI.fetchData();
             await repeatTaskAPI.fetchAllTags();
+            await repeatTaskAPI.fetchData();
             resolve(true);
         })
             .then(() => {
@@ -79,6 +80,31 @@
                 console.error("fetch data error: ", error);
             });
     });
+    async function onUpdateValue(rowId: string, columnId: string, value: string | number) {
+        let task = repeatTaskAPI.getRepeatTaskById(rowId);
+        if (!task) {
+            console.error("task not found", rowId);
+            return;
+        }
+        if (columnId === "title") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, title: value as string });
+        }
+        if (columnId === "tags") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, tags: value as string });
+        }
+        if (columnId === "repeat_time") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, repeat_time: value as string });
+        }
+        if (columnId === "priority") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, priority: value as Priority });
+        }
+        if (columnId === "status") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, status: value as number });
+        }
+        if (columnId === "description") {
+            await repeatTaskAPI.updateRepeatTask({ ...task, description: value as string });
+        }
+    }
 </script>
 
 <div class="flex flex-col h-full">
@@ -95,7 +121,10 @@
                     placeholder="搜索任务标题..."
                     class="bg-background h-8 w-[150px] lg:w-[250px]"
                     type="search"
-                    bind:value={globalFilter}
+                    bind:value={search.value}
+                    oninput={() => {
+                        search.set();
+                    }}
                 />
             </div>
             <div class="flex items-center space-x-2">
@@ -127,7 +156,7 @@
                                         rowId={row.id}
                                         value={row.title}
                                         onUpdateValue={(rowId, newValue) => {
-                                            console.log("onUpdateValue, rowId: ", rowId, "newValue: ", newValue);
+                                            onUpdateValue(rowId, "title", newValue);
                                         }}
                                     />
                                 </Table.Cell>
@@ -137,14 +166,8 @@
                                         allTags={repeatTaskAPI.allTags}
                                         selectedTags={row.tags ? row.tags.split(",") : []}
                                         onTagsChange={(rowId, allTags, selectedTags) => {
-                                            console.log(
-                                                "onTagsChange, rowId: ",
-                                                rowId,
-                                                "allTags: ",
-                                                allTags,
-                                                "selectedTags: ",
-                                                selectedTags
-                                            );
+                                            repeatTaskAPI.createTagsIfNotExist(allTags.join(","));
+                                            onUpdateValue(rowId, "tags", selectedTags.join(","));
                                         }}
                                     />
                                 </Table.Cell>
@@ -153,7 +176,7 @@
                                         rowId={row.id}
                                         value={row.repeat_time}
                                         onUpdateValue={(rowId, newValue) => {
-                                            console.log("onUpdateValue, rowId: ", rowId, "newValue: ", newValue);
+                                            onUpdateValue(rowId, "repeat_time", newValue);
                                         }}
                                     />
                                 </Table.Cell>
@@ -162,7 +185,7 @@
                                         rowId={row.id}
                                         value={row.priority}
                                         onUpdateValue={(rowId, newValue) => {
-                                            console.log("onUpdateValue, rowId: ", rowId, "newValue: ", newValue);
+                                            onUpdateValue(rowId, "priority", newValue);
                                         }}
                                     />
                                 </Table.Cell>
@@ -174,7 +197,7 @@
                                             handleDelete(rowId);
                                         }}
                                         onUpdateValue={(rowId, newValue) => {
-                                            console.log("onUpdateValue, rowId: ", rowId, "newValue: ", newValue);
+                                            onUpdateValue(rowId, "status", newValue);
                                         }}
                                     />
                                 </Table.Cell>
@@ -183,6 +206,29 @@
                     {/if}
                 </Table.Body>
             </Table.Root>
+        </div>
+        <div class="flex justify-end items-center space-x-2">
+            <Label class="text-sm text-muted-foreground">
+                第 {table.currentPage} 页，共 {table.pageCount} 页
+            </Label>
+            <Button
+                class="w-8 h-8"
+                disabled={table.currentPage === 1}
+                variant="outline"
+                size="icon"
+                onclick={() => table.setPage("previous")}
+            >
+                <ChevronLeft />
+            </Button>
+            <Button
+                class="w-8 h-8"
+                disabled={table.currentPage === table.pageCount}
+                variant="outline"
+                size="icon"
+                onclick={() => table.setPage("next")}
+            >
+                <ChevronRight />
+            </Button>
         </div>
     </div>
 </div>

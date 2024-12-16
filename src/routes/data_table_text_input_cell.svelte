@@ -3,7 +3,7 @@
 
     export let rowId: string;
     export let value: string;
-    export let onUpdateValue: (rowId: string, newValue: unknown) => void;
+    export let onUpdateValue: (rowId: string, newValue: string) => void;
 
     const handleSubmit = () => {
         onUpdateValue(rowId, value);

@@ -17,7 +17,11 @@ class RepeatTaskAPI {
 
     public async fetchAllTags() {
         let tags = await getAllTags();
-        this.allTags = tags.map((tag: { name: string }) => tag.name).filter((tag: string) => tag !== "");
+        let newTags = tags.map((tag: { name: string }) => tag.name).filter((tag: string) => tag !== "");
+        console.log("allTags: ", newTags);
+        this.allTags.length = 0;
+        this.allTags.push(...newTags);
+
     }
 
     public async fetchData() {
@@ -29,9 +33,17 @@ class RepeatTaskAPI {
         this.data.unshift(newTask);
     }
 
+    public getRepeatTaskById(taskId: string): RepeatTask | undefined {
+        return this.data.find((task) => task.id === taskId);
+    }
+
     public async updateRepeatTask(task: RepeatTask) {
-        // const newTask = await updateRepeatTask(task);
-        // this.data.unshift(newTask);
+        let taskId = task.id;
+        const newTask = await updateRepeatTask(taskId, task);
+        let index = this.data.findIndex((task) => task.id === taskId);
+        if (index !== -1) {
+            this.data[index] = newTask;
+        }
     }
 
     public async deleteRepeatTask(taskId: string) {
@@ -40,6 +52,10 @@ class RepeatTaskAPI {
         if (index !== -1) {
             this.data.splice(index, 1);
         }
+    }
+    public async createTagsIfNotExist(tags: string) {
+        await createTag(tags);
+        await this.fetchAllTags();
     }
 }
 
