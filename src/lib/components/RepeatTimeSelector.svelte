@@ -54,23 +54,6 @@
         }
     }
 
-    $: if (startTime) handleTimeChange();
-    $: if (endTime) handleTimeChange();
-
-    function handleTimeChange() {
-        if (startTime && endTime) {
-            if (!isValidTimeRange(startTime, endTime)) {
-                const startDate = new Date(`2000-01-01T${startTime}`);
-                startDate.setHours(startDate.getHours() + 1);
-                const newEndTime = startDate.toTimeString().slice(0, 5);
-                endTime = newEndTime;
-                updateValue();
-            } else {
-                updateValue();
-            }
-        }
-    }
-
     function updateValue() {
         const newBits = (weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT) | (excludeHolidays ? EXCLUDE_HOLIDAYS_BIT : 0);
         value = `${newBits}|${startTime}|${endTime}`;
@@ -85,6 +68,30 @@
     }
 
     $: description = generateDescription(lastBits);
+
+    function handleStartTimeChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        startTime = input.value;
+        validateAndUpdateTime();
+    }
+
+    function handleEndTimeChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        endTime = input.value;
+        validateAndUpdateTime();
+    }
+
+    function validateAndUpdateTime() {
+        if (startTime && endTime) {
+            if (!isValidTimeRange(startTime, endTime)) {
+                const startDate = new Date(`2000-01-01T${startTime}`);
+                startDate.setHours(startDate.getHours() + 1);
+                const newEndTime = startDate.toTimeString().slice(0, 5);
+                endTime = newEndTime;
+            }
+            updateValue();
+        }
+    }
 </script>
 
 <div class="w-[300px] rounded-lg border bg-white p-4 shadow-sm">
@@ -97,13 +104,15 @@
         <div class="flex items-center gap-4">
             <Input
                 type="time"
-                bind:value={startTime}
+                value={startTime}
+                onchange={handleStartTimeChange}
                 class="w-[48px] bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <span class="text-gray-500">至</span>
             <Input
                 type="time"
-                bind:value={endTime}
+                value={endTime}
+                onchange={handleEndTimeChange}
                 class="w-[48px] bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
         </div>
