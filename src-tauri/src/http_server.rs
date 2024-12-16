@@ -1,4 +1,5 @@
-use crate::database::{KVStore, Matter, Tag, RepeatTask};
+use crate::database::SafeConnection;
+use crate::database::{KVStore, Matter, RepeatTask, Tag};
 use axum::{
     extract::{Path, Query, State},
     response::IntoResponse,
@@ -7,7 +8,6 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use once_cell::sync::OnceCell;
-use crate::database::SafeConnection;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -108,7 +108,10 @@ impl RouteConfig for ApiRoutes {
             .route("/repeat-task/:id", delete(delete_repeat_task))
             .route("/repeat-task", get(get_all_repeat_tasks))
             .route("/repeat-task/active", get(get_active_repeat_tasks))
-            .route("/repeat-task/:id/status/:status", put(update_repeat_task_status))
+            .route(
+                "/repeat-task/:id/status/:status",
+                put(update_repeat_task_status),
+            )
             .with_state(state)
     }
 }
@@ -234,8 +237,7 @@ async fn delete_matter(
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    Matter::delete(&state.db, &id)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    Matter::delete(&state.db, &id).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
     Ok(Json(ApiResponse::<()>::success(())))
 }
 
@@ -297,7 +299,8 @@ async fn create_tag(
     let state = state.lock().await;
 
     // 分割字符串并去重
-    let names: Vec<String> = payload.names
+    let names: Vec<String> = payload
+        .names
         .split(',')
         .map(|s| s.trim().to_string())
         .collect::<std::collections::HashSet<_>>()
@@ -305,13 +308,14 @@ async fn create_tag(
         .collect();
 
     if names.is_empty() {
-        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+        return Err(ServerError::BadRequest(
+            "No valid tag names provided".into(),
+        ));
     }
 
     // 批量创建标签
     for name in names {
-        Tag::create(&state.db, &name)
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        Tag::create(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
     }
 
     Ok(Json(ApiResponse::<()>::success(())))
@@ -341,13 +345,14 @@ async fn delete_tag(
         .collect();
 
     if names.is_empty() {
-        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+        return Err(ServerError::BadRequest(
+            "No valid tag names provided".into(),
+        ));
     }
 
     // 批量删除标签
     for name in names {
-        Tag::delete(&state.db, &name)
-            .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+        Tag::delete(&state.db, &name).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
     }
 
     Ok(Json(ApiResponse::<()>::success(())))
@@ -368,7 +373,9 @@ async fn update_tag_last_used_at(
         .collect();
 
     if names.is_empty() {
-        return Err(ServerError::BadRequest("No valid tag names provided".into()));
+        return Err(ServerError::BadRequest(
+            "No valid tag names provided".into(),
+        ));
     }
 
     // 批量更新标签的最后使用时间
@@ -389,8 +396,7 @@ async fn create_repeat_task(
     task.updated_at = Utc::now();
 
     let state = state.lock().await;
-    RepeatTask::create(&state.db, &task)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    RepeatTask::create(&state.db, &task).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::success(task)))
 }
@@ -411,8 +417,8 @@ async fn get_all_repeat_tasks(
     State(state): State<Arc<Mutex<AppState>>>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    let tasks = RepeatTask::get_all(&state.db)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    let tasks =
+        RepeatTask::get_all(&state.db).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::success(tasks)))
 }
@@ -447,8 +453,7 @@ async fn delete_repeat_task(
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    RepeatTask::delete(&state.db, &id)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+    RepeatTask::delete(&state.db, &id).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::<()>::success(())))
 }
@@ -499,9 +504,7 @@ pub fn start_http_server(port: u16, db: Arc<SafeConnection>) -> Result<(), Strin
     // 存储服务实例
     match HTTP_SERVER.set(server) {
         Ok(_) => Ok(()),
-        Err(_) => Err(
-            "Failed to store HTTP server instance".into(),
-        ),
+        Err(_) => Err("Failed to store HTTP server instance".into()),
     }
 }
 

@@ -100,7 +100,10 @@ impl NotificationManager {
             let minutes = duration.num_minutes();
 
             // 计算任务总时长
-            let total_duration_minutes = matter.end_time.signed_duration_since(matter.start_time).num_minutes();
+            let total_duration_minutes = matter
+                .end_time
+                .signed_duration_since(matter.start_time)
+                .num_minutes();
 
             // 调整通知时间
             let adjusted_notify_before = if total_duration_minutes <= config.notify_before {

@@ -2,11 +2,11 @@
 
 use crate::utils;
 use chrono::{DateTime, TimeZone, Utc};
-use rusqlite::{params, Connection, OpenFlags, Result, OptionalExtension};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, Result};
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
 use std::sync::Arc;
 use std::sync::RwLock;
+use tauri::AppHandle;
 
 const CURRENT_DB_VERSION: u32 = 1;
 
@@ -58,16 +58,16 @@ pub struct Matter {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RepeatTask {
-    pub id: String,  // UUID 作为主键更合适
+    pub id: String, // UUID 作为主键更合适
     pub title: String,
-    pub tags: Option<String>,  // 用逗号分隔的标签字符串
-    pub repeat_time: String,   // 重复时间段值
+    pub tags: Option<String>, // 用逗号分隔的标签字符串
+    pub repeat_time: String,  // 重复时间段值
     pub status: i32,          // 使用枚举: 1=Active, 2=Paused, 3=Archived
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
     pub updated_at: DateTime<Utc>,
-    pub priority: i32,        // 与 Matter 保持一致的优先级
+    pub priority: i32, // 与 Matter 保持一致的优先级
     #[serde(default)]
     pub description: Option<String>,
 }
@@ -93,13 +93,13 @@ pub struct Tag {
 
 // 创建一个线程安全的数据库连接包装器
 pub struct SafeConnection {
-    conn: RwLock<Connection>
+    conn: RwLock<Connection>,
 }
 
 impl SafeConnection {
     pub fn new(conn: Connection) -> Self {
         Self {
-            conn: RwLock::new(conn)
+            conn: RwLock::new(conn),
         }
     }
 }
@@ -494,7 +494,8 @@ impl RepeatTask {
 
     pub fn get_active_tasks(conn: &Arc<SafeConnection>) -> Result<Vec<RepeatTask>> {
         let conn = conn.conn.read().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM repeat_task WHERE status = 1 ORDER BY created_at DESC")?;
+        let mut stmt =
+            conn.prepare("SELECT * FROM repeat_task WHERE status = 1 ORDER BY created_at DESC")?;
         let tasks = stmt
             .query_map([], |row| {
                 Ok(RepeatTask {

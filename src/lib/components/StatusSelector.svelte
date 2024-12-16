@@ -8,9 +8,9 @@
     export let onStatusValueChange: (status: number) => void;
 
     const STATUS_CONFIGS = [
-        { value: TaskStatus.Active, label: "激活", icon: Play },
-        { value: TaskStatus.Stopped, label: "停止", icon: Pause },
-        { value: TaskStatus.Archived, label: "归档", icon: Archive },
+        { value: TaskStatus.Active, label: "进行中", icon: Play },
+        { value: TaskStatus.Stopped, label: "已暂停", icon: Pause },
+        { value: TaskStatus.Archived, label: "已完成", icon: Archive },
     ];
 
     let open = false;
@@ -39,7 +39,7 @@
     <Popover.Trigger>
         <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
             <div class="flex items-center gap-2">
-                {#if status}
+                {#if status != null}
                     <svelte:component this={getStatusIcon(status)} class="w-4 h-4" />
                 {/if}
                 {getStatusLabel(status)}

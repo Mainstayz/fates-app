@@ -1,12 +1,11 @@
 <script lang="ts">
     // 导入必要的依赖
     import { emit, listen } from "@tauri-apps/api/event";
-    import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
+    import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
 
     // 导入组件
     import Timeline from "$lib/components/Timeline.svelte";
-    import EventFormFields from "$lib/components/EventFormFields.svelte";
     import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
     import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
     import { Button } from "$lib/components/ui/button";
@@ -18,7 +17,6 @@
 
     // 导入类型和工具函数
     import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
-    import { formatDateForInput, formatTimeForInput } from "$lib/utils";
     import { Plus } from "lucide-svelte";
     import {
         getAllMatters,
