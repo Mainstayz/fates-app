@@ -74,13 +74,11 @@
     async function updateHeatMapData() {
         try {
             const matters = await getAllMatters();
-            const dailyCounts = new Map<string, number>();
-
-            matters.forEach((matter) => {
-                // 使用 dayjs 处理日期，格式化为 YYYY-MM-DD
+            const dailyCounts = matters.reduce((acc, matter) => {
                 const dateKey = dayjs(matter.start_time).format("YYYY-MM-DD");
-                dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
-            });
+                acc.set(dateKey, (acc.get(dateKey) || 0) + 1);
+                return acc;
+            }, new Map<string, number>());
 
             heatmapData = Array.from(dailyCounts.entries()).map(([date, value]) => ({
                 date,
@@ -173,52 +171,39 @@
         }
     }
 
-    async function createTags(tags: string[]) {
-        try {
-            if (tags.length === 0) return;
-            console.log("create tags: ", tags);
-            if (tags.length === 1) {
-                await createTag(tags[0]);
-            } else {
-                let tagsStr = tags.join(",");
+    // 将标签管理相关的代码抽取为一个独立的类
+    class TagManager {
+        async createTags(tags: string[]) {
+            try {
+                if (!tags.length) return;
+
+                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
                 await createTag(tagsStr);
+            } catch (e) {
+                error(`创建标签失败: ${e}`);
             }
-        } catch (e) {
-            error(`创建标签失败: ${e}`);
         }
-    }
 
-    // 更新标签使用时间戳
-    async function updateTags(tags: string[]) {
-        try {
-            if (tags.length === 0) return;
-            console.log("update tags: ", tags);
-            if (tags.length === 1) {
-                await updateTagLastUsedAt(tags[0]);
-            } else {
-                let tagsStr = tags.join(",");
+        async updateTags(tags: string[]) {
+            try {
+                if (!tags.length) return;
+
+                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
                 await updateTagLastUsedAt(tagsStr);
+            } catch (e) {
+                error(`更新标签使用时间戳���败: ${e}`);
             }
-        } catch (e) {
-            error(`更新标签使用时间戳失败: ${e}`);
         }
-    }
 
-    // 加载标签
-    async function loadTags() {
-        try {
-            console.log("load tags ...");
-            if (tags.length > 0) {
+        async loadTags() {
+            try {
                 tags.splice(0, tags.length);
+                const allTags: Tag[] = await getAllTags();
+                tags.push(...allTags);
+                tags.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime());
+            } catch (e) {
+                error(`加载标签失败: ${e}`);
             }
-            const allTags: Tag[] = await getAllTags();
-            allTags.forEach((tag: Tag) => {
-                tags.push(tag);
-            });
-            tags.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime());
-            console.log(`load tags: ${tags.length}`);
-        } catch (e) {
-            error(`加载标签失败: ${e}`);
         }
     }
 
@@ -231,82 +216,103 @@
     let heatmapComponent: DailyHeatMap;
     let heatmapData: HeatMapData[] = $state([]);
 
-    // 修改 loadTimelineData，使用新的 updateHeatMapData 函数
-    async function loadTimelineData() {
-        try {
-            clearTimelineData();
-            const matters = await getAllMatters();
-            console.log("matters: ", matters);
+    // 将数据操作相关的代码抽取为一个独立的类
+    class TimelineDataManager {
+        constructor(private timelineComponent: Timeline) {}
 
-            for (const matter of matters) {
-                let newTags: string[] = [];
-                if (matter.tags && matter.tags.trim() !== "") {
-                    newTags = matter.tags.split(",");
+        async loadTimelineData() {
+            try {
+                this.clearTimelineData();
+                const matters = await getAllMatters();
+
+                for (const matter of matters) {
+                    const newTags = matter.tags?.trim() ? matter.tags.split(",") : [];
+
+                    this.timelineComponent.addItem({
+                        id: matter.id,
+                        group: "",
+                        content: matter.title,
+                        description: matter.description,
+                        priority: matter.priority,
+                        matter_type: matter.type_,
+                        start: new Date(matter.start_time),
+                        end: matter.end_time ? new Date(matter.end_time) : undefined,
+                        className: matter.reserved_1,
+                        tags: newTags,
+                        created_at: new Date(matter.created_at),
+                    });
                 }
 
-                timelineComponent.addItem({
-                    id: matter.id,
-                    group: "",
-                    content: matter.title,
-                    description: matter.description,
-                    priority: matter.priority,
-                    matter_type: matter.type_,
-                    start: new Date(matter.start_time),
-                    end: matter.end_time ? new Date(matter.end_time) : undefined,
-                    className: matter.reserved_1,
-                    tags: newTags,
-                    created_at: new Date(matter.created_at),
-                });
+                await this.updateHeatMapData();
+            } catch (e) {
+                error(`加载时间线数据失败: ${e}`);
             }
+        }
 
-            await updateHeatMapData();
-        } catch (e) {
-            error(`加载时间线数据失败: ${e}`);
+        async updateHeatMapData() {
+            try {
+                const matters = await getAllMatters();
+                const dailyCounts = matters.reduce((acc, matter) => {
+                    const dateKey = dayjs(matter.start_time).format("YYYY-MM-DD");
+                    acc.set(dateKey, (acc.get(dateKey) || 0) + 1);
+                    return acc;
+                }, new Map<string, number>());
+
+                heatmapData = Array.from(dailyCounts.entries()).map(([date, value]) => ({
+                    date,
+                    value,
+                }));
+
+                if (heatmapComponent) {
+                    heatmapComponent.redraw(heatmapData);
+                }
+            } catch (e) {
+                error(`更新热力图数据失败: ${e}`);
+            }
+        }
+
+        clearTimelineData() {
+            if (!this.timelineComponent) return;
+
+            const existingItems = this.timelineComponent.getAllItems() || [];
+            existingItems.forEach((item) => this.timelineComponent.removeItem(item.id));
         }
     }
 
-    // 清除时间线所有数据
-    function clearTimelineData() {
-        if (!timelineComponent) return;
+    // 将事件处理相关的代码抽取为一个独立的类
+    class TimelineEventHandler {
+        constructor(private timelineComponent: Timeline) {}
 
-        const existingItems = timelineComponent.getAllItems() || [];
-        existingItems.forEach((item) => timelineComponent.removeItem(item.id));
-    }
-
-    // 理论上不会走这个分支
-    const handleAdd = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        callback(item);
-    };
-
-    // 处理移动事件
-    const handleMove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        try {
-            await saveTimelineItem(item);
+        async handleAdd(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
             callback(item);
-        } catch (e) {
-            error(`保存时间线数据失败: ${e}`);
+        }
+
+        async handleMove(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
+            try {
+                await saveTimelineItem(item);
+                callback(item);
+            } catch (e) {
+                error(`保存时间线数据失败: ${e}`);
+                callback(null);
+            }
+        }
+
+        handleMoving(item: TimelineItem, callback: (item: TimelineItem) => void) {
+            callback(item);
+        }
+
+        async handleUpdate(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
+            editingItem = item;
+            editDialogOpen = true;
             callback(null);
         }
-    };
 
-    // 处理正在移动的事件（可以添加移动限制逻辑）
-    const handleMoving = (item: TimelineItem, callback: (item: TimelineItem) => void) => {
-        callback(item);
-    };
-
-    // 处理更新事件
-    const handleUpdate = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        editingItem = item;
-        editDialogOpen = true;
-        callback(null);
-    };
-
-    // 处理删除事件
-    const handleRemove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
-        deleteItem = item;
-        alertDelete = true;
-        callback(null);
-    };
+        async handleRemove(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
+            deleteItem = item;
+            alertDelete = true;
+            callback(null);
+        }
+    }
 
     // 对话框相关处理函数
     function handleDialogClose() {
@@ -331,8 +337,8 @@
         {
             event: "reload_timeline_data",
             handler: () => {
-                loadTags();
-                loadTimelineData();
+                tagManager?.loadTags();
+                timelineDataManager?.loadTimelineData();
             },
         },
         {
@@ -372,8 +378,30 @@
         unlisteners = [];
     }
 
+    // 将时间范围管理相关的代码抽取为一个独立的类
+    class TimeRangeManager {
+        public readonly TIME_RANGES = {
+            "6h": 3 * 60 * 60 * 1000,
+            "12h": 6 * 60 * 60 * 1000,
+            "1d": 12 * 60 * 60 * 1000,
+            "3d": 1.5 * 24 * 60 * 60 * 1000,
+            "7d": 3.5 * 24 * 60 * 60 * 1000,
+        } as const;
+
+        constructor(private timelineComponent: Timeline) {}
+
+        handleTimeRangeChange(value: keyof typeof this.TIME_RANGES) {
+            const now = Date.now();
+            const msOffset = this.TIME_RANGES[value] ?? this.TIME_RANGES["1d"];
+
+            this.timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
+        }
+    }
+
     // 添加处理时间范围变化的函数
     function handleTimeRangeChange(value: string) {
+        if (!timelineComponent) return;
+
         console.log("timeline range: ", value);
         selectedRange = value;
         const now = Date.now();
@@ -402,24 +430,92 @@
         timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
     }
 
-    // 添加 effect 监听 selectedRange 的变化
+    // 加 effect 监听 selectedRange 的变化
     $effect(() => {
         if (timelineComponent) {
             handleTimeRangeChange(selectedRange);
         }
     });
 
-    // 组件生命周期
+    // 首先声明管理器实例变量
+    let timelineDataManager: TimelineDataManager;
+    let tagManager: TagManager;
+    let timeRangeManager: TimeRangeManager;
+    let eventHandler: TimelineEventHandler;
+
+    // 修改 onMount，删除重复的 onMount 调用
     onMount(() => {
         console.log("timeline page onMount ...");
+
+        // 确保 timelineComponent 已经初始化
+        if (!timelineComponent) {
+            error("Timeline component not initialized");
+            return;
+        }
+
+        // 初始化各个管理器
+        timelineDataManager = new TimelineDataManager(timelineComponent);
+        tagManager = new TagManager();
+        timeRangeManager = new TimeRangeManager(timelineComponent);
+        eventHandler = new TimelineEventHandler(timelineComponent);
+
+        // 设置事件监听器
         setupEventListeners();
-        loadTimelineData();
-        handleTimeRangeChange(selectedRange);
+
+        // 加载数据
+        timelineDataManager.loadTimelineData();
+        tagManager.loadTags();
+
+        // 设置时间范围
+        timeRangeManager.handleTimeRangeChange(selectedRange as keyof typeof timeRangeManager.TIME_RANGES);
+
+        // 清理函数
         return () => {
             console.log("timeline page onUnmount ...");
             cleanupEventListeners();
         };
     });
+
+    // 将事件处理相关的代码修改为普通函数
+    const handleAdd = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        if (eventHandler) {
+            await eventHandler.handleAdd(item, callback);
+        } else {
+            callback(null);
+        }
+    };
+
+    const handleMove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        if (eventHandler) {
+            await eventHandler.handleMove(item, callback);
+        } else {
+            callback(null);
+        }
+    };
+
+    const handleMoving = (item: TimelineItem, callback: (item: TimelineItem) => void) => {
+        if (eventHandler) {
+            eventHandler.handleMoving(item, callback);
+        } else {
+            callback(item);
+        }
+    };
+
+    const handleUpdate = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        if (eventHandler) {
+            await eventHandler.handleUpdate(item, callback);
+        } else {
+            callback(null);
+        }
+    };
+
+    const handleRemove = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
+        if (eventHandler) {
+            await eventHandler.handleRemove(item, callback);
+        } else {
+            callback(null);
+        }
+    };
 </script>
 
 <div class="flex flex-col h-full">
@@ -499,7 +595,7 @@
                 />
             </div>
             <div class="flex flex-col pt-4 gap-2">
-                <Label class="text-lg text-muted-foreground">���历</Label>
+                <Label class="text-lg text-muted-foreground">历史</Label>
                 <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />
             </div>
         </div>
@@ -514,14 +610,14 @@
                     tagsList={tags.map((tag) => tag.name)}
                     callback={(item: TimelineItem, newTags: string[], selectedTags: string[]) => {
                         console.log("edit finish, save timeline item ...", item);
-                        Promise.all([createTags(newTags), saveTimelineItem(item)])
+                        Promise.all([tagManager.createTags(newTags), saveTimelineItem(item)])
                             .then(() => {
                                 timelineComponent.updateItem(item);
                                 editingItem = null;
-                                return updateTags(selectedTags);
+                                return tagManager.updateTags(selectedTags);
                             })
                             .then(() => {
-                                loadTags();
+                                tagManager.loadTags();
                             })
                             .catch((error) => {
                                 console.error("Failed to save changes:", error);

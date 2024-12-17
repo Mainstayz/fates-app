@@ -13,5 +13,5 @@
 </script>
 
 <div>
-    <PrioritySelector priority={value} variant="ghost" on:change={handlePriorityChange} />
+    <PrioritySelector priority={value} variant="outline" on:change={handlePriorityChange} />
 </div>

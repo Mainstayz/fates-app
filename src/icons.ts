@@ -16,3 +16,5 @@ export { default as CircleHelp } from "lucide-svelte/icons/circle-help";
 export { default as Tags } from "lucide-svelte/icons/tags";
 // repeat
 export { default as Repeat } from "lucide-svelte/icons/repeat";
+// list-todo
+export { default as ListTodo } from "lucide-svelte/icons/list-todo";

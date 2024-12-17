@@ -1,5 +1,5 @@
 use crate::database::SafeConnection;
-use crate::database::{KVStore, Matter, RepeatTask, Tag};
+use crate::database::{KVStore, Matter, RepeatTask, Tag, Todo};
 use axum::{
     extract::{Path, Query, State},
     response::IntoResponse,
@@ -112,6 +112,11 @@ impl RouteConfig for ApiRoutes {
                 "/repeat-task/:id/status/:status",
                 put(update_repeat_task_status),
             )
+            .route("/todo", post(create_todo))
+            .route("/todo/:id", get(get_todo))
+            .route("/todo/:id", put(update_todo))
+            .route("/todo/:id", delete(delete_todo))
+            .route("/todo", get(get_all_todos))
             .with_state(state)
     }
 }
@@ -464,6 +469,69 @@ async fn update_repeat_task_status(
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
     RepeatTask::update_status(&state.db, &id, status)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+// Todo 相关处理函数
+async fn create_todo(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Json(mut todo): Json<Todo>,
+) -> Result<impl IntoResponse, ServerError> {
+    todo.created_at = Utc::now();
+    todo.updated_at = Utc::now();
+
+    let state = state.lock().await;
+    Todo::create(&state.db, &todo)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(todo)))
+}
+
+async fn get_todo(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let todo = Todo::get_by_id(&state.db, &id)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?
+        .ok_or_else(|| ServerError::NotFound("Todo not found".into()))?;
+
+    Ok(Json(ApiResponse::success(todo)))
+}
+
+async fn get_all_todos(
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let todos = Todo::get_all(&state.db)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(todos)))
+}
+
+async fn update_todo(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+    Json(mut todo): Json<Todo>,
+) -> Result<impl IntoResponse, ServerError> {
+    todo.id = id;
+    todo.updated_at = Utc::now();
+
+    let state = state.lock().await;
+    todo.update(&state.db)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(todo)))
+}
+
+async fn delete_todo(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    Todo::delete(&state.db, &id)
         .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::<()>::success(())))

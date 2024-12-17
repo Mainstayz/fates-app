@@ -62,7 +62,7 @@ pub struct RepeatTask {
     pub title: String,
     pub tags: Option<String>, // 用逗号分隔的标签字符串
     pub repeat_time: String,  // 重复时间段值
-    pub status: i32,          // 使用枚举: 1=Active, 2=Paused, 3=Archived
+    pub status: i32,          // 使用枚举：1=Active, 2=Paused, 3=Archived
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
@@ -89,6 +89,17 @@ pub struct Tag {
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
     pub last_used_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Todo {
+    pub id: String, // UUID
+    pub title: String,
+    pub status: String, // "todo", "in_progress", "completed"
+    #[serde(default = "default_datetime")]
+    pub created_at: DateTime<Utc>,
+    #[serde(default = "default_datetime")]
+    pub updated_at: DateTime<Utc>,
 }
 
 // 创建一个线程安全的数据库连接包装器
@@ -179,6 +190,18 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             updated_at DATETIME NOT NULL,
             priority INTEGER DEFAULT 0,
             description TEXT DEFAULT ''
+        )",
+        [],
+    )?;
+
+    // 创建 todo 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS todo (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL
         )",
         [],
     )?;
@@ -552,6 +575,75 @@ impl RepeatTask {
             "UPDATE repeat_task SET status = ?1, updated_at = ?2 WHERE id = ?3",
             params![new_status, Utc::now(), id],
         )?;
+        Ok(())
+    }
+}
+
+impl Todo {
+    pub fn create(conn: &Arc<SafeConnection>, todo: &Todo) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "INSERT INTO todo (id, title, status, created_at, updated_at)
+    VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                todo.id,
+                todo.title,
+                todo.status,
+                todo.created_at,
+                todo.updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+    pub fn get_by_id(conn: &Arc<SafeConnection>, id: &str) -> Result<Option<Todo>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT FROM todo WHERE id = ?1")?;
+        let todo = stmt
+            .query_row(params![id], |row| {
+                Ok(Todo {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    status: row.get(2)?,
+                    created_at: row.get(3)?,
+                    updated_at: row.get(4)?,
+                })
+            })
+            .optional()?;
+        Ok(todo)
+    }
+    pub fn get_all(conn: &Arc<SafeConnection>) -> Result<Vec<Todo>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM todo ORDER BY created_at DESC")?;
+        let todos = stmt
+            .query_map([], |row| {
+                Ok(Todo {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    status: row.get(2)?,
+                    created_at: row.get(3)?,
+                    updated_at: row.get(4)?,
+                })
+            })?
+            .collect();
+        todos
+    }
+
+    pub fn update(&self, conn: &Arc<SafeConnection>) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE todo SET
+        title = ?1,
+        status = ?2,
+        updated_at = ?3
+        WHERE id = ?4",
+            params![self.title, self.status, self.updated_at, self.id],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute("DELETE FROM todo WHERE id = ?1", params![id])?;
         Ok(())
     }
 }

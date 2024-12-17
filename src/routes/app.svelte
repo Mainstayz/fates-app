@@ -6,6 +6,7 @@
     import StatisticsPage from "./statistics_page.svelte";
     import SettingsDialog from "./settings_dialog.svelte";
     import RepeatPage from "./repeat_page.svelte";
+    import TodoPage from "./todo_page.svelte";
     import TagsManagerPage from "./tags_manager_page.svelte";
     import { primaryRoutes } from "../config";
     import { check } from "@tauri-apps/plugin-updater";
@@ -20,6 +21,7 @@
     let tagsComponent = $state<TagsManagerPage | null>(null);
     let repeatComponent = $state<RepeatPage | null>(null);
     let timelineData = $state<TimelineData | null>(null);
+    let todoComponent = $state<TodoPage | null>(null);
 
     $inspect(navCollapsedSize);
 
@@ -107,6 +109,9 @@
             {/if}
             {#if selectedRoute === "repeat"}
                 <RepeatPage bind:this={repeatComponent} />
+            {/if}
+            {#if selectedRoute === "todo"}
+                <TodoPage bind:this={todoComponent} />
             {/if}
         </Resizable.Pane>
     </Resizable.PaneGroup>

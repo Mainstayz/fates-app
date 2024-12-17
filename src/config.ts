@@ -15,6 +15,11 @@ export const primaryRoutes: Route[] = [
         label: "timeline",
     },
     {
+        icon: Icons.ListTodo,
+        variant: "default",
+        label: "todo",
+    },
+    {
         icon: Icons.Repeat,
         variant: "default",
         label: "repeat",

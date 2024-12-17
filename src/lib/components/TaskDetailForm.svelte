@@ -20,10 +20,8 @@
         callback: (item: TimelineItem, newTags: string[], selectedTags: string[]) => void;
     } = $props();
 
-    let origianlSelectedTags: string[] = [];
-
     let localItem = $state({ ...item }); // 创建本地副本
-    let localTagsList = $state([...initialTagsList]); // 创建本地副本
+
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
     let description = $state(item.description || "");
@@ -31,7 +29,9 @@
     let priority = $state<Priority>(item.priority || Priority.Medium);
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
-    let selectedTags = $state(item.tags || []);
+
+    let localTagsList: string[] = [...(initialTagsList || [])]; // 创建本地副本
+    let localSelectedTags: string[] = [...(item.tags || [])];
 
     // 监听变化并更新 item
     function updateItem() {
@@ -52,7 +52,7 @@
                 break;
         }
 
-        let newTags = selectedTags.filter((tag) => tag !== "");
+        let newTags = localSelectedTags.filter((tag) => tag !== "");
         // 过滤空字符串
         const updatedItem = {
             ...localItem,
@@ -85,14 +85,8 @@
     }
 
     function handleTagsChange(tagsList: string[], selectedTags: string[]) {
-        // 不改变引用， 清空 localTagsList，并添加 tagsList
-        let filteredTagsList = tagsList.filter((tag) => tag !== "");
-        localTagsList.splice(0, localTagsList.length);
-        localTagsList.push(...filteredTagsList);
-
-        // 不改变引用， 清空 selectedTags，并添加 selectedTags
-        selectedTags.splice(0, selectedTags.length);
-        selectedTags.push(...selectedTags);
+        localTagsList = tagsList;
+        localSelectedTags = selectedTags;
     }
 
     onMount(() => {
@@ -104,22 +98,13 @@
             // 防止自动获取焦点
             (inputElement as HTMLElement).setAttribute("tabindex", "-1");
         }
-        if (selectedTags.length > 0) {
-            let revTags = selectedTags.reverse();
-            for (let tag of revTags) {
-                if (!localTagsList.includes(tag)) {
-                    localTagsList.unshift(tag);
-                }
-            }
-        }
         return () => {
-            let diffTags = selectedTags.filter((tag) => !origianlSelectedTags.includes(tag));
-            let outputTags = [...selectedTags];
+            let diffTags = localTagsList.filter((tag) => !initialTagsList.includes(tag));
             const updatedItem = updateItem();
             console.log("Before callback - updatedItem:", updatedItem);
-            console.log("Before callback - diffTags:", diffTags);
-            console.log("Before callback - outputTags:", outputTags);
-            callback(updatedItem, diffTags, outputTags);
+            console.log("Before callback - localTagsList:", localTagsList, "diff:", diffTags);
+            console.log("Before callback - selectedTags:", localSelectedTags);
+            callback(updatedItem, diffTags, localSelectedTags);
         };
     });
 
@@ -162,7 +147,11 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">标签</div>
                 <div>
-                    <TagsAddButton tagsList={localTagsList} {selectedTags} onTagsChange={handleTagsChange} />
+                    <TagsAddButton
+                        tagsList={localTagsList}
+                        selectedTags={localSelectedTags}
+                        onTagsChange={handleTagsChange}
+                    />
                 </div>
             </div>
         </div>

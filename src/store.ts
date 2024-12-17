@@ -33,6 +33,14 @@ export interface RepeatTask {
     description?: string;
 }
 
+export interface Todo {
+    id: string;
+    title: string;
+    status: string; // "todo", "in_progress", "completed"
+    created_at: string;
+    updated_at: string;
+}
+
 const post = async (url: string, body: any) => {
     // console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
@@ -212,5 +220,36 @@ export const deleteRepeatTask = async (id: string) => {
 export const updateRepeatTaskStatus = async (id: string, status: number) => {
     const url = `${API_BASE_URL}/repeat-task/${id}/status/${status}`;
     const response = await put(url, {});
+    return processResponse(url, response);
+};
+
+// Todo API
+export const createTodo = async (todo: Todo) => {
+    const url = `${API_BASE_URL}/todo`;
+    const response = await post(url, todo);
+    return processResponse(url, response);
+};
+
+export const getTodoById = async (id: string) => {
+    const url = `${API_BASE_URL}/todo/${id}`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const getAllTodos = async (): Promise<Todo[]> => {
+    const url = `${API_BASE_URL}/todo`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const updateTodo = async (id: string, todo: Todo) => {
+    const url = `${API_BASE_URL}/todo/${id}`;
+    const response = await put(url, todo);
+    return processResponse(url, response);
+};
+
+export const deleteTodo = async (id: string) => {
+    const url = `${API_BASE_URL}/todo/${id}`;
+    const response = await delete_(url);
     return processResponse(url, response);
 };
