@@ -3,6 +3,7 @@
     import type { TimelineItem } from "$lib/types";
     import { Label } from "$lib/components/ui/label";
     let { items }: { items: TimelineItem[] } = $props();
+    console.log("On reciver items: ", items);
 </script>
 
 <div class="flex flex-col h-full">

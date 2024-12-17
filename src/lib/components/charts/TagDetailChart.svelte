@@ -10,10 +10,12 @@
 
     function getChartOptions() {
         return {
-            series: [{
-                name: "时长（小时）",
-                data: data.map(d => d.duration),
-            }],
+            series: [
+                {
+                    name: "时长（小时）",
+                    data: data.map((d) => d.duration),
+                },
+            ],
             chart: {
                 type: "bar",
                 height: "100%",
@@ -37,7 +39,7 @@
                 align: "center",
             },
             xaxis: {
-                categories: data.map(d => d.content),
+                categories: data.map((d) => d.content),
                 labels: {
                     show: false,
                 },
@@ -46,6 +48,11 @@
                 },
                 axisTicks: {
                     show: false,
+                },
+            },
+            yaxis: {
+                labels: {
+                    show: true,
                 },
             },
             grid: {
@@ -65,8 +72,16 @@
         };
     }
 
-    $: if (chart && data) {
-        chart.updateOptions(getChartOptions());
+    function updateChart() {
+        if (chart && data) {
+            chart.updateOptions(getChartOptions());
+        }
+    }
+
+    $: {
+        data;
+        selectedTag;
+        updateChart();
     }
 
     onMount(() => {

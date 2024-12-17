@@ -30,11 +30,10 @@
     }
 
     function onRouteSelect(route: string) {
-        console.log("onRouteSelect", route);
-
         if (route === "statistics" && timelineComponent) {
-            console.log(statisticsComponent);
-            timelineData = timelineComponent.getAllItems();
+            let allItems = timelineComponent.getAllItems();
+            console.log("Switch statistics :", allItems);
+            timelineData = allItems;
         }
 
         // 更新选中的路由

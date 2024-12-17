@@ -6,14 +6,20 @@
     import BarChart from "./charts/BarChart.svelte";
     import TagDetailChart from "./charts/TagDetailChart.svelte";
     import type { TimelineItem } from "$lib/types";
-    import { calculateTagStats, filterItemsByRange, type TimeRange, UNCLASSIFIED_TAG, OTHER_TAG } from "$lib/utils/statistics";
+    import {
+        calculateTagStats,
+        filterItemsByRange,
+        type TimeRange,
+        UNCLASSIFIED_TAG,
+        OTHER_TAG,
+    } from "$lib/utils/statistics";
 
     // 定义组件的属性和状态
-    let { items }: { items: TimelineItem[] } = $props();  // 接收时间项数组作为属性
+    let { items }: { items: TimelineItem[] } = $props(); // 接收时间项数组作为属性
 
     // 定义响应式状态
-    let selectedRange: TimeRange = $state("all");     // 选中的时间范围，默认为"全部"
-    let selectedTag: string | null = $state(null);    // 选中的标签，默认为 null
+    let selectedRange: TimeRange = $state("all"); // 选中的时间范围，默认为"全部"
+    let selectedTag: string | null = $state(null); // 选中的标签，默认为 null
 
     // 定义时间范围选项
     const timeRanges = [
@@ -25,19 +31,29 @@
 
     // 处理标签选择的函数
     function handleTagSelect(tag: string) {
+        console.log("Selected Tag:", tag);
         selectedTag = tag;
     }
 
     // 获取图表数据的函数
     function getChartData() {
-        // 计算所选时间范围内的标签统计数据
-        const stats = calculateTagStats(items, selectedRange);
-        const tags = Object.keys(stats);              // 获取所有标签
-        const durations = Object.values(stats);       // 获取对应的持续时间
-        const totalDuration = durations.reduce((a, b) => a + b, 0);  // 计算总时长
-        const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));  // 转换为小时
+        try {
+            const stats = calculateTagStats(items, selectedRange);
+            const tags = Object.keys(stats);
+            const durations = Object.values(stats);
+            const totalDuration = durations.reduce((a, b) => a + b, 0);
+            const durationHours = durations.map((d) => +(d / (1000 * 60 * 60)).toFixed(2));
 
-        return { tags, durations, durationHours, totalDuration };
+            // Validate data before returning
+            if (tags.length === 0 || durations.length === 0) {
+                return null;
+            }
+
+            return { tags, durations, durationHours, totalDuration };
+        } catch (error) {
+            console.error("Error in getChartData:", error);
+            return null;
+        }
     }
 
     // 获取标签详细数据的函数
@@ -56,7 +72,6 @@
         // 处理"其他"标签的特殊情况
         // 获取排名靠后的标签（第 10 个之后的所有标签）
         if (selectedTag === OTHER_TAG) {
-
             console.log('Processing "其他" tag');
             // 用于存储每个标签的总时长
             const tagDurations: { [key: string]: number } = {};
@@ -76,8 +91,7 @@
             });
 
             // 按时长降序排序标签
-            const sortedEntries = Object.entries(tagDurations)
-                .sort(([, a], [, b]) => b - a);
+            const sortedEntries = Object.entries(tagDurations).sort(([, a], [, b]) => b - a);
 
             console.log("Total tags before filtering:", sortedEntries.length);
 
@@ -101,7 +115,7 @@
                 // 转换为所需的数据格式
                 .map((item) => {
                     const duration = +(
-                        (new Date(item.end).getTime() - new Date(item.start).getTime()) /
+                        (new Date(item.end!).getTime() - new Date(item.start).getTime()) /
                         (1000 * 60 * 60)
                     ).toFixed(2);
                     console.log("Mapped item:", item.content, "duration:", duration);
@@ -127,7 +141,7 @@
                 .map((item) => ({
                     content: item.content,
                     duration: +(
-                        (new Date(item.end).getTime() - new Date(item.start).getTime()) /
+                        (new Date(item.end!).getTime() - new Date(item.start).getTime()) /
                         (1000 * 60 * 60)
                     ).toFixed(2),
                 }))
@@ -150,9 +164,10 @@
             // 转换为所需的数据格式
             .map((item) => ({
                 content: item.content,
-                duration: +((new Date(item.end).getTime() - new Date(item.start).getTime()) / (1000 * 60 * 60)).toFixed(
-                    2
-                ),
+                duration: +(
+                    (new Date(item.end!).getTime() - new Date(item.start).getTime()) /
+                    (1000 * 60 * 60)
+                ).toFixed(2),
             }))
             // 按时长降序排序并只取前 10 个
             .sort((a, b) => b.duration - a.duration)
@@ -202,26 +217,38 @@
                 <div class="w-1/3 flex items-center justify-center">
                     {#if items?.length > 0}
                         {@const chartData = getChartData()}
-                        <PieChart
-                            data={{
-                                tags: chartData.tags,
-                                durations: chartData.durations,
-                                totalDuration: chartData.totalDuration,
-                            }}
-                            onTagSelect={handleTagSelect}
-                        />
+                        {#if chartData}
+                            <PieChart
+                                data={{
+                                    tags: chartData.tags,
+                                    durations: chartData.durations,
+                                    totalDuration: chartData.totalDuration,
+                                }}
+                                onTagSelect={handleTagSelect}
+                            />
+                        {:else}
+                            <div class="flex items-center justify-center h-full text-gray-500">
+                                <p>无法生成图表数据</p>
+                            </div>
+                        {/if}
                     {/if}
                 </div>
                 <div class="w-2/3 flex items-center justify-center">
                     {#if items?.length > 0}
                         {@const chartData = getChartData()}
-                        <BarChart
-                            data={{
-                                tags: chartData.tags,
-                                durationHours: chartData.durationHours,
-                            }}
-                            onTagSelect={handleTagSelect}
-                        />
+                        {#if chartData}
+                            <BarChart
+                                data={{
+                                    tags: chartData.tags,
+                                    durationHours: chartData.durationHours,
+                                }}
+                                onTagSelect={handleTagSelect}
+                            />
+                        {:else}
+                            <div class="flex items-center justify-center h-full text-gray-500">
+                                <p>无法生成图表数据</p>
+                            </div>
+                        {/if}
                     {/if}
                 </div>
             </div>
