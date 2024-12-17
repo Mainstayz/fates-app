@@ -1,6 +1,5 @@
 <script lang="ts">
     import * as Alert from "$lib/components/ui/alert";
-    // import { load } from "@tauri-apps/plugin-store";
     import { invoke } from "@tauri-apps/api/core";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";

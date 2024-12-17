@@ -44,7 +44,6 @@
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
     let switchAddTaskInput = $state(false);
-    let switchTaskDetailInput = $state(false);
 
     // 编辑状态管理
     let editingItem: TimelineItem | null = $state(null);
@@ -53,8 +52,6 @@
     // 删除状态管理
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
-    let alertClearAll = $state(false);
-    let showClearAllDialog = $state(false);
 
     let tags = $state<Tag[]>([]);
 
@@ -310,34 +307,6 @@
         alertDelete = true;
         callback(null);
     };
-
-    // 处理编辑事件提交
-    function handleEditSubmit(
-        event: CustomEvent<{
-            title: string;
-            startTime: Date;
-            endTime: Date;
-            tags: string[];
-            color: string;
-        }>
-    ) {
-        if (!editingItem) return;
-
-        const formData = event.detail;
-        const updatedItem: TimelineItem = {
-            ...editingItem,
-            content: formData.title,
-            start: formData.startTime,
-            end: formData.endTime,
-            className: formData.color,
-            tags: formData.tags,
-        };
-
-        timelineComponent.updateItem(updatedItem);
-        editingItem = null;
-        editDialogOpen = false;
-        saveTimelineItem(updatedItem);
-    }
 
     // 对话框相关处理函数
     function handleDialogClose() {
