@@ -91,13 +91,13 @@
 
     onMount(() => {
         // 获取输入框元素
-        const inputElement = document.querySelector('input[placeholder="任务标题"]');
-        if (inputElement) {
-            // 移除焦点
-            (inputElement as HTMLElement).blur();
-            // 防止自动获取焦点
-            (inputElement as HTMLElement).setAttribute("tabindex", "-1");
-        }
+        // const inputElement = document.querySelector('input[placeholder="任务标题"]');
+        // if (inputElement) {
+        //     // 移除焦点
+        //     (inputElement as HTMLElement).blur();
+        //     // 防止自动获取焦点
+        //     (inputElement as HTMLElement).setAttribute("tabindex", "-1");
+        // }
         return () => {
             let diffTags = localTagsList.filter((tag) => !initialTagsList.includes(tag));
             const updatedItem = updateItem();

@@ -3,7 +3,9 @@
     import * as Select from "$lib/components/ui/select";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import * as Switch from "$lib/components/ui/switch";
+    import { Switch } from "$lib/components/ui/switch";
+
+    import { Separator } from "$lib/components/ui/separator";
     import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
     import { onMount, onDestroy } from "svelte";
     import { open as openPath } from "@tauri-apps/plugin-shell";
@@ -11,14 +13,14 @@
     import { emit } from "@tauri-apps/api/event";
     import { Button } from "$lib/components/ui/button";
     import { confirm } from "@tauri-apps/plugin-dialog";
-    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
-    import { Card } from "$lib/components/ui/card";
+    import { cubicInOut } from "svelte/easing";
+    import { crossfade } from "svelte/transition";
     let { open = $bindable(), ...props } = $props();
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
     let checkInterval = $state(2); // 默认 2 小时
-    let currentTab = $state("ui");
+    let currentSection = $state("common");
 
     // 添加语言选项配置
     const languages = [
@@ -47,7 +49,6 @@
     async function initSettings() {
         try {
             autoStart = await isEnabled();
-            // let settings = await load("settings.json", { autoSave: false });
             language = "zh";
             checkInterval = 2;
         } catch (error) {
@@ -118,6 +119,13 @@
         }
     }
 
+    const [send, receive] = crossfade({
+        duration: 250,
+        easing: cubicInOut,
+    });
+
+    const navItems = [{ id: "common", title: "通用" }] as const;
+
     onMount(async () => {
         await initSettings();
     });
@@ -130,99 +138,95 @@
 </script>
 
 <Dialog.Root bind:open>
-    <Dialog.Content class="sm:max-w-[800px]">
-        <Dialog.Header>
+    <Dialog.Portal>
+        <Dialog.Overlay class="bg-[#000000]/20" />
+        <Dialog.Content class="sm:max-w-[800px] h-[600px]">
+            <!-- <Dialog.Header class="bg-yellow-500">
             <Dialog.Title>设置</Dialog.Title>
-        </Dialog.Header>
-        <Tabs
-            orientation="vertical"
-            data-orientation="vertical"
-            value={currentTab}
-            onValueChange={(v) => {
-                currentTab = v;
-            }}
-            class="w-full"
-        >
-            <div class="grid grid-cols-[100px_1fr] gap-6">
-                <!-- 左侧导航栏 -->
-                <TabsList>
-                    <TabsTrigger value="ui" class="w-full justify-start">UI</TabsTrigger>
-                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
-                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
+        </Dialog.Header> -->
+            <div class="flex flex-col gap-4">
+                <Label class="text-2xl font-bold">设置</Label>
+                <div class="grid grid-cols-[200px_1fr] gap-6">
+                    <!-- 左侧导航栏 -->
+                    <div class="flex flex-col gap-2">
+                        {#each navItems as item}
+                            {@const isActive = currentSection === item.id}
+                            <Button
+                                variant="ghost"
+                                class="relative justify-start hover:bg-transparent"
+                                onclick={() => (currentSection = item.id)}
+                            >
+                                {#if isActive}
+                                    <!-- 样式相关：
+                                absolute inset-0 - 使 div 绝对定位并填充整个按钮区域
+                                rounded-md - 添加圆角
+                                bg-muted - 设置背景色为浅灰色
+                                动画相关：
+                                in:send 和 out:receive 是 Svelte 的 crossfade 过渡效果
+                                当一个按钮被选中时：
+                                旧的激活背景会通过 out:receive 过渡消失
+                                新的激活背景会通过 in:send 过渡出现
+                                key: "active-settings-tab" 用于标识这些元素是相互关联的，确保它们之间能够正确地进行过 -->
+                                    <div
+                                        class="absolute inset-0 rounded-md bg-muted"
+                                        in:send={{ key: "active-settings-tab" }}
+                                        out:receive={{ key: "active-settings-tab" }}
+                                    ></div>
+                                {/if}
+                                <span class="relative">{item.title}</span>
+                            </Button>
+                        {/each}
+                    </div>
 
-                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
-                </TabsList>
+                    <!-- 右侧内容区 -->
+                    <div class="flex flex-col p-4 rounded-lg gap-4">
+                        {#if currentSection === "common"}
+                            <!-- <div>
+                        <h3 class="text-lg font-medium">通用</h3>
+                        <p class="text-muted-foreground text-sm">通用设置</p>
+                    </div> -->
 
-                <!-- 右侧内容区 -->
-                <div class="min-h-[500px]">
-                    <TabsContent value="ui">
-                        <Card class="p-6">
-                            <h2 class="text-lg font-semibold mb-4">UI 设置</h2>
-                            <!-- 这里可以添加 UI 相关的设置选项 -->
-                        </Card>
-                    </TabsContent>
+                            <!-- <Separator class="my-4" /> -->
 
-                    <TabsContent value="common">
-                        <Card class="p-6">
-                            <h2 class="text-lg font-semibold mb-4">通用设置</h2>
-                            <!-- 这里可以添加通用设置选项 -->
-                        </Card>
-                    </TabsContent>
+                            <!-- 开机启动 -->
+                            <div class="flex items-center justify-between space-x-2">
+                                <Label for="necessary" class="flex flex-col flex-1 space-y-1">
+                                    <span>开机启动</span>
+                                    <span class="text-muted-foreground text-xs font-normal leading-snug">
+                                        设置开机启动
+                                    </span>
+                                </Label>
+                                <Switch id="necessary" bind:checked={autoStart} />
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <!-- 语言 -->
+                                <Label for="language">
+                                    <span>语言</span>
+                                </Label>
+
+                                <Select.Root type="single" bind:value={language}>
+                                    <Select.Trigger>
+                                        <span>{getLanguageLabel(language)}</span>
+                                    </Select.Trigger>
+                                    <Select.Content>
+                                        {#each languages as language}
+                                            <Select.Item value={language.value}>{language.label}</Select.Item>
+                                        {/each}
+                                    </Select.Content>
+                                </Select.Root>
+                            </div>
+                        {:else if currentSection === "common_1"}
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-medium">通用设置</h3>
+                                <!-- 通用设置内容 -->
+                            </div>
+                        {/if}
+                    </div>
                 </div>
             </div>
-        </Tabs>
-        <!-- <div class="grid gap-4 py-4">
-            <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="language-select" class="text-right">语言</Label>
-                <div class="col-span-3">
-                    <Select.Root type="single" bind:value={language}>
-                        <Select.Trigger class="w-full">
-                            {getLanguageLabel(language)}
-                        </Select.Trigger>
-                        <Select.Content>
-                            {#each languages as languageOption}
-                                <Select.Item value={languageOption.value}>
-                                    {languageOption.label}
-                                </Select.Item>
-                            {/each}
-                        </Select.Content>
-                    </Select.Root>
-                </div>
-            </div>
-            <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="autostart-switch" class="text-right">开机启动</Label>
-                <div class="col-span-3">
-                    <Switch.Root id="autostart-switch" checked={autoStart} onCheckedChange={handleAutoStartChange} />
-                </div>
-            </div>
-            <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="check-interval-input" class="text-right">检测间隔 (小时)</Label>
-                <Input
-                    id="check-interval-input"
-                    type="number"
-                    min="0.5"
-                    max="24"
-                    step="0.5"
-                    class="col-span-3"
-                    bind:value={checkInterval}
-                />
-            </div>
-            <div class="grid grid-cols-4 items-center gap-4">
-                <Label class="text-right">数据管理</Label>
-                <div class="col-span-3 space-x-2">
-                    <Button variant="secondary" size="sm" onclick={openDataFolder}>打开数据文件夹</Button>
-                    <Button variant="secondary" size="sm" onclick={reloadData}>重新加载数据</Button>
-                    <Button variant="destructive" size="sm" onclick={handleClearData}>清除所有数据</Button>
-                    <p class="text-sm text-muted-foreground mt-2">
-                        清除数据将永久删除所有事件记录和标签数据，此操作不可恢复。
-                    </p>
-                </div>
-            </div>
-        </div> -->
-        <Dialog.Footer>
-            <Dialog.Close class="btn">关闭</Dialog.Close>
-        </Dialog.Footer>
-    </Dialog.Content>
+        </Dialog.Content>
+    </Dialog.Portal>
 </Dialog.Root>
 
 <style>

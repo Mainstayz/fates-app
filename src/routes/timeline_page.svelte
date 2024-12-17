@@ -603,10 +603,11 @@
 
     <!-- 编辑页面 -->
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
-        <Dialog.Content>
-            {#if editingItem}
+        <Dialog.Portal>
+            <Dialog.Overlay class="bg-[#000000]/20" />
+            <Dialog.Content trapFocus={false} interactOutsideBehavior="ignore">
                 <TaskDetailForm
-                    item={editingItem}
+                    item={editingItem!}
                     tagsList={tags.map((tag) => tag.name)}
                     callback={(item: TimelineItem, newTags: string[], selectedTags: string[]) => {
                         console.log("edit finish, save timeline item ...", item);
@@ -624,8 +625,8 @@
                             });
                     }}
                 />
-            {/if}
-        </Dialog.Content>
+            </Dialog.Content>
+        </Dialog.Portal>
     </Dialog.Root>
 
     {#if deleteItem}
