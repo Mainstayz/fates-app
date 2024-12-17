@@ -389,11 +389,11 @@ impl KVStore {
         Ok(())
     }
 
-    pub fn get(conn: &Arc<SafeConnection>, key: &str) -> Result<Option<String>> {
+    pub fn get(conn: &Arc<SafeConnection>, key: &str, default: &str) -> Result<String> {
         let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare("SELECT value FROM kvstore WHERE key = ?1")?;
         let value = stmt.query_row(params![key], |row| row.get(0)).optional()?;
-        Ok(value)
+        Ok(value.unwrap_or(default.to_string()))
     }
 
     pub fn delete(conn: &Arc<SafeConnection>, key: &str) -> Result<()> {

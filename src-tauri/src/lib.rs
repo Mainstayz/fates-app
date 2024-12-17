@@ -107,22 +107,28 @@ pub fn run() {
             let notification_manager = NotificationManager::new(
                 config,
                 move || {
-                    // 从数据库读取设置
-                    if let Ok(Some(check_interval)) =
-                        KVStore::get(&db_clone, SETTING_KEY_CHECK_INTERVAL)
+                    // 从数据库读取 SETTING_KEY_CHECK_INTERVAL
+                    if let Ok(check_interval) =
+                        KVStore::get(&db_clone, SETTING_KEY_CHECK_INTERVAL, "15")
                     {
+                        // 解析
                         if let Ok(interval) = check_interval.parse::<i64>() {
                             static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> =
                                 std::sync::Mutex::new(None);
+                            // 最后检查时间
                             let mut last = LAST_CHECK.lock().unwrap();
+                            // 获取现在
                             let now = std::time::Instant::now();
 
                             if let Some(last_check) = *last {
                                 let elapsed = now.duration_since(last_check);
-                                if elapsed.as_secs() >= (interval as u64 * 3600) {
+                                let interval_secs = interval as u64 * 60;
+                                if elapsed.as_secs() >= interval_secs{
                                     *last = Some(now);
                                     return true;
                                 }
+                                // 打印
+                                log::debug!("Elapsed {:?} s, less than interval {} s", elapsed.as_secs(), interval_secs);
                             } else {
                                 *last = Some(now);
                                 return true;

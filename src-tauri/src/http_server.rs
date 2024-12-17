@@ -274,9 +274,8 @@ async fn get_kv(
     Path(key): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let state = state.lock().await;
-    let value = KVStore::get(&state.db, &key)
-        .map_err(|e| ServerError::DatabaseError(e.to_string()))?
-        .ok_or_else(|| ServerError::NotFound("Key not found".into()))?;
+    let value = KVStore::get(&state.db, &key,"")
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?;
 
     Ok(Json(ApiResponse::success(value)))
 }
