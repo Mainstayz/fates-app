@@ -237,11 +237,11 @@
         // 初始化 Timeline
         timeline = new Timeline(container, itemsDataSet, options);
 
-        // 添加时间窗口重置
-        timeline.on("rangechanged", () => {
-            if (resetTimeout) window.clearTimeout(resetTimeout);
-            resetTimeout = window.setTimeout(debouncedCheckTimeWindow, 3000);
-        });
+        // 添加时间窗口重置定时器
+        // timeline.on("rangechanged", () => {
+        //     if (resetTimeout) window.clearTimeout(resetTimeout);
+        //     resetTimeout = window.setTimeout(debouncedCheckTimeWindow, 3000);
+        // });
     });
 
     // 检查时间窗口
