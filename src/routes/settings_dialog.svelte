@@ -11,11 +11,14 @@
     import { emit } from "@tauri-apps/api/event";
     import { Button } from "$lib/components/ui/button";
     import { confirm } from "@tauri-apps/plugin-dialog";
+    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
+    import { Card } from "$lib/components/ui/card";
     let { open = $bindable(), ...props } = $props();
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
     let checkInterval = $state(2); // 默认 2 小时
+    let currentTab = $state("ui");
 
     // 添加语言选项配置
     const languages = [
@@ -131,7 +134,44 @@
         <Dialog.Header>
             <Dialog.Title>设置</Dialog.Title>
         </Dialog.Header>
-        <div class="grid gap-4 py-4">
+        <Tabs
+            orientation="vertical"
+            data-orientation="vertical"
+            value={currentTab}
+            onValueChange={(v) => {
+                currentTab = v;
+            }}
+            class="w-full"
+        >
+            <div class="grid grid-cols-[100px_1fr] gap-6">
+                <!-- 左侧导航栏 -->
+                <TabsList>
+                    <TabsTrigger value="ui" class="w-full justify-start">UI</TabsTrigger>
+                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
+                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
+
+                    <TabsTrigger value="common" class="w-full justify-start">通用</TabsTrigger>
+                </TabsList>
+
+                <!-- 右侧内容区 -->
+                <div class="min-h-[500px]">
+                    <TabsContent value="ui">
+                        <Card class="p-6">
+                            <h2 class="text-lg font-semibold mb-4">UI 设置</h2>
+                            <!-- 这里可以添加 UI 相关的设置选项 -->
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="common">
+                        <Card class="p-6">
+                            <h2 class="text-lg font-semibold mb-4">通用设置</h2>
+                            <!-- 这里可以添加通用设置选项 -->
+                        </Card>
+                    </TabsContent>
+                </div>
+            </div>
+        </Tabs>
+        <!-- <div class="grid gap-4 py-4">
             <div class="grid grid-cols-4 items-center gap-4">
                 <Label for="language-select" class="text-right">语言</Label>
                 <div class="col-span-3">
@@ -178,7 +218,7 @@
                     </p>
                 </div>
             </div>
-        </div>
+        </div> -->
         <Dialog.Footer>
             <Dialog.Close class="btn">关闭</Dialog.Close>
         </Dialog.Footer>

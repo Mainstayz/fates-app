@@ -97,8 +97,8 @@ importers:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.49)
       bits-ui:
-        specifier: 1.0.0-next.69
-        version: 1.0.0-next.69(svelte@5.10.1)
+        specifier: 1.0.0-next.72
+        version: 1.0.0-next.72(svelte@5.10.1)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1086,8 +1086,8 @@ packages:
   binary-search-bounds@2.0.5:
     resolution: {integrity: sha512-H0ea4Fd3lS1+sTEB2TgcLoK21lLhwEJzlQv3IN47pJS976Gx4zoWe0ak3q+uYh60ppQxg9F16Ri4tS1sfD4+jA==}
 
-  bits-ui@1.0.0-next.69:
-    resolution: {integrity: sha512-XN7Uso5gmI4GFtb/5zzce9sSzH/39gX3q6pxoSkV9bAa5mN9Lc+R6hZUDgx3cGY/quWBF/wFPqXgk27Nw2VkSw==}
+  bits-ui@1.0.0-next.72:
+    resolution: {integrity: sha512-a5KlTSiju/lGmlGxA2KjVTLYYewaGos+aw1et3CXcPW2+UC/HfV/jiCiHt7SEGIJvCbEKH5RKPBrHzewBEfZlQ==}
     engines: {node: '>=18', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0-next.1
@@ -2764,7 +2764,7 @@ snapshots:
 
   binary-search-bounds@2.0.5: {}
 
-  bits-ui@1.0.0-next.69(svelte@5.10.1):
+  bits-ui@1.0.0-next.72(svelte@5.10.1):
     dependencies:
       '@floating-ui/core': 1.6.8
       '@floating-ui/dom': 1.6.12

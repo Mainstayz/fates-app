@@ -5,6 +5,7 @@
     import TimelinePage from "./timeline_page.svelte";
     import StatisticsPage from "./statistics_page.svelte";
     import SettingsDialog from "./settings_dialog.svelte";
+    import SettingsPage from "./settings.svelte";
     import RepeatPage from "./repeat_page.svelte";
     import TodoPage from "./todo_page.svelte";
     import TagsManagerPage from "./tags_manager_page.svelte";
@@ -12,10 +13,11 @@
     import { check } from "@tauri-apps/plugin-updater";
     import { relaunch } from "@tauri-apps/plugin-process";
     import { onMount } from "svelte";
+    import { Dialog, DialogContent } from "$lib/components/ui/dialog";
 
     let navCollapsedSize = $state(5);
     let selectedRoute = $state("");
-    let settingsOpen = $state(false);
+    let settingsOpen = $state(true);
     let statisticsComponent = $state<StatisticsPage | null>(null);
     let timelineComponent = $state<TimelinePage | null>(null);
     let tagsComponent = $state<TagsManagerPage | null>(null);
