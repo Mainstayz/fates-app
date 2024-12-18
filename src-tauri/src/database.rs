@@ -62,7 +62,7 @@ pub struct RepeatTask {
     pub title: String,
     pub tags: Option<String>, // 用逗号分隔的标签字符串
     pub repeat_time: String, // 重复时间段值
-    pub status: i32, // 使用枚举：1=Active, 2=Paused, 3=Archived
+    pub status: i32, // 使用枚举：1=Active, 0=Stopped, -1=Archived
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]

@@ -1,4 +1,4 @@
-use crate::database::{ KVStore, Matter, SafeConnection };
+use crate::database::{ KVStore, Matter, RepeatTask, SafeConnection };
 use crate::models::{
     MessageBoxData,
     Notification,
@@ -8,9 +8,12 @@ use crate::models::{
     SETTING_KEY_CHECK_INTERVAL,
     SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
 };
-use chrono::{ DateTime, Local, NaiveTime };
+use chrono::{ DateTime, Local, NaiveTime, Utc };
+use chinese_holiday::*;
+
 use std::sync::{ Arc, Mutex };
 use std::time::Duration;
+
 use tauri::{ AppHandle, Emitter };
 
 use tauri_plugin_notification::NotificationExt;
@@ -67,17 +70,23 @@ impl NotificationManager {
 
                 let now = Local::now();
 
-                // Skip if not in work time
+                // 检查是否在工作时间
                 if !Self::is_work_time(&now, &config) {
                     log::debug!("当前时间 {} 不在工作时间内", now);
                     continue;
                 }
 
-                // log::debug!("当前时间 {} 在工作时间内", now);
-                let data = get_timeline(); // 使用回调获取最新数据
+                let data = get_timeline(); // 获取最新数据
 
-                // Check for no tasks
-                // log::debug!("开始检查���有任务的情况...");
+                // TODO: 添加循环任务检查
+                // if let Err(e) = Self::check_repeat_tasks(&now, &data, &db, &callback) {
+                //     log::error!("检查循环任务失败：{}", e);
+                // }
+
+                // 检查即将开始和结束的任务
+                Self::check_upcoming_tasks(&now, &data, &config, &callback);
+
+                // 检查是否需要发送"没有任务"的提醒
                 if Self::should_notify_no_tasks(&now, &data) {
                     log::info!("未找到计划任务，正在发送通知");
                     callback(Notification {
@@ -87,12 +96,7 @@ impl NotificationManager {
                         timestamp: now.to_rfc3339(),
                         notification_type: NotificationType::NoTask,
                     });
-                    continue;
                 }
-
-                // Check upcoming tasks
-                // log::debug!("开始检查即将到来、结束的任务情况...");
-                Self::check_upcoming_tasks(&now, &data, &config, &callback);
             }
         });
     }
@@ -107,65 +111,37 @@ impl NotificationManager {
         let now_utc = now.with_timezone(&chrono::Utc);
 
         for matter in matters {
-            let duration = matter.start_time.signed_duration_since(now_utc);
-            let minutes = duration.num_minutes();
+            // 检查任务是否即将结束
+            let end_duration = matter.end_time.signed_duration_since(now_utc);
+            let minutes_to_end = end_duration.num_minutes();
 
-            // 计算任务总时长
-            let total_duration_minutes = matter.end_time
-                .signed_duration_since(matter.start_time)
-                .num_minutes();
+            if minutes_to_end <= config.notify_before && minutes_to_end > 0 {
+                callback(Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: "任务即将结束".to_string(),
+                    message: format!("任务「{}」将在 {} 分钟后结束", matter.title, minutes_to_end),
+                    timestamp: now.to_rfc3339(),
+                    notification_type: NotificationType::TaskEnd,
+                });
+                continue;
+            }
 
-            // 调整通知时间
-            let adjusted_notify_before = if total_duration_minutes <= config.notify_before {
-                total_duration_minutes
-            } else {
-                config.notify_before
-            };
+            // 检查任务是否即将开始
+            let start_duration = matter.start_time.signed_duration_since(now_utc);
+            let minutes_to_start = start_duration.num_minutes();
 
-            // 检查开始通知
-            if minutes <= adjusted_notify_before && minutes > 0 {
+            if minutes_to_start <= config.notify_before && minutes_to_start > 0 {
                 callback(Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: "任务即将开始".to_string(),
-                    message: format!("任务「{}」将在 {} 分钟后开始", matter.title, minutes),
+                    message: format!(
+                        "任务「{}」将在 {} 分钟后开始",
+                        matter.title,
+                        minutes_to_start
+                    ),
                     timestamp: now.to_rfc3339(),
                     notification_type: NotificationType::TaskStart,
                 });
-
-                // 处理短任务情况
-                if total_duration_minutes <= config.notify_before {
-                    callback(Notification {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        title: "短任务提醒".to_string(),
-                        message: format!(
-                            "注意：任务「{}」总时长仅 {} 分钟",
-                            matter.title,
-                            total_duration_minutes
-                        ),
-                        timestamp: now.to_rfc3339(),
-                        notification_type: NotificationType::TaskEnd,
-                    });
-                }
-            }
-
-            // 检查结束通知
-            if total_duration_minutes > config.notify_before {
-                let end_duration = matter.end_time.signed_duration_since(now_utc);
-                let minutes_to_end = end_duration.num_minutes();
-
-                if minutes_to_end <= config.notify_before && minutes_to_end > 0 {
-                    callback(Notification {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        title: "任务即将结束".to_string(),
-                        message: format!(
-                            "任务「{}」将在 {} 分钟后结束",
-                            matter.title,
-                            minutes_to_end
-                        ),
-                        timestamp: now.to_rfc3339(),
-                        notification_type: NotificationType::TaskEnd,
-                    });
-                }
             }
         }
     }
@@ -344,5 +320,65 @@ impl NotificationManager {
         });
 
         notification_manager
+    }
+
+    /// 检查并处理循环任务
+    fn check_repeat_tasks(
+        now: &DateTime<Local>,
+        matters: &[Matter],
+        db: &Arc<SafeConnection>,
+        callback: &Arc<dyn Fn(Notification) + Send + Sync>
+    ) -> Result<(), rusqlite::Error> {
+        // 获取所有活跃的循环任务
+        let repeat_tasks = RepeatTask::get_active_tasks(db)?;
+
+        // 过滤出今天应该添加的循环任务
+        let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
+        let today_end = now.date_naive().and_hms_opt(23, 59, 59).unwrap();
+
+        for task in repeat_tasks {
+            // TODO: 这里需要根据 repeat_time 的格式来判断是否应该在今天添加任务
+            // 暂时简单判断 - 如果今天没有相同标题的任务，就添加
+            let task_exists = matters.iter().any(|m| m.title == task.title);
+
+            if !task_exists {
+                // 创建新的 Matter 实例
+                let new_matter = Matter {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: task.title.clone(),
+                    description: task.description.clone(),
+                    tags: task.tags.clone(),
+                    // TODO: 根据 repeat_time 设置具体时间
+                    start_time: Utc::now(),
+                    end_time: Utc::now() + chrono::Duration::hours(1),
+                    priority: task.priority,
+                    type_: 0, // 默认类型
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                    reserved_1: None,
+                    reserved_2: None,
+                    reserved_3: None,
+                    reserved_4: None,
+                    reserved_5: None,
+                };
+
+                // 添加到数据库
+                if let Err(e) = Matter::create(db, &new_matter) {
+                    log::error!("创建循环任务失败：{}", e);
+                    continue;
+                }
+
+                // 发送通知
+                callback(Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: "新增循环任务".to_string(),
+                    message: format!("已添加循环任务「{}」", task.title),
+                    timestamp: now.to_rfc3339(),
+                    notification_type: NotificationType::TaskStart,
+                });
+            }
+        }
+
+        Ok(())
     }
 }
