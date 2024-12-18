@@ -1,11 +1,22 @@
-use crate::database::Matter;
-use crate::models::{Notification, NotificationConfig, NotificationType};
-use chrono::{DateTime, Local, NaiveTime};
-use std::sync::{Arc, Mutex};
+use crate::database::{ KVStore, Matter, SafeConnection };
+use crate::models::{
+    MessageBoxData,
+    Notification,
+    NotificationConfig,
+    NotificationType,
+    NOTIFICATION_MESSAGE,
+    SETTING_KEY_CHECK_INTERVAL,
+    SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
+};
+use chrono::{ DateTime, Local, NaiveTime };
+use std::sync::{ Arc, Mutex };
 use std::time::Duration;
-use tauri::AppHandle;
+use tauri::{ AppHandle, Emitter };
+
 use tauri_plugin_notification::NotificationExt;
 use tokio::time;
+
+use crate::tray::flash_tray_icon;
 
 /// 通知管理器结构体
 /// - check_handler: 返回值为 true 时，才进行后续的检查
@@ -14,8 +25,8 @@ use tokio::time;
 /// - callback: 发送通知的回调函数
 pub struct NotificationManager {
     config: NotificationConfig,
-    check_handler: Arc<dyn Fn() -> bool + Send + Sync>,
-    get_timeline: Arc<dyn Fn() -> Vec<Matter> + Send + Sync>,
+    check_handler: Arc<dyn (Fn() -> bool) + Send + Sync>,
+    get_timeline: Arc<dyn (Fn() -> Vec<Matter>) + Send + Sync>,
     callback: Arc<dyn Fn(Notification) + Send + Sync>,
 }
 
@@ -23,9 +34,9 @@ impl NotificationManager {
     /// 创建新的通知管理器实例
     pub fn new(
         config: NotificationConfig,
-        check_handler: impl Fn() -> bool + Send + Sync + 'static,
-        get_timeline: impl Fn() -> Vec<Matter> + Send + Sync + 'static,
-        callback: impl Fn(Notification) + Send + Sync + 'static,
+        check_handler: impl (Fn() -> bool) + Send + Sync + 'static,
+        get_timeline: impl (Fn() -> Vec<Matter>) + Send + Sync + 'static,
+        callback: impl Fn(Notification) + Send + Sync + 'static
     ) -> Self {
         NotificationManager {
             config,
@@ -91,7 +102,7 @@ impl NotificationManager {
         now: &DateTime<Local>,
         matters: &[Matter],
         config: &NotificationConfig,
-        callback: &Arc<dyn Fn(Notification) + Send + Sync>,
+        callback: &Arc<dyn Fn(Notification) + Send + Sync>
     ) {
         let now_utc = now.with_timezone(&chrono::Utc);
 
@@ -100,8 +111,7 @@ impl NotificationManager {
             let minutes = duration.num_minutes();
 
             // 计算任务总时长
-            let total_duration_minutes = matter
-                .end_time
+            let total_duration_minutes = matter.end_time
                 .signed_duration_since(matter.start_time)
                 .num_minutes();
 
@@ -129,7 +139,8 @@ impl NotificationManager {
                         title: "短任务提醒".to_string(),
                         message: format!(
                             "注意：任务「{}」总时长仅 {} 分钟",
-                            matter.title, total_duration_minutes
+                            matter.title,
+                            total_duration_minutes
                         ),
                         timestamp: now.to_rfc3339(),
                         notification_type: NotificationType::TaskEnd,
@@ -148,7 +159,8 @@ impl NotificationManager {
                         title: "任务即将结束".to_string(),
                         message: format!(
                             "任务「{}」将在 {} 分钟后结束",
-                            matter.title, minutes_to_end
+                            matter.title,
+                            minutes_to_end
                         ),
                         timestamp: now.to_rfc3339(),
                         notification_type: NotificationType::TaskEnd,
@@ -173,11 +185,7 @@ impl NotificationManager {
         let work_start = match NaiveTime::parse_from_str(&config.work_start_time, "%H:%M") {
             Ok(time) => time,
             Err(e) => {
-                log::error!(
-                    "解析工作开始时间失败：{}, 时间字符串：{}",
-                    e,
-                    config.work_start_time
-                );
+                log::error!("解析工作开始时间失败：{}, 时间字符串：{}", e, config.work_start_time);
                 return false;
             }
         };
@@ -231,7 +239,7 @@ impl NotificationManager {
     pub fn send_notification(
         app_handle: tauri::AppHandle,
         title: &str,
-        body: &str,
+        body: &str
     ) -> Result<(), String> {
         app_handle
             .notification()
@@ -240,5 +248,101 @@ impl NotificationManager {
             .body(body)
             .show()
             .map_err(|e| format!("发送通知失败：{}", e))
+    }
+
+    // 添加新的初始化函数
+    pub fn initialize(app: &tauri::App, db: Arc<SafeConnection>) -> Arc<NotificationManager> {
+        // 初始化通知配置
+        let config = NotificationConfig {
+            work_start_time: "00:01".to_string(),
+            work_end_time: "24:00".to_string(),
+            check_interval: 1,
+            notify_before: 15,
+        };
+
+        let db_clone = db.clone();
+        let db_clone_2 = db.clone();
+        let db_clone_3 = db.clone();
+        let app_handle_clone = app.handle().clone();
+
+        // 创建通知管理器
+        let notification_manager = NotificationManager::new(
+            config,
+            move || {
+                if
+                    let Ok(check_interval) = KVStore::get(
+                        &db_clone,
+                        SETTING_KEY_CHECK_INTERVAL,
+                        "15"
+                    )
+                {
+                    if let Ok(interval) = check_interval.parse::<i64>() {
+                        static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(
+                            None
+                        );
+                        let mut last = LAST_CHECK.lock().unwrap();
+                        let now = std::time::Instant::now();
+
+                        if let Some(last_check) = *last {
+                            let elapsed = now.duration_since(last_check);
+                            let interval_secs = (interval as u64) * 60;
+                            if elapsed.as_secs() >= interval_secs {
+                                *last = Some(now);
+                                return true;
+                            }
+                            log::debug!(
+                                "Elapsed {:?} s, less than interval {} s",
+                                elapsed.as_secs(),
+                                interval_secs
+                            );
+                        } else {
+                            *last = Some(now);
+                            return true;
+                        }
+                    }
+                }
+                false
+            },
+            move || Matter::get_all(&db_clone_2).unwrap_or_default(),
+            move |notification| {
+                let title = notification.title.clone();
+                let body = notification.message.clone();
+
+                // 保存消息到数据库
+                let message_box = MessageBoxData {
+                    title: title.clone(),
+                    description: body.clone(),
+                };
+                let json = serde_json::to_string(&message_box).unwrap();
+                let _ = KVStore::set(&db_clone_3, SETTING_KEY_NOTIFICATION_MESSAGE_DATA, &json);
+
+                // 发送通知消息
+                let _ = app_handle_clone.emit(NOTIFICATION_MESSAGE, message_box);
+
+                // 闪烁托盘图标
+                flash_tray_icon(app_handle_clone.clone(), true);
+
+                // 发送系统通知
+                if
+                    let Err(e) = NotificationManager::send_notification(
+                        app_handle_clone.clone(),
+                        &title,
+                        &body
+                    )
+                {
+                    log::error!("发送通知失败：{}", e);
+                }
+            }
+        );
+
+        let notification_manager = Arc::new(notification_manager);
+
+        // 启动通知循环
+        let nm_clone = notification_manager.clone();
+        tauri::async_runtime::spawn(async move {
+            nm_clone.start_notification_loop().await;
+        });
+
+        notification_manager
     }
 }

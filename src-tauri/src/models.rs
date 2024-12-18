@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 
 // SettingKey - HTTP 相关
 pub const SETTING_KEY_HTTP_SERVER_PORT: &str = "httpServerPort";
@@ -28,9 +28,9 @@ pub struct MessageBoxData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationConfig {
     pub work_start_time: String, // "08:00"
-    pub work_end_time: String,   // "18:00"
-    pub check_interval: u64,     // 检查间隔 (分钟)
-    pub notify_before: i64,      // 提前多少分钟通知
+    pub work_end_time: String, // "18:00"
+    pub check_interval: u64, // 检查间隔 (分钟)
+    pub notify_before: i64, // 提前多少分钟通知
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +44,7 @@ pub struct Notification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NotificationType {
-    NoTask,    // 没有任务提醒
+    NoTask, // 没有任务提醒
     TaskStart, // 任务即将开始
-    TaskEnd,   // 任务即将结束
+    TaskEnd, // 任务即将结束
 }
