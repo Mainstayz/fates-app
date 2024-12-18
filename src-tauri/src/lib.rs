@@ -28,10 +28,14 @@ async fn auto_launch(app: tauri::AppHandle, enable: bool) {
 pub fn run() {
     let logger_builder = tauri_plugin_log::Builder
         ::new()
-        .level(log::LevelFilter::Debug)
         .clear_targets()
         .targets([
-            Target::new(TargetKind::Stdout),
+            Target::new(TargetKind::Stdout)
+                .filter(|metadata| {
+                    let target = metadata.target();
+                    // 仅仅允许 fates 开头的日志
+                    target.starts_with("fates")
+                }),
             Target::new(TargetKind::Webview),
             Target::new(TargetKind::LogDir {
                 file_name: Some("rust".into()),
@@ -40,17 +44,11 @@ pub fn run() {
                 file_name: Some("webview".into()),
             }).filter(|metadata| metadata.target() == WEBVIEW_TARGET),
         ])
-        .filter(|metadata| {
-            metadata.target() != "hyper" &&
-                metadata.target() != "hyper_util::client::legacy::pool" &&
-                metadata.target() != "hyper_util::client::legacy::connect::dns" &&
-                metadata.target() != "hyper_util::client::legacy::connect::http"
-        })
-        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
-        // .format(|out, message, record| {
-        //     out.finish(format_args!("[{} {}] {}", record.level(), record.target(), message))
-        // })
-        .build();
+        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal);
+
+    // 在构建应用之前设置环境变量
+    // std::env::set_var("RUST_LOG", "info,hyper=off,hyper_util=off");
+
     let builder = tauri::Builder
         ::default()
         .plugin(
@@ -76,7 +74,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(logger_builder)
+        .plugin(logger_builder.build())
         .invoke_handler(
             tauri::generate_handler![auto_launch, get_tray_flash_state, flash_tray_icon]
         )
