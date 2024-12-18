@@ -18,6 +18,12 @@ pub const SETTING_KEY_NOTIFY_BEFORE_MINUTES: &str = "notifyBeforeMinutes";
 // 常量定义
 pub const NOTIFICATION_MESSAGE: &str = "notification-message";
 
+// 通知刷新时间进度
+pub const NOTIFICATION_REFRESH_TIME_PROGRESS: &str = "refresh-time-progress";
+
+// 通知 reload_timeline_data
+pub const NOTIFICATION_RELOAD_TIMELINE_DATA: &str = "reload-timeline-data";
+
 // 消息盒子数据结构
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageBoxData {

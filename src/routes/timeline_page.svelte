@@ -244,6 +244,7 @@
                 }
 
                 await this.updateHeatMapData();
+                await emit("refresh-time-progress");
             } catch (e) {
                 error(`加载时间线数据失败: ${e}`);
             }

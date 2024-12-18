@@ -7,11 +7,12 @@ use crate::models::{
     NOTIFICATION_MESSAGE,
     SETTING_KEY_CHECK_INTERVAL,
     SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
+    NOTIFICATION_RELOAD_TIMELINE_DATA,
 };
-use chrono::{ DateTime, Local, NaiveTime, Utc, TimeZone, Datelike, Timelike, Weekday };
+use chrono::{ DateTime, Local, NaiveTime, Utc, TimeZone, Datelike };
 use chinese_holiday::*;
 
-use std::sync::{ Arc, Mutex };
+use std::sync::{ Arc };
 use std::time::Duration;
 
 use tauri::{ AppHandle, Emitter };
@@ -21,13 +22,10 @@ use tokio::time;
 
 use crate::tray::flash_tray_icon;
 
-/// 通知管理器结构体
-/// - check_handler: 返回值为 true 时，才进行后续的检查
-/// - get_timeline: 获取时间线数据的回调函数
-/// - config: 通知配置
-/// - callback: 发送通知的回调函数
 pub struct NotificationManager {
     config: NotificationConfig,
+    app_handle: AppHandle,
+    db: Arc<SafeConnection>,
     check_handler: Arc<dyn (Fn() -> bool) + Send + Sync>,
     get_timeline: Arc<dyn (Fn() -> Vec<Matter>) + Send + Sync>,
     callback: Arc<dyn Fn(Notification) + Send + Sync>,
@@ -37,12 +35,16 @@ impl NotificationManager {
     /// 创建新的通知管理器实例
     pub fn new(
         config: NotificationConfig,
+        app_handle: AppHandle,
+        db: Arc<SafeConnection>,
         check_handler: impl (Fn() -> bool) + Send + Sync + 'static,
         get_timeline: impl (Fn() -> Vec<Matter>) + Send + Sync + 'static,
         callback: impl Fn(Notification) + Send + Sync + 'static
     ) -> Self {
         NotificationManager {
             config,
+            app_handle,
+            db,
             check_handler: Arc::new(check_handler),
             get_timeline: Arc::new(get_timeline),
             callback: Arc::new(callback),
@@ -57,6 +59,9 @@ impl NotificationManager {
         let get_timeline = Arc::clone(&self.get_timeline);
         let config = self.config.clone();
         let callback = Arc::clone(&self.callback);
+
+        let db = Arc::clone(&self.db);
+        let app_handle = self.app_handle.clone();
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
@@ -76,18 +81,24 @@ impl NotificationManager {
                     continue;
                 }
 
-                let data = get_timeline(); // 获取最新数据
+                let timeline_items = get_timeline(); // 获取最新数据
 
-                // TODO: 添加循环任务检查
-                // if let Err(e) = Self::check_repeat_tasks(&now, &data, &db, &callback) {
-                //     log::error!("检查循环任务失败：{}", e);
-                // }
+                if
+                    let Err(e) = Self::check_repeat_tasks(
+                        &now,
+                        &timeline_items,
+                        &db,
+                        app_handle.clone()
+                    )
+                {
+                    log::error!("检查循环任务失败：{}", e);
+                }
 
                 // 检查即将开始和结束的任务
-                Self::check_upcoming_tasks(&now, &data, &config, &callback);
+                Self::check_upcoming_tasks(&now, &timeline_items, &config, &callback);
 
                 // 检查是否需要发送"没有任务"的提醒
-                if Self::should_notify_no_tasks(&now, &data) {
+                if Self::should_notify_no_tasks(&now, &timeline_items) {
                     log::info!("未找到计划任务，正在发送通知");
                     callback(Notification {
                         id: uuid::Uuid::new_v4().to_string(),
@@ -101,7 +112,7 @@ impl NotificationManager {
         });
     }
 
-    /// Check and notify for upcoming task starts and ends
+    // 检查并通知即将到来的任务开始和结束
     fn check_upcoming_tasks(
         now: &DateTime<Local>,
         matters: &[Matter],
@@ -111,10 +122,10 @@ impl NotificationManager {
         let now_utc = now.with_timezone(&chrono::Utc);
 
         for matter in matters {
-            // 检查任务是否即将结束
             let end_duration = matter.end_time.signed_duration_since(now_utc);
             let minutes_to_end = end_duration.num_minutes();
 
+            // 如果任务在通知时间内即将结束，则发送通知
             if minutes_to_end <= config.notify_before && minutes_to_end > 0 {
                 callback(Notification {
                     id: uuid::Uuid::new_v4().to_string(),
@@ -126,11 +137,11 @@ impl NotificationManager {
                 continue;
             }
 
-            // 检查任务是否即将开始
+            // 如果任务在通知时间内即将开始，则发送通知
             let start_duration = matter.start_time.signed_duration_since(now_utc);
             let minutes_to_start = start_duration.num_minutes();
 
-            if minutes_to_start <= config.notify_before && minutes_to_start > 0 {
+            if minutes_to_start <= config.notify_before && minutes_to_start >= 0 {
                 callback(Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: "任务即将开始".to_string(),
@@ -182,6 +193,7 @@ impl NotificationManager {
         // );
 
         // 如果结束时间是 24:00，且当前时间大于等于工作开始时间，就认为在工作时间内
+
         if config.work_end_time == "24:00" {
             current_time >= work_start
         } else {
@@ -239,11 +251,14 @@ impl NotificationManager {
         let db_clone = db.clone();
         let db_clone_2 = db.clone();
         let db_clone_3 = db.clone();
+
         let app_handle_clone = app.handle().clone();
 
         // 创建通知管理器
         let notification_manager = NotificationManager::new(
             config,
+            app.handle().clone(),
+            db.clone(),
             move || {
                 if
                     let Ok(check_interval) = KVStore::get(
@@ -395,14 +410,15 @@ impl NotificationManager {
         Some((start_time, end_time))
     }
 
-    /// 修改 check_repeat_tasks 方法
     fn check_repeat_tasks(
         now: &DateTime<Local>,
         matters: &[Matter],
         db: &Arc<SafeConnection>,
-        callback: &Arc<dyn Fn(Notification) + Send + Sync>
+        app_handle: AppHandle
     ) -> Result<(), rusqlite::Error> {
         let repeat_tasks = RepeatTask::get_active_tasks(db)?;
+
+        let mut created_count = 0;
 
         for task in repeat_tasks {
             // 检查任务是否在今天可用
@@ -470,6 +486,13 @@ impl NotificationManager {
                     reserved_5: None,
                 };
 
+                log::debug!(
+                    "创建循环任务，id: {}, title: {}, repeat_time: {}",
+                    new_matter.id,
+                    task.title,
+                    task.repeat_time
+                );
+
                 // 添加到数据库
                 if let Err(e) = Matter::create(db, &new_matter) {
                     log::error!("创建循环任务失败：{}", e);
@@ -479,15 +502,13 @@ impl NotificationManager {
                 // 设置今天已经创建过
                 let _ = KVStore::set(db, &store_key, "1");
 
-                // 发送通知
-                callback(Notification {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    title: "新增循环任务".to_string(),
-                    message: format!("已添加循环任务「{}」", task.title),
-                    timestamp: now.to_rfc3339(),
-                    notification_type: NotificationType::TaskStart,
-                });
+                created_count += 1;
             }
+        }
+
+        // 发送通知刷新时间进度
+        if created_count > 0 {
+            let _ = app_handle.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
         }
 
         Ok(())
