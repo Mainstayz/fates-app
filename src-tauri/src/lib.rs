@@ -38,6 +38,8 @@ pub fn run() {
                 file_name: Some("webview".into()),
             }).filter(|metadata| metadata.target() == WEBVIEW_TARGET),
         ])
+        // 排除掉 hyper 和
+        .filter(|metadata| metadata.target() != "hyper")
         .build();
     let builder = tauri::Builder
         ::default()

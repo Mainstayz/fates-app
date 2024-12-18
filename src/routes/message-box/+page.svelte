@@ -57,13 +57,13 @@
         try {
             title = payload.title;
             description = payload.description;
-            // 触发高度更新事件
+            console.log("On receive notification message, title:", title, "description:", description);
             updateHeight(true);
         } catch (error) {
             console.error("Failed to handle notification:", error);
         }
     }
-
+    // notification-message
     async function setupEventListeners() {
         try {
             const notificationUnlisten = await listen<NotificationPayload>("notification-message", (event) =>

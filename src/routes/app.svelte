@@ -15,7 +15,7 @@
 
     let navCollapsedSize = $state(5);
     let selectedRoute = $state("");
-    let settingsOpen = $state(true);
+    let settingsOpen = $state(false);
     let statisticsComponent = $state<StatisticsPage | null>(null);
     let timelineComponent = $state<TimelinePage | null>(null);
     let tagsComponent = $state<TagsManagerPage | null>(null);
