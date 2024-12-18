@@ -39,7 +39,7 @@ pub struct Matter {
     #[serde(default)]
     pub priority: i32,
     #[serde(default)]
-    pub type_: i32, // type 是 Rust 关键字，所以使用 type_
+    pub type_: i32, // type 是 Rust 关键字，所以使用 type_, 0 为普通任务，1 为循环任务
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]

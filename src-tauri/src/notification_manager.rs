@@ -8,7 +8,7 @@ use crate::models::{
     SETTING_KEY_CHECK_INTERVAL,
     SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
 };
-use chrono::{ DateTime, Local, NaiveTime, Utc };
+use chrono::{ DateTime, Local, NaiveTime, Utc, TimeZone, Datelike, Timelike, Weekday };
 use chinese_holiday::*;
 
 use std::sync::{ Arc, Mutex };
@@ -322,41 +322,149 @@ impl NotificationManager {
         notification_manager
     }
 
-    /// 检查并处理循环任务
+    /// 检查循环任务在今天是否可用
+    fn is_repeat_task_available_today(task: &RepeatTask, now: &DateTime<Local>) -> bool {
+        // 解析 repeat_time 字符串
+        let parts: Vec<&str> = task.repeat_time.split('|').collect();
+        if parts.len() != 3 {
+            log::error!("无效的 repeat_time 格式：{}", task.repeat_time);
+            return false;
+        }
+
+        // 解析位移值
+        let bits = match parts[0].parse::<i32>() {
+            Ok(b) => b,
+            Err(e) => {
+                log::error!("解析位移值失败：{}, 值：{}", e, parts[0]);
+                return false;
+            }
+        };
+
+        // 获取今天是星期几 (0-6, 0 是周日)
+        let weekday = now.weekday().num_days_from_sunday() as i32;
+        let weekday_bit = 1 << weekday;
+
+        // 检查是否匹配当前星期
+        if (bits & weekday_bit) == 0 {
+            return false;
+        }
+
+        // 检查是否需要排除节假日
+        let exclude_holidays = (bits & (1 << 7)) != 0;
+        if exclude_holidays {
+            use chinese_holiday::Ymd;
+            let is_holiday = chinese_holiday
+                ::chinese_holiday(Ymd::new(now.year() as u16, now.month() as u8, now.day() as u8))
+                .is_holiday();
+
+            if is_holiday {
+                return false;
+            }
+        }
+
+        // 解析开始和结束时间
+        let start_time = match NaiveTime::parse_from_str(parts[1], "%H:%M") {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!("解析开始时间失败：{}, 值：{}", e, parts[1]);
+                return false;
+            }
+        };
+
+        let end_time = match NaiveTime::parse_from_str(parts[2], "%H:%M") {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!("解析结束时间失败：{}, 值：{}", e, parts[2]);
+                return false;
+            }
+        };
+
+        true
+    }
+
+    /// 获取循环任务的开始和结束时间
+    fn get_repeat_task_times(task: &RepeatTask) -> Option<(NaiveTime, NaiveTime)> {
+        let parts: Vec<&str> = task.repeat_time.split('|').collect();
+        if parts.len() != 3 {
+            return None;
+        }
+
+        let start_time = NaiveTime::parse_from_str(parts[1], "%H:%M").ok()?;
+        let end_time = NaiveTime::parse_from_str(parts[2], "%H:%M").ok()?;
+
+        Some((start_time, end_time))
+    }
+
+    /// 修改 check_repeat_tasks 方法
     fn check_repeat_tasks(
         now: &DateTime<Local>,
         matters: &[Matter],
         db: &Arc<SafeConnection>,
         callback: &Arc<dyn Fn(Notification) + Send + Sync>
     ) -> Result<(), rusqlite::Error> {
-        // 获取所有活跃的循环任务
         let repeat_tasks = RepeatTask::get_active_tasks(db)?;
 
-        // 过滤出今天应该添加的循环任务
-        let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
-        let today_end = now.date_naive().and_hms_opt(23, 59, 59).unwrap();
-
         for task in repeat_tasks {
-            // TODO: 这里需要根据 repeat_time 的格式来判断是否应该在今天添加任务
-            // 暂时简单判断 - 如果今天没有相同标题的任务，就添加
-            let task_exists = matters.iter().any(|m| m.title == task.title);
+            // 检查任务是否在今天可用
+            if !Self::is_repeat_task_available_today(&task, now) {
+                log::debug!("任务 {}, {} 今天不可用", task.title, task.repeat_time);
+                continue;
+            }
 
-            if !task_exists {
+            // 检查今天是否已经创建了该任务
+            // 存到 reserved_2 中
+            let task_exists = matters.iter().any(|m| {
+                if let Some(reserved_2) = &m.reserved_2 { *reserved_2 == task.id } else { false }
+            });
+
+            if task_exists {
+                log::debug!("任务 {}, {} 今天已创建", task.title, task.repeat_time);
+                continue;
+            }
+            // repeat_task_<task_id>_<date(format: yyyy_mm_dd)>
+            let store_key = format!(
+                "repeat_task_{}_{}",
+                task.id,
+                now.date_naive().format("%Y_%m_%d")
+            );
+
+            let task_value = KVStore::get(db, &store_key, "0");
+            if task_value.is_ok() && task_value.unwrap() == "1" {
+                log::debug!("任务 {}, {} 今天创建过，跳过", task.title, task.repeat_time);
+                continue;
+            }
+
+            // 获取任务时间
+            if let Some((start_time, end_time)) = Self::get_repeat_task_times(&task) {
+                // 创建今天的日期时间
+                let today = now.date_naive();
+                let start_dt = today.and_time(start_time);
+                let end_dt = today.and_time(end_time);
+
+                // if priority is 1, color is red
+                // if priority is 0, color is yellow
+                // if priority is -1, color is green
+                let color = match task.priority {
+                    1 => "red",
+                    0 => "blue",
+                    -1 => "green",
+                    _ => "blue",
+                };
+
                 // 创建新的 Matter 实例
                 let new_matter = Matter {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: task.title.clone(),
                     description: task.description.clone(),
                     tags: task.tags.clone(),
-                    // TODO: 根据 repeat_time 设置具体时间
-                    start_time: Utc::now(),
-                    end_time: Utc::now() + chrono::Duration::hours(1),
+                    start_time: Utc.from_local_datetime(&start_dt).unwrap(),
+                    end_time: Utc.from_local_datetime(&end_dt).unwrap(),
                     priority: task.priority,
-                    type_: 0, // 默认类型
+                    type_: 1, // 1 为循环任务
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
-                    reserved_1: None,
-                    reserved_2: None,
+                    reserved_1: Some(color.to_string()),
+                    reserved_2: Some(task.id.clone()),
                     reserved_3: None,
                     reserved_4: None,
                     reserved_5: None,
@@ -367,6 +475,9 @@ impl NotificationManager {
                     log::error!("创建循环任务失败：{}", e);
                     continue;
                 }
+
+                // 设置今天已经创建过
+                let _ = KVStore::set(db, &store_key, "1");
 
                 // 发送通知
                 callback(Notification {
