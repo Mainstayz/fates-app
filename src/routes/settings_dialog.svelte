@@ -15,12 +15,35 @@
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { cubicInOut } from "svelte/easing";
     import { crossfade } from "svelte/transition";
+    // store
+    import { getKV, setKV } from "../store";
     let { open = $bindable(), ...props } = $props();
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
-    let checkInterval = $state(2); // 默认 2 小时
+    let checkInterval = $state("120"); // 默认 120 分钟
     let currentSection = $state("common");
+
+    let workStart = $state("09:00");
+    let workEnd = $state("18:00");
+
+    const InternalMap = {
+        "120": "2 小时",
+        "240": "4 小时",
+        "360": "6 小时",
+    } as const;
+
+    $effect(() => {
+        if (checkInterval) {
+            setKV("checkInterval", checkInterval);
+        }
+        if (workStart) {
+            setKV("workStartTime", workStart);
+        }
+        if (workEnd) {
+            setKV("workEndTime", workEnd);
+        }
+    });
 
     // 添加语言选项配置
     const languages = [
@@ -49,8 +72,22 @@
     async function initSettings() {
         try {
             autoStart = await isEnabled();
+            workStart = await getKV("workStartTime");
+            if (workStart == "") {
+                await setKV("workStartTime", "09:00");
+                workStart = "09:00";
+            }
+            workEnd = await getKV("workEndTime");
+            if (workEnd == "") {
+                await setKV("workEndTime", "18:00");
+                workEnd = "18:00";
+            }
             language = "zh";
-            checkInterval = 2;
+            checkInterval = await getKV("checkInterval");
+            if (checkInterval == "") {
+                await setKV("checkInterval", "120");
+                checkInterval = "120";
+            }
         } catch (error) {
             console.error("Failed to get autostart status:", error);
         }
@@ -124,7 +161,10 @@
         easing: cubicInOut,
     });
 
-    const navItems = [{ id: "common", title: "通用" }] as const;
+    const navItems = [
+        { id: "common", title: "通用" },
+        { id: "notification", title: "通知" },
+    ] as const;
 
     onMount(async () => {
         await initSettings();
@@ -216,10 +256,49 @@
                                     </Select.Content>
                                 </Select.Root>
                             </div>
-                        {:else if currentSection === "common_1"}
+                        {:else if currentSection === "notification"}
                             <div class="space-y-4">
-                                <h3 class="text-lg font-medium">通用设置</h3>
-                                <!-- 通用设置内容 -->
+                                <!-- <h3 class="text-lg font-medium">通知</h3> -->
+                                <!-- 通知内容 -->
+                                <div class="flex flex-row gap-2 items-center">
+                                    <!-- 工作开始 -->
+                                    <div class="flex flex-col gap-2">
+                                        <Label for="work-start">工作时间</Label>
+                                        <div class="flex flex-row gap-2 items-center">
+                                            <Input
+                                                bind:value={workStart}
+                                                type="time"
+                                                id="work-start"
+                                                class="bg-background h-[24px] w-[64px]"
+                                            />
+                                            <span class="text-muted-foreground">到</span>
+                                            <Input
+                                                bind:value={workEnd}
+                                                type="time"
+                                                id="work-end"
+                                                class="bg-background h-[24px] w-[64px]"
+                                            />
+                                        </div>
+                                        <span class="text-muted-foreground text-xs font-normal leading-snug">
+                                            在指定时间范围内，会推送通知
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <Label for="check-interval">检查间隔</Label>
+                                    <Select.Root type="single" bind:value={checkInterval}>
+                                        <Select.Trigger>
+                                            <span>{InternalMap[checkInterval as keyof typeof InternalMap]}</span>
+                                        </Select.Trigger>
+                                        <Select.Content>
+                                            {#each Object.keys(InternalMap) as key}
+                                                <Select.Item value={key}
+                                                    >{InternalMap[key as keyof typeof InternalMap]}</Select.Item
+                                                >
+                                            {/each}
+                                        </Select.Content>
+                                    </Select.Root>
+                                </div>
                             </div>
                         {/if}
                     </div>

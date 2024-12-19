@@ -74,10 +74,10 @@ const post = async (url: string, body: any) => {
 };
 
 const get = async (url: string) => {
-    // console.log(`=====> GET ${url}`);
+    console.log(`=====> GET ${url}`);
     const response = await fetch(url);
     const responseText = await response.text();
-    // console.log(`<==== GET ${url} , response: ${responseText}`);
+    console.log(`<==== GET ${url} , response: ${responseText}`);
     return JSON.parse(responseText);
 };
 
@@ -155,8 +155,10 @@ export const getMattersByRange = async (start: string, end: string) => {
 // KVStore API
 export const setKV = async (key: string, value: string) => {
     const url = `${API_BASE_URL}/kv/${key}`;
-    const response = await put(url, { value });
-    return processResponse(url, response);
+     await fetch(url, {
+        method: "PUT",
+        body: value,
+    });
 };
 
 export const getKV = async (key: string) => {

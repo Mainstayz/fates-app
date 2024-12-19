@@ -402,7 +402,7 @@ impl NotificationManager {
                     let Ok(check_interval) = KVStore::get(
                         &db_clone,
                         SETTING_KEY_CHECK_INTERVAL,
-                        "15"
+                        "120"
                     )
                 {
                     if let Ok(interval) = check_interval.parse::<i64>() {

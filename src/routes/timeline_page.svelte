@@ -573,10 +573,10 @@
                             快速添加任务
                         </Button>
                     {/if}
-                    <!-- <Button variant="default">
+                    <Button variant="default">
                         <Plus />
                         添加模版任务
-                    </Button> -->
+                    </Button>
                 </div>
             </div>
 
