@@ -766,7 +766,7 @@ impl NotificationRecord {
     pub fn mark_as_read_by_type(conn: &Arc<SafeConnection>, type_: i32) -> Result<()> {
         let conn = conn.conn.write().unwrap();
         conn.execute(
-            "UPDATE notification_records SET status = ?1, read_at = ?2 WHERE type_ = ?3",
+            "UPDATE notification_records SET status = ?1, read_at = ?2 WHERE type = ?3",
             params![NotificationStatus::Read as i32, Utc::now(), type_]
         )?;
         Ok(())
