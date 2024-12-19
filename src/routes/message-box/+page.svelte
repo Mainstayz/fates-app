@@ -6,131 +6,104 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { getUnreadNotifications, markNotificationAsReadByType, type NotificationRecord } from "../../store";
 
-    interface MessageBoxProps {
+    type MessageBoxProps = {
         title: string;
         description: string;
-    }
+    };
 
-    interface NotificationPayload {
+    type NotificationPayload = {
         title: string;
         description: string;
-    }
+    };
 
     let { title = "", description = "" }: MessageBoxProps = $props();
 
     let unlistens: UnlistenFn[] = [];
     let rootElement: HTMLElement;
     let pageHeight = 0;
-    let lastHeight = 0;
-    let resizeObserver: ResizeObserver | null = null;
     let systemNotifications: NotificationRecord[] = [];
+    let window: Awaited<ReturnType<typeof getCurrentWindow>>;
 
-    const window = getCurrentWindow();
+    const resizeObserver = new ResizeObserver(updateHeight);
+
+    function handleError(message: string) {
+        return (error: unknown) => {
+            console.error(`${message}:`, error);
+        };
+    }
 
     async function disableFlashAndHide() {
-        try {
-            await markNotificationAsRead();
-        } catch (error) {
-            console.error("Failed to handle tray icon:", error);
-        } finally {
-            // 关闭闪烁托盘图标
-            await invoke("flash_tray_icon", { flash: false });
-            // 隐藏消息盒子，并暂停鼠标跟踪
-            await window.emit("hide-message-box");
-        }
+        if (!window) return;
+
+        await Promise.all([
+            markNotificationAsRead().catch(handleError("Failed to mark notification as read")),
+            invoke("flash_tray_icon", { flash: false }).catch(handleError("Failed to disable tray icon flash")),
+            window.emit("hide-message-box").catch(handleError("Failed to hide message box")),
+        ]);
     }
 
-    function handleGlobalClick() {
-        disableFlashAndHide();
-    }
+    const handleGlobalClick = () => {
+        disableFlashAndHide().catch(handleError("Failed to handle global click"));
+    };
 
-    async function updateHeight(force: boolean = false) {
-        if (!rootElement) return;
+    async function updateHeight() {
+        if (!rootElement || !window) return;
 
         const newHeight = rootElement.clientHeight;
-        if (pageHeight === newHeight && !force) return;
+        if (pageHeight === newHeight) return;
 
         pageHeight = newHeight;
-        try {
-            console.log("emit height change:", newHeight);
-            await window.emit("message-box-height", newHeight);
-        } catch (error) {
-            console.error("Failed to emit height change:", error);
-        }
+        console.log("updateHeight: pageHeight = ", pageHeight, ", emit message-box-height event");
+        await window.emit("message-box-height", pageHeight).catch(handleError("Failed to emit height change"));
     }
 
     async function markNotificationAsRead() {
-        try {
-            await markNotificationAsReadByType(0);
-        } catch (error) {
-            console.error("Failed to mark notification as read:", error);
-        }
+        console.log("markNotificationAsRead: markNotificationAsReadByType(0)");
+        await markNotificationAsReadByType(0);
     }
 
-    // notification-message
     async function setupEventListeners() {
-        try {
-            const notificationUnlisten = await listen<NotificationPayload>("notification-message", (event) => {
-                loadMessageBoxData()
-                    .finally(() => {
-                        console.log("On notification-message event, load message box data and update height ..");
-                    })
-                    .catch((error) => {
-                        console.error("Failed to load message box data:", error);
-                    });
-            });
+        const notificationUnlisten = listen<NotificationPayload>("notification-message", () =>
+            loadMessageBoxData().catch(handleError("Failed to load message box data"))
+        );
 
-            const heightQueryUnlisten = await listen("query-message-box-height", (event) => updateHeight(true));
+        const heightQueryUnlisten = listen("query-message-box-height", () => updateHeight());
 
-            unlistens.push(notificationUnlisten, heightQueryUnlisten);
-        } catch (error) {
-            console.error("Failed to setup event listeners:", error);
-        }
+        unlistens = await Promise.all([notificationUnlisten, heightQueryUnlisten]);
     }
 
     async function loadMessageBoxData() {
-        try {
-            const unreadNotifications = await getUnreadNotifications();
-            systemNotifications = unreadNotifications.filter((n) => n.type_ === 0);
+        const unreadNotifications = await getUnreadNotifications();
+        systemNotifications = unreadNotifications.filter((n) => n.type_ === 0);
 
-            if (systemNotifications.length > 0) {
-                // 按创建时间排序，获取最新的消息
-                const latestNotification = systemNotifications.sort(
-                    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                )[0];
+        if (systemNotifications.length > 0) {
+            const latestNotification = systemNotifications.reduce((latest, current) =>
+                new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+            );
 
-                title = latestNotification.title;
-                description = latestNotification.content;
-
-                // 闪烁托盘图标
-                await invoke("flash_tray_icon", { flash: true });
-            } else {
-                title = "";
-                description = "";
-            }
-        } catch (error) {
-            console.error("Failed to load message box data:", error);
+            title = latestNotification.title;
+            description = latestNotification.content;
+            await invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to enable tray icon flash"));
+        } else {
+            title = description = "";
         }
     }
 
-    function setupResizeObserver() {
-        if (!rootElement) return;
-
-        resizeObserver = new ResizeObserver((entries) => updateHeight(true));
-        resizeObserver.observe(rootElement);
-    }
-
     onMount(async () => {
-        await loadMessageBoxData();
-        await setupEventListeners();
-        document.addEventListener("click", handleGlobalClick);
-        setupResizeObserver();
+        try {
+            window = await getCurrentWindow();
+            await Promise.all([loadMessageBoxData(), setupEventListeners()]);
+            document.addEventListener("click", handleGlobalClick);
+            resizeObserver.observe(rootElement);
+        } catch (error) {
+            handleError("Failed to initialize message box")(error);
+        }
     });
 
     onDestroy(() => {
         unlistens.forEach((unlisten) => unlisten());
-        resizeObserver?.disconnect();
         document.removeEventListener("click", handleGlobalClick);
+        resizeObserver.disconnect();
     });
 </script>
 
