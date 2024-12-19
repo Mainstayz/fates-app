@@ -41,6 +41,24 @@ export interface Todo {
     updated_at: string;
 }
 
+export interface NotificationRecord {
+    id: string;
+    title: string;
+    content: string;
+    type_: number;
+    status: number;
+    related_task_id?: string;
+    created_at: string;
+    read_at?: string;
+    expire_at?: string;
+    action_url?: string;
+    reserved_1?: string;
+    reserved_2?: string;
+    reserved_3?: string;
+    reserved_4?: string;
+    reserved_5?: string;
+}
+
 const post = async (url: string, body: any) => {
     // console.log(`=====> POST ${url} , body: ${JSON.stringify(body)}`);
     const response = await fetch(url, {
@@ -251,5 +269,53 @@ export const updateTodo = async (id: string, todo: Todo) => {
 export const deleteTodo = async (id: string) => {
     const url = `${API_BASE_URL}/todo/${id}`;
     const response = await delete_(url);
+    return processResponse(url, response);
+};
+
+export const createNotification = async (notification: NotificationRecord) => {
+    const url = `${API_BASE_URL}/notification`;
+    const response = await post(url, notification);
+    return processResponse(url, response);
+};
+
+export const getNotificationById = async (id: string) => {
+    const url = `${API_BASE_URL}/notification/${id}`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const getUnreadNotifications = async (): Promise<NotificationRecord[]> => {
+    const url = `${API_BASE_URL}/notification/unread`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const updateNotification = async (id: string, notification: NotificationRecord) => {
+    const url = `${API_BASE_URL}/notification/${id}`;
+    const response = await put(url, notification);
+    return processResponse(url, response);
+};
+
+export const deleteNotification = async (id: string) => {
+    const url = `${API_BASE_URL}/notification/${id}`;
+    const response = await delete_(url);
+    return processResponse(url, response);
+};
+
+export const markNotificationAsRead = async (id: string) => {
+    const url = `${API_BASE_URL}/notification/${id}/read`;
+    const response = await put(url, {});
+    return processResponse(url, response);
+};
+
+export const markNotificationAsReadByType = async (type_: number) => {
+    const url = `${API_BASE_URL}/notification/read/${type_}`;
+    const response = await put(url, {});
+    return processResponse(url, response);
+};
+
+export const markAllNotificationsAsRead = async () => {
+    const url = `${API_BASE_URL}/notification/read-all`;
+    const response = await put(url, {});
     return processResponse(url, response);
 };

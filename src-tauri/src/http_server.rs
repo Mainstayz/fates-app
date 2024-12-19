@@ -1,5 +1,5 @@
 use crate::database::SafeConnection;
-use crate::database::{ KVStore, Matter, RepeatTask, Tag, Todo };
+use crate::database::{ KVStore, Matter, RepeatTask, Tag, Todo, NotificationRecord };
 use axum::{
     extract::{ Path, Query, State },
     response::IntoResponse,
@@ -111,6 +111,16 @@ impl RouteConfig for ApiRoutes {
             .route("/todo/:id", put(update_todo))
             .route("/todo/:id", delete(delete_todo))
             .route("/todo", get(get_all_todos))
+            .route("/notification", post(create_notification))
+            .route("/notification/:id", get(get_notification))
+            .route("/notification/:id", put(update_notification))
+            .route("/notification/:id", delete(delete_notification))
+            // .route("/notification", get(get_all_notifications))
+            .route("/notification/unread", get(get_unread_notifications))
+            .route("/notification/:id/read", put(mark_notification_as_read))
+            // make special type notification as read
+            .route("/notification/read/:type", put(mark_notification_as_read_by_type))
+            .route("/notification/read-all", put(mark_all_notifications_as_read))
             .with_state(state)
     }
 }
@@ -581,4 +591,115 @@ pub fn stop_http_server() -> Result<(), ServerError> {
     } else {
         Err(ServerError::StartupError("HTTP server not running".into()))
     }
+}
+
+async fn create_notification(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Json(mut notification): Json<NotificationRecord>
+) -> Result<impl IntoResponse, ServerError> {
+    notification.created_at = Utc::now();
+
+    let state = state.lock().await;
+    NotificationRecord::create(&state.db, &notification).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+
+    Ok(Json(ApiResponse::success(notification)))
+}
+
+async fn get_notification(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    let notification = NotificationRecord::get_by_id(&state.db, &id)
+        .map_err(|e| ServerError::DatabaseError(e.to_string()))?
+        .ok_or_else(|| ServerError::NotFound("Notification not found".into()))?;
+
+    Ok(Json(ApiResponse::success(notification)))
+}
+
+// async fn get_all_notifications(State(state): State<Arc<Mutex<AppState>>>) -> Result<
+//     impl IntoResponse,
+//     ServerError
+// > {
+//     let state = state.lock().await;
+//     let notifications = NotificationRecord::get_all(&state.db).map_err(|e|
+//         ServerError::DatabaseError(e.to_string())
+//     )?;
+
+//     Ok(Json(ApiResponse::success(notifications)))
+// }
+
+async fn get_unread_notifications(State(state): State<Arc<Mutex<AppState>>>) -> Result<
+    impl IntoResponse,
+    ServerError
+> {
+    let state = state.lock().await;
+    let notifications = NotificationRecord::get_unread(&state.db).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+
+    Ok(Json(ApiResponse::success(notifications)))
+}
+
+async fn update_notification(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+    Json(mut notification): Json<NotificationRecord>
+) -> Result<impl IntoResponse, ServerError> {
+    notification.id = id;
+
+    let state = state.lock().await;
+    notification.update(&state.db).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(notification)))
+}
+
+async fn delete_notification(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    NotificationRecord::delete(&state.db, &id).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+async fn mark_notification_as_read(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    NotificationRecord::mark_as_read(&state.db, &id).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+async fn mark_notification_as_read_by_type(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(type_): Path<i32>
+) -> Result<impl IntoResponse, ServerError> {
+    let state = state.lock().await;
+    NotificationRecord::mark_as_read_by_type(&state.db, type_).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+    Ok(Json(ApiResponse::<()>::success(())))
+}
+
+// 将所有通知标记为已读
+async fn mark_all_notifications_as_read(State(state): State<Arc<Mutex<AppState>>>) -> Result<
+    impl IntoResponse,
+    ServerError
+> {
+    let state = state.lock().await;
+    NotificationRecord::mark_all_as_read(&state.db).map_err(|e|
+        ServerError::DatabaseError(e.to_string())
+    )?;
+
+    Ok(Json(ApiResponse::<()>::success(())))
 }

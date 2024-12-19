@@ -102,6 +102,31 @@ pub struct Todo {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationRecord {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    pub type_: i32,
+    pub status: i32,
+    pub related_task_id: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub read_at: Option<DateTime<Utc>>,
+    pub expire_at: Option<DateTime<Utc>>,
+    pub action_url: Option<String>,
+    pub reserved_1: Option<String>,
+    pub reserved_2: Option<String>,
+    pub reserved_3: Option<String>,
+    pub reserved_4: Option<String>,
+    pub reserved_5: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum NotificationStatus {
+    Unread = 0,
+    Read = 1,
+}
+
 // 创建一个线程安全的数据库连接包装器
 pub struct SafeConnection {
     conn: RwLock<Connection>,
@@ -200,6 +225,28 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             status TEXT NOT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
+        )",
+        []
+    )?;
+
+    // 创建通知表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS notification_records (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            type INTEGER NOT NULL,
+            status INTEGER NOT NULL DEFAULT 0,
+            related_task_id TEXT,
+            created_at DATETIME NOT NULL,
+            read_at DATETIME,
+            expire_at DATETIME,
+            action_url TEXT,
+            reserved_1 TEXT,
+            reserved_2 TEXT,
+            reserved_3 TEXT,
+            reserved_4 TEXT,
+            reserved_5 TEXT
         )",
         []
     )?;
@@ -637,6 +684,172 @@ impl Todo {
     pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
         let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM todo WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+}
+
+impl NotificationRecord {
+    pub fn create(conn: &Arc<SafeConnection>, notification: &NotificationRecord) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "INSERT INTO notification_records (
+                id, title, content, type, status, related_task_id,
+                created_at, read_at, expire_at, action_url,
+                reserved_1, reserved_2, reserved_3, reserved_4, reserved_5
+            ) VALUES (
+                ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15
+            )",
+            params![
+                notification.id,
+                notification.title,
+                notification.content,
+                notification.type_,
+                notification.status,
+                notification.related_task_id,
+                notification.created_at,
+                notification.read_at,
+                notification.expire_at,
+                notification.action_url,
+                notification.reserved_1,
+                notification.reserved_2,
+                notification.reserved_3,
+                notification.reserved_4,
+                notification.reserved_5
+            ]
+        )?;
+        Ok(())
+    }
+
+    pub fn get_unread(conn: &Arc<SafeConnection>) -> Result<Vec<NotificationRecord>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT * FROM notification_records
+            WHERE status = 0
+            ORDER BY created_at DESC"
+        )?;
+
+        let notifications = stmt
+            .query_map([], |row| {
+                Ok(NotificationRecord {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    content: row.get(2)?,
+                    type_: row.get(3)?,
+                    status: row.get(4)?,
+                    related_task_id: row.get(5)?,
+                    created_at: row.get(6)?,
+                    read_at: row.get(7)?,
+                    expire_at: row.get(8)?,
+                    action_url: row.get(9)?,
+                    reserved_1: row.get(10)?,
+                    reserved_2: row.get(11)?,
+                    reserved_3: row.get(12)?,
+                    reserved_4: row.get(13)?,
+                    reserved_5: row.get(14)?,
+                })
+            })?
+            .collect();
+
+        notifications
+    }
+
+    pub fn mark_as_read(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE notification_records
+            SET status = ?1, read_at = ?2
+            WHERE id = ?3",
+            params![NotificationStatus::Read as i32, Utc::now(), id]
+        )?;
+        Ok(())
+    }
+    pub fn mark_as_read_by_type(conn: &Arc<SafeConnection>, type_: i32) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE notification_records SET status = ?1, read_at = ?2 WHERE type_ = ?3",
+            params![NotificationStatus::Read as i32, Utc::now(), type_]
+        )?;
+        Ok(())
+    }
+    pub fn mark_all_as_read(conn: &Arc<SafeConnection>) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE notification_records
+            SET status = ?1, read_at = ?2
+            WHERE status = ?3",
+            params![NotificationStatus::Read as i32, Utc::now(), NotificationStatus::Unread as i32]
+        )?;
+        Ok(())
+    }
+
+    pub fn get_by_id(conn: &Arc<SafeConnection>, id: &str) -> Result<Option<NotificationRecord>> {
+        let conn = conn.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM notification_records WHERE id = ?1")?;
+
+        let notification = stmt
+            .query_row(params![id], |row| {
+                Ok(NotificationRecord {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    content: row.get(2)?,
+                    type_: row.get(3)?,
+                    status: row.get(4)?,
+                    related_task_id: row.get(5)?,
+                    created_at: row.get(6)?,
+                    read_at: row.get(7)?,
+                    expire_at: row.get(8)?,
+                    action_url: row.get(9)?,
+                    reserved_1: row.get(10)?,
+                    reserved_2: row.get(11)?,
+                    reserved_3: row.get(12)?,
+                    reserved_4: row.get(13)?,
+                    reserved_5: row.get(14)?,
+                })
+            })
+            .optional()?;
+
+        Ok(notification)
+    }
+
+    pub fn update(&self, conn: &Arc<SafeConnection>) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute(
+            "UPDATE notification_records SET
+                title = ?1,
+                content = ?2,
+                type = ?3,
+                status = ?4,
+                related_task_id = ?5,
+                expire_at = ?6,
+                action_url = ?7,
+                reserved_1 = ?8,
+                reserved_2 = ?9,
+                reserved_3 = ?10,
+                reserved_4 = ?11,
+                reserved_5 = ?12
+            WHERE id = ?13",
+            params![
+                self.title,
+                self.content,
+                self.type_,
+                self.status,
+                self.related_task_id,
+                self.expire_at,
+                self.action_url,
+                self.reserved_1,
+                self.reserved_2,
+                self.reserved_3,
+                self.reserved_4,
+                self.reserved_5,
+                self.id
+            ]
+        )?;
+        Ok(())
+    }
+
+    pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
+        let conn = conn.conn.write().unwrap();
+        conn.execute("DELETE FROM notification_records WHERE id = ?1", params![id])?;
         Ok(())
     }
 }

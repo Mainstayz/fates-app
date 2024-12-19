@@ -4,6 +4,7 @@
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
     import { getCurrentWindow } from "@tauri-apps/api/window";
+    import { getUnreadNotifications, markNotificationAsReadByType, type NotificationRecord } from "../../store";
 
     interface MessageBoxProps {
         title: string;
@@ -22,15 +23,20 @@
     let pageHeight = 0;
     let lastHeight = 0;
     let resizeObserver: ResizeObserver | null = null;
+    let systemNotifications: NotificationRecord[] = [];
 
     const window = getCurrentWindow();
 
     async function disableFlashAndHide() {
         try {
-            await invoke("flash_tray_icon", { flash: false });
-            await window.emit("hide-message-box");
+            await markNotificationAsRead();
         } catch (error) {
             console.error("Failed to handle tray icon:", error);
+        } finally {
+            // 关闭闪烁托盘图标
+            await invoke("flash_tray_icon", { flash: false });
+            // 隐藏消息盒子，并暂停鼠标跟踪
+            await window.emit("hide-message-box");
         }
     }
 
@@ -53,22 +59,26 @@
         }
     }
 
-    async function handleNotificationMessage(payload: NotificationPayload) {
+    async function markNotificationAsRead() {
         try {
-            title = payload.title;
-            description = payload.description;
-            console.log("On receive notification message, title:", title, "description:", description);
-            updateHeight(true);
+            await markNotificationAsReadByType(0);
         } catch (error) {
-            console.error("Failed to handle notification:", error);
+            console.error("Failed to mark notification as read:", error);
         }
     }
+
     // notification-message
     async function setupEventListeners() {
         try {
-            const notificationUnlisten = await listen<NotificationPayload>("notification-message", (event) =>
-                handleNotificationMessage(event.payload)
-            );
+            const notificationUnlisten = await listen<NotificationPayload>("notification-message", (event) => {
+                loadMessageBoxData()
+                    .finally(() => {
+                        console.log("On notification-message event, load message box data and update height ..");
+                    })
+                    .catch((error) => {
+                        console.error("Failed to load message box data:", error);
+                    });
+            });
 
             const heightQueryUnlisten = await listen("query-message-box-height", (event) => updateHeight(true));
 
@@ -80,9 +90,24 @@
 
     async function loadMessageBoxData() {
         try {
-            // const store = await load("message-box.json", { autoSave: false });
-            title = "";
-            description = "";
+            const unreadNotifications = await getUnreadNotifications();
+            systemNotifications = unreadNotifications.filter((n) => n.type_ === 0);
+
+            if (systemNotifications.length > 0) {
+                // 按创建时间排序，获取最新的消息
+                const latestNotification = systemNotifications.sort(
+                    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )[0];
+
+                title = latestNotification.title;
+                description = latestNotification.content;
+
+                // 闪烁托盘图标
+                await invoke("flash_tray_icon", { flash: true });
+            } else {
+                title = "";
+                description = "";
+            }
         } catch (error) {
             console.error("Failed to load message box data:", error);
         }

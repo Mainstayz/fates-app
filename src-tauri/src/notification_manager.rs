@@ -1,4 +1,4 @@
-use crate::database::{ KVStore, Matter, RepeatTask, SafeConnection };
+use crate::database::{ KVStore, Matter, RepeatTask, SafeConnection, NotificationRecord };
 use crate::models::{
     MessageBoxData,
     Notification,
@@ -435,33 +435,54 @@ impl NotificationManager {
             },
             move || Matter::get_all(&db_clone_2).unwrap_or_default(),
             move |notification| {
+                log::info!("收到通知：{:?}", notification);
                 let title = notification.title.clone();
                 let body = notification.message.clone();
+                // let type_ = notification.notification_type;
 
-                // 保存消息到数据库
-                let message_box = MessageBoxData {
+                let notification_record = NotificationRecord {
+                    id: uuid::Uuid::new_v4().to_string(),
                     title: title.clone(),
-                    description: body.clone(),
+                    content: body.clone(),
+                    type_: 0 as i32,
+                    status: 0,
+                    related_task_id: None, // 暂时不关联任务
+                    created_at: Utc::now(),
+                    read_at: None,
+                    expire_at: None,
+                    action_url: None,
+                    reserved_1: None,
+                    reserved_2: None,
+                    reserved_3: None,
+                    reserved_4: None,
+                    reserved_5: None,
                 };
-                let json = serde_json::to_string(&message_box).unwrap();
-                let _ = KVStore::set(&db_clone_3, SETTING_KEY_NOTIFICATION_MESSAGE_DATA, &json);
+
+                let _ = NotificationRecord::create(&db_clone_3, &notification_record).unwrap();
+                // 保存消息到数据库
+                // let message_box = MessageBoxData {
+                //     title: title.clone(),
+                //     description: body.clone(),
+                // };
+                // let json = serde_json::to_string(&message_box).unwrap();
+                // let _ = KVStore::set(&db_clone_3, SETTING_KEY_NOTIFICATION_MESSAGE_DATA, &json);
 
                 // 发送通知消息
-                let _ = app_handle_clone.emit(NOTIFICATION_MESSAGE, message_box);
+                let _ = app_handle_clone.emit(NOTIFICATION_MESSAGE, {});
 
                 // 闪烁托盘图标
-                flash_tray_icon(app_handle_clone.clone(), true);
+                // flash_tray_icon(app_handle_clone.clone(), true);
 
                 // 发送系统通知
-                if
-                    let Err(e) = NotificationManager::send_notification(
-                        app_handle_clone.clone(),
-                        &title,
-                        &body
-                    )
-                {
-                    log::error!("发送通知失败：{}", e);
-                }
+                // if
+                //     let Err(e) = NotificationManager::send_notification(
+                //         app_handle_clone.clone(),
+                //         &title,
+                //         &body
+                //     )
+                // {
+                //     log::error!("发送通知失败：{}", e);
+                // }
             }
         );
 
@@ -520,6 +541,7 @@ impl NotificationManager {
         }
 
         if created_count > 0 {
+            // 通知前端刷新任务列表
             let _ = app_handle.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
         }
 
