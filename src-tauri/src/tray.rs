@@ -110,7 +110,6 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
                         // 发送 tray_flash_did_click 事件
                         log::info!("发送 tray_flash_did_click 事件");
                         handle.emit("tray_flash_did_click", ()).unwrap();
-                        flash_tray_icon(handle.clone(), false);
                     }
                     show_main_window(handle.clone());
                 }

@@ -69,7 +69,12 @@
 
         const heightQueryUnlisten = listen("query-message-box-height", () => updateHeight());
 
-        unlistens = await Promise.all([notificationUnlisten, heightQueryUnlisten]);
+        // tray_flash_did_click
+        const trayFlashDidClickUnlisten = listen("tray_flash_did_click", () => {
+            disableFlashAndHide().catch(handleError("Failed to handle tray flash click"));
+        });
+
+        unlistens = await Promise.all([notificationUnlisten, heightQueryUnlisten, trayFlashDidClickUnlisten]);
     }
 
     async function loadMessageBoxData() {
@@ -85,12 +90,14 @@
             description = latestNotification.content;
             await invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to enable tray icon flash"));
         } else {
+            console.log("No system notifications found, will set title and description to empty strings");
             title = description = "";
         }
     }
 
     onMount(async () => {
         try {
+            console.log("MessageBox page mounted");
             window = await getCurrentWindow();
             await Promise.all([loadMessageBoxData(), setupEventListeners()]);
             document.addEventListener("click", handleGlobalClick);
@@ -101,6 +108,7 @@
     });
 
     onDestroy(() => {
+        console.log("MessageBox page destroyed");
         unlistens.forEach((unlisten) => unlisten());
         document.removeEventListener("click", handleGlobalClick);
         resizeObserver.disconnect();
