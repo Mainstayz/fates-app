@@ -11,7 +11,9 @@
     import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
     import * as store from "../store";
     import type { Todo } from "../store";
+    import type { Matter } from "../store";
     import { onMount } from "svelte";
+    import { emit } from "@tauri-apps/api/event";
     class TodoAPI {
         public data = $state<Todo[]>([]);
 
@@ -82,6 +84,29 @@
             await todoAPI.updateTodo({ ...todo, title: value });
         }
     }
+
+    const handleExecute = async (row: Todo) => {
+        let start_time = new Date();
+        // end_time 为 2 小时后
+        const end_time = new Date(start_time.getTime() + 2 * 60 * 60 * 1000);
+
+        const matter: Matter = {
+            id: uuidv4(),
+            title: row.title,
+            type_: 2,
+            start_time: start_time.toISOString(),
+            end_time: end_time.toISOString(),
+            priority: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            reserved_1: "blue",
+            reserved_2: row.id,
+        };
+
+        await store.createMatter(matter);
+        await todoAPI.updateTodo({ ...row, status: "in_progress" });
+        await emit("refresh-time-progress", {});
+    };
 
     onMount(() => {
         todoAPI
@@ -159,9 +184,16 @@
                                     </Badge>
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <Button variant="destructive" size="sm" onclick={() => handleDelete(row.id)}>
-                                        <Trash2 />
-                                    </Button>
+                                    <div class="flex gap-2">
+                                        <Button variant="destructive" size="sm" onclick={() => handleDelete(row.id)}>
+                                            <Trash2 />
+                                        </Button>
+                                        {#if row.status === "todo"}
+                                            <Button variant="outline" size="sm" onclick={() => handleExecute(row)}>
+                                                执行
+                                            </Button>
+                                        {/if}
+                                    </div>
                                 </Table.Cell>
                             </Table.Row>
                         {/each}

@@ -92,6 +92,7 @@ impl RouteConfig for ApiRoutes {
             .route("/matter/:id", delete(delete_matter))
             .route("/matter/range", get(get_matters_by_range))
             .route("/matter", get(get_all_matters))
+            .route("/matter/query", get(query_matter_by_field))
             .route("/kv/:key", get(get_kv))
             .route("/kv/:key", put(set_kv))
             .route("/kv/:key", delete(delete_kv))
@@ -571,7 +572,7 @@ pub fn start_http_server(port: u16, db: Arc<SafeConnection>) -> Result<(), Strin
         }
     });
 
-    // 存储服务实例
+    // 存储服务��例
     match HTTP_SERVER.set(server) {
         Ok(_) => Ok(()),
         Err(_) => Err("Failed to store HTTP server instance".into()),
@@ -702,4 +703,58 @@ async fn mark_all_notifications_as_read(State(state): State<Arc<Mutex<AppState>>
     )?;
 
     Ok(Json(ApiResponse::<()>::success(())))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct QueryFieldParams {
+    field: String,
+    value: String,
+    #[serde(default = "default_exact_match")]
+    exact_match: bool,
+}
+
+fn default_exact_match() -> bool {
+    false
+}
+
+async fn query_matter_by_field(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Query(params): Query<QueryFieldParams>
+) -> Result<impl IntoResponse, ServerError> {
+    // 验证字段名是否合法
+    let valid_fields = vec![
+        "id",
+        "title",
+        "description",
+        "tags",
+        "priority",
+        "type",
+        "reserved_1",
+        "reserved_2",
+        "reserved_3",
+        "reserved_4",
+        "reserved_5"
+    ];
+
+    if !valid_fields.contains(&params.field.as_str()) {
+        return Err(
+            ServerError::BadRequest(
+                format!(
+                    "Invalid field name: {}. Valid fields are: {}",
+                    params.field,
+                    valid_fields.join(", ")
+                )
+            )
+        );
+    }
+
+    let state = state.lock().await;
+    let matters = Matter::query_by_field(
+        &state.db,
+        &params.field,
+        &params.value,
+        params.exact_match
+    ).map_err(|e| ServerError::DatabaseError(e.to_string()))?;
+
+    Ok(Json(ApiResponse::success(matters)))
 }

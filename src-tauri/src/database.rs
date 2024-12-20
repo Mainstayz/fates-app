@@ -39,7 +39,7 @@ pub struct Matter {
     #[serde(default)]
     pub priority: i32,
     #[serde(default)]
-    pub type_: i32, // type 是 Rust 关键字，所以使用 type_, 0 为普通任务，1 为循环任务
+    pub type_: i32, // type 是 Rust 关键字，所以使用 type_, 0 为普通任务，1 为循环任务，2 为待办事项
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
@@ -416,6 +416,51 @@ impl Matter {
         let conn = conn.conn.write().unwrap();
         conn.execute("DELETE FROM matter WHERE id = ?1", params![id])?;
         Ok(())
+    }
+
+    pub fn query_by_field(
+        conn: &Arc<SafeConnection>,
+        field: &str,
+        value: &str,
+        exact_match: bool
+    ) -> Result<Vec<Matter>> {
+        let conn = conn.conn.read().unwrap();
+
+        // 构建查询语句
+        let query = if exact_match {
+            format!("SELECT * FROM matter WHERE {} = ?1 ORDER BY start_time", field)
+        } else {
+            format!("SELECT * FROM matter WHERE {} LIKE ?1 ORDER BY start_time", field)
+        };
+
+        let mut stmt = conn.prepare(&query)?;
+
+        // 如果不是精确匹配，则使用模糊查询
+        let search_value = if exact_match { value.to_string() } else { format!("%{}%", value) };
+
+        let matters = stmt
+            .query_map([search_value], |row| {
+                Ok(Matter {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    description: row.get(2)?,
+                    tags: row.get(3)?,
+                    start_time: row.get(4)?,
+                    end_time: row.get(5)?,
+                    priority: row.get(6)?,
+                    type_: row.get(7)?,
+                    created_at: row.get(8)?,
+                    updated_at: row.get(9)?,
+                    reserved_1: row.get(10)?,
+                    reserved_2: row.get(11)?,
+                    reserved_3: row.get(12)?,
+                    reserved_4: row.get(13)?,
+                    reserved_5: row.get(14)?,
+                })
+            })?
+            .collect();
+
+        matters
     }
 }
 

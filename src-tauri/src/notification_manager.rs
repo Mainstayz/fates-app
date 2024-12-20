@@ -503,6 +503,20 @@ impl NotificationManager {
         db: &Arc<SafeConnection>,
         app_handle: AppHandle
     ) -> Result<(), rusqlite::Error> {
+        log::info!("检查循环任务 ...");
+
+        // 获取今天的开始和结束时间
+        let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
+        let today_end = now.date_naive().and_hms_opt(23, 59, 59).unwrap();
+        let today_start_utc = Local.from_local_datetime(&today_start).unwrap().with_timezone(&Utc);
+        let today_end_utc = Local.from_local_datetime(&today_end).unwrap().with_timezone(&Utc);
+
+        // 过滤并排序今天的任务
+        let today_matters: Vec<&Matter> = matters
+            .iter()
+            .filter(|m| { m.start_time >= today_start_utc && m.start_time <= today_end_utc })
+            .collect();
+
         let repeat_tasks = RepeatTask::get_active_tasks(db)?;
         let mut created_count = 0;
 
@@ -512,12 +526,13 @@ impl NotificationManager {
                 continue;
             }
 
-            let task_exists = matters.iter().any(|m| {
+            // 使用过滤后的今天的任务列表检查是否已创建
+            let task_exists = today_matters.iter().any(|m| {
                 if let Some(reserved_2) = &m.reserved_2 { *reserved_2 == task.id } else { false }
             });
 
             if task_exists {
-                log::debug!("任务 {}, {} 今天已创建", task.title, task.repeat_time);
+                log::debug!("任务 {} {}, {} 今天已创建", task.id, task.title, task.repeat_time);
                 continue;
             }
 

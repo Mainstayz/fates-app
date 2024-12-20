@@ -11,7 +11,7 @@ export interface Matter {
     start_time: string;
     end_time: string;
     priority: number;
-    type_: number;
+    type_: number; // 0: 普通任务，1: 循环任务，2: 待办事项
     created_at: string;
     updated_at: string;
     reserved_1?: string; // 用于 className
@@ -130,6 +130,12 @@ export const getMatterById = async (id: string) => {
 
 export const getAllMatters = async (): Promise<Matter[]> => {
     const url = `${API_BASE_URL}/matter`;
+    const response = await get(url);
+    return processResponse(url, response);
+};
+
+export const queryMattersByField = async (field: string, value: string, exact_match: boolean): Promise<Matter[]> => {
+    const url = `${API_BASE_URL}/matter/query?field=${field}&value=${value}&exact_match=${exact_match}`;
     const response = await get(url);
     return processResponse(url, response);
 };
