@@ -40,7 +40,7 @@
 
     // Handlebars 模板
     const template = Handlebars.compile(`
-        <div class="gantt-item">
+        <div class="gantt-item" tabindex="0" role="button" data-item-id="{{id}}">
             <div class="gantt-item-content">
                     <div class="flex items-center gap-1">
                         <div class="gantt-item-title">{{content}}</div>
@@ -58,7 +58,7 @@
         </div>
     `);
     // 实现一个 tooltip 的模板
-    // 内容为 item 的 start 和 end
+    // 内 item 的 start 和 end
     const tooltipTemplate = Handlebars.compile(`
         <div class="flex flex-col p-0.5 whitespace-nowrap">
             <div class="flex items-center">
@@ -98,6 +98,7 @@
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
         console.log(">>>>> item", item);
         const renderedContent = template({
+            id: item.id,
             content: item.content,
             tags: item.tags?.length ? item.tags : null,
             className: item.className,
@@ -116,8 +117,18 @@
     }
 
     function convertToExternalItem(item: TimelineItemInternal): TimelineItem {
+        // 如果 item._raw 不存在，则创建一个, 可能是双击添加的
+        if (!item.end && item.content == "new item") {
+            // 如果 end 不存在，则设置为 start + 2 小时
+            item.end = new Date(item.start.getTime() + 2 * 60 * 60 * 1000);
+            // 设置为蓝色
+            item.className = "blue";
+        }
         if (!item._raw) {
-            throw new Error("Internal item missing _raw data");
+            item._raw = {
+                content: item.content,
+                tags: [],
+            };
         }
         // 将 _raw 中的 content 和 tags 转换为 item 的 content 和 tags
         let ret: TimelineItem = {
@@ -128,7 +139,7 @@
         return ret;
     }
 
-    // 创建事件处理器
+    // 创建事处理器
     function createEventHandler(handler?: TimelineHandler) {
         if (!handler) return undefined;
 
@@ -162,7 +173,7 @@
             height: "100%",
             groupEditable: true,
             editable: {
-                add: false,
+                add: true,
                 updateTime: true,
                 updateGroup: true,
                 remove: true,
@@ -231,7 +242,7 @@
             zoomKey: "ctrlKey",
 
             // 优化渲染性能
-            // throttleRedraw: 16, // 限制重绘频率 (ms)
+            // throttleRedraw: 16, // 限��重绘频率 (ms)
         };
 
         // 初始化 Timeline
@@ -242,6 +253,80 @@
         //     if (resetTimeout) window.clearTimeout(resetTimeout);
         //     resetTimeout = window.setTimeout(debouncedCheckTimeWindow, 3000);
         // });
+
+        // 添加 Timeline 事件监听
+        timeline.on("select", function (properties: { items: (string | number)[] }) {
+            if (!properties.items || properties.items.length === 0) return;
+
+            const selectedId = properties.items[0];
+            const selectedItem = itemsDataSet.get(selectedId);
+            if (selectedItem) {
+                // 找到对应的 DOM 元素并设置焦点
+                const element = container.querySelector(`[data-item-id="${selectedId}"]`);
+                if (element instanceof HTMLElement) {
+                    element.focus();
+                }
+            }
+        });
+
+        // 直接在容器上监听事件，使用事件委托
+        container.addEventListener("keydown", (event) => {
+            const target = event.target as HTMLElement;
+            const ganttItem = target.closest(".gantt-item") as HTMLElement;
+
+            if (!ganttItem) return;
+
+            console.log(">>>>> keydown on gantt-item", event.key);
+
+            // 阻止事件冒泡和默认行为
+            event.stopPropagation();
+            event.preventDefault();
+
+            const itemId = ganttItem.dataset.itemId;
+            if (!itemId) return;
+
+            const item = itemsDataSet.get(itemId);
+            if (!item) return;
+
+            switch (event.key) {
+                case "Delete":
+                case "Backspace":
+                    if (props.onRemove) {
+                        props.onRemove(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
+                            if (resultItem === null) {
+                                itemsDataSet.remove(itemId);
+                            }
+                        });
+                    }
+                    break;
+                case "Enter":
+                case " ":
+                    if (props.onUpdate) {
+                        props.onUpdate(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
+                            if (resultItem) {
+                                itemsDataSet.update(convertToInternalItem(resultItem));
+                            }
+                        });
+                    }
+                    break;
+            }
+        });
+
+        // 添加点击事件监听，确保元素可以获得焦点
+        container.addEventListener("click", (event) => {
+            const target = event.target as HTMLElement;
+            const ganttItem = target.closest(".gantt-item") as HTMLElement;
+            if (ganttItem) {
+                ganttItem.focus();
+            }
+        });
+
+        return () => {
+            // 移除容器级别的事件监听器清理
+            // if (container) {
+            //     container.removeEventListener("keydown", handleKeyDown);
+            // }
+        };
     });
 
     // 检查时间窗口
@@ -326,7 +411,7 @@
         return itemsDataSet?.get().map(convertToExternalItem) ?? [];
     }
 
-    // 优化导出方法，添加批量处理
+    // 优化导出方法，添加量处理
     export function addItems(items: TimelineItem[]) {
         if (!itemsDataSet) return;
 
@@ -346,9 +431,57 @@
         }
     }
 
+    // 添加键盘事件处理函数
+    function handleKeyDown(event: KeyboardEvent) {
+        console.log(">>>>> onKeyDown event", event);
+        const target = event.currentTarget as HTMLElement; // 改用 currentTarget
+        if (!target.classList.contains("gantt-item")) return;
+
+        // 阻止事件冒泡和默认行为
+        event.stopPropagation();
+        event.preventDefault();
+
+        const itemId = target.dataset.itemId;
+        if (!itemId) return;
+
+        const item = itemsDataSet.get(itemId);
+        if (!item) return;
+
+        switch (event.key) {
+            case "Delete":
+            case "Backspace":
+                // 处理删除事件
+                if (props.onRemove) {
+                    props.onRemove(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
+                        if (resultItem === null) {
+                            itemsDataSet.remove(itemId);
+                        }
+                    });
+                }
+                break;
+            case "Enter":
+            case " ": // 空格键
+                // 处理选择/编辑事件
+                if (props.onUpdate) {
+                    props.onUpdate(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
+                        if (resultItem) {
+                            itemsDataSet.update(convertToInternalItem(resultItem));
+                        }
+                    });
+                }
+                break;
+        }
+    }
+
     onDestroy(() => {
         if (resetTimeout) window.clearTimeout(resetTimeout);
-        if (timeline) timeline.destroy();
+        if (timeline) {
+            timeline.destroy();
+        }
+        // 移除容器级别的事件监听器清理
+        // if (container) {
+        //     container.removeEventListener("keydown", handleKeyDown);
+        // }
     });
 </script>
 
@@ -424,7 +557,7 @@
         @apply text-muted-foreground;
     }
 
-    /* 时间轴次要网格线样式 */
+    /* 时轴次要网格线样式 */
     :global(.vis-timeline .vis-time-axis .vis-grid.vis-minor) {
         @apply border-gray-300;
     }
@@ -505,13 +638,29 @@
     }
 
     :global(.gantt-item) {
-        /* 固定高度 */
         height: 32px;
-        /* 内容水平居中 */
         display: flex;
         align-items: center;
-        /* 内容垂直居中 */
-        /* justify-content: center; */
+        cursor: pointer;
+        outline: none;
+        user-select: none; /* 防止文本选择影响焦点 */
+        -webkit-user-select: none;
+    }
+
+    :global(.gantt-item:focus) {
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
+        border-radius: var(--radius);
+        background-color: rgba(0, 0, 0, 0.05); /* 添加焦点背景色 */
+    }
+
+    :global(.gantt-item:focus:hover) {
+        background-color: rgba(0, 0, 0, 0.08); /* 焦点时的悬停效果 */
+    }
+
+    /* 添加悬停效果 */
+    :global(.gantt-item:hover) {
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     /* 字体大小 */

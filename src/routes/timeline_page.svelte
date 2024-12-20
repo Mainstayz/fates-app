@@ -133,17 +133,25 @@
     }
 
     // 修改 createTimelineItem
-    async function createTimelineItem(title: string) {
+    async function createTimelineItem(title: string, inputItem?: TimelineItem) {
         if (!timelineComponent) return;
 
-        let nowDate = new Date();
-        let endDate = new Date(nowDate.getTime() + 2 * 60 * 60 * 1000);
-        let item: TimelineItem = {
-            id: uuidv4(),
-            content: title,
-            start: nowDate,
-            end: endDate,
-        };
+        let item: TimelineItem;
+        let nowDate: Date;
+        if (inputItem) {
+            item = inputItem;
+            nowDate = item.start;
+        } else {
+            nowDate = new Date();
+            let endDate = new Date(nowDate.getTime() + 2 * 60 * 60 * 1000);
+            item = {
+                id: uuidv4(),
+                content: title,
+                start: nowDate,
+                end: endDate,
+                className: "blue",
+            };
+        }
 
         let createTime = nowDate.toISOString();
         let newMatter: Matter = {
@@ -162,7 +170,11 @@
 
         try {
             await createMatter(newMatter);
-            timelineComponent.addItem(item);
+            if (inputItem) {
+                timelineComponent.updateItem(item);
+            } else {
+                timelineComponent.addItem(item);
+            }
             console.log("create matter: ", newMatter);
             await updateHeatMapData();
             await emit("refresh-time-progress");
@@ -285,6 +297,10 @@
         constructor(private timelineComponent: Timeline) {}
 
         async handleAdd(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
+            // 可能是双击添加的
+            if (item.content == "new item") {
+                createTimelineItem(newTaskTitle, item);
+            }
             callback(item);
         }
 
