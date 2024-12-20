@@ -255,6 +255,7 @@
         // });
 
         // 添加 Timeline 事件监听
+        // 键盘事件依赖于 select 事件
         timeline.on("select", function (properties: { items: (string | number)[] }) {
             if (!properties.items || properties.items.length === 0) return;
 
@@ -270,63 +271,7 @@
         });
 
         // 直接在容器上监听事件，使用事件委托
-        container.addEventListener("keydown", (event) => {
-            const target = event.target as HTMLElement;
-            const ganttItem = target.closest(".gantt-item") as HTMLElement;
-
-            if (!ganttItem) return;
-
-            console.log(">>>>> keydown on gantt-item", event.key);
-
-            // 阻止事件冒泡和默认行为
-            event.stopPropagation();
-            event.preventDefault();
-
-            const itemId = ganttItem.dataset.itemId;
-            if (!itemId) return;
-
-            const item = itemsDataSet.get(itemId);
-            if (!item) return;
-
-            switch (event.key) {
-                case "Delete":
-                case "Backspace":
-                    if (props.onRemove) {
-                        props.onRemove(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
-                            if (resultItem === null) {
-                                itemsDataSet.remove(itemId);
-                            }
-                        });
-                    }
-                    break;
-                case "Enter":
-                case " ":
-                    if (props.onUpdate) {
-                        props.onUpdate(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
-                            if (resultItem) {
-                                itemsDataSet.update(convertToInternalItem(resultItem));
-                            }
-                        });
-                    }
-                    break;
-            }
-        });
-
-        // 添加点击事件监听，确保元素可以获得焦点
-        container.addEventListener("click", (event) => {
-            const target = event.target as HTMLElement;
-            const ganttItem = target.closest(".gantt-item") as HTMLElement;
-            if (ganttItem) {
-                ganttItem.focus();
-            }
-        });
-
-        return () => {
-            // 移除容器级别的事件监听器清理
-            // if (container) {
-            //     container.removeEventListener("keydown", handleKeyDown);
-            // }
-        };
+        container.addEventListener("keydown", handleKeyDown);
     });
 
     // 检查时间窗口
@@ -434,23 +379,24 @@
     // 添加键盘事件处理函数
     function handleKeyDown(event: KeyboardEvent) {
         console.log(">>>>> onKeyDown event", event);
-        const target = event.currentTarget as HTMLElement; // 改用 currentTarget
-        if (!target.classList.contains("gantt-item")) return;
+        const target = event.target as HTMLElement;
+        const ganttItem = target.closest(".gantt-item") as HTMLElement;
+        if (!ganttItem) return;
 
         // 阻止事件冒泡和默认行为
         event.stopPropagation();
         event.preventDefault();
 
-        const itemId = target.dataset.itemId;
+        const itemId = ganttItem.dataset.itemId;
         if (!itemId) return;
 
         const item = itemsDataSet.get(itemId);
         if (!item) return;
+        console.log(">>>>> onKeyDown event", event, "title", item.content);
 
         switch (event.key) {
             case "Delete":
             case "Backspace":
-                // 处理删除事件
                 if (props.onRemove) {
                     props.onRemove(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
                         if (resultItem === null) {
@@ -460,8 +406,7 @@
                 }
                 break;
             case "Enter":
-            case " ": // 空格键
-                // 处理选择/编辑事件
+            case " ":
                 if (props.onUpdate) {
                     props.onUpdate(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
                         if (resultItem) {
@@ -478,7 +423,7 @@
         if (timeline) {
             timeline.destroy();
         }
-        // 移除容器级别的事件监听器清理
+        // 移除容器级别的事件监听器清理;
         // if (container) {
         //     container.removeEventListener("keydown", handleKeyDown);
         // }
@@ -636,6 +581,11 @@
     :global(.vis-timeline .vis-item .vis-item-content) {
         padding: 0.5rem 0.75rem;
     }
+    /* .vis-editable.vis-selected */
+    :global(.vis-editable.vis-selected) {
+        /* 添加阴影 */
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+    }
 
     :global(.gantt-item) {
         height: 32px;
@@ -647,21 +597,23 @@
         -webkit-user-select: none;
     }
 
-    :global(.gantt-item:focus) {
+    /* 添加焦点背景色 */
+    /* :global(.gantt-item:focus) {
         outline: 2px solid var(--primary);
         outline-offset: -2px;
         border-radius: var(--radius);
-        background-color: rgba(0, 0, 0, 0.05); /* 添加焦点背景色 */
-    }
+        background-color: rgba(0, 0, 0, 0.05);
+    } */
 
-    :global(.gantt-item:focus:hover) {
-        background-color: rgba(0, 0, 0, 0.08); /* 焦点时的悬停效果 */
-    }
+    /* 焦点时的悬停效果 */
+    /* :global(.gantt-item:focus:hover) {
+        background-color: rgba(0, 0, 0, 0.08);
+    } */
 
     /* 添加悬停效果 */
-    :global(.gantt-item:hover) {
+    /* :global(.gantt-item:hover) {
         background-color: rgba(0, 0, 0, 0.05);
-    }
+    } */
 
     /* 字体大小 */
     :global(.gantt-item-title) {
