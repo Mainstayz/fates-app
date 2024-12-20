@@ -14,6 +14,12 @@
     import type { Matter } from "../store";
     import { onMount } from "svelte";
     import { emit } from "@tauri-apps/api/event";
+    import AlertDialog from "$lib/components/AleatDialog.svelte";
+
+    let alertOpen = $state(false);
+    let alertTitle = $state("");
+    let alertContent = $state("");
+    let alertDeleteHandler = $state(() => {});
     class TodoAPI {
         public data = $state<Todo[]>([]);
         private matters: Matter[] = [];
@@ -28,6 +34,12 @@
             // 获取最新的待办事项数据
             const todos = await store.getAllTodos();
             const getTodoById = (id: string) => todos.find((item) => item.id === id);
+            // 如果 todos 存在，但是 matter 不存在，则重置  todo.status 为 todo
+            for (const todo of todos) {
+                if (!this.matters.some((matter) => matter.reserved_2 === todo.id)) {
+                    await store.updateTodo(todo.id, { ...todo, status: "todo" });
+                }
+            }
 
             for (const matter of matters) {
                 const todoId = matter.reserved_2;
@@ -69,8 +81,13 @@
         }
 
         async deleteTodo(id: string) {
-            await store.deleteTodo(id);
-            await this.fetchData();
+            alertOpen = true;
+            alertTitle = "确定删除吗？";
+            alertContent = "删除后将无法恢复，请谨慎操作！";
+            alertDeleteHandler = async () => {
+                await store.deleteTodo(id);
+                await this.fetchData();
+            };
         }
 
         async updateTodo(todo: Todo) {
@@ -152,6 +169,10 @@
         await store.createMatter(matter);
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
         await emit("refresh-time-progress", {});
+        alertOpen = true;
+        alertTitle = "提示";
+        alertContent = "已添加，可前往时间线查看";
+        alertDeleteHandler = async () => {};
     };
 
     onMount(() => {
@@ -276,3 +297,11 @@
         </div>
     </div>
 </div>
+
+<AlertDialog
+    bind:open={alertOpen}
+    title={alertTitle}
+    content={alertContent}
+    onConfirm={alertDeleteHandler}
+    showCancel={true}
+/>

@@ -4,6 +4,7 @@
     import { Button } from "$lib/components/ui/button";
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
+    import AlertDialog from "$lib/components/AleatDialog.svelte";
 
     import { TableHandler, Datatable, ThSort, ThFilter } from "@vincjo/datatables";
 
@@ -11,16 +12,21 @@
     import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
     import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
-    import DataTableActionCell from "./data_table_action_cell.svelte";
+    import DataTableRepeatActionCell from "./data_table_repeat_action_cell.svelte";
 
     import { Priority } from "$lib/types";
     import { onMount, onDestroy } from "svelte";
     import { repeatTaskAPI } from "../repeat-task.svelte";
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
+    import { emit } from "@tauri-apps/api/event";
 
     let localAllTags = $state<string[]>([]);
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
     const search = table.createSearch();
+
+    let alertDelete = $state(false);
+    let alertDeleteTitle = "提示";
+    let alertDeleteContent = "已添加，可前往时间线查看";
 
     $effect(() => {
         repeatTaskAPI.data;
@@ -65,6 +71,17 @@
         };
 
         await repeatTaskAPI.createRepeatTask(defaultTask);
+    };
+
+    const handleAddMatter = async (rowId: string) => {
+        const repeatTask = repeatTaskAPI.getRepeatTaskById(rowId);
+        if (!repeatTask) {
+            console.error("repeat task not found", rowId);
+            return;
+        }
+        await repeatTaskAPI.createMatter(repeatTask);
+        await emit("refresh-time-progress", {});
+        alertDelete = true;
     };
 
     onMount(() => {
@@ -190,7 +207,7 @@
                                     />
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <DataTableActionCell
+                                    <DataTableRepeatActionCell
                                         rowId={row.id}
                                         original={row}
                                         onDelete={(rowId) => {
@@ -198,6 +215,9 @@
                                         }}
                                         onUpdateValue={(rowId, newValue) => {
                                             onUpdateValue(rowId, "status", newValue);
+                                        }}
+                                        onAddMatter={(rowId) => {
+                                            handleAddMatter(rowId);
                                         }}
                                     />
                                 </Table.Cell>
@@ -232,3 +252,5 @@
         </div>
     </div>
 </div>
+
+<AlertDialog bind:open={alertDelete} title={alertDeleteTitle} content={alertDeleteContent} />
