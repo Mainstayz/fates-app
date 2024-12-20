@@ -270,6 +270,11 @@
             }
         });
 
+        // rangechanged, 由于 rangechanged 事件会频繁触发，1s 内触发一次
+        // timeline.on("rangechanged", function (event: any) {
+        //     console.log(">>>>> rangechanged", event);
+        // });
+
         // 直接在容器上监听事件，使用事件委托
         container.addEventListener("keydown", handleKeyDown);
     });
@@ -378,29 +383,30 @@
 
     // 添加键盘事件处理函数
     function handleKeyDown(event: KeyboardEvent) {
-        console.log(">>>>> onKeyDown event", event);
         const target = event.target as HTMLElement;
+        // Returns the first (starting at element) inclusive ancestor that matches selectors, and null otherwise.
         const ganttItem = target.closest(".gantt-item") as HTMLElement;
         if (!ganttItem) return;
 
         // 阻止事件冒泡和默认行为
         event.stopPropagation();
         event.preventDefault();
-
+        //
         const itemId = ganttItem.dataset.itemId;
         if (!itemId) return;
 
+        console.log(">>>>> onKeyDown event", event, "item id:", itemId);
+
         const item = itemsDataSet.get(itemId);
         if (!item) return;
-        console.log(">>>>> onKeyDown event", event, "title", item.content);
 
         switch (event.key) {
             case "Delete":
             case "Backspace":
                 if (props.onRemove) {
                     props.onRemove(convertToExternalItem(item), (resultItem: TimelineItem | null) => {
-                        if (resultItem === null) {
-                            itemsDataSet.remove(itemId);
+                        if (resultItem) {
+                            itemsDataSet.remove(convertToInternalItem(resultItem));
                         }
                     });
                 }
@@ -424,9 +430,9 @@
             timeline.destroy();
         }
         // 移除容器级别的事件监听器清理;
-        // if (container) {
-        //     container.removeEventListener("keydown", handleKeyDown);
-        // }
+        if (container) {
+            container.removeEventListener("keydown", handleKeyDown);
+        }
     });
 </script>
 
