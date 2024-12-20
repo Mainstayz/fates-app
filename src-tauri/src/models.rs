@@ -54,4 +54,5 @@ pub enum NotificationType {
     NoTask, // 没有任务提醒
     TaskStart, // 任务即将开始
     TaskEnd, // 任务即将结束
+    NewTask, // 新创建了任务
 }

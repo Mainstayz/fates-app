@@ -183,9 +183,9 @@ impl NotificationHandler {
     pub fn check_upcoming_tasks(
         now: &DateTime<Local>,
         matters: &[Matter],
-        config: &NotificationConfig,
-        callback: &Arc<dyn Fn(Notification) + Send + Sync>
-    ) {
+        config: &NotificationConfig
+    ) -> Vec<Notification> {
+        let mut notifications = Vec::new();
         let now_utc = now.with_timezone(&chrono::Utc);
 
         for matter in matters {
@@ -193,7 +193,7 @@ impl NotificationHandler {
             let minutes_to_end = end_duration.num_minutes();
 
             if minutes_to_end <= config.notify_before && minutes_to_end > 0 {
-                callback(Notification {
+                notifications.push(Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: "任务即将结束".to_string(),
                     message: format!("任务「{}」将在 {} 分钟后结束", matter.title, minutes_to_end),
@@ -207,7 +207,7 @@ impl NotificationHandler {
             let minutes_to_start = start_duration.num_minutes();
 
             if minutes_to_start <= config.notify_before && minutes_to_start >= 0 {
-                callback(Notification {
+                notifications.push(Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: "任务即将开始".to_string(),
                     message: format!(
@@ -220,6 +220,8 @@ impl NotificationHandler {
                 });
             }
         }
+
+        notifications
     }
 
     /// 检查是否需要发送"没有任务"的提醒
@@ -241,28 +243,15 @@ pub struct NotificationManager {
     config: NotificationConfig,
     app_handle: AppHandle,
     db: Arc<SafeConnection>,
-    check_handler: Arc<dyn (Fn() -> bool) + Send + Sync>,
-    get_timeline: Arc<dyn (Fn() -> Vec<Matter>) + Send + Sync>,
-    callback: Arc<dyn Fn(Notification) + Send + Sync>,
 }
 
 impl NotificationManager {
     /// 创建新的通知管理器实例
-    pub fn new(
-        config: NotificationConfig,
-        app_handle: AppHandle,
-        db: Arc<SafeConnection>,
-        check_handler: impl (Fn() -> bool) + Send + Sync + 'static,
-        get_timeline: impl (Fn() -> Vec<Matter>) + Send + Sync + 'static,
-        callback: impl Fn(Notification) + Send + Sync + 'static
-    ) -> Self {
+    pub fn new(config: NotificationConfig, app_handle: AppHandle, db: Arc<SafeConnection>) -> Self {
         NotificationManager {
             config,
             app_handle,
             db,
-            check_handler: Arc::new(check_handler),
-            get_timeline: Arc::new(get_timeline),
-            callback: Arc::new(callback),
         }
     }
 
@@ -270,23 +259,19 @@ impl NotificationManager {
     /// 这是一个异步函数，会在后台持续运行检查是否需要发送通知
     pub async fn start_notification_loop(&self) {
         log::info!("开始通知循环");
-        let check_handler = Arc::clone(&self.check_handler);
-        let get_timeline = Arc::clone(&self.get_timeline);
-        let config = self.config.clone();
-        let callback = Arc::clone(&self.callback);
 
+        let config = self.config.clone();
         let db = Arc::clone(&self.db);
         let app_handle = self.app_handle.clone();
 
         tokio::spawn(async move {
             log::info!("启动异步任务");
+
+            // 60 秒检查一次
             let mut interval = time::interval(Duration::from_secs(config.check_interval * 60));
+
             loop {
                 interval.tick().await;
-                if !check_handler() {
-                    log::info!("通知条件检查返回 false，跳过检查");
-                    continue;
-                }
 
                 let now = Local::now();
 
@@ -295,46 +280,104 @@ impl NotificationManager {
                     log::debug!("当前时间 {} 不在工作时间内", now);
                     continue;
                 }
+                // 获取今天所有的任务
+                let today_timeline_items = Self::get_today_matters(&db); // 获取最新数据
 
-                let timeline_items = get_timeline(); // 获取最新数据
-
-                if
-                    let Err(e) = Self::check_repeat_tasks(
-                        &now,
-                        &timeline_items,
-                        &db,
-                        app_handle.clone()
-                    )
+                // 检查循环任务并获取新创建的任务
+                let mut new_matters_count = 0;
+                match
+                    Self::check_repeat_tasks(&now, &today_timeline_items, &db, app_handle.clone())
                 {
-                    log::error!("检查循环任务失败：{}", e);
+                    Ok(new_matters) => {
+                        if !new_matters.is_empty() {
+                            // 将新创建的任务添加到时间线中
+                            new_matters_count = new_matters.len();
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("检查循环任务失败：{}", e);
+                    }
                 }
 
-                // 检查即将开始和结束的任务
-                Self::check_upcoming_tasks(&now, &timeline_items, &config, &callback);
-
-                // 检查是否需要发送"没有任务"的提醒
-                if Self::should_notify_no_tasks(&now, &timeline_items) {
-                    log::info!("未找到计划任务，正在发送通知");
-                    callback(Notification {
+                let mut notification_list = Vec::new();
+                if new_matters_count > 0 {
+                    log::info!("新创建了 {} 个任务", new_matters_count);
+                    let notification = Notification {
                         id: uuid::Uuid::new_v4().to_string(),
-                        title: "没有计划任务".to_string(),
-                        message: "考虑计划一些任务".to_string(),
+                        title: "新增循环任务".to_string(),
+                        message: format!("新创建了 {} 个循环任务", new_matters_count),
                         timestamp: now.to_rfc3339(),
-                        notification_type: NotificationType::NoTask,
-                    });
+                        notification_type: NotificationType::NewTask,
+                    };
+                    Self::create_notification_record_by_matter(
+                        app_handle.clone(),
+                        &db,
+                        notification
+                    );
+                    continue;
+                }
+
+                // 检查即将开始和结束的任务，15 分钟检查一次
+                {
+                    let check_upcoming_interval = 15;
+                    let check_upcoming_key = "last_check_upcoming_task_time";
+                    if
+                        !Self::check_kvstore_key_update_time(
+                            &db,
+                            check_upcoming_key,
+                            check_upcoming_interval as i64
+                        )
+                    {
+                        log::info!("检查 [即将开始和结束的任务] 不满足条件，跳过检查");
+                        continue;
+                    }
+                    let upcoming_notifications = NotificationHandler::check_upcoming_tasks(
+                        &now,
+                        &today_timeline_items,
+                        &config
+                    );
+                    if !upcoming_notifications.is_empty() {
+                        let notification = upcoming_notifications[0].clone();
+                        Self::create_notification_record_by_matter(
+                            app_handle.clone(),
+                            &db,
+                            notification
+                        );
+                        continue;
+                    }
+                }
+                {
+                    let check_interval = KVStore::get(&db, SETTING_KEY_CHECK_INTERVAL, "120")
+                        .unwrap_or_else(|_| "120".to_string())
+                        .parse::<u64>()
+                        .unwrap_or(120);
+                    let check_no_task_key = "last_check_no_task_time";
+                    if
+                        !Self::check_kvstore_key_update_time(
+                            &db,
+                            check_no_task_key,
+                            check_interval as i64
+                        )
+                    {
+                        log::info!("检查 [没有任务] 不满足条件，跳过检查");
+                        continue;
+                    }
+
+                    // 没有任务，发送通知
+                    if Self::should_notify_no_tasks(&now, &today_timeline_items) {
+                        log::info!("未找到计划任务，正在发送通知");
+                        let notification = Notification {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            title: "没有计划任务".to_string(),
+                            message: "考虑计划一些任务".to_string(),
+                            timestamp: now.to_rfc3339(),
+                            notification_type: NotificationType::NoTask,
+                        };
+                        notification_list.push(notification);
+                    }
                 }
             }
         });
-    }
-
-    // 检查并通知即将到来的任务开始和结束
-    fn check_upcoming_tasks(
-        now: &DateTime<Local>,
-        matters: &[Matter],
-        config: &NotificationConfig,
-        callback: &Arc<dyn Fn(Notification) + Send + Sync>
-    ) {
-        NotificationHandler::check_upcoming_tasks(now, matters, config, callback);
     }
 
     /// 检查当前时间是否在工作时间范围内
@@ -370,8 +413,8 @@ impl NotificationManager {
         let start_time = KVStore::get(&db, SETTING_KEY_WORK_START_TIME, "00:01").unwrap_or(
             "00:01".to_string()
         );
-        let end_time = KVStore::get(&db, SETTING_KEY_WORK_END_TIME, "24:00").unwrap_or(
-            "24:00".to_string()
+        let end_time = KVStore::get(&db, SETTING_KEY_WORK_END_TIME, "23:59").unwrap_or(
+            "23:59".to_string()
         );
         let notify_before = KVStore::get(&db, SETTING_KEY_NOTIFY_BEFORE_MINUTES, "15").unwrap_or(
             "15".to_string()
@@ -385,105 +428,11 @@ impl NotificationManager {
             notify_before: notify_before.parse::<i64>().unwrap_or(15),
         };
 
-        let db_clone = db.clone();
-        let db_clone_2 = db.clone();
-        let db_clone_3 = db.clone();
-
-        let app_handle_clone = app.handle().clone();
-
         // 创建通知管理器
         let notification_manager = NotificationManager::new(
             config,
             app.handle().clone(),
-            db.clone(),
-            move || {
-                // 间隔检查
-                if
-                    let Ok(check_interval) = KVStore::get(
-                        &db_clone,
-                        SETTING_KEY_CHECK_INTERVAL,
-                        "120"
-                    )
-                {
-                    if let Ok(interval) = check_interval.parse::<i64>() {
-                        static LAST_CHECK: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(
-                            None
-                        );
-                        let mut last = LAST_CHECK.lock().unwrap();
-                        let now = std::time::Instant::now();
-
-                        if let Some(last_check) = *last {
-                            let elapsed = now.duration_since(last_check);
-                            let interval_secs = (interval as u64) * 60;
-                            if elapsed.as_secs() >= interval_secs {
-                                log::debug!("Elapsed {:?} s, return true", elapsed.as_secs());
-                                *last = Some(now);
-                                return true;
-                            }
-                            log::debug!(
-                                "Elapsed {:?} s, less than interval {} s",
-                                elapsed.as_secs(),
-                                interval_secs
-                            );
-                        } else {
-                            *last = Some(now);
-                            return true;
-                        }
-                    }
-                }
-                false
-            },
-            move || Matter::get_all(&db_clone_2).unwrap_or_default(),
-            move |notification| {
-                log::info!("收到通知：{:?}", notification);
-                let title = notification.title.clone();
-                let body = notification.message.clone();
-                // let type_ = notification.notification_type;
-
-                let notification_record = NotificationRecord {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    title: title.clone(),
-                    content: body.clone(),
-                    type_: 0 as i32,
-                    status: 0,
-                    related_task_id: None, // 暂时不关联任务
-                    created_at: Utc::now(),
-                    read_at: None,
-                    expire_at: None,
-                    action_url: None,
-                    reserved_1: None,
-                    reserved_2: None,
-                    reserved_3: None,
-                    reserved_4: None,
-                    reserved_5: None,
-                };
-
-                let _ = NotificationRecord::create(&db_clone_3, &notification_record).unwrap();
-                // 保存消息到数据库
-                // let message_box = MessageBoxData {
-                //     title: title.clone(),
-                //     description: body.clone(),
-                // };
-                // let json = serde_json::to_string(&message_box).unwrap();
-                // let _ = KVStore::set(&db_clone_3, SETTING_KEY_NOTIFICATION_MESSAGE_DATA, &json);
-
-                // 发送通知消息
-                let _ = app_handle_clone.emit(NOTIFICATION_MESSAGE, {});
-
-                // 闪烁托盘图标
-                // flash_tray_icon(app_handle_clone.clone(), true);
-
-                // 发送系统通知
-                // if
-                //     let Err(e) = NotificationManager::send_notification(
-                //         app_handle_clone.clone(),
-                //         &title,
-                //         &body
-                //     )
-                // {
-                //     log::error!("发送通知失败：{}", e);
-                // }
-            }
+            db.clone()
         );
 
         let notification_manager = Arc::new(notification_manager);
@@ -502,7 +451,7 @@ impl NotificationManager {
         matters: &[Matter],
         db: &Arc<SafeConnection>,
         app_handle: AppHandle
-    ) -> Result<(), rusqlite::Error> {
+    ) -> Result<Vec<Matter>, rusqlite::Error> {
         log::info!("检查循环任务 ...");
 
         // 获取今天的开始和结束时间
@@ -518,7 +467,7 @@ impl NotificationManager {
             .collect();
 
         let repeat_tasks = RepeatTask::get_active_tasks(db)?;
-        let mut created_count = 0;
+        let mut created_matters = Vec::new();
 
         for task in repeat_tasks {
             if !RepeatTaskHandler::is_available_today(&task, now) {
@@ -551,15 +500,102 @@ impl NotificationManager {
                 let new_matter = RepeatTaskHandler::create_today_task(&task, now, time_range);
                 Matter::create(db, &new_matter)?;
                 KVStore::set(db, &store_key, "1")?;
-                created_count += 1;
+                created_matters.push(new_matter);
             }
         }
 
-        if created_count > 0 {
+        if !created_matters.is_empty() {
             // 通知前端刷新任务列表
             let _ = app_handle.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
         }
 
-        Ok(())
+        Ok(created_matters)
+    }
+
+    /// 检查 KVStore 的 key 更新时间是否超过指定时间
+    ///
+    /// # Arguments
+    /// * `db` - 数据库连接
+    /// * `key` - 要检查的键
+    /// * `duration_minutes` - 时间阈值（分钟）
+    ///
+    /// # Returns
+    /// * `bool` - 是否超过指定时间
+    fn check_kvstore_key_update_time(
+        db: &Arc<SafeConnection>,
+        key: &str,
+        duration_minutes: i64
+    ) -> bool {
+        let now = Local::now();
+        // 获取今天 00:00 的时间作为默认时间
+        let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
+        let default_time = Local.from_local_datetime(&today_start).unwrap();
+        let default_time_str = default_time.to_rfc3339();
+
+        // 获取更新时间，如果不存在或无效则使用今天 00:00
+        let update_time_str = KVStore::get(db, key, &default_time_str).unwrap_or_else(|_|
+            default_time_str.clone()
+        );
+
+        // 解析时间字符串
+        let update_time = match DateTime::parse_from_rfc3339(&update_time_str) {
+            Ok(time) => time,
+            Err(_) =>
+                DateTime::parse_from_rfc3339(&default_time_str).expect("默认时间格式应该始终有效"),
+        };
+
+        let minutes = now.signed_duration_since(update_time.with_timezone(&Local)).num_minutes();
+        let is_pass = minutes > duration_minutes;
+
+        // 如果超过指定时间，更新时间戳
+        if is_pass {
+            if let Err(e) = KVStore::set(db, key, &now.to_rfc3339()) {
+                log::error!("更新时间戳失败：{}", e);
+            }
+        }
+
+        is_pass
+    }
+
+    /// 获取今天的所有任务
+    fn get_today_matters(db: &Arc<SafeConnection>) -> Vec<Matter> {
+        let now = Local::now();
+        let today_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
+        let today_end = now.date_naive().and_hms_opt(23, 59, 59).unwrap();
+
+        let today_start_utc = Local.from_local_datetime(&today_start).unwrap().with_timezone(&Utc);
+        let today_end_utc = Local.from_local_datetime(&today_end).unwrap().with_timezone(&Utc);
+
+        Matter::get_by_time_range(db, today_start_utc, today_end_utc).unwrap_or_default()
+    }
+
+    fn create_notification_record_by_matter(
+        app_handle: AppHandle,
+        db: &Arc<SafeConnection>,
+        notification: Notification
+    ) {
+        let title = notification.title.clone();
+        let body = notification.message.clone();
+        let notification_record = NotificationRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            title: title.clone(),
+            content: body.clone(),
+            type_: 0 as i32,
+            status: 0,
+            related_task_id: None, // 暂时不关联任务
+            created_at: Utc::now(),
+            read_at: None,
+            expire_at: None,
+            action_url: None,
+            reserved_1: None,
+            reserved_2: None,
+            reserved_3: None,
+            reserved_4: None,
+            reserved_5: None,
+        };
+
+        let _ = NotificationRecord::create(&db, &notification_record).unwrap();
+        // 发送通知消息
+        let _ = app_handle.emit(NOTIFICATION_MESSAGE, {});
     }
 }
