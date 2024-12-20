@@ -16,8 +16,50 @@
     import { emit } from "@tauri-apps/api/event";
     class TodoAPI {
         public data = $state<Todo[]>([]);
+        private matters: Matter[] = [];
+
+        async syncTodoStatus() {
+            // 获取所有类型为 2 的 matter
+            console.log("syncTodoStatus ... ");
+            const matters = await store.queryMattersByField("type", "2", true);
+            this.matters = matters;
+            const now = new Date();
+
+            // 获取最新的待办事项数据
+            const todos = await store.getAllTodos();
+            const getTodoById = (id: string) => todos.find((item) => item.id === id);
+
+            for (const matter of matters) {
+                const todoId = matter.reserved_2;
+                if (!todoId) {
+                    continue;
+                }
+
+                const todo = getTodoById(todoId);
+                if (!todo) {
+                    continue;
+                }
+
+                const startTime = new Date(matter.start_time);
+                const endTime = new Date(matter.end_time);
+
+                let newStatus = todo.status;
+                if (now < startTime) {
+                    newStatus = "todo";
+                } else if (now >= startTime && now <= endTime) {
+                    newStatus = "in_progress";
+                } else if (now > endTime) {
+                    newStatus = "completed";
+                }
+
+                if (newStatus !== todo.status) {
+                    await store.updateTodo(todoId, { ...todo, status: newStatus });
+                }
+            }
+        }
 
         async fetchData() {
+            await this.syncTodoStatus();
             this.data = await store.getAllTodos();
         }
 
@@ -38,6 +80,10 @@
 
         getTodoById(id: string) {
             return this.data.find((item) => item.id === id);
+        }
+
+        isTodoInProgress(todoId: string): boolean {
+            return this.matters.some((matter) => matter.reserved_2 === todoId);
         }
     }
 
@@ -189,9 +235,13 @@
                                             <Trash2 />
                                         </Button>
                                         {#if row.status === "todo"}
-                                            <Button variant="outline" size="sm" onclick={() => handleExecute(row)}>
-                                                执行
-                                            </Button>
+                                            {#if todoAPI.isTodoInProgress(row.id)}
+                                                <Button disabled variant="outline" size="sm">已添加</Button>
+                                            {:else}
+                                                <Button variant="outline" size="sm" onclick={() => handleExecute(row)}>
+                                                    执行
+                                                </Button>
+                                            {/if}
                                         {/if}
                                     </div>
                                 </Table.Cell>
