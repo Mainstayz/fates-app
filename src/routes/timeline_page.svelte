@@ -541,7 +541,8 @@
             <Label class="text-2xl font-bold tracking-tight">时间追踪</Label>
             <Label class="text-base text-muted-foreground">用文字描绘每一个瞬间！</Label>
         </div>
-        <div class="py-6">
+        <div class="flex flex-col py-6 gap-2">
+            <!-- 时间范围选择 -->
             <div class="flex gap-2 justify-between">
                 <div class="flex gap-2">
                     <Select.Root type="single" bind:value={selectedRange}>
@@ -596,7 +597,8 @@
                 </div>
             </div>
 
-            <div class="pt-4">
+            <!-- 时间线 -->
+            <div class="pt-0">
                 <Timeline
                     bind:this={timelineComponent}
                     zoomMin={1000 * 60 * 5}
@@ -611,6 +613,8 @@
                     onMoving={handleMoving}
                 />
             </div>
+
+            <!-- 历史热力图 -->
             <div class="flex flex-col pt-4 gap-2">
                 <Label class="text-lg text-muted-foreground">历史</Label>
                 <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />

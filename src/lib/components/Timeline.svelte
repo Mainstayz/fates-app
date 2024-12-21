@@ -438,7 +438,7 @@
     });
 </script>
 
-<div class="w-full my-5 h-[300px]" bind:this={container}></div>
+<div class="w-full h-[300px]" bind:this={container}></div>
 
 <style>
     /* 时间线容器样式 */

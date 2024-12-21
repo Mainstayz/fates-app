@@ -269,14 +269,14 @@
                                                 bind:value={workStart}
                                                 type="time"
                                                 id="work-start"
-                                                class="bg-background h-[24px] w-[64px]"
+                                                class="bg-background h-[24px] w-[72px]"
                                             />
                                             <span class="text-muted-foreground">到</span>
                                             <Input
                                                 bind:value={workEnd}
                                                 type="time"
                                                 id="work-end"
-                                                class="bg-background h-[24px] w-[64px]"
+                                                class="bg-background h-[24px] w-[72px]"
                                             />
                                         </div>
                                         <span class="text-muted-foreground text-xs font-normal leading-snug">

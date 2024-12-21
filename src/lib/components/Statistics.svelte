@@ -211,7 +211,7 @@
             </Select.Root>
         </div>
 
-        <div class="flex-1 flex flex-col pt-4 gap-4">
+        <div class="flex-1 flex flex-col pt-2 gap-2">
             <!-- 上部分图表 -->
             <div class="flex flex-row w-full flex-none h-2/4 border rounded-lg">
                 <div class="w-1/3 flex items-center justify-center">
