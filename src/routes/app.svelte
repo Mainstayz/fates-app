@@ -101,7 +101,7 @@
                 <TimelinePage bind:this={timelineComponent} />
             {/if}
             {#if selectedRoute === "statistics"}
-                <StatisticsPage bind:this={statisticsComponent} items={timelineData?.items ?? []} />
+                <StatisticsPage bind:this={statisticsComponent} />
             {/if}
             {#if selectedRoute === "tags"}
                 <TagsManagerPage bind:this={tagsComponent} />

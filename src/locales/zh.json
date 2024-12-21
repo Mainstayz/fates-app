@@ -1,0 +1,13 @@
+{
+    "routes": {
+        "settings": "设置",
+        "timeline": "时间线",
+        "statistics": "统计",
+        "tags": "标签",
+        "repeat": "重复",
+        "todo": "待办"
+    },
+    "app": {
+
+    }
+}

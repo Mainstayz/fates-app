@@ -1,4 +1,5 @@
 <script lang="ts">
+    import "../i18n";
     import App from "./app.svelte";
     import { onMount } from "svelte";
     import { MouseTrackerState } from "../mouse-tracker.svelte";

@@ -1,0 +1,13 @@
+{
+    "routes": {
+        "settings": "Settings",
+        "timeline": "Timeline",
+        "statistics": "Statistics",
+        "tags": "Tags",
+        "repeat": "Repeat",
+        "todo": "Todo"
+    },
+    "app": {
+
+    }
+}

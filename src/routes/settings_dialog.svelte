@@ -18,6 +18,7 @@
     // store
     import { getKV, setKV } from "../store";
     let { open = $bindable(), ...props } = $props();
+    import { t, locale } from "svelte-i18n";
 
     let language = $state("zh"); // 默认中文
     let autoStart = $state(false);
@@ -42,6 +43,10 @@
         }
         if (workEnd) {
             setKV("workEndTime", workEnd);
+        }
+        if (language) {
+            setKV("language", language);
+            locale.set(language);
         }
     });
 

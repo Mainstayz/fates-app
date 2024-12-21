@@ -2,6 +2,7 @@
     import type { Route } from "../config";
     import { Button } from "$lib/components/ui/button";
     import * as Tooltip from "$lib/components/ui/tooltip/index";
+    import { t } from "svelte-i18n";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;
@@ -14,8 +15,8 @@
     onRouteSelect(routes[0].label);
 
     // 将设置路由和其他路由分开
-    $: mainRoutes = routes.filter(route => route.label !== "Settings");
-    $: settingsRoute = routes.find(route => route.label === "Settings");
+    $: mainRoutes = routes.filter((route) => route.label !== "Settings");
+    $: settingsRoute = routes.find((route) => route.label === "Settings");
 
     // 处理主导航按钮点击事件
     function handleRouteClick(route: Route) {
@@ -48,7 +49,7 @@
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content side="right" class="flex items-center gap-4">
-                        {route.label}
+                        {$t(route.translationKey)}
                     </Tooltip.Content>
                 </Tooltip.Root>
             </Tooltip.Provider>
@@ -60,16 +61,12 @@
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={0}>
                     <Tooltip.Trigger>
-                        <Button
-                            size="icon"
-                            variant="secondary"
-                            onclick={handleSettingsClick}
-                        >
+                        <Button size="icon" variant="secondary" onclick={handleSettingsClick}>
                             <settingsRoute.icon />
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content side="right" class="flex items-center gap-4">
-                        {settingsRoute.label}
+                        {$t(settingsRoute.translationKey)}
                     </Tooltip.Content>
                 </Tooltip.Root>
             </Tooltip.Provider>
