@@ -8,6 +8,58 @@
         "todo": "待办"
     },
     "app": {
-
+        "timeline": {
+            "title": "任务管理",
+            "description": "用文字描绘每一个瞬间！",
+            "addTask": "添加任务",
+            "addTaskPlaceholder": "请输入任务名称",
+            "timeRanges": {
+                "6h": "最近 6 小时",
+                "12h": "最近 12 小时",
+                "1d": "最近 1 天",
+                "3d": "最近 3 天",
+                "7d": "最近 7 天",
+                "default": "选择时间范围"
+            },
+            "taskCompletionStatusLastYear": "最近一年任务记录",
+            "month": "M月",
+            "weekdays": {
+                "mon": "一",
+                "wed": "三",
+                "fri": "五",
+                "sun": "日"
+            },
+            "noValue": "无",
+            "taskCompletionAt": "个任务完成于"
+        },
+        "settings": {
+            "title": "设置",
+            "nav": {
+                "common": "通用",
+                "notification": "通知"
+            },
+            "autoStart": {
+                "title": "开机启动",
+                "description": "设置开机启动"
+            },
+            "language": "语言",
+            "workTime": {
+                "title": "工作时间",
+                "to": "到",
+                "description": "在指定时间范围内，会推送通知"
+            },
+            "checkInterval": {
+                "title": "检查间隔",
+                "120": "2小时",
+                "240": "4小时",
+                "360": "6小时"
+            }
+        },
+        "other": {
+            "confirmDelete": "确定删除吗？",
+            "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
+            "cancel": "取消",
+            "confirm": "确定"
+        }
     }
 }

@@ -3,6 +3,7 @@
     import { emit, listen } from "@tauri-apps/api/event";
     import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
+    import { t } from "svelte-i18n";
 
     // 导入组件
     import Timeline from "$lib/components/Timeline.svelte";
@@ -59,13 +60,13 @@
     let selectedRange = $state("1d"); // 默认选择 3 天
 
     // 时间范围选项
-    const timeRanges = [
-        { value: "6h", label: "最近 6 小时" },
-        { value: "12h", label: "最近 12 小时" },
-        { value: "1d", label: "最近 1 天" },
-        { value: "3d", label: "最近 3 天" },
-        { value: "7d", label: "最近 7 天" },
-    ] as const;
+    const timeRanges = $derived([
+        { value: "6h", label: $t("app.timeline.timeRanges.6h") },
+        { value: "12h", label: $t("app.timeline.timeRanges.12h") },
+        { value: "1d", label: $t("app.timeline.timeRanges.1d") },
+        { value: "3d", label: $t("app.timeline.timeRanges.3d") },
+        { value: "7d", label: $t("app.timeline.timeRanges.7d") },
+    ]);
 
     // 添加任务输入框
     let newTaskTitle = $state("");
@@ -538,8 +539,8 @@
 <div class="flex flex-col h-full">
     <div class="p-6">
         <div class="flex flex-col gap-4">
-            <Label class="text-2xl font-bold tracking-tight">时间追踪</Label>
-            <Label class="text-base text-muted-foreground">用文字描绘每一个瞬间！</Label>
+            <Label class="text-2xl font-bold tracking-tight">{$t("app.timeline.title")}</Label>
+            <Label class="text-base text-muted-foreground">{$t("app.timeline.description")}</Label>
         </div>
         <div class="flex flex-col py-6 gap-2">
             <!-- 时间范围选择 -->
@@ -547,7 +548,10 @@
                 <div class="flex gap-2">
                     <Select.Root type="single" bind:value={selectedRange}>
                         <Select.Trigger class="w-[180px]">
-                            <span>{timeRanges.find((r) => r.value === selectedRange)?.label || "选择时间范围"}</span>
+                            <span
+                                >{timeRanges.find((r) => r.value === selectedRange)?.label ||
+                                    $t("app.timeline.timeRanges.default")}</span
+                            >
                         </Select.Trigger>
                         <Select.Content>
                             <Select.Group>
@@ -567,7 +571,7 @@
                         <!-- 输入回车提交,自动获取焦点 -->
                         <Input
                             type="text"
-                            placeholder="请输入任务名称"
+                            placeholder={$t("app.timeline.addTaskPlaceholder")}
                             class="bg-background w-[320px]"
                             bind:value={newTaskTitle}
                             autofocus
@@ -587,7 +591,7 @@
                     {:else}
                         <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
                             <Plus />
-                            快速添加任务
+                            {$t("app.timeline.addTask")}
                         </Button>
                     {/if}
                     <!-- <Button variant="default">
@@ -616,7 +620,7 @@
 
             <!-- 历史热力图 -->
             <div class="flex flex-col pt-4 gap-2">
-                <Label class="text-lg text-muted-foreground">历史</Label>
+                <Label class="text-lg text-muted-foreground">{$t("app.timeline.taskCompletionStatusLastYear")}</Label>
                 <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />
             </div>
         </div>
@@ -654,11 +658,11 @@
         <AlertDialog.Root bind:open={alertDelete}>
             <AlertDialog.Content>
                 <AlertDialog.Header>
-                    <AlertDialog.Title>确定删除吗？</AlertDialog.Title>
-                    <AlertDialog.Description>删除后将无法恢复，请谨慎操作！</AlertDialog.Description>
+                    <AlertDialog.Title>{$t("app.other.confirmDelete")}</AlertDialog.Title>
+                    <AlertDialog.Description>{$t("app.other.confirmDeleteDescription")}</AlertDialog.Description>
                 </AlertDialog.Header>
                 <AlertDialog.Footer>
-                    <AlertDialog.Cancel>取消</AlertDialog.Cancel>
+                    <AlertDialog.Cancel>{$t("app.other.cancel")}</AlertDialog.Cancel>
                     <AlertDialog.Action
                         onclick={async () => {
                             alertDelete = false;
@@ -669,7 +673,7 @@
                             }
                         }}
                     >
-                        确定删除
+                        {$t("app.other.confirm")}
                     </AlertDialog.Action>
                 </AlertDialog.Footer>
             </AlertDialog.Content>

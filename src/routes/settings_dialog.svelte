@@ -20,7 +20,7 @@
     let { open = $bindable(), ...props } = $props();
     import { t, locale } from "svelte-i18n";
 
-    let language = $state("zh"); // 默认中文
+    let language = $state(""); // 默认中文
     let autoStart = $state(false);
     let checkInterval = $state("120"); // 默认 120 分钟
     let currentSection = $state("common");
@@ -28,11 +28,16 @@
     let workStart = $state("09:00");
     let workEnd = $state("18:00");
 
-    const InternalMap = {
-        "120": "2 小时",
-        "240": "4 小时",
-        "360": "6 小时",
-    } as const;
+    const InternalMap = $derived({
+        "120": $t("app.settings.checkInterval.120"),
+        "240": $t("app.settings.checkInterval.240"),
+        "360": $t("app.settings.checkInterval.360"),
+    });
+
+    const navItems = $derived([
+        { id: "common", title: $t("app.settings.nav.common") },
+        { id: "notification", title: $t("app.settings.nav.notification") },
+    ]);
 
     $effect(() => {
         if (checkInterval) {
@@ -44,8 +49,9 @@
         if (workEnd) {
             setKV("workEndTime", workEnd);
         }
-        if (language) {
+        if (language.length > 0) {
             setKV("language", language);
+            console.log("设置语言：", language);
             locale.set(language);
         }
     });
@@ -87,11 +93,15 @@
                 await setKV("workEndTime", "18:00");
                 workEnd = "18:00";
             }
-            language = "zh";
             checkInterval = await getKV("checkInterval");
             if (checkInterval == "") {
                 await setKV("checkInterval", "120");
                 checkInterval = "120";
+            }
+            language = await getKV("language");
+            if (language == "") {
+                await setKV("language", "zh");
+                language = "zh";
             }
         } catch (error) {
             console.error("Failed to get autostart status:", error);
@@ -166,11 +176,6 @@
         easing: cubicInOut,
     });
 
-    const navItems = [
-        { id: "common", title: "通用" },
-        { id: "notification", title: "通知" },
-    ] as const;
-
     onMount(async () => {
         await initSettings();
     });
@@ -190,7 +195,7 @@
             <Dialog.Title>设置</Dialog.Title>
         </Dialog.Header> -->
             <div class="flex flex-col gap-4">
-                <Label class="text-2xl font-bold">设置</Label>
+                <Label class="text-2xl font-bold">{$t("app.settings.title")}</Label>
                 <div class="grid grid-cols-[200px_1fr] gap-6">
                     <!-- 左侧导航栏 -->
                     <div class="flex flex-col gap-2">
@@ -236,9 +241,9 @@
                             <!-- 开机启动 -->
                             <div class="flex items-center justify-between space-x-2">
                                 <Label for="necessary" class="flex flex-col flex-1 space-y-1">
-                                    <span>开机启动</span>
+                                    <span>{$t("app.settings.autoStart.title")}</span>
                                     <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                        设置开机启动
+                                        {$t("app.settings.autoStart.description")}
                                     </span>
                                 </Label>
                                 <Switch id="necessary" bind:checked={autoStart} />
@@ -247,7 +252,7 @@
                             <div class="flex flex-col gap-2">
                                 <!-- 语言 -->
                                 <Label for="language">
-                                    <span>语言</span>
+                                    <span>{$t("app.settings.language")}</span>
                                 </Label>
 
                                 <Select.Root type="single" bind:value={language}>
@@ -268,7 +273,7 @@
                                 <div class="flex flex-row gap-2 items-center">
                                     <!-- 工作开始 -->
                                     <div class="flex flex-col gap-2">
-                                        <Label for="work-start">工作时间</Label>
+                                        <Label for="work-start">{$t("app.settings.workTime.title")}</Label>
                                         <div class="flex flex-row gap-2 items-center">
                                             <Input
                                                 bind:value={workStart}
@@ -276,7 +281,7 @@
                                                 id="work-start"
                                                 class="bg-background h-[24px] w-[72px]"
                                             />
-                                            <span class="text-muted-foreground">到</span>
+                                            <span class="text-muted-foreground">{$t("app.settings.workTime.to")}</span>
                                             <Input
                                                 bind:value={workEnd}
                                                 type="time"
@@ -285,12 +290,12 @@
                                             />
                                         </div>
                                         <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                            在指定时间范围内，会推送通知
+                                            {$t("app.settings.workTime.description")}
                                         </span>
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-2">
-                                    <Label for="check-interval">检查间隔</Label>
+                                    <Label for="check-interval">{$t("app.settings.checkInterval.title")}</Label>
                                     <Select.Root type="single" bind:value={checkInterval}>
                                         <Select.Trigger>
                                             <span>{InternalMap[checkInterval as keyof typeof InternalMap]}</span>

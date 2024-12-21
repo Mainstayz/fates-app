@@ -239,9 +239,9 @@
             groupOrder: "content", // 按内容排序
 
             // 添加虚拟滚动配置
-            verticalScroll: true,
-            horizontalScroll: true,
-            zoomKey: "ctrlKey",
+            // verticalScroll: true,
+            // horizontalScroll: true,
+            // zoomKey: "ctrlKey",
 
             // 优化渲染性能
             // throttleRedraw: 16, // 限重绘频率 (ms)

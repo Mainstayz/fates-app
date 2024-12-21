@@ -5,12 +5,21 @@
     import { MouseTrackerState } from "../mouse-tracker.svelte";
     import { MessageBoxManager } from "$lib/MessageBoxManager";
     import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";
+    import { locale } from "svelte-i18n";
+    import { getKV, setKV } from "../store";
     const mouseTrackerState = new MouseTrackerState();
     let messageBoxManager: MessageBoxManager;
     let timeProgressBarManager: TimeProgressBarManager;
 
     onMount(() => {
         const initialize = async () => {
+            let language = await getKV("language");
+            if (language == "") {
+                language = "zh";
+                await setKV("language", language);
+            }
+            console.log("设置语言：", language);
+            locale.set(language);
             // 初始化 MouseTracker
             mouseTrackerState.init();
 

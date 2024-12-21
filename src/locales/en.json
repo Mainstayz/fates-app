@@ -1,13 +1,65 @@
 {
-    "routes": {
-        "settings": "Settings",
-        "timeline": "Timeline",
-        "statistics": "Statistics",
-        "tags": "Tags",
-        "repeat": "Repeat",
-        "todo": "Todo"
+  "routes": {
+    "settings": "Settings",
+    "timeline": "Timeline",
+    "statistics": "Statistics",
+    "tags": "Tags",
+    "repeat": "Repeat",
+    "todo": "Todo"
+  },
+  "app": {
+    "timeline": {
+      "title": "Task Management",
+      "description": "Use text to describe every moment!",
+      "addTask": "Add Task",
+      "addTaskPlaceholder": "Please enter the task name",
+      "timeRanges": {
+        "6h": "Last 6 hours",
+        "12h": "Last 12 hours",
+        "1d": "Last 1 day",
+        "3d": "Last 3 days",
+        "7d": "Last 7 days",
+        "default": "Select Time Range"
+      },
+      "taskCompletionStatusLastYear": "Task records for the past year",
+      "month": "MMM",
+      "weekdays": {
+        "mon": "Mon",
+        "wed": "Wed",
+        "fri": "Fri",
+        "sun": "Sun"
+      },
+      "noValue": "No",
+      "taskCompletionAt": "tasks completion at"
     },
-    "app": {
-
+    "other": {
+      "confirmDelete": "Are you sure to delete?",
+      "confirmDeleteDescription": "Once deleted, it cannot be recovered, please be careful!",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "settings": {
+      "title": "Settings",
+      "nav": {
+        "common": "Common",
+        "notification": "Notification"
+      },
+      "autoStart": {
+        "title": "Auto Start",
+        "description": "Set auto start on boot"
+      },
+      "language": "Language",
+      "workTime": {
+        "title": "Work Time",
+        "to": "to",
+        "description": "Notifications will be pushed during the specified time range"
+      },
+      "checkInterval": {
+        "120": "2 hours",
+        "240": "4 hours",
+        "360": "6 hours",
+        "title": "Check Interval"
+      }
     }
+  }
 }

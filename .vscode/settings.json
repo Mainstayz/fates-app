@@ -3,5 +3,9 @@
   "rust-analyzer.server.extraEnv": {
     "CARGO_TARGET_DIR": "${workspaceFolder}/src-tauri/target/analyzer"
   },
-  "rust-analyzer.cargo.targetDir": "${workspaceFolder}/src-tauri/target/analyzer"
+  "rust-analyzer.cargo.targetDir": "${workspaceFolder}/src-tauri/target/analyzer",
+  "i18n-ally.localesPaths": [
+    "src/locales"
+  ],
+  "i18n-ally.keystyle": "nested"
 }

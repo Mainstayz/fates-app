@@ -9,7 +9,12 @@
     // @ts-ignore
     import CalendarLabel from "cal-heatmap/plugins/CalendarLabel";
     import dayjs from "dayjs";
+    import localeData from "dayjs/plugin/localeData";
     import "cal-heatmap/cal-heatmap.css";
+
+    dayjs.extend(localeData);
+
+    import { t, locale } from "svelte-i18n";
 
     // 定义数据源的类型
     interface DataPoint {
@@ -21,6 +26,11 @@
     let { data }: { data: DataPoint[] } = $props();
 
     let cal: CalHeatmap;
+
+    let monthLabel = $derived($t("app.timeline.month"));
+    let weekdaysMon = $derived($t("app.timeline.weekdays.mon"));
+    let weekdaysWed = $derived($t("app.timeline.weekdays.wed"));
+    let weekdaysFri = $derived($t("app.timeline.weekdays.fri"));
 
     type SubDomain = {
         type: string;
@@ -89,85 +99,94 @@
         }
     }
 
-    onMount(() => {
-        cal = new CalHeatmap();
-        cal.addTemplates(yyTemplate);
-        cal.paint(
-            {
-                theme: "light",
-                data: {
-                    source: data,
-                    x: "date",
-                    y: (d: DataPoint) => d.value,
-                    groupY: "max",
-                },
-                date: {
-                    start: dayjs().startOf("year").valueOf(),
-                    min: dayjs().startOf("year").valueOf(),
-                    max: dayjs(),
-                },
-                range: 13,
-                scale: {
-                    color: {
-                        type: "threshold",
-                        range: ["#9be9a8", "#40c463", "#30a14e", "#216e39"],
-                        domain: [2, 3, 5],
+    function redrawCal(locale: string = "en") {
+        if (cal) {
+            cal.addTemplates(yyTemplate);
+            cal.paint(
+                {
+                    theme: "light",
+                    data: {
+                        source: data,
+                        x: "date",
+                        y: (d: DataPoint) => d.value,
+                        groupY: "max",
                     },
-                },
-                domain: {
-                    type: "month",
-                    // dynamicDimension: false,
-                    gutter: 4, // 每个域之间的空间，以像素为单位
-                    label: { text: "M 月", textAlign: "middle", position: "top" },
-                },
-                subDomain: {
-                    type: "yyDay", // 显示域类型中的所有天，但域的开始和结束四舍五入到该月的第一周和结束周，以便每列具有相同的天数。
-                    radius: 2,
-                    width: 15,
-                    height: 15,
-                    gutter: 4,
-                },
-                itemSelector: "#ex-ghDay",
-            },
-            [
-                [
-                    Tooltip,
-                    {
-                        text: (date: Date, value: number) => {
-                            const formattedDate = new Date(date).toLocaleDateString("zh-CN", {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                            });
-                            return `${value || "无"} 贡献于 ${formattedDate}`;
+                    date: {
+                        start: dayjs().startOf("year").valueOf(),
+                        min: dayjs().startOf("year").valueOf(),
+                        max: dayjs(),
+                        locale: locale,
+                    },
+                    range: 13,
+                    scale: {
+                        color: {
+                            type: "threshold",
+                            range: ["#9be9a8", "#40c463", "#30a14e", "#216e39"],
+                            domain: [2, 3, 5],
                         },
                     },
-                ],
-                [
-                    LegendLite,
-                    {
-                        includeBlank: true,
-                        itemSelector: "#ex-ghDay-legend",
+                    domain: {
+                        type: "month",
+                        // dynamicDimension: false,
+                        gutter: 4, // 每个域之间的空间，以像素为单位
+                        label: { text: monthLabel, textAlign: "middle", position: "top" },
+                    },
+                    subDomain: {
+                        type: "yyDay", // 显示域类型中的所有天，但域的开始和结束四舍五入到该月的第一周和结束周，以便每列具有相同的天数。
                         radius: 2,
                         width: 15,
                         height: 15,
                         gutter: 4,
                     },
-                ],
+                    itemSelector: "#ex-ghDay",
+                },
                 [
-                    CalendarLabel,
-                    {
-                        width: 25,
-                        textAlign: "start",
-                        padding: [25, 0, 0, 0],
-                        text: function () {
-                            return ["", "一", "", "三", "", "五", ""];
+                    [
+                        Tooltip,
+                        {
+                            text: (date: Date, value: number) => {
+                                return `${value || $t("app.timeline.noValue")} ${$t("app.timeline.taskCompletionAt")} ${dayjs(date).format("YYYY-MM-DD")}`;
+                            },
                         },
-                    },
-                ],
-            ]
-        );
+                    ],
+                    [
+                        LegendLite,
+                        {
+                            includeBlank: true,
+                            itemSelector: "#ex-ghDay-legend",
+                            radius: 2,
+                            width: 15,
+                            height: 15,
+                            gutter: 4,
+                        },
+                    ],
+                    [
+                        CalendarLabel,
+                        {
+                            width: 25,
+                            textAlign: "start",
+                            padding: [25, 0, 0, 0],
+                            text: () => ["", weekdaysMon, "", weekdaysWed, "", weekdaysFri, ""],
+                        },
+                    ],
+                ]
+            );
+        }
+    }
+
+    locale.subscribe((l: string | null | undefined) => {
+        if (cal && l) {
+            cal.paint({
+                date: {
+                    locale: l,
+                },
+            });
+        }
+    });
+
+    onMount(() => {
+        cal = new CalHeatmap();
+        redrawCal();
     });
 </script>
 
