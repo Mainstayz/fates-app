@@ -1,6 +1,7 @@
 <script lang="ts">
     import Handlebars from "handlebars";
     import { onMount, onDestroy } from "svelte";
+    import { Tags } from "lucide-svelte";
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
     import type { TimelineItem, TimelineGroup, TimelineItemInternal } from "$lib/types";
@@ -47,13 +48,13 @@
                         <div class="gantt-item-date">({{formatDateRange start end}})</div>
                     </div>
                     {{#if tags}}
-                        <div class="gantt-item-tags">
-                        <span class="gantt-item-tag">tags: </span>
-                        {{#each tags}}
-                            <span class="gantt-item-tag">{{this}}</span>{{#unless @last}} <span class="gantt-item-tag">,</span> {{/unless}}
-                        {{/each}}
-                    </div>
-                {{/if}}
+                        <div class="gantt-item-tags flex  gap-1">
+                            <span class="inline-block text-sm">🏷️</span>
+                            {{#each tags}}
+                                <span class="gantt-item-tag">{{this}}</span>{{#unless @last}} <span class="gantt-item-tag">,</span> {{/unless}}
+                            {{/each}}
+                        </div>
+                    {{/if}}
             </div>
         </div>
     `);
@@ -120,6 +121,7 @@
         // 如果 item._raw 不存在，则创建一个, 可能是双击添加的
         if (!item.end && item.content == "new item") {
             // 如果 end 不存在，则设置为 start + 2 小时
+            item.content = "#新任务";
             item.end = new Date(item.start.getTime() + 2 * 60 * 60 * 1000);
             // 设置为蓝色
             item.className = "blue";
@@ -242,7 +244,7 @@
             zoomKey: "ctrlKey",
 
             // 优化渲染性能
-            // throttleRedraw: 16, // 限��重绘频率 (ms)
+            // throttleRedraw: 16, // 限重绘频率 (ms)
         };
 
         // 初始化 Timeline
@@ -575,10 +577,11 @@
     } */
 
     /* 今天日期背景颜色 */
-    :global(.vis-time-axis .vis-grid.vis-today) {
-        /* background: var(--destructive); */
+    /* background: var(--destructive); */
+    /* :global(.vis-time-axis .vis-grid.vis-today) {
+
         @apply bg-neutral-100;
-    }
+    } */
     /* .vis-rolling-mode-btn */
     :global(.vis-rolling-mode-btn) {
         @apply bg-blue-300;

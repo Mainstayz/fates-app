@@ -298,7 +298,7 @@
 
         async handleAdd(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
             // 可能是双击添加的
-            if (item.content == "new item") {
+            if (item.content == "#新任务") {
                 createTimelineItem(newTaskTitle, item);
             }
             callback(item);

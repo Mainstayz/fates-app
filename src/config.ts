@@ -10,7 +10,7 @@ export type Route = {
 
 export const primaryRoutes: Route[] = [
     {
-        icon: Icons.ChartGantt,
+        icon: Icons.CalendarRange,
         variant: "default",
         label: "timeline",
     },

@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as Popover from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
-    import { Leaf, Zap, Flame } from "lucide-svelte";
+    import { Circle, Bookmark, Flame } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
     import { Priority } from "$lib/types";
 
@@ -10,10 +10,15 @@
     export let priority: Priority;
     export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
 
+    const COLOR_MAP = {
+        [Priority.Low]: "text-green-500",
+        [Priority.Medium]: "text-blue-500",
+        [Priority.High]: "text-red-500",
+    };
     const PRIORITY_COLORS = [
-        { value: Priority.Low, label: "低优先级", icon: Leaf },
-        { value: Priority.Medium, label: "中优先级", icon: Zap },
-        { value: Priority.High, label: "高优先级", icon: Flame },
+        { value: Priority.Low, label: "低优先级" },
+        { value: Priority.Medium, label: "中优先级" },
+        { value: Priority.High, label: "高优先级" },
     ];
 
     let open = false;
@@ -27,24 +32,25 @@
         dispatch("change", { priority: newPriority });
         open = false;
     }
+
+    function getIconComponent(priority: Priority | undefined) {
+        switch (priority) {
+            case Priority.High:
+                return Flame;
+            case Priority.Medium:
+                return Bookmark;
+            case Priority.Low:
+            default:
+                return Circle;
+        }
+    }
 </script>
 
 <Popover.Root bind:open>
     <Popover.Trigger>
         <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
             <div class="flex items-center gap-2">
-                {#if priority !== undefined}
-                    {@const Icon = PRIORITY_COLORS.find((c) => c.value === priority)?.icon}
-                    <Icon
-                        class={`w-4 h-4 ${
-                            priority === Priority.High
-                                ? "text-red-500"
-                                : priority === Priority.Medium
-                                  ? "text-yellow-500"
-                                  : "text-green-500"
-                        }`}
-                    />
-                {/if}
+                <svelte:component this={getIconComponent(priority)} class={`w-4 h-4 ${COLOR_MAP[priority]}`} />
                 {getPriorityLabel(priority)}
             </div>
         </Button>
@@ -57,19 +63,11 @@
                     class="w-full justify-start"
                     onclick={() => handlePriorityChange(priorityOption.value)}
                 >
-                    {@const Icon = priorityOption.icon}
-                    <div class="flex items-center gap-2">
-                        <Icon
-                            class={`w-4 h-4 ${
-                                priorityOption.value === Priority.High
-                                    ? "text-red-500"
-                                    : priorityOption.value === Priority.Medium
-                                      ? "text-yellow-500"
-                                      : "text-green-500"
-                            }`}
-                        />
-                        {priorityOption.label}
-                    </div>
+                    <svelte:component
+                        this={getIconComponent(priorityOption.value)}
+                        class={`w-4 h-4 ${COLOR_MAP[priorityOption.value]}`}
+                    />
+                    {priorityOption.label}
                 </Button>
             {/each}
         </div>

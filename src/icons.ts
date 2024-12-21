@@ -18,3 +18,5 @@ export { default as Tags } from "lucide-svelte/icons/tags";
 export { default as Repeat } from "lucide-svelte/icons/repeat";
 // list-todo
 export { default as ListTodo } from "lucide-svelte/icons/list-todo";
+// calendar-range
+export { default as CalendarRange } from "lucide-svelte/icons/calendar-range";
