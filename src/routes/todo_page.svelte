@@ -20,7 +20,7 @@
     let alertOpen = $state(false);
     let alertTitle = $state("");
     let alertContent = $state("");
-    let alertDeleteHandler = $state(() => {});
+    let alertConfirm: () => Promise<void> = $state(async () => {});
     class TodoAPI {
         public data = $state<Todo[]>([]);
         private matters: Matter[] = [];
@@ -82,13 +82,13 @@
         }
 
         async deleteTodo(id: string) {
-            alertOpen = true;
             alertTitle = $t("app.other.confirmDelete");
             alertContent = $t("app.other.confirmDeleteDescription");
-            alertDeleteHandler = async () => {
+            alertConfirm = async () => {
                 await store.deleteTodo(id);
                 await this.fetchData();
             };
+            alertOpen = true;
         }
 
         async updateTodo(todo: Todo) {
@@ -162,10 +162,10 @@
         await store.createMatter(matter);
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
         await emit("refresh-time-progress", {});
-        alertOpen = true;
         alertTitle = $t("app.other.tip");
         alertContent = $t("app.todo.todoInProgressDescription");
-        alertDeleteHandler = async () => {};
+        alertConfirm = async () => {};
+        alertOpen = true;
     };
 
     onMount(() => {
@@ -299,6 +299,6 @@
     bind:open={alertOpen}
     title={alertTitle}
     content={alertContent}
-    onConfirm={alertDeleteHandler}
+    onConfirm={alertConfirm}
     showCancel={true}
 />

@@ -25,10 +25,10 @@
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
     const search = table.createSearch();
 
-    let alertDelete = $state(false);
-    let alertDeleteTitle = $t("app.repeat.addedTip");
-    let alertDeleteContent = $t("app.repeat.addedDescription");
-
+    let alertOpen = $state(false);
+    let alertTitle = $state("");
+    let alertContent = $state("");
+    let alertConfirm: () => Promise<void> = $state(async () => {});
     $effect(() => {
         repeatTaskAPI.data;
         repeatTaskAPI.allTags;
@@ -36,7 +36,12 @@
     });
 
     const handleDelete = async (rowId: string) => {
-        await repeatTaskAPI.deleteRepeatTask(rowId);
+        alertTitle = $t("app.other.confirmDelete");
+        alertContent = $t("app.other.confirmDeleteDescription");
+        alertConfirm = async () => {
+            await repeatTaskAPI.deleteRepeatTask(rowId);
+        };
+        alertOpen = true;
     };
 
     const handleCreate = async () => {
@@ -71,7 +76,10 @@
         }
         await repeatTaskAPI.createMatter(repeatTask);
         await emit("refresh-time-progress", {});
-        alertDelete = true;
+        alertTitle = $t("app.repeat.addedTip");
+        alertContent = $t("app.repeat.addedDescription");
+        alertConfirm = async () => {};
+        alertOpen = true;
     };
 
     onMount(() => {
@@ -247,4 +255,4 @@
     </div>
 </div>
 
-<AlertDialog bind:open={alertDelete} title={alertDeleteTitle} content={alertDeleteContent} />
+<AlertDialog bind:open={alertOpen} title={alertTitle} content={alertContent} onConfirm={alertConfirm} />
