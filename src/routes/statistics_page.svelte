@@ -4,6 +4,7 @@
     import { getAllMatters } from "../store";
     import type { TimelineItem } from "$lib/types";
     import { onMount } from "svelte";
+    import { t } from "svelte-i18n";
 
     let timelineItems: any[] = $state([]);
     onMount(async () => {
@@ -21,8 +22,8 @@
 
 <div class="flex flex-col h-full">
     <div class="flex flex-col px-6 pt-6 gap-4">
-        <Label class="text-2xl font-bold tracking-tight">统计</Label>
-        <Label class="text-base text-muted-foreground">一张用文字编织的网，捕捉转瞬即逝的时光。</Label>
+        <Label class="text-2xl font-bold tracking-tight">{$t("routes.statistics")}</Label>
+        <Label class="text-base text-muted-foreground">{$t("app.timeline.description")}</Label>
     </div>
     <div class="flex-1 p-6">
         <Statistics items={timelineItems} />

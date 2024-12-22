@@ -23,12 +23,12 @@
     let selectedTag: string | null = $state(null); // 选中的标签，默认为 null
 
     // 定义时间范围选项
-    const timeRanges = [
+    const timeRanges = $derived([
         { value: "all", label: $t("app.statistics.timeRanges.all") },
         { value: "year", label: $t("app.statistics.timeRanges.year") },
         { value: "month", label: $t("app.statistics.timeRanges.month") },
         { value: "week", label: $t("app.statistics.timeRanges.week") },
-    ] as const;
+    ]);
 
     // 处理标签选择的函数
     function handleTagSelect(tag: string) {

@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from "svelte";
     import ApexCharts from "apexcharts";
 
-    export let data: { tags: string[], durationHours: number[] };
+    export let data: { tags: string[]; durationHours: number[] };
     export let onTagSelect: (tag: string) => void;
 
     let chartElement: HTMLElement;
@@ -10,11 +10,13 @@
 
     function getChartOptions() {
         return {
-            series: [{
-                name: "时长（小时）",
-                data: data.durationHours,
-                color: "#3B82F6",
-            }],
+            series: [
+                {
+                    name: "时长（小时）",
+                    data: data.durationHours,
+                    color: "#3B82F6",
+                },
+            ],
             chart: {
                 type: "bar",
                 height: "100%",
@@ -39,8 +41,8 @@
             plotOptions: {
                 bar: {
                     borderRadius: 4,
-                    horizontal: true
-                }
+                    horizontal: true,
+                },
             },
             dataLabels: { enabled: false },
             xaxis: {
@@ -53,6 +55,11 @@
                 },
                 axisTicks: {
                     show: false,
+                },
+            },
+            yaxis: {
+                labels: {
+                    show: true,
                 },
             },
             grid: {
@@ -91,4 +98,4 @@
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full"> </div>
+<div bind:this={chartElement} class="w-full h-full"></div>

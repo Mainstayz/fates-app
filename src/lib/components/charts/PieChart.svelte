@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from "svelte";
     import ApexCharts from "apexcharts";
 
-    export let data: { tags: string[], durations: number[], totalDuration: number };
+    export let data: { tags: string[]; durations: number[]; totalDuration: number };
     export let onTagSelect: (tag: string) => void;
 
     let chartElement: HTMLElement;
@@ -10,7 +10,7 @@
 
     function getChartOptions() {
         return {
-            series: data.durations.map(d => +((d / data.totalDuration) * 100).toFixed(1)),
+            series: data.durations.map((d) => +((d / data.totalDuration) * 100).toFixed(1)),
             chart: {
                 type: "donut",
                 height: "100%",
@@ -34,6 +34,11 @@
                     donut: {
                         size: "70%",
                     },
+                },
+            },
+            yaxis: {
+                labels: {
+                    show: false,
                 },
             },
             labels: data.tags,
@@ -61,4 +66,4 @@
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full" ></div>
+<div bind:this={chartElement} class="w-full h-full"></div>
