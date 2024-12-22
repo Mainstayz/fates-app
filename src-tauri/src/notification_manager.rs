@@ -1,4 +1,4 @@
-use crate::database::{ KVStore, Matter, RepeatTask, SafeConnection, NotificationRecord };
+use crate::database::{ KVStore, Matter, NotificationRecord, RepeatTask, SafeConnection };
 use crate::models::{
     MessageBoxData,
     Notification,
@@ -8,14 +8,14 @@ use crate::models::{
     NOTIFICATION_RELOAD_TIMELINE_DATA,
     SETTING_KEY_CHECK_INTERVAL,
     SETTING_KEY_NOTIFICATION_MESSAGE_DATA,
-    SETTING_KEY_WORK_START_TIME,
-    SETTING_KEY_WORK_END_TIME,
     SETTING_KEY_NOTIFY_BEFORE_MINUTES,
+    SETTING_KEY_WORK_END_TIME,
+    SETTING_KEY_WORK_START_TIME,
 };
-use chrono::{ DateTime, Local, NaiveTime, Utc, TimeZone, Datelike };
 use chinese_holiday::*;
+use chrono::{ DateTime, Datelike, Local, NaiveTime, TimeZone, Utc };
 
-use std::sync::{ Arc };
+use std::sync::Arc;
 use std::time::Duration;
 
 use tauri::{ AppHandle, Emitter };
@@ -322,28 +322,26 @@ impl NotificationManager {
                     let check_upcoming_interval = 15;
                     let check_upcoming_key = "last_check_upcoming_task_time";
                     if
-                        !Self::check_kvstore_key_update_time(
+                        Self::check_kvstore_key_update_time(
                             &db,
                             check_upcoming_key,
                             check_upcoming_interval as i64
                         )
                     {
-                        log::info!("检查 [即将开始和结束的任务] 不满足条件，跳过检查");
-                        continue;
-                    }
-                    let upcoming_notifications = NotificationHandler::check_upcoming_tasks(
-                        &now,
-                        &today_timeline_items,
-                        &config
-                    );
-                    if !upcoming_notifications.is_empty() {
-                        let notification = upcoming_notifications[0].clone();
-                        Self::create_notification_record_by_matter(
-                            app_handle.clone(),
-                            &db,
-                            notification
+                        let upcoming_notifications = NotificationHandler::check_upcoming_tasks(
+                            &now,
+                            &today_timeline_items,
+                            &config
                         );
-                        continue;
+                        if !upcoming_notifications.is_empty() {
+                            let notification = upcoming_notifications[0].clone();
+                            Self::create_notification_record_by_matter(
+                                app_handle.clone(),
+                                &db,
+                                notification
+                            );
+                            continue;
+                        }
                     }
                 }
                 {
@@ -359,7 +357,6 @@ impl NotificationManager {
                             check_interval as i64
                         )
                     {
-                        log::info!("检查 [没有任务] 不满足条件，跳过检查");
                         continue;
                     }
 
@@ -463,7 +460,7 @@ impl NotificationManager {
         // 过滤并排序今天的任务
         let today_matters: Vec<&Matter> = matters
             .iter()
-            .filter(|m| { m.start_time >= today_start_utc && m.start_time <= today_end_utc })
+            .filter(|m| m.start_time >= today_start_utc && m.start_time <= today_end_utc)
             .collect();
 
         let repeat_tasks = RepeatTask::get_active_tasks(db)?;
@@ -540,8 +537,9 @@ impl NotificationManager {
         // 解析时间字符串
         let update_time = match DateTime::parse_from_rfc3339(&update_time_str) {
             Ok(time) => time,
-            Err(_) =>
-                DateTime::parse_from_rfc3339(&default_time_str).expect("默认时间格式应该始终有效"),
+            Err(_) => {
+                DateTime::parse_from_rfc3339(&default_time_str).expect("默认时间格式应该始终有效")
+            }
         };
 
         let minutes = now.signed_duration_since(update_time.with_timezone(&Local)).num_minutes();
@@ -552,6 +550,8 @@ impl NotificationManager {
             if let Err(e) = KVStore::set(db, key, &now.to_rfc3339()) {
                 log::error!("更新时间戳失败：{}", e);
             }
+        } else {
+            log::info!("检查 [{}], 时间差 {} 分钟，少于 {} 分钟", key, minutes, duration_minutes);
         }
 
         is_pass

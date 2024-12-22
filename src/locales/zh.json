@@ -129,7 +129,10 @@
             "noData": "暂无数据",
             "noDataDescription": "请添加一些时间记录来查看统计图表",
             "noDetailData": "暂无详细数据",
-            "selectTimeRange": "选择时间范围"
+            "selectTimeRange": "选择时间范围",
+            "tagDetailChart": {
+                "topTen": "前 10 条 {tag}"
+            }
         },
         "status": {
             "active": "进行中",

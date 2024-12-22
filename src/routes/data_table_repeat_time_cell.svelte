@@ -16,7 +16,7 @@
         try {
             const { weekdaysBits, startTime, endTime } = parseRepeatTimeString(repeatTimeValue);
             const description = generateDescription(weekdaysBits);
-            const conponents = description.split(" ");
+            const conponents = description.split("|");
             const fixedValues = conponents.map((component) => {
                 if (component.length == 2 && component.startsWith("周")) {
                     // 去掉周字

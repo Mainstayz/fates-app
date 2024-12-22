@@ -15,13 +15,13 @@
     let lastBits: number;
 
     const WEEKDAY_LABELS = [
+        $t("app.repeat.repeatTime.weekdays.sun"),
         $t("app.repeat.repeatTime.weekdays.mon"),
         $t("app.repeat.repeatTime.weekdays.tue"),
         $t("app.repeat.repeatTime.weekdays.wed"),
         $t("app.repeat.repeatTime.weekdays.thu"),
         $t("app.repeat.repeatTime.weekdays.fri"),
         $t("app.repeat.repeatTime.weekdays.sat"),
-        $t("app.repeat.repeatTime.weekdays.sun"),
     ];
 
     function initializeValues() {
@@ -109,7 +109,7 @@
     <div class="space-y-4">
         <div class="flex flex-col gap-1">
             <Label class="text-xl font-bold">{$t("app.repeat.repeatTime.title")}</Label>
-            <Label class="text-sm text-gray-500">{description}</Label>
+            <Label class="text-sm text-gray-500">{description.split("|").join(" ")}</Label>
         </div>
 
         <div class="flex items-center gap-4">
@@ -117,7 +117,7 @@
                 type="time"
                 value={startTime}
                 onchange={handleStartTimeChange}
-                class="w-[48px] bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                class="w-[48px] bg-background font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <span class="text-gray-500">{$t("app.repeat.repeatTime.to")}</span>
             <Input

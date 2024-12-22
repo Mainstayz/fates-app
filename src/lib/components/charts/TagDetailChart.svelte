@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
+    import { t } from "svelte-i18n";
     import ApexCharts from "apexcharts";
 
     export let data: Array<{ content: string; duration: number }>;
@@ -35,7 +36,9 @@
                 },
             },
             title: {
-                text: `${selectedTag} 前 10 条`,
+                text: $t("app.statistics.tagDetailChart.topTen", {
+                    values: { tag: selectedTag },
+                }),
                 align: "center",
             },
             xaxis: {

@@ -129,7 +129,10 @@
       "noData": "No Data",
       "noDataDescription": "Add some time records to view statistics",
       "noDetailData": "No Detail Data",
-      "selectTimeRange": "Select Time Range"
+      "selectTimeRange": "Select Time Range",
+      "tagDetailChart": {
+        "topTen": "Top 10 {tag}"
+      }
     },
     "status": {
       "active": "In Progress",
