@@ -13,6 +13,7 @@
         UNCLASSIFIED_TAG,
         OTHER_TAG,
     } from "$lib/utils/statistics";
+    import { t } from "svelte-i18n";
 
     // 定义组件的属性和状态
     let { items }: { items: TimelineItem[] } = $props(); // 接收时间项数组作为属性
@@ -23,10 +24,10 @@
 
     // 定义时间范围选项
     const timeRanges = [
-        { value: "all", label: "所有时间" },
-        { value: "year", label: "今年来" },
-        { value: "month", label: "最近一个月" },
-        { value: "week", label: "最近一周" },
+        { value: "all", label: $t("app.statistics.timeRanges.all") },
+        { value: "year", label: $t("app.statistics.timeRanges.year") },
+        { value: "month", label: $t("app.statistics.timeRanges.month") },
+        { value: "week", label: $t("app.statistics.timeRanges.week") },
     ] as const;
 
     // 处理标签选择的函数
@@ -197,7 +198,10 @@
         <div class="w-[200px]">
             <Select.Root type="single" bind:value={selectedRange}>
                 <Select.Trigger class="w-full">
-                    <span>{timeRanges.find((r) => r.value === selectedRange)?.label || "选择时间范围"}</span>
+                    <span
+                        >{timeRanges.find((r) => r.value === selectedRange)?.label ||
+                            $t("app.statistics.selectTimeRange")}</span
+                    >
                 </Select.Trigger>
                 <Select.Content>
                     <Select.Group>
@@ -261,7 +265,7 @@
                         <TagDetailChart data={detailData} {selectedTag} />
                     {:else}
                         <div class="flex items-center justify-center h-full text-gray-500">
-                            <p>暂无详细数据</p>
+                            <p>{$t("app.statistics.noDetailData")}</p>
                         </div>
                     {/if}
                 {/if}
@@ -269,8 +273,8 @@
         </div>
     {:else}
         <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
-            <h3 class="text-lg font-medium mb-2">暂无数据</h3>
-            <p class="text-sm text-center">请添加一些时间记录来查看统计图表</p>
+            <h3 class="text-lg font-medium mb-2">{$t("app.statistics.noData")}</h3>
+            <p class="text-sm text-center">{$t("app.statistics.noDataDescription")}</p>
         </div>
     {/if}
 </div>

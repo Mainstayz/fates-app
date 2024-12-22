@@ -118,6 +118,33 @@
         "360": "6 hours",
         "title": "Check Interval"
       }
+    },
+    "statistics": {
+      "timeRanges": {
+        "all": "All Time",
+        "year": "This Year",
+        "month": "Last Month",
+        "week": "Last Week"
+      },
+      "noData": "No Data",
+      "noDataDescription": "Add some time records to view statistics",
+      "noDetailData": "No Detail Data",
+      "selectTimeRange": "Select Time Range"
+    },
+    "status": {
+      "active": "In Progress",
+      "stopped": "Paused",
+      "archived": "Completed",
+      "select": "Select Status"
+    },
+    "tags": {
+      "noTags": "No tags found",
+      "newTag": "New tag",
+      "createNewTag": "Create new tag",
+      "clearTags": "Clear tags",
+      "moreTagsHidden": "More tags hidden ({count})",
+      "searchTags": "Search tags",
+      "newTagPlaceholder": "New tag name"
     }
   }
 }

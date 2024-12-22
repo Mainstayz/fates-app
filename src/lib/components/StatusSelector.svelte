@@ -3,20 +3,22 @@
     import { Button } from "$lib/components/ui/button";
     import { Archive, Pause, Play } from "lucide-svelte";
     import { TaskStatus } from "$lib/types";
+    import { t } from "svelte-i18n";
+
     export let status: number;
     export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined = "outline";
     export let onStatusValueChange: (status: number) => void;
 
     const STATUS_CONFIGS = [
-        { value: TaskStatus.Active, label: "进行中", icon: Play },
-        { value: TaskStatus.Stopped, label: "已暂停", icon: Pause },
-        { value: TaskStatus.Archived, label: "已完成", icon: Archive },
+        { value: TaskStatus.Active, label: $t("app.status.active"), icon: Play },
+        { value: TaskStatus.Stopped, label: $t("app.status.stopped"), icon: Pause },
+        { value: TaskStatus.Archived, label: $t("app.status.archived"), icon: Archive },
     ];
 
     let open = false;
 
     function getStatusLabel(value: TaskStatus) {
-        return STATUS_CONFIGS.find((c) => c.value === value)?.label ?? "选择状态";
+        return STATUS_CONFIGS.find((c) => c.value === value)?.label ?? $t("app.status.select");
     }
 
     function getStatusIcon(value: TaskStatus) {
