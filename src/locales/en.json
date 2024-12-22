@@ -50,6 +50,42 @@
       "todoInProgress": "Added",
       "todoInProgressDescription": "Added, you can check it in the timeline"
     },
+    "repeat": {
+      "title": "Repeat Tasks",
+      "description": "Repeat tasks are tasks that need to be performed regularly, such as daily drinking water and exercise.",
+      "createTask": "Create Task",
+      "searchPlaceholder": "Search task title...",
+      "columns": {
+        "title": "Title",
+        "tags": "Tags",
+        "repeatTime": "Repeat Time",
+        "priority": "Priority",
+        "actions": "Actions"
+      },
+      "newTaskPrefix": "New Task",
+      "addedTip": "Tip",
+      "addedDescription": "Added, you can check it in the timeline",
+      "priority": {
+        "low": "Low Priority",
+        "medium": "Medium Priority",
+        "high": "High Priority",
+        "select": "Select Priority"
+      },
+      "repeatTime": {
+        "title": "Task Repeat Time Range",
+        "to": "to",
+        "excludeHolidays": "Exclude Holidays",
+        "weekdays": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
+      }
+    },
     "other": {
       "confirmDelete": "Are you sure to delete?",
       "confirmDeleteDescription": "Once deleted, it cannot be recovered, please be careful!",

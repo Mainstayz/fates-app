@@ -2,7 +2,8 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
-    import { WEEKDAY_LABELS, EXCLUDE_HOLIDAYS_BIT, generateDescription } from "$lib/utils/repeatTime";
+    import { EXCLUDE_HOLIDAYS_BIT, generateDescription } from "$lib/utils/repeatTime";
+    import { t } from "svelte-i18n";
 
     export let value: string;
     export let onUpdateValue: (newValue: string) => void;
@@ -12,6 +13,16 @@
     let endTime: string;
     let excludeHolidays: boolean;
     let lastBits: number;
+
+    const WEEKDAY_LABELS = [
+        $t("app.repeat.repeatTime.weekdays.mon"),
+        $t("app.repeat.repeatTime.weekdays.tue"),
+        $t("app.repeat.repeatTime.weekdays.wed"),
+        $t("app.repeat.repeatTime.weekdays.thu"),
+        $t("app.repeat.repeatTime.weekdays.fri"),
+        $t("app.repeat.repeatTime.weekdays.sat"),
+        $t("app.repeat.repeatTime.weekdays.sun"),
+    ];
 
     function initializeValues() {
         const [bits, start, end] = value.split("|");
@@ -97,7 +108,7 @@
 <div class="w-[300px] rounded-lg border bg-white p-4 shadow-sm">
     <div class="space-y-4">
         <div class="flex flex-col gap-1">
-            <Label class="text-xl font-bold">任务重复添加时间段</Label>
+            <Label class="text-xl font-bold">{$t("app.repeat.repeatTime.title")}</Label>
             <Label class="text-sm text-gray-500">{description}</Label>
         </div>
 
@@ -108,7 +119,7 @@
                 onchange={handleStartTimeChange}
                 class="w-[48px] bg-gray-100 font-bold border-none p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
-            <span class="text-gray-500">至</span>
+            <span class="text-gray-500">{$t("app.repeat.repeatTime.to")}</span>
             <Input
                 type="time"
                 value={endTime}
@@ -131,7 +142,7 @@
         </div>
 
         <div class="flex items-center justify-between">
-            <Label for="exclude-holidays" class="font-bold">忽略法定节假日</Label>
+            <Label for="exclude-holidays" class="font-bold">{$t("app.repeat.repeatTime.excludeHolidays")}</Label>
             <Switch id="exclude-holidays" checked={excludeHolidays} onCheckedChange={handleSwitchChange} />
         </div>
     </div>

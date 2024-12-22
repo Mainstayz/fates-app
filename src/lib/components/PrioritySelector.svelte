@@ -4,6 +4,7 @@
     import { Circle, Bookmark, Flame } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
     import { Priority } from "$lib/types";
+    import { t } from "svelte-i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -16,15 +17,15 @@
         [Priority.High]: "text-red-500",
     };
     const PRIORITY_COLORS = [
-        { value: Priority.Low, label: "低优先级" },
-        { value: Priority.Medium, label: "中优先级" },
-        { value: Priority.High, label: "高优先级" },
+        { value: Priority.Low, label: $t("app.repeat.priority.low") },
+        { value: Priority.Medium, label: $t("app.repeat.priority.medium") },
+        { value: Priority.High, label: $t("app.repeat.priority.high") },
     ];
 
     let open = false;
 
     function getPriorityLabel(value: any) {
-        return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? "选择优先级";
+        return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? $t("app.repeat.priority.select");
     }
 
     function handlePriorityChange(newPriority: any) {

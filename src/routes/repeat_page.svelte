@@ -5,6 +5,7 @@
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
     import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import { t } from "svelte-i18n";
 
     import { TableHandler, Datatable, ThSort, ThFilter } from "@vincjo/datatables";
 
@@ -25,25 +26,14 @@
     const search = table.createSearch();
 
     let alertDelete = $state(false);
-    let alertDeleteTitle = "提示";
-    let alertDeleteContent = "已添加，可前往时间线查看";
+    let alertDeleteTitle = $t("app.repeat.addedTip");
+    let alertDeleteContent = $t("app.repeat.addedDescription");
 
     $effect(() => {
         repeatTaskAPI.data;
         repeatTaskAPI.allTags;
         table.setRows(repeatTaskAPI.data);
     });
-
-    // $effect(() => {
-    //     // table.setRows(repeatTaskAPI.data);
-    // });
-    // const onUpdateValue = async (rowId: string, columnId: string, value: string | number) => {
-    //     // Implementation here
-    // };
-
-    // const onTagsChange = async (rowId: string, columnId: string, allTags: string[], selectedTags: string[]) => {
-    //     // Implementation here
-    // };
 
     const handleDelete = async (rowId: string) => {
         await repeatTaskAPI.deleteRepeatTask(rowId);
@@ -60,7 +50,7 @@
 
         const defaultTask = {
             id: uuidv4(),
-            title: `#新任务_${timestamp}`, // 例如: "新任务_03151423"
+            title: `#${$t("app.repeat.newTaskPrefix")}_${timestamp}`, // 例如: "新任务_03151423"
             tags: "",
             repeat_time: "127|08:00|10:00",
             priority: Priority.Medium,
@@ -126,16 +116,16 @@
 
 <div class="flex flex-col h-full">
     <div class="flex flex-col px-6 pt-6 gap-4">
-        <Label class="text-2xl font-bold tracking-tight">重复任务</Label>
+        <Label class="text-2xl font-bold tracking-tight">{$t("app.repeat.title")}</Label>
         <Label class="text-base text-muted-foreground">
-            重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。
+            {$t("app.repeat.description")}
         </Label>
     </div>
     <div class="flex flex-col flex-1 p-6 gap-2">
         <div class="flex items-center justify-between">
             <div class="flex flex-1 items-center space-x-2">
                 <Input
-                    placeholder="搜索任务标题..."
+                    placeholder={$t("app.repeat.searchPlaceholder")}
                     class="bg-background h-8 w-[150px] lg:w-[250px]"
                     type="search"
                     bind:value={search.value}
@@ -148,7 +138,7 @@
                 <Button
                     onclick={() => {
                         handleCreate();
-                    }}>创建任务</Button
+                    }}>{$t("app.repeat.createTask")}</Button
                 >
             </div>
         </div>
@@ -156,11 +146,11 @@
             <Table.Root>
                 <Table.Header>
                     <Table.Row>
-                        <Table.Head>标题</Table.Head>
-                        <Table.Head>标签</Table.Head>
-                        <Table.Head>重复时间</Table.Head>
-                        <Table.Head>优先级</Table.Head>
-                        <Table.Head>操作</Table.Head>
+                        <Table.Head>{$t("app.repeat.columns.title")}</Table.Head>
+                        <Table.Head>{$t("app.repeat.columns.tags")}</Table.Head>
+                        <Table.Head>{$t("app.repeat.columns.repeatTime")}</Table.Head>
+                        <Table.Head>{$t("app.repeat.columns.priority")}</Table.Head>
+                        <Table.Head>{$t("app.repeat.columns.actions")}</Table.Head>
                     </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -229,7 +219,11 @@
         </div>
         <div class="flex justify-end items-center space-x-2">
             <Label class="text-sm text-muted-foreground">
-                第 {table.currentPage} 页，共 {table.pageCount} 页
+                {$t("app.other.page0")}
+                {table.currentPage}
+                {$t("app.other.page1")}
+                {table.pageCount}
+                {$t("app.other.page2")}
             </Label>
             <Button
                 class="w-8 h-8"

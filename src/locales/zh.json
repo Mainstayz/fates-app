@@ -50,6 +50,42 @@
             "todoInProgress": "添加",
             "todoInProgressDescription": "已添加，可前往时间线中查看"
         },
+        "repeat": {
+            "title": "重复任务",
+            "description": "重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。",
+            "createTask": "创建任务",
+            "searchPlaceholder": "搜索任务标题...",
+            "columns": {
+                "title": "标题",
+                "tags": "标签",
+                "repeatTime": "重复时间",
+                "priority": "优先级",
+                "actions": "操作"
+            },
+            "newTaskPrefix": "新任务",
+            "addedTip": "提示",
+            "addedDescription": "已添加，可前往时间线查看",
+            "priority": {
+                "low": "低优先级",
+                "medium": "中优先级",
+                "high": "高优先级",
+                "select": "选择优先级"
+            },
+            "repeatTime": {
+                "title": "任务重复添加时间段",
+                "to": "至",
+                "excludeHolidays": "忽略法定节假日",
+                "weekdays": {
+                    "mon": "一",
+                    "tue": "二",
+                    "wed": "三",
+                    "thu": "四",
+                    "fri": "五",
+                    "sat": "六",
+                    "sun": "日"
+                }
+            }
+        },
         "settings": {
             "title": "设置",
             "nav": {

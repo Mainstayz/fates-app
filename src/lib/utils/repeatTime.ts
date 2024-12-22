@@ -1,4 +1,5 @@
-export const WEEKDAY_LABELS = ["日", "一", "二", "三", "四", "五", "六"] as const;
+import { get } from 'svelte/store';
+import { locale, _ } from 'svelte-i18n';
 
 export const EXCLUDE_HOLIDAYS_BIT = 1 << 7;
 
@@ -9,10 +10,14 @@ export interface RepeatTimeValue {
 }
 
 export function generateDescription(weekdaysBits: number): string {
+    const currentLocale = get(locale);
+    const t = (key: string) => get(_)(`app.repeat.repeatTime.weekdays.${key}`);
+
     const excludeHolidays = !!(weekdaysBits & EXCLUDE_HOLIDAYS_BIT);
     const daysOnly = weekdaysBits & ~EXCLUDE_HOLIDAYS_BIT;
 
-    const selectedDays = WEEKDAY_LABELS.reduce((acc, _, index) => {
+    const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const selectedDays = weekdays.reduce((acc, _, index) => {
         if (daysOnly & (1 << index)) {
             acc.push(index);
         }
@@ -27,16 +32,31 @@ export function generateDescription(weekdaysBits: number): string {
     const isEveryDay = selectedDays.length === 7;
 
     if (isWorkDays) {
-        return excludeHolidays ? "工作日" : "周一至周五";
+        return currentLocale === 'zh'
+            ? (excludeHolidays ? "工作日" : "周一至周五")
+            : (excludeHolidays ? "Workdays" : "MondayToFriday");
     }
 
     if (isEveryDay) {
-        return excludeHolidays ? "每天 除节假日" : "每天";
+        return currentLocale === 'zh'
+            ? (excludeHolidays ? "每天 除节假日" : "每天")
+            : (excludeHolidays ? "Everyday except holidays" : "Everyday");
     }
 
-    const dayLabels = selectedDays.map((day) => `周${WEEKDAY_LABELS[day]}`).join(" ");
+    const dayLabels = selectedDays
+        .map((day) => {
+            const label = t(weekdays[day]);
+            return currentLocale === 'zh' ? `周${label}` : label;
+        })
+        .join(" ");
 
-    return excludeHolidays ? `${dayLabels} 除节假日` : dayLabels;
+    if (excludeHolidays) {
+        return currentLocale === 'zh'
+            ? `${dayLabels} 除节假日`
+            : `${dayLabels} except holidays`;
+    }
+
+    return dayLabels;
 }
 
 export function parseRepeatTimeString(value: string): RepeatTimeValue {
