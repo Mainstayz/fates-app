@@ -32,6 +32,24 @@
             "noValue": "无",
             "taskCompletionAt": "个任务完成于"
         },
+        "todo": {
+            "title": "待办",
+            "description": "在这里管理你的待办事项",
+            "addTodo": "添加待办",
+            "addTodoPlaceholder": "请输入待办名称",
+            "todoList": "待办列表",
+            "defaultTodoTitle": "新增任务",
+            "name": "名称",
+            "status": "状态",
+            "action": "操作",
+            "statusOptions": {
+                "todo": "待办",
+                "in_progress": "进行中",
+                "completed": "已完成"
+            },
+            "todoInProgress": "添加",
+            "todoInProgressDescription": "已添加，可前往时间线中查看"
+        },
         "settings": {
             "title": "设置",
             "nav": {
@@ -59,7 +77,11 @@
             "confirmDelete": "确定删除吗？",
             "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
             "cancel": "取消",
-            "confirm": "确定"
+            "confirm": "确定",
+            "page0": "第",
+            "page1": "页，共",
+            "page2": "页",
+            "tip": "提示"
         }
     }
 }

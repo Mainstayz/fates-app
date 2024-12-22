@@ -15,6 +15,7 @@
     import { onMount } from "svelte";
     import { emit } from "@tauri-apps/api/event";
     import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import { t } from "svelte-i18n";
 
     let alertOpen = $state(false);
     let alertTitle = $state("");
@@ -82,8 +83,8 @@
 
         async deleteTodo(id: string) {
             alertOpen = true;
-            alertTitle = "确定删除吗？";
-            alertContent = "删除后将无法恢复，请谨慎操作！";
+            alertTitle = $t("app.other.confirmDelete");
+            alertContent = $t("app.other.confirmDeleteDescription");
             alertDeleteHandler = async () => {
                 await store.deleteTodo(id);
                 await this.fetchData();
@@ -118,17 +119,9 @@
     };
 
     const handleCreate = async () => {
-        const timestamp = new Date()
-            .toLocaleString("zh-CN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-            })
-            .replace(/[\/\s:]/g, "");
-
         const defaultTodo = {
             id: uuidv4(),
-            title: `#新待办_${timestamp}`,
+            title: `${$t("app.todo.defaultTodoTitle")}`,
             status: "todo",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -170,8 +163,8 @@
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
         await emit("refresh-time-progress", {});
         alertOpen = true;
-        alertTitle = "提示";
-        alertContent = "已添加，可前往时间线查看";
+        alertTitle = $t("app.other.tip");
+        alertContent = $t("app.todo.todoInProgressDescription");
         alertDeleteHandler = async () => {};
     };
 
@@ -189,8 +182,8 @@
 
 <div class="flex flex-col h-full">
     <div class="flex flex-col px-6 pt-6 gap-4">
-        <Label class="text-2xl font-bold tracking-tight">待办事项</Label>
-        <Label class="text-base text-muted-foreground">这里列出了所有的待办事项，你可以添加、编辑和删除待办。</Label>
+        <Label class="text-2xl font-bold tracking-tight">{$t("app.todo.title")}</Label>
+        <Label class="text-base text-muted-foreground">{$t("app.todo.description")}</Label>
     </div>
     <div class="flex flex-col flex-1 p-6 gap-2">
         <div class="flex items-center justify-between">
@@ -217,9 +210,9 @@
             <Table.Root>
                 <Table.Header>
                     <Table.Row>
-                        <Table.Head>标题</Table.Head>
-                        <Table.Head>状态</Table.Head>
-                        <Table.Head>操作</Table.Head>
+                        <Table.Head>{$t("app.todo.name")}</Table.Head>
+                        <Table.Head>{$t("app.todo.status")}</Table.Head>
+                        <Table.Head>{$t("app.todo.action")}</Table.Head>
                     </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -244,10 +237,10 @@
                                               : "outline"}
                                     >
                                         {row.status === "todo"
-                                            ? "待办"
+                                            ? $t("app.todo.statusOptions.todo")
                                             : row.status === "in_progress"
-                                              ? "进行中"
-                                              : "已完成"}
+                                              ? $t("app.todo.statusOptions.in_progress")
+                                              : $t("app.todo.statusOptions.completed")}
                                     </Badge>
                                 </Table.Cell>
                                 <Table.Cell>
@@ -260,7 +253,7 @@
                                                 <Button disabled variant="outline" size="sm">已添加</Button>
                                             {:else}
                                                 <Button variant="outline" size="sm" onclick={() => handleExecute(row)}>
-                                                    执行
+                                                    {$t("app.todo.todoInProgress")}
                                                 </Button>
                                             {/if}
                                         {/if}
@@ -274,7 +267,11 @@
         </div>
         <div class="flex justify-end items-center space-x-2">
             <Label class="text-sm text-muted-foreground">
-                第 {table.currentPage} 页，共 {table.pageCount} 页
+                {$t("app.other.page0")}
+                {table.currentPage}
+                {$t("app.other.page1")}
+                {table.pageCount}
+                {$t("app.other.page2")}
             </Label>
             <Button
                 class="w-8 h-8"

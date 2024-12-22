@@ -32,11 +32,33 @@
       "noValue": "No",
       "taskCompletionAt": "tasks completion at"
     },
+    "todo": {
+      "title": "Todo",
+      "description": "Manage your tasks here",
+      "addTodo": "Add Todo",
+      "addTodoPlaceholder": "Please enter the todo name",
+      "todoList": "Todo List",
+      "defaultTodoTitle": "New Item",
+      "name": "Name",
+      "status": "Status",
+      "action": "Action",
+      "statusOptions": {
+        "todo": "Todo",
+        "in_progress": "In Progress",
+        "completed": "Completed"
+      },
+      "todoInProgress": "Added",
+      "todoInProgressDescription": "Added, you can check it in the timeline"
+    },
     "other": {
       "confirmDelete": "Are you sure to delete?",
       "confirmDeleteDescription": "Once deleted, it cannot be recovered, please be careful!",
       "cancel": "Cancel",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "page0": "Page",
+      "page1": "of",
+      "page2": "Page",
+      "tip": "Tip"
     },
     "settings": {
       "title": "Settings",
