@@ -27,6 +27,7 @@
     "@tauri-apps/plugin-updater": "~2.0.0",
     "apexcharts": "^4.2.0",
     "cal-heatmap": "^4.2.4",
+    "chinese-holidays": "^1.7.0",
     "dayjs": "^1.11.13",
     "debounce": "^2.2.0",
     "handlebars": "^4.7.8",
