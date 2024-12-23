@@ -4,12 +4,10 @@ mod autostart;
 mod database;
 mod http_server;
 mod models;
-mod notification_manager;
 mod tray;
 mod utils;
 
 use crate::http_server::start_http_server;
-use crate::notification_manager::NotificationManager;
 use crate::tray::{ flash_tray_icon, get_tray_flash_state };
 use tauri::Manager;
 use tauri::{ WebviewUrl, WebviewWindowBuilder };
@@ -89,11 +87,6 @@ pub fn run() {
 
             // 注册托盘图标
             let _ = try_register_tray_icon(app);
-
-            // 初始化通知管理器
-            let notification_manager = NotificationManager::initialize(app, db.clone());
-            app.manage(notification_manager);
-
             Ok(())
         })
         .on_window_event(handle_window_event)
