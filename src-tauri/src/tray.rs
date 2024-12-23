@@ -17,7 +17,9 @@ use tokio::time::interval;
 
 #[derive(Default)]
 struct TrayState {
+    #[cfg(target_os = "windows")]
     timer: Option<async_runtime::JoinHandle<()>>,
+
     is_running: bool,
 }
 

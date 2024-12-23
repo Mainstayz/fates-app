@@ -10,11 +10,9 @@ mod utils;
 use crate::http_server::start_http_server;
 use crate::tray::{ flash_tray_icon, get_tray_flash_state };
 use tauri::Manager;
-use tauri::{ WebviewUrl, WebviewWindowBuilder };
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{ Target, TargetKind, WEBVIEW_TARGET };
-use tauri_plugin_store::StoreExt;
 use tray::try_register_tray_icon;
 
 #[tauri::command]

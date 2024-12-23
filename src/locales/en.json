@@ -134,6 +134,16 @@
         "topTen": "Top 10 {tag}"
       }
     },
+    "messages": {
+      "newRepeatTasks": "New Repeat Tasks",
+      "newRepeatTasksDescription": "Created {count} new repeat tasks",
+      "noPlannedTasks": "No Planned Tasks",
+      "noPlannedTasksDescription": "Consider planning some tasks",
+      "taskEndingSoon": "Task Ending Soon",
+      "taskEndingSoonDescription": "Task \"{title}\" will end in {minutes} minutes",
+      "taskStartingSoon": "Task Starting Soon",
+      "taskStartingSoonDescription": "Task \"{title}\" will start in {minutes} minutes"
+    },
     "status": {
       "active": "In Progress",
       "stopped": "Paused",

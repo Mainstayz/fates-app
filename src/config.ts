@@ -1,9 +1,15 @@
 import type { Icon } from "lucide-svelte";
 import type { ComponentType } from "svelte";
 import * as Icons from "./icons";
-// 本地化
-import { t } from "svelte-i18n";
 
+export const SETTING_KEY_LANGUAGE = "language";
+export const SETTING_KEY_WORK_START_TIME = "work_start_time";
+export const SETTING_KEY_WORK_END_TIME = "work_end_time";
+export const SETTING_KEY_NOTIFICATION_CHECK_INTERVAL = "notification_check_interval";
+export const SETTING_KEY_NOTIFY_BEFORE_MINUTES = "notify_before_minutes";
+
+// notification: reload_timeline_data
+export const NOTIFICATION_RELOAD_TIMELINE_DATA = "reload_timeline_data";
 export type Route = {
     icon: ComponentType<Icon>;
     variant: "default" | "ghost";

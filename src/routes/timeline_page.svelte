@@ -35,6 +35,8 @@
     // 导入 dayjs
     import dayjs from "dayjs";
 
+    import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";
+
     interface Tag {
         name: string;
         last_used_at: string;
@@ -353,7 +355,7 @@
     // 定义事件监听器配置
     const EVENT_LISTENERS = [
         {
-            event: "reload_timeline_data",
+            event: NOTIFICATION_RELOAD_TIMELINE_DATA,
             handler: () => {
                 tagManager?.loadTags();
                 timelineDataManager?.loadTimelineData();
@@ -361,19 +363,7 @@
         },
         {
             event: "tray_flash_did_click",
-            handler: () => {
-                // console.log("on tray_flash_did_click ...");
-                // 发送通知消息
-                // console.log("send notification message ...");
-                // emit("notification-message", {
-                //     title: "Hello",
-                //     description: "This is a test",
-                // }).then(() => {
-                //     console.log("notification message sent");
-                // }).catch((error) => {
-                //     console.error("Failed to send notification message:", error);
-                // });
-            },
+            handler: () => {},
         },
     ] as const;
 

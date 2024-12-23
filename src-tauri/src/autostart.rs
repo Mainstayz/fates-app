@@ -1,7 +1,7 @@
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 
-use tauri::{ App, AppHandle, Manager, Wry };
+use tauri::{ AppHandle };
 
 #[cfg(desktop)]
 pub fn enable_autostart(app: AppHandle, enable: bool) -> Result<bool, String> {

@@ -19,6 +19,14 @@
     import { getKV, setKV } from "../store";
     let { open = $bindable(), ...props } = $props();
     import { t, locale } from "svelte-i18n";
+    import {
+        SETTING_KEY_LANGUAGE,
+        SETTING_KEY_WORK_START_TIME,
+        SETTING_KEY_WORK_END_TIME,
+        SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
+        SETTING_KEY_NOTIFY_BEFORE_MINUTES,
+        NOTIFICATION_RELOAD_TIMELINE_DATA,
+    } from "../config";
 
     let language = $state(""); // 默认中文
     let autoStart = $state(false);
@@ -41,17 +49,16 @@
 
     $effect(() => {
         if (checkInterval) {
-            setKV("checkInterval", checkInterval);
+            setKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL, checkInterval);
         }
         if (workStart) {
-            setKV("workStartTime", workStart);
+            setKV(SETTING_KEY_WORK_START_TIME, workStart);
         }
         if (workEnd) {
-            setKV("workEndTime", workEnd);
+            setKV(SETTING_KEY_WORK_END_TIME, workEnd);
         }
         if (language.length > 0) {
-            setKV("language", language);
-            console.log("设置语言：", language);
+            setKV(SETTING_KEY_LANGUAGE, language);
             locale.set(language);
         }
     });
@@ -83,50 +90,28 @@
     async function initSettings() {
         try {
             autoStart = await isEnabled();
-            workStart = await getKV("workStartTime");
+            workStart = await getKV(SETTING_KEY_WORK_START_TIME);
             if (workStart == "") {
-                await setKV("workStartTime", "09:00");
+                await setKV(SETTING_KEY_WORK_START_TIME, "09:00");
                 workStart = "09:00";
             }
-            workEnd = await getKV("workEndTime");
+            workEnd = await getKV(SETTING_KEY_WORK_END_TIME);
             if (workEnd == "") {
-                await setKV("workEndTime", "18:00");
+                await setKV(SETTING_KEY_WORK_END_TIME, "18:00");
                 workEnd = "18:00";
             }
-            checkInterval = await getKV("checkInterval");
+            checkInterval = await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL);
             if (checkInterval == "") {
-                await setKV("checkInterval", "120");
+                await setKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL, "120");
                 checkInterval = "120";
             }
-            language = await getKV("language");
+            language = await getKV(SETTING_KEY_LANGUAGE);
             if (language == "") {
-                await setKV("language", "zh");
+                await setKV(SETTING_KEY_LANGUAGE, "zh");
                 language = "zh";
             }
         } catch (error) {
             console.error("Failed to get autostart status:", error);
-        }
-    }
-
-    async function saveSettings() {
-        try {
-            console.log("保存设置：", language, checkInterval);
-            // let settings = await load("settings.json", { autoSave: false });
-            // settings.set("language", language);
-            // settings.set("checkInterval", checkInterval);
-            // await settings.save();
-        } catch (error) {
-            console.error("保存设置失败：", error);
-        }
-    }
-
-    async function handleAutoStartChange(checked: boolean) {
-        try {
-            await toggleAutoStart(checked);
-            autoStart = checked;
-        } catch (error) {
-            console.error("设置开机启动失败：", error);
-            autoStart = !checked;
         }
     }
 
@@ -137,12 +122,6 @@
         });
         if (confirmed) {
             try {
-                // const timelineData = await load("timeline_data.json");
-                // const tags = await load("tags.json");
-                // await timelineData.clear();
-                // await tags.clear();
-                // await timelineData.save();
-                // await tags.save();
                 console.log("数据已清除");
                 await reloadData();
             } catch (error) {
@@ -164,7 +143,7 @@
     async function reloadData() {
         try {
             // 发送重新加载数据的事件
-            await emit("reload_timeline_data");
+            await emit(NOTIFICATION_RELOAD_TIMELINE_DATA);
             console.log("已触发数据重新加载");
         } catch (error) {
             console.error("重新加载数据失败：", error);
@@ -178,12 +157,6 @@
 
     onMount(async () => {
         await initSettings();
-    });
-
-    $effect(() => {
-        if (open) {
-            saveSettings();
-        }
     });
 </script>
 

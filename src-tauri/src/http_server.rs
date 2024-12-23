@@ -15,7 +15,6 @@ use std::sync::atomic::{ AtomicU16, Ordering };
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{ oneshot, Mutex };
-use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {

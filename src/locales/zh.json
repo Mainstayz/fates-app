@@ -134,6 +134,16 @@
                 "topTen": "前 10 条 {tag}"
             }
         },
+        "messages": {
+            "newRepeatTasks": "新重复任务",
+            "newRepeatTasksDescription": "创建了 {count} 个新重复任务",
+            "noPlannedTasks": "没有计划任务",
+            "noPlannedTasksDescription": "考虑计划一些任务",
+            "taskEndingSoon": "任务即将结束",
+            "taskEndingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后结束",
+            "taskStartingSoon": "任务即将开始",
+            "taskStartingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后开始"
+        },
         "status": {
             "active": "进行中",
             "stopped": "已暂停",

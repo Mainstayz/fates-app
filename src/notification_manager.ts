@@ -1,15 +1,17 @@
-import type { Matter, NotificationRecord, RepeatTask } from "./store";
+import "./i18n";
+import type { Matter, RepeatTask } from "./store";
 import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from "./store";
-import { emit } from "@tauri-apps/api/event";
-import {  isHolidayDate } from "./holuday-cn";
+import { isHolidayDate } from "./holuday-cn";
+import { _, locale } from "svelte-i18n";
+import { get } from "svelte/store";
+import {
+    SETTING_KEY_LANGUAGE,
+    SETTING_KEY_WORK_START_TIME,
+    SETTING_KEY_WORK_END_TIME,
+    SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
+    SETTING_KEY_NOTIFY_BEFORE_MINUTES,
+} from "./config";
 
-// Constants
-const NOTIFICATION_MESSAGE = "notification-message";
-const NOTIFICATION_RELOAD_TIMELINE_DATA = "notification-reload-timeline-data";
-const SETTING_KEY_WORK_START_TIME = "work_start_time";
-const SETTING_KEY_WORK_END_TIME = "work_end_time";
-const SETTING_KEY_CHECK_INTERVAL = "check_interval";
-const SETTING_KEY_NOTIFY_BEFORE_MINUTES = "notify_before_minutes";
 
 // Types
 interface NotificationConfig {
@@ -26,7 +28,7 @@ enum NotificationType {
     NewTask,
 }
 
-interface Notification {
+export interface Notification {
     id: string;
     title: string;
     message: string;
@@ -133,12 +135,14 @@ class RepeatTaskHandler {
 export class NotificationManager {
     private config: NotificationConfig;
     private checkInterval: NodeJS.Timeout | null = null;
+    private notificationCallback: (notification: Notification) => void;
 
-    constructor(config: NotificationConfig) {
+    constructor(config: NotificationConfig, notificationCallback: (notification: Notification) => void) {
         this.config = config;
+        this.notificationCallback = notificationCallback;
     }
 
-    static async initialize(): Promise<NotificationManager> {
+    static async initialize(callback: (notification: Notification) => void): Promise<NotificationManager> {
         const startTime = (await getKV(SETTING_KEY_WORK_START_TIME)) || "00:01";
         const endTime = (await getKV(SETTING_KEY_WORK_END_TIME)) || "23:59";
         const notifyBefore = (await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES)) || "15";
@@ -150,7 +154,7 @@ export class NotificationManager {
             notifyBefore: parseInt(notifyBefore, 10),
         };
 
-        const manager = new NotificationManager(config);
+        const manager = new NotificationManager(config, callback);
         manager.startNotificationLoop();
         return manager;
     }
@@ -159,8 +163,6 @@ export class NotificationManager {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
-        console.log(`Starting notification loop with interval ${this.config.checkInterval} minutes`);
-        await this.checkNotifications();
         this.checkInterval = setInterval(async () => {
             console.log(`Checking notifications at ${new Date().toISOString()}`);
             await this.checkNotifications();
@@ -168,6 +170,12 @@ export class NotificationManager {
     }
 
     private async checkNotifications() {
+        let language = await getKV(SETTING_KEY_LANGUAGE);
+        console.log("Current language:", language);
+        if (language) {
+            locale.set(language);
+        }
+
         const now = new Date();
 
         console.log(`Checking if in work hours: ${now.toISOString()}`);
@@ -175,6 +183,7 @@ export class NotificationManager {
             console.log(`Current time ${now} is not in work hours`);
             return;
         }
+        console.log("In work hours");
 
         // Get today's matters
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -185,46 +194,55 @@ export class NotificationManager {
         console.log(`Checking repeat tasks at ${now.toISOString()}`);
         const newMatters = await this.checkRepeatTasks(now, matters);
         if (newMatters.length > 0) {
-            console.log(`Creating notification for new repeat tasks at ${now.toISOString()}, ${newMatters.length} new repeat tasks`);
-            await this.createNotificationRecord({
-                id: crypto.randomUUID(),
-                title: "New Repeat Tasks",
-                message: `Created ${newMatters.length} new repeat tasks`,
-                timestamp: now.toISOString(),
-                notificationType: NotificationType.NewTask,
-            });
+            console.log(
+                `Creating notification for new repeat tasks at ${now.toISOString()}, ${
+                    newMatters.length
+                } new repeat tasks`
+            );
+            // 创建通知, 通知类型为 NewTask,
+            let title = get(_)("app.messages.newRepeatTasks");
+            let message = get(_)("app.messages.newRepeatTasksDescription", { values: { count: newMatters.length } });
+            this.onReceiveNotification(title, message, NotificationType.NewTask);
             return;
         }
+        console.log("No new repeat tasks");
 
         // Check upcoming tasks
-        console.log(`Checking upcoming tasks at ${now.toISOString()}`);
-        if (await this.shouldCheckUpcoming()) {
+        let shouldCheckUpcoming = await this.shouldCheckUpcoming();
+        if (shouldCheckUpcoming) {
+            console.log(`Checking upcoming tasks at ${now.toISOString()}`);
             const upcomingNotifications = this.checkUpcomingTasks(now, matters);
-            console.log(`Found ${upcomingNotifications.length} upcoming tasks`);
-            for (const notification of upcomingNotifications) {
-                await this.createNotificationRecord(notification);
+            if (upcomingNotifications.length == 0) {
+                console.log("No upcoming tasks");
+            } else {
+                console.log(`Found ${upcomingNotifications.length} upcoming tasks`);
+                let notification = upcomingNotifications[0];
+                this.notificationCallback(notification);
+                return;
             }
         }
 
         // Check no tasks
+        let shouldCheckNoTasks = await this.shouldCheckNoTasks();
+        if (!shouldCheckNoTasks) {
+            console.log("No need to check no tasks");
+            return;
+        }
+
         console.log(`Checking no tasks at ${now.toISOString()}`);
-        if (await this.shouldCheckNoTasks()) {
-            if (this.shouldNotifyNoTasks(now, matters)) {
-                console.log(`Creating notification for no tasks at ${now.toISOString()}`);
-                await this.createNotificationRecord({
-                    id: crypto.randomUUID(),
-                    title: "No Planned Tasks",
-                    message: "Consider planning some tasks",
-                    timestamp: now.toISOString(),
-                    notificationType: NotificationType.NoTask,
-                });
-            }
+        if (this.shouldNotifyNoTasks(now, matters)) {
+            let title = get(_)("app.messages.noPlannedTasks");
+            let message = get(_)("app.messages.noPlannedTasksDescription");
+            this.onReceiveNotification(title, message, NotificationType.NoTask);
         }
     }
 
     private async checkRepeatTasks(now: Date, existingMatters: Matter[]): Promise<Matter[]> {
         const repeatTasks = await getActiveRepeatTasks();
-        console.log(`Active repeat tasks: ${repeatTasks.length}`);
+        if (repeatTasks.length === 0) {
+            console.log("No active repeat tasks, skip");
+            return [];
+        }
         const createdMatters: Matter[] = [];
         for (const task of repeatTasks) {
             if (!RepeatTaskHandler.isAvailableToday(task, now)) {
@@ -250,11 +268,6 @@ export class NotificationManager {
                 createdMatters.push(newMatter);
             }
         }
-
-        if (createdMatters.length > 0) {
-            await emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
-        }
-
         return createdMatters;
     }
 
@@ -269,18 +282,26 @@ export class NotificationManager {
             const minutesToStart = Math.floor((startTime.getTime() - now.getTime()) / (1000 * 60));
 
             if (minutesToEnd <= this.config.notifyBefore && minutesToEnd > 0) {
+                let title = get(_)("app.messages.taskEndingSoon");
+                let message = get(_)("app.messages.taskEndingSoonDescription", {
+                    values: { title: matter.title, minutes: minutesToEnd },
+                });
                 notifications.push({
                     id: crypto.randomUUID(),
-                    title: "Task Ending Soon",
-                    message: `Task "${matter.title}" will end in ${minutesToEnd} minutes`,
+                    title: title,
+                    message: message,
                     timestamp: now.toISOString(),
                     notificationType: NotificationType.TaskEnd,
                 });
             } else if (minutesToStart <= this.config.notifyBefore && minutesToStart >= 0) {
+                let title = get(_)("app.messages.taskStartingSoon");
+                let message = get(_)("app.messages.taskStartingSoonDescription", {
+                    values: { title: matter.title, minutes: minutesToStart },
+                });
                 notifications.push({
                     id: crypto.randomUUID(),
-                    title: "Task Starting Soon",
-                    message: `Task "${matter.title}" will start in ${minutesToStart} minutes`,
+                    title: title,
+                    message: message,
                     timestamp: now.toISOString(),
                     notificationType: NotificationType.TaskStart,
                 });
@@ -300,33 +321,17 @@ export class NotificationManager {
         });
     }
 
-    private async createNotificationRecord(notification: Notification) {
-        const record: NotificationRecord = {
-            id: notification.id,
-            title: notification.title,
-            content: notification.message,
-            type_: 0,
-            status: 0,
-            created_at: notification.timestamp,
-            related_task_id: undefined,
-            read_at: undefined,
-            expire_at: undefined,
-            action_url: undefined,
-            reserved_1: undefined,
-            reserved_2: undefined,
-            reserved_3: undefined,
-            reserved_4: undefined,
-            reserved_5: undefined,
+    private async onReceiveNotification(title: string, message: string, notificationType: NotificationType) {
+        let notificationRecord: Notification = {
+            id: crypto.randomUUID(),
+            title: title,
+            message: message,
+            timestamp: new Date().toISOString(),
+            notificationType: notificationType,
         };
-
-        await this.createNotification(record);
-        await emit(NOTIFICATION_MESSAGE, {});
-    }
-
-    private async createNotification(notification: NotificationRecord) {
-        // You can add any additional notification logic here
-        // For example, showing system notifications or updating UI
-        console.log("Creating notification:", notification);
+        if (this.notificationCallback) {
+            this.notificationCallback(notificationRecord);
+        }
     }
 
     private async shouldCheckUpcoming(): Promise<boolean> {
@@ -336,7 +341,7 @@ export class NotificationManager {
 
     private async shouldCheckNoTasks(): Promise<boolean> {
         const key = "last_check_no_task_time";
-        const interval = parseInt((await getKV(SETTING_KEY_CHECK_INTERVAL)) || "120", 10);
+        const interval = parseInt((await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL)) || "120", 10);
         return this.checkKVStoreKeyUpdateTime(key, interval);
     }
 
@@ -363,6 +368,5 @@ export class NotificationManager {
         }
     }
 }
-
 
 export default NotificationManager;
