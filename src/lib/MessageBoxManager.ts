@@ -2,8 +2,8 @@ import { listen } from "@tauri-apps/api/event";
 import { platform } from "@tauri-apps/plugin-os";
 import { PhysicalPosition, PhysicalSize, type Window } from "@tauri-apps/api/window";
 import debounce from "debounce";
-import type { MouseTrackerState } from "../mouse-tracker.svelte";
-import { createWindow, getWindowByLabel } from "../windows";
+import type { MouseTrackerState } from "../features/mouse-tracker.svelte";
+import { createWindow, getWindowByLabel } from "../tauri/windows";
 
 
 const OFFSET_Y = 4;

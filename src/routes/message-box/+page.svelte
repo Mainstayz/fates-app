@@ -4,7 +4,7 @@
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import NotificationManager, { type Notification } from "../../notification_manager";
+    import NotificationManager, { type Notification } from "../../tauri/notification_manager";
 
     type MessageBoxProps = {
         title: string;

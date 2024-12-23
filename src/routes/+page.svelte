@@ -1,8 +1,8 @@
 <script lang="ts">
-    import "../i18n";
+    import "../i18n/i18n";
     import App from "./app.svelte";
     import { onMount } from "svelte";
-    import { MouseTrackerState } from "../mouse-tracker.svelte";
+    import { MouseTrackerState } from "../features/mouse-tracker.svelte";
     import { MessageBoxManager } from "$lib/MessageBoxManager";
     import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";
     import { locale } from "svelte-i18n";

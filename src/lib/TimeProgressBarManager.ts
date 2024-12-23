@@ -1,5 +1,5 @@
 import { Window } from "@tauri-apps/api/window";
-import { createWindow, getWindowByLabel } from "../windows";
+import { createWindow } from "../tauri/windows";
 
 export class TimeProgressBarManager {
     private static instance: TimeProgressBarManager;

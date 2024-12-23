@@ -1,7 +1,7 @@
-import "./i18n";
-import type { Matter, RepeatTask } from "./store";
-import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from "./store";
-import { isHolidayDate } from "./holuday-cn";
+import "../i18n/i18n";
+import type { Matter, RepeatTask } from "../store";
+import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from "../store";
+import { isHolidayDate } from "../i18n/holiday-cn";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import {
@@ -10,7 +10,7 @@ import {
     SETTING_KEY_WORK_END_TIME,
     SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
     SETTING_KEY_NOTIFY_BEFORE_MINUTES,
-} from "./config";
+} from "../config";
 
 
 // Types

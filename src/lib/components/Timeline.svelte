@@ -1,10 +1,9 @@
 <script lang="ts">
     import Handlebars from "handlebars";
     import { onMount, onDestroy } from "svelte";
-    import { Tags } from "lucide-svelte";
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
-    import type { TimelineItem, TimelineGroup, TimelineItemInternal } from "$lib/types";
+    import type { TimelineItem, TimelineItemInternal } from "$lib/types";
 
     // 定义回调函数的类型
     type TimelineCallback<T> = (item: T | null) => void;
@@ -16,7 +15,6 @@
         start?: Date;
         end?: Date;
         items?: TimelineItem[];
-        // groups?: TimelineGroup[];
         onAdd?: TimelineHandler;
         onMove?: TimelineHandler;
         onMoving?: TimelineHandler;

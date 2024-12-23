@@ -1,5 +1,7 @@
 import type { TimelineItem } from "$lib/types";
 
+
+//TODO： 本地化
 export const UNCLASSIFIED_TAG = "未分类";
 export const OTHER_TAG = "其他";
 export const MAX_TAGS = 10;

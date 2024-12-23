@@ -1,6 +1,4 @@
 <script lang="ts">
-    // 导入必要的组件和工具
-    import { onMount } from "svelte";
     import * as Select from "$lib/components/ui/select";
     import PieChart from "./charts/PieChart.svelte";
     import BarChart from "./charts/BarChart.svelte";

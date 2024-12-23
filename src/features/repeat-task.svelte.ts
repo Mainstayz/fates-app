@@ -7,9 +7,9 @@ import {
     createTag,
     getAllTags,
     createMatter,
-} from "./store";
+} from "../store";
 
-import type { RepeatTask, Matter } from "./store";
+import type { RepeatTask, Matter } from "../store";
 import { v4 as uuidv4 } from "uuid";
 
 class RepeatTaskAPI {

@@ -17,7 +17,7 @@
 
     import { Priority } from "$lib/types";
     import { onMount, onDestroy } from "svelte";
-    import { repeatTaskAPI } from "../repeat-task.svelte";
+    import { repeatTaskAPI } from "../features/repeat-task.svelte";
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { emit } from "@tauri-apps/api/event";
 
