@@ -4,6 +4,7 @@
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
     import { getCurrentWindow } from "@tauri-apps/api/window";
+    import NotificationManager from "../../notification_manager";
     import { getUnreadNotifications, markNotificationAsReadByType, type NotificationRecord } from "../../store";
 
     type MessageBoxProps = {
@@ -23,6 +24,7 @@
     let pageHeight = 0;
     let systemNotifications: NotificationRecord[] = [];
     let window: Awaited<ReturnType<typeof getCurrentWindow>>;
+    let notificationManager: NotificationManager;
 
     const resizeObserver = new ResizeObserver(updateHeight);
 
@@ -98,7 +100,7 @@
     onMount(async () => {
         try {
             console.log("MessageBox page mounted");
-            window = await getCurrentWindow();
+            notificationManager = await NotificationManager.initialize();
             await Promise.all([loadMessageBoxData(), setupEventListeners()]);
             document.addEventListener("click", handleGlobalClick);
             resizeObserver.observe(rootElement);
@@ -109,6 +111,7 @@
 
     onDestroy(() => {
         console.log("MessageBox page destroyed");
+        notificationManager.stop();
         unlistens.forEach((unlisten) => unlisten());
         document.removeEventListener("click", handleGlobalClick);
         resizeObserver.disconnect();

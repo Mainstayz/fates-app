@@ -1,14 +1,15 @@
-import type { Matter, NotificationRecord, RepeatTask } from './store';
-import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from './store';
-import { emit } from '@tauri-apps/api/event';
+import type { Matter, NotificationRecord, RepeatTask } from "./store";
+import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from "./store";
+import { emit } from "@tauri-apps/api/event";
+import {  isHolidayDate } from "./holuday-cn";
 
 // Constants
-const NOTIFICATION_MESSAGE = 'notification-message';
-const NOTIFICATION_RELOAD_TIMELINE_DATA = 'notification-reload-timeline-data';
-const SETTING_KEY_WORK_START_TIME = 'work_start_time';
-const SETTING_KEY_WORK_END_TIME = 'work_end_time';
-const SETTING_KEY_CHECK_INTERVAL = 'check_interval';
-const SETTING_KEY_NOTIFY_BEFORE_MINUTES = 'notify_before_minutes';
+const NOTIFICATION_MESSAGE = "notification-message";
+const NOTIFICATION_RELOAD_TIMELINE_DATA = "notification-reload-timeline-data";
+const SETTING_KEY_WORK_START_TIME = "work_start_time";
+const SETTING_KEY_WORK_END_TIME = "work_end_time";
+const SETTING_KEY_CHECK_INTERVAL = "check_interval";
+const SETTING_KEY_NOTIFY_BEFORE_MINUTES = "notify_before_minutes";
 
 // Types
 interface NotificationConfig {
@@ -22,7 +23,7 @@ enum NotificationType {
     TaskStart,
     TaskEnd,
     NoTask,
-    NewTask
+    NewTask,
 }
 
 interface Notification {
@@ -37,7 +38,7 @@ interface Notification {
 class TimeUtils {
     static parseTime(timeStr: string): Date {
         const today = new Date();
-        const [hours, minutes] = timeStr.split(':').map(Number);
+        const [hours, minutes] = timeStr.split(":").map(Number);
         return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
     }
 
@@ -45,7 +46,7 @@ class TimeUtils {
         const startTime = this.parseTime(workStart);
         const endTime = this.parseTime(workEnd);
 
-        if (workEnd === '24:00') {
+        if (workEnd === "24:00") {
             return currentTime >= startTime;
         }
 
@@ -56,7 +57,7 @@ class TimeUtils {
 // Repeat Task Handler
 class RepeatTaskHandler {
     static isAvailableToday(task: RepeatTask, now: Date): boolean {
-        const parts = task.repeat_time.split('|');
+        const parts = task.repeat_time.split("|");
         if (parts.length !== 3) {
             console.error(`Invalid repeat_time format: ${task.repeat_time}`);
             return false;
@@ -78,15 +79,21 @@ class RepeatTaskHandler {
         // Check holidays (simplified - you may want to add actual holiday checking logic)
         const excludeHolidays = (bits & (1 << 7)) !== 0;
         if (excludeHolidays) {
-            // TODO: Add holiday checking logic here if needed
-            return true;
+            // 使用 HolidayManager 检查是否为节假日
+            const isHoliday = isHolidayDate(now);
+            if (isHoliday) {
+                console.log(`Current time ${now} is a holiday`);
+                return false;
+            } else {
+                console.log(`Current time ${now} is not a holiday`);
+            }
         }
 
         return true;
     }
 
     static getTimeRange(task: RepeatTask): [Date, Date] | null {
-        const parts = task.repeat_time.split('|');
+        const parts = task.repeat_time.split("|");
         if (parts.length !== 3) {
             return null;
         }
@@ -100,7 +107,7 @@ class RepeatTaskHandler {
     static createTodayTask(task: RepeatTask, now: Date, timeRange: [Date, Date]): Matter {
         const [startTime, endTime] = timeRange;
 
-        const color = task.priority === 1 ? 'red' : task.priority === 0 ? 'blue' : 'green';
+        const color = task.priority === 1 ? "red" : task.priority === 0 ? "blue" : "green";
 
         return {
             id: crypto.randomUUID(),
@@ -117,7 +124,7 @@ class RepeatTaskHandler {
             reserved_2: task.id,
             reserved_3: undefined,
             reserved_4: undefined,
-            reserved_5: undefined
+            reserved_5: undefined,
         };
     }
 }
@@ -132,15 +139,15 @@ export class NotificationManager {
     }
 
     static async initialize(): Promise<NotificationManager> {
-        const startTime = await getKV(SETTING_KEY_WORK_START_TIME) || '00:01';
-        const endTime = await getKV(SETTING_KEY_WORK_END_TIME) || '23:59';
-        const notifyBefore = await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES) || '15';
+        const startTime = (await getKV(SETTING_KEY_WORK_START_TIME)) || "00:01";
+        const endTime = (await getKV(SETTING_KEY_WORK_END_TIME)) || "23:59";
+        const notifyBefore = (await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES)) || "15";
 
         const config: NotificationConfig = {
             workStartTime: startTime,
             workEndTime: endTime,
             checkInterval: 1,
-            notifyBefore: parseInt(notifyBefore, 10)
+            notifyBefore: parseInt(notifyBefore, 10),
         };
 
         const manager = new NotificationManager(config);
@@ -152,8 +159,10 @@ export class NotificationManager {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
-
+        console.log(`Starting notification loop with interval ${this.config.checkInterval} minutes`);
+        await this.checkNotifications();
         this.checkInterval = setInterval(async () => {
+            console.log(`Checking notifications at ${new Date().toISOString()}`);
             await this.checkNotifications();
         }, this.config.checkInterval * 60 * 1000);
     }
@@ -161,9 +170,9 @@ export class NotificationManager {
     private async checkNotifications() {
         const now = new Date();
 
-        // Check if in work hours
+        console.log(`Checking if in work hours: ${now.toISOString()}`);
         if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
-            console.debug(`Current time ${now} is not in work hours`);
+            console.log(`Current time ${now} is not in work hours`);
             return;
         }
 
@@ -173,35 +182,41 @@ export class NotificationManager {
         const matters = await getMattersByRange(todayStart.toISOString(), todayEnd.toISOString());
 
         // Check repeat tasks
+        console.log(`Checking repeat tasks at ${now.toISOString()}`);
         const newMatters = await this.checkRepeatTasks(now, matters);
         if (newMatters.length > 0) {
+            console.log(`Creating notification for new repeat tasks at ${now.toISOString()}, ${newMatters.length} new repeat tasks`);
             await this.createNotificationRecord({
                 id: crypto.randomUUID(),
-                title: 'New Repeat Tasks',
+                title: "New Repeat Tasks",
                 message: `Created ${newMatters.length} new repeat tasks`,
                 timestamp: now.toISOString(),
-                notificationType: NotificationType.NewTask
+                notificationType: NotificationType.NewTask,
             });
             return;
         }
 
         // Check upcoming tasks
+        console.log(`Checking upcoming tasks at ${now.toISOString()}`);
         if (await this.shouldCheckUpcoming()) {
             const upcomingNotifications = this.checkUpcomingTasks(now, matters);
+            console.log(`Found ${upcomingNotifications.length} upcoming tasks`);
             for (const notification of upcomingNotifications) {
                 await this.createNotificationRecord(notification);
             }
         }
 
         // Check no tasks
+        console.log(`Checking no tasks at ${now.toISOString()}`);
         if (await this.shouldCheckNoTasks()) {
             if (this.shouldNotifyNoTasks(now, matters)) {
+                console.log(`Creating notification for no tasks at ${now.toISOString()}`);
                 await this.createNotificationRecord({
                     id: crypto.randomUUID(),
-                    title: 'No Planned Tasks',
-                    message: 'Consider planning some tasks',
+                    title: "No Planned Tasks",
+                    message: "Consider planning some tasks",
                     timestamp: now.toISOString(),
-                    notificationType: NotificationType.NoTask
+                    notificationType: NotificationType.NoTask,
                 });
             }
         }
@@ -209,21 +224,21 @@ export class NotificationManager {
 
     private async checkRepeatTasks(now: Date, existingMatters: Matter[]): Promise<Matter[]> {
         const repeatTasks = await getActiveRepeatTasks();
+        console.log(`Active repeat tasks: ${repeatTasks.length}`);
         const createdMatters: Matter[] = [];
-
         for (const task of repeatTasks) {
             if (!RepeatTaskHandler.isAvailableToday(task, now)) {
                 continue;
             }
 
-            const taskExists = existingMatters.some(m => m.reserved_2 === task.id);
+            const taskExists = existingMatters.some((m) => m.reserved_2 === task.id);
             if (taskExists) {
                 continue;
             }
 
-            const storeKey = `repeat_task_${task.id}_${now.toISOString().split('T')[0]}`;
+            const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
             const created = await getKV(storeKey);
-            if (created === '1') {
+            if (created === "1") {
                 continue;
             }
 
@@ -231,7 +246,7 @@ export class NotificationManager {
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createTodayTask(task, now, timeRange);
                 await createMatter(newMatter);
-                await setKV(storeKey, '1');
+                await setKV(storeKey, "1");
                 createdMatters.push(newMatter);
             }
         }
@@ -256,18 +271,18 @@ export class NotificationManager {
             if (minutesToEnd <= this.config.notifyBefore && minutesToEnd > 0) {
                 notifications.push({
                     id: crypto.randomUUID(),
-                    title: 'Task Ending Soon',
+                    title: "Task Ending Soon",
                     message: `Task "${matter.title}" will end in ${minutesToEnd} minutes`,
                     timestamp: now.toISOString(),
-                    notificationType: NotificationType.TaskEnd
+                    notificationType: NotificationType.TaskEnd,
                 });
             } else if (minutesToStart <= this.config.notifyBefore && minutesToStart >= 0) {
                 notifications.push({
                     id: crypto.randomUUID(),
-                    title: 'Task Starting Soon',
+                    title: "Task Starting Soon",
                     message: `Task "${matter.title}" will start in ${minutesToStart} minutes`,
                     timestamp: now.toISOString(),
-                    notificationType: NotificationType.TaskStart
+                    notificationType: NotificationType.TaskStart,
                 });
             }
         }
@@ -278,11 +293,10 @@ export class NotificationManager {
     private shouldNotifyNoTasks(now: Date, matters: Matter[]): boolean {
         const future = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours from now
 
-        return !matters.some(matter => {
+        return !matters.some((matter) => {
             const startTime = new Date(matter.start_time);
             const endTime = new Date(matter.end_time);
-            return (startTime >= now && startTime <= future) ||
-                   (startTime <= now && endTime >= now);
+            return (startTime >= now && startTime <= future) || (startTime <= now && endTime >= now);
         });
     }
 
@@ -302,7 +316,7 @@ export class NotificationManager {
             reserved_2: undefined,
             reserved_3: undefined,
             reserved_4: undefined,
-            reserved_5: undefined
+            reserved_5: undefined,
         };
 
         await this.createNotification(record);
@@ -312,24 +326,24 @@ export class NotificationManager {
     private async createNotification(notification: NotificationRecord) {
         // You can add any additional notification logic here
         // For example, showing system notifications or updating UI
-        console.log('Creating notification:', notification);
+        console.log("Creating notification:", notification);
     }
 
     private async shouldCheckUpcoming(): Promise<boolean> {
-        const key = 'last_check_upcoming_task_time';
+        const key = "last_check_upcoming_task_time";
         return this.checkKVStoreKeyUpdateTime(key, 15);
     }
 
     private async shouldCheckNoTasks(): Promise<boolean> {
-        const key = 'last_check_no_task_time';
-        const interval = parseInt(await getKV(SETTING_KEY_CHECK_INTERVAL) || '120', 10);
+        const key = "last_check_no_task_time";
+        const interval = parseInt((await getKV(SETTING_KEY_CHECK_INTERVAL)) || "120", 10);
         return this.checkKVStoreKeyUpdateTime(key, interval);
     }
 
     private async checkKVStoreKeyUpdateTime(key: string, durationMinutes: number): Promise<boolean> {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const updateTimeStr = await getKV(key) || todayStart.toISOString();
+        const updateTimeStr = (await getKV(key)) || todayStart.toISOString();
 
         const updateTime = new Date(updateTimeStr);
         const minutes = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
@@ -349,3 +363,6 @@ export class NotificationManager {
         }
     }
 }
+
+
+export default NotificationManager;
