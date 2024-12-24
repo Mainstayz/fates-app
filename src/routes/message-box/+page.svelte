@@ -1,9 +1,8 @@
 <script lang="ts">
     import * as Alert from "$lib/components/ui/alert";
     import { invoke } from "@tauri-apps/api/core";
-    import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+    import { listen, emit, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
     import NotificationManager, { type Notification } from "../../tauri/notification_manager";
 
     type MessageBoxProps = {
@@ -16,7 +15,6 @@
     let unlistens: UnlistenFn[] = [];
     let rootElement: HTMLElement;
     let pageHeight = 0;
-    let window: Awaited<ReturnType<typeof getCurrentWindow>>;
     let notificationManager: NotificationManager;
 
     const resizeObserver = new ResizeObserver(updateHeight);
@@ -34,15 +32,14 @@
     }
 
     async function disableFlashAndHide() {
-        if (!window) return;
-
         await Promise.all([
             invoke("flash_tray_icon", { flash: false }).catch(handleError("Failed to disable tray icon flash")),
-            window.emit("hide-message-box").catch(handleError("Failed to hide message box")),
+            emit("hide-message-box").catch(handleError("Failed to hide message box")),
         ]);
     }
 
     const handleGlobalClick = () => {
+        console.log("handleGlobalClick");
         disableFlashAndHide().catch(handleError("Failed to handle global click"));
     };
 
@@ -54,7 +51,7 @@
 
         pageHeight = newHeight;
         console.log("updateHeight: pageHeight = ", pageHeight, ", emit message-box-height event");
-        await window.emit("message-box-height", pageHeight).catch(handleError("Failed to emit height change"));
+        emit("message-box-height", pageHeight).catch(handleError("Failed to emit height change"));
     }
 
     async function setupEventListeners() {

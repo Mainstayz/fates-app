@@ -38,6 +38,7 @@ export interface Notification {
 
 // Time Utils
 class TimeUtils {
+
     static parseTime(timeStr: string): Date {
         const today = new Date();
         const [hours, minutes] = timeStr.split(":").map(Number);
@@ -45,14 +46,22 @@ class TimeUtils {
     }
 
     static isInWorkHours(currentTime: Date, workStart: string, workEnd: string): boolean {
-        const startTime = this.parseTime(workStart);
-        const endTime = this.parseTime(workEnd);
+        // Convert to hours and minutes for direct comparison to avoid timezone issues
+        const currentHours = currentTime.getHours();
+        const currentMinutes = currentTime.getMinutes();
+        const currentTotalMinutes = currentHours * 60 + currentMinutes;
+
+        const [startHours, startMinutes] = workStart.split(':').map(Number);
+        const startTotalMinutes = startHours * 60 + startMinutes;
 
         if (workEnd === "24:00") {
-            return currentTime >= startTime;
+            return currentTotalMinutes >= startTotalMinutes;
         }
 
-        return currentTime >= startTime && currentTime <= endTime;
+        const [endHours, endMinutes] = workEnd.split(':').map(Number);
+        const endTotalMinutes = endHours * 60 + endMinutes;
+
+        return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
     }
 }
 
@@ -178,9 +187,10 @@ export class NotificationManager {
 
         const now = new Date();
 
-        console.log(`Checking if in work hours: ${now.toISOString()}`);
+        // local time
+        console.log(`Checking if in work hours: ${now.toLocaleString()}`);
         if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
-            console.log(`Current time ${now} is not in work hours`);
+
             return;
         }
         console.log("In work hours");

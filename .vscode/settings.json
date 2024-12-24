@@ -5,7 +5,8 @@
   },
   "rust-analyzer.cargo.targetDir": "${workspaceFolder}/src-tauri/target/analyzer",
   "i18n-ally.localesPaths": [
-    "src/locales"
+    "src/locales",
+    "src/i18n"
   ],
   "i18n-ally.keystyle": "nested"
 }
