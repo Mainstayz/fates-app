@@ -5,7 +5,8 @@
     "statistics": "Statistics",
     "tags": "Tags",
     "repeat": "Repeat",
-    "todo": "Todo"
+    "todo": "Todo",
+    "openai": "AI Chat"
   },
   "app": {
     "timeline": {

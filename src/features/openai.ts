@@ -220,9 +220,7 @@ export class OpenAIClient {
 
         return this.withLock(conversationId, async () => {
             try {
-                console.log("sendMessage start");
                 const conversation = await this.getOrCreateConversation(conversationId);
-                console.log("getOrCreateConversation done");
                 const userMessage: ChatMessage = {
                     id: `${conversationId}-user-${Date.now()}`,
                     conversationId,
@@ -233,10 +231,8 @@ export class OpenAIClient {
                     status: "completed",
                 };
                 await this.updateConversation(conversationId, userMessage);
-                console.log("updateConversation done");
 
                 if (options?.stream && options?.streamCallbacks) {
-                    console.log("stream start");
                     const stream = await this.client.chat.completions.create({
                         messages: conversation.messages,
                         model: options?.model || this.defaultModel,
@@ -247,7 +243,6 @@ export class OpenAIClient {
                         presence_penalty: options?.presencePenalty,
                         stream: true,
                     });
-                    console.log("stream done");
 
                     let fullContent = "";
                     for await (const chunk of stream) {
@@ -270,12 +265,9 @@ export class OpenAIClient {
                         },
                     };
                     await this.updateConversation(conversationId, assistantMessage);
-                    console.log("updateConversation done");
                     options.streamCallbacks.onComplete?.(fullContent);
-                    console.log("onComplete done");
                     return fullContent;
                 } else {
-                    console.log("completion start");
                     const completion = await this.client.chat.completions.create({
                         messages: conversation.messages,
                         model: options?.model || this.defaultModel,
@@ -286,7 +278,6 @@ export class OpenAIClient {
                         presence_penalty: options?.presencePenalty,
                         stream: false,
                     });
-                    console.log("completion done");
                     if (!("choices" in completion)) {
                         throw new Error("Unexpected response format from OpenAI API");
                     }
@@ -294,7 +285,6 @@ export class OpenAIClient {
                     if (!completion.choices || completion.choices.length === 0) {
                         throw new Error("No choices returned from OpenAI API");
                     }
-                    console.log("assistantMessage start");
 
                     const assistantMessage: ChatMessage = {
                         id: `${conversationId}-assistant-${Date.now()}`,
@@ -309,16 +299,13 @@ export class OpenAIClient {
                             temperature: options?.temperature ?? 0.7,
                         },
                     };
-                    console.log("assistantMessage done");
                     await this.updateConversation(conversationId, assistantMessage);
-                    console.log("updateConversation done");
                     return assistantMessage.content;
                 }
             } catch (error) {
                 if (options?.stream && options?.streamCallbacks?.onError) {
                     options.streamCallbacks.onError(error instanceof Error ? error : new Error(String(error)));
                 }
-                console.error("Chat completion error:", error);
                 throw error;
             }
         });

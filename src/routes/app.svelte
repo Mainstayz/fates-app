@@ -1,102 +1,81 @@
 <script lang="ts">
-    import * as Resizable from "$lib/components/ui/resizable";
+    import type { Route } from "../config";
+    import * as Icons from "../icons";
+    import { MessageSquare } from "lucide-svelte";
     import Nav from "./nav.svelte";
-    import type { TimelineData } from "$lib/types";
     import TimelinePage from "./timeline_page.svelte";
     import StatisticsPage from "./statistics_page.svelte";
-    import SettingsDialog from "./settings_dialog.svelte";
+    import TagsManagerPage from "./tags_manager_page.svelte";
     import RepeatPage from "./repeat_page.svelte";
     import TodoPage from "./todo_page.svelte";
-    import TagsManagerPage from "./tags_manager_page.svelte";
-    import { primaryRoutes } from "../config";
-    import { check } from "@tauri-apps/plugin-updater";
-    import { relaunch } from "@tauri-apps/plugin-process";
-    import { onMount } from "svelte";
+    import OpenAIChatPage from "./openai_chat_page.svelte";
+    import SettingsDialog from "./settings_dialog.svelte";
 
-    let navCollapsedSize = $state(5);
-    let selectedRoute = $state("");
-    let settingsOpen = $state(false);
-    let statisticsComponent = $state<StatisticsPage | null>(null);
-    let timelineComponent = $state<TimelinePage | null>(null);
-    let tagsComponent = $state<TagsManagerPage | null>(null);
-    let repeatComponent = $state<RepeatPage | null>(null);
-    let timelineData = $state<TimelineData | null>(null);
-    let todoComponent = $state<TodoPage | null>(null);
+    let timelineComponent: TimelinePage | null = null;
+    let statisticsComponent: StatisticsPage | null = null;
+    let tagsComponent: TagsManagerPage | null = null;
+    let repeatComponent: RepeatPage | null = null;
+    let todoComponent: TodoPage | null = null;
+    let openaiComponent: OpenAIChatPage | null = null;
+    let settingsOpen = false;
 
-    $inspect(navCollapsedSize);
+    const navCollapsedSize = 50;
+    let selectedRoute: string = "timeline";
 
-    function onLayoutChange(sizes: number[]) {
-        console.log("onLayoutChange", sizes);
-    }
+    const primaryRoutes: Route[] = [
+        {
+            icon: Icons.CalendarRange,
+            variant: "default",
+            label: "timeline",
+            translationKey: "routes.timeline",
+        },
+        {
+            icon: Icons.CharCombined,
+            variant: "default",
+            label: "statistics",
+            translationKey: "routes.statistics",
+        },
+        {
+            icon: Icons.Tags,
+            variant: "default",
+            label: "tags",
+            translationKey: "routes.tags",
+        },
+        {
+            icon: Icons.Repeat,
+            variant: "default",
+            label: "repeat",
+            translationKey: "routes.repeat",
+        },
+        {
+            icon: Icons.ListTodo,
+            variant: "default",
+            label: "todo",
+            translationKey: "routes.todo",
+        },
+        {
+            icon: MessageSquare,
+            variant: "default",
+            label: "openai",
+            translationKey: "routes.openai",
+        },
+    ];
 
     function onRouteSelect(route: string) {
-        if (route === "statistics" && timelineComponent) {
-            let allItems = timelineComponent.getAllItems();
-            console.log("Switch statistics :", allItems);
-            timelineData = allItems;
-        }
-
-        // 更新选中的路由
         selectedRoute = route;
     }
 
     function onSettingsClick() {
         settingsOpen = true;
     }
-
-    // 添加自动更新代码
-    async function checkForUpdates() {
-        const update = await check({
-            timeout: 30000 /* milliseconds */,
-        });
-        if (update) {
-            console.log(`found update ${update.version} from ${update.date} with notes ${update.body}`);
-            let downloaded = 0;
-            let contentLength = 0; // Initialize contentLength to 0
-            // alternatively we could also call update.download() and update.install() separately
-            await update.downloadAndInstall((event) => {
-                switch (event.event) {
-                    case "Started":
-                        contentLength = event.data.contentLength ?? 0; // Ensure contentLength is a number
-                        console.log(`started downloading ${contentLength} bytes`);
-                        break;
-                    case "Progress":
-                        downloaded += event.data.chunkLength;
-                        console.log(`downloaded ${downloaded} from ${contentLength}`);
-                        break;
-                    case "Finished":
-                        console.log("download finished");
-                        break;
-                }
-            });
-
-            console.log("update installed");
-            await relaunch();
-        }
-    }
-
-    onMount(() => {
-        try {
-            checkForUpdates();
-        } catch (error) {
-            console.error("Error checking for updates", error);
-        }
-    });
 </script>
 
 <div class="w-full h-full">
-    <Resizable.PaneGroup direction="horizontal" class="h-full items-stretch" {onLayoutChange}>
-        <Resizable.Pane
-            defaultSize={navCollapsedSize}
-            collapsedSize={navCollapsedSize}
-            minSize={navCollapsedSize}
-            maxSize={navCollapsedSize}
-            collapsible={true}
-        >
+    <div class="flex h-full">
+        <div class="w-[50px] flex-shrink-0">
             <Nav routes={primaryRoutes} {onRouteSelect} {onSettingsClick} />
-        </Resizable.Pane>
-        <Resizable.Handle />
-        <Resizable.Pane>
+        </div>
+        <div class="flex-grow">
             {#if selectedRoute === "timeline" || selectedRoute === ""}
                 <TimelinePage bind:this={timelineComponent} />
             {/if}
@@ -112,8 +91,11 @@
             {#if selectedRoute === "todo"}
                 <TodoPage bind:this={todoComponent} />
             {/if}
-        </Resizable.Pane>
-    </Resizable.PaneGroup>
+            {#if selectedRoute === "openai"}
+                <OpenAIChatPage bind:this={openaiComponent} />
+            {/if}
+        </div>
+    </div>
 </div>
 
 <SettingsDialog bind:open={settingsOpen} />

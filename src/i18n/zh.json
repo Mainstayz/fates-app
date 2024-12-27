@@ -5,7 +5,8 @@
         "statistics": "统计",
         "tags": "标签",
         "repeat": "重复",
-        "todo": "待办"
+        "todo": "待办",
+        "openai": "AI 聊天"
     },
     "app": {
         "timeline": {
@@ -22,7 +23,7 @@
                 "default": "选择时间范围"
             },
             "taskCompletionStatusLastYear": "最近一年任务记录",
-            "month": "M月",
+            "month": "M 月",
             "weekdays": {
                 "mon": "一",
                 "wed": "三",
@@ -104,13 +105,13 @@
             },
             "checkInterval": {
                 "title": "检查间隔",
-                "120": "2小时",
-                "240": "4小时",
-                "360": "6小时"
+                "120": "2 小时",
+                "240": "4 小时",
+                "360": "6 小时"
             }
         },
         "other": {
-            "confirmDelete": "确定删除吗？",
+            "confirmDelete": "���定删除吗？",
             "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
             "cancel": "取消",
             "confirm": "确定",
