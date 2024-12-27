@@ -159,11 +159,15 @@
         <!-- 配置最大高度 -->
         <div class="flex-1 overflow-y-auto space-y-4 max-h-[calc(100vh-524px)]">
             {#each chatHistory as message}
-                <div class="p-4 rounded-lg {message.role === 'assistant' ? 'bg-primary/10' : 'bg-secondary/10'}">
+                <div
+                    class="p-4 rounded-lg {message.role === 'assistant'
+                        ? 'bg-primary/10'
+                        : 'bg-secondary/10'} select-text"
+                >
                     <div class="text-sm text-muted-foreground mb-1">
                         {message.role === "assistant" ? "助手" : message.role === "system" ? "系统" : "用户"}
                     </div>
-                    <div class="whitespace-pre-wrap">{message.content}</div>
+                    <div class="whitespace-pre-wrap select-text">{message.content}</div>
                 </div>
             {/each}
         </div>

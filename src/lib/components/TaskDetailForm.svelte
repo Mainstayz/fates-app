@@ -126,6 +126,7 @@
             autofocus={false}
             tabindex={-1}
         />
+        <button class="ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"> 按钮 </button>
     </div>
     <!-- Tags，以及 ��先级 -->
     <div class="flex flex-row gap-2">
