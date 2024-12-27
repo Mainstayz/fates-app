@@ -156,8 +156,8 @@
                 <Button variant="outline" onclick={() => clearHistory()}>清除聊天历史</Button>
             </div>
         </div>
-
-        <div class="flex-1 overflow-y-auto space-y-4">
+        <!-- 配置最大高度 -->
+        <div class="flex-1 overflow-y-auto space-y-4 max-h-[calc(100vh-524px)]">
             {#each chatHistory as message}
                 <div class="p-4 rounded-lg {message.role === 'assistant' ? 'bg-primary/10' : 'bg-secondary/10'}">
                     <div class="text-sm text-muted-foreground mb-1">
