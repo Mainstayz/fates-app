@@ -52,7 +52,7 @@ export const primaryRoutes: Route[] = [
     {
         icon: Icons.Settings,
         variant: "ghost",
-        label: "Settings",
+        label: "settings",
         translationKey: "routes.settings",
     },
 ];

@@ -59,6 +59,12 @@
             label: "openai",
             translationKey: "routes.openai",
         },
+        {
+            icon: Icons.Settings,
+            variant: "default",
+            label: "settings",
+            translationKey: "routes.settings",
+        },
     ];
 
     function onRouteSelect(route: string) {

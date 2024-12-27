@@ -15,8 +15,8 @@
     onRouteSelect(routes[0].label);
 
     // 将设置路由和其他路由分开
-    $: mainRoutes = routes.filter((route) => route.label !== "Settings");
-    $: settingsRoute = routes.find((route) => route.label === "Settings");
+    $: mainRoutes = routes.filter((route) => route.label !== "settings");
+    $: settingsRoute = routes.find((route) => route.label === "settings");
 
     // 处理主导航按钮点击事件
     function handleRouteClick(route: Route) {
