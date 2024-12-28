@@ -117,17 +117,13 @@
             defaultModel: model,
         });
         let systemPrompt = `
-您是一位任务标题优化专家，擅长将模糊的任务描述转化为清晰、可执行的标题。您需要：
+您是一位任务标题优化专家，擅长将模糊的任务描述转化为更具体、精炼的方式命名，以便快速回忆起任务的具体内容。您需要：
 
 1. 分析任务标题
-2. 应用 SMART 原则优化标题
-3. 确保标题简洁且富有指导性
+2. 根据关键信息和行动点，构建精炼的任务标题。
+3. 检查任务标题是否简洁明了，能否让人迅速回忆起任务的具体内容。
 
-优化原则：
-- 具体性：明确任务目标和范围
-- 可衡量：包含可量化的指标
-- 相关性：确保与目标相关
-- 明确性：避免模糊表述
+注意：任务标题应简洁、明确，能够准确反映任务的核心内容，同时易于理解和记忆。
 
 请按以下格式输出优化建议：
 
@@ -206,7 +202,11 @@
                 <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
                     <Tooltip.Trigger>
                         <Button variant="ghost" size="icon" onclick={generateTitle}>
-                            <Sparkles />
+                            {#if aiLoading}
+                                <LoaderCircle class="animate-spin" />
+                            {:else}
+                                <Sparkles />
+                            {/if}
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content>

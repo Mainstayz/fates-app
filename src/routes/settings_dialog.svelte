@@ -126,7 +126,8 @@
                 await setKV(SETTING_KEY_LANGUAGE, "zh");
                 language = "zh";
             }
-            aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
+            const aiEnabledStr = await getKV(SETTING_KEY_AI_ENABLED);
+            aiEnabled = aiEnabledStr === "true";
             aiBaseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
             aiModelId = await getKV(SETTING_KEY_AI_MODEL_ID);
             aiApiKey = await getKV(SETTING_KEY_AI_API_KEY);
