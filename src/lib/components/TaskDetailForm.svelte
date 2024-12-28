@@ -2,13 +2,26 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Textarea } from "$lib/components/ui/textarea";
-    import { PanelTop, Text } from "lucide-svelte";
+    import { Button } from "$lib/components/ui/button";
+    import { PanelTop, Sparkles, Text, LoaderCircle } from "lucide-svelte";
+    import * as Tooltip from "$lib/components/ui/tooltip";
     import TagsAddButton from "./TagsAddButton.svelte";
     import DateRangePicker from "./DateRangePicker.svelte";
     import { onMount, onDestroy } from "svelte";
     import type { TimelineItem } from "$lib/types";
     import { Priority } from "$lib/types";
     import PrioritySelector from "./PrioritySelector.svelte";
+
+    import { OpenAIClient } from "$src/features/openai";
+    import {
+        SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_MODEL_ID,
+        SETTING_KEY_AI_BASE_URL,
+        SETTING_KEY_AI_SYSTEM_PROMPT,
+        SETTING_KEY_AI_ENABLED,
+    } from "$src/config";
+    import { getKV } from "$src/store";
+    import { v4 as uuidv4 } from "uuid";
 
     let {
         item,
@@ -21,6 +34,9 @@
     } = $props();
 
     let localItem = $state({ ...item }); // 创建本地副本
+
+    let aiEnabled = $state(false);
+    let aiLoading = $state(false);
 
     // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
@@ -89,6 +105,61 @@
         localSelectedTags = selectedTags;
     }
 
+    async function generateTitle() {
+        aiLoading = true;
+        let apikey = await getKV(SETTING_KEY_AI_API_KEY);
+        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
+        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+
+        let client = new OpenAIClient({
+            apiKey: apikey,
+            baseURL: baseUrl,
+            defaultModel: model,
+        });
+        let systemPrompt = `
+您是一位任务标题优化专家，擅长将模糊的任务描述转化为清晰、可执行的标题。您需要：
+
+1. 分析任务标题
+2. 应用 SMART 原则优化标题
+3. 确保标题简洁且富有指导性
+
+优化原则：
+- 具体性：明确任务目标和范围
+- 可衡量：包含可量化的指标
+- 相关性：确保与目标相关
+- 明确性：避免模糊表述
+
+请按以下格式输出优化建议：
+
+{
+  "original_title": "原始标题",
+  "title": "优化后的标题",
+  "summary": "优化说明"
+}
+
+示例输出：
+
+{
+  "original_title": "阅读",
+  "title": "阅读《人类简史》第 1-2 章",
+  "summary": "明确了阅读材料、范围"
+}
+        `;
+        let conversationId = uuidv4();
+        client.setSystemPrompt(conversationId, systemPrompt);
+        try {
+            const responseJson = await client.sendMessage(conversationId, content);
+            aiLoading = false;
+            let responseObject = JSON.parse(responseJson);
+            let newTitle = responseObject.title;
+            let newSummary = responseObject.summary;
+            console.log(`new title: ${newTitle}, summary: ${newSummary}`);
+            content = newTitle;
+        } catch (error) {
+            console.error("Error generating title:", error);
+        }
+    }
+
     onMount(() => {
         // 获取输入框元素
         // const inputElement = document.querySelector('input[placeholder="任务标题"]');
@@ -98,6 +169,10 @@
         //     // 防止自动获取焦点
         //     (inputElement as HTMLElement).setAttribute("tabindex", "-1");
         // }
+        getKV(SETTING_KEY_AI_ENABLED).then((enabled) => {
+            console.log("aiEnabled:", enabled);
+            aiEnabled = enabled === "true";
+        });
         return () => {
             let diffTags = localTagsList.filter((tag) => !initialTagsList.includes(tag));
             const updatedItem = updateItem();
@@ -126,9 +201,22 @@
             autofocus={false}
             tabindex={-1}
         />
-        <button class="ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"> 按钮 </button>
+        {#if aiEnabled}
+            <Tooltip.Provider>
+                <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
+                    <Tooltip.Trigger>
+                        <Button variant="ghost" size="icon" onclick={generateTitle}>
+                            <Sparkles />
+                        </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                        <p>AI 生成标题</p>
+                    </Tooltip.Content>
+                </Tooltip.Root>
+            </Tooltip.Provider>
+        {/if}
     </div>
-    <!-- Tags，以及 ��先级 -->
+    <!-- Tags，以及 先级 -->
     <div class="flex flex-row gap-2">
         <div class="w-[24px]"></div>
         <div class="flex flex-1 gap-8 pl-[12px]">
