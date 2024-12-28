@@ -4,7 +4,6 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
-
     import { Separator } from "$lib/components/ui/separator";
     import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
     import { onMount, onDestroy } from "svelte";
@@ -15,7 +14,6 @@
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { cubicInOut } from "svelte/easing";
     import { crossfade } from "svelte/transition";
-    // store
     import { getKV, setKV } from "../store";
     let { open = $bindable(), ...props } = $props();
     import { t, locale } from "svelte-i18n";
@@ -26,15 +24,22 @@
         SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
         SETTING_KEY_NOTIFY_BEFORE_MINUTES,
         NOTIFICATION_RELOAD_TIMELINE_DATA,
+        SETTING_KEY_AI_ENABLED,
+        SETTING_KEY_AI_BASE_URL,
+        SETTING_KEY_AI_MODEL_ID,
+        SETTING_KEY_AI_API_KEY,
     } from "../config";
 
-    let language = $state(""); // 默认中文
+    let language = $state("");
     let autoStart = $state(false);
-    let checkInterval = $state("120"); // 默认 120 分钟
+    let checkInterval = $state("120");
     let currentSection = $state("common");
-
     let workStart = $state("09:00");
     let workEnd = $state("18:00");
+    let aiEnabled = $state(false);
+    let aiBaseUrl = $state("");
+    let aiModelId = $state("");
+    let aiApiKey = $state("");
 
     const InternalMap = $derived({
         "120": $t("app.settings.checkInterval.120"),
@@ -45,6 +50,7 @@
     const navItems = $derived([
         { id: "common", title: $t("app.settings.nav.common") },
         { id: "notification", title: $t("app.settings.nav.notification") },
+        { id: "ai", title: $t("app.settings.ai.title") },
     ]);
 
     $effect(() => {
@@ -61,9 +67,20 @@
             setKV(SETTING_KEY_LANGUAGE, language);
             locale.set(language);
         }
+        if (aiEnabled !== undefined) {
+            setKV(SETTING_KEY_AI_ENABLED, aiEnabled.toString());
+        }
+        if (aiBaseUrl) {
+            setKV(SETTING_KEY_AI_BASE_URL, aiBaseUrl);
+        }
+        if (aiModelId) {
+            setKV(SETTING_KEY_AI_MODEL_ID, aiModelId);
+        }
+        if (aiApiKey) {
+            setKV(SETTING_KEY_AI_API_KEY, aiApiKey);
+        }
     });
 
-    // 添加语言选项配置
     const languages = [
         { value: "zh", label: "中文" },
         { value: "en", label: "English" },
@@ -86,7 +103,6 @@
         }
     }
 
-    // 初始化时获取自启动状态
     async function initSettings() {
         try {
             autoStart = await isEnabled();
@@ -110,8 +126,12 @@
                 await setKV(SETTING_KEY_LANGUAGE, "zh");
                 language = "zh";
             }
+            aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
+            aiBaseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+            aiModelId = await getKV(SETTING_KEY_AI_MODEL_ID);
+            aiApiKey = await getKV(SETTING_KEY_AI_API_KEY);
         } catch (error) {
-            console.error("Failed to get autostart status:", error);
+            console.error("Failed to get settings:", error);
         }
     }
 
@@ -142,7 +162,6 @@
 
     async function reloadData() {
         try {
-            // 发送重新加载数据的事件
             await emit(NOTIFICATION_RELOAD_TIMELINE_DATA);
             console.log("已触发数据重新加载");
         } catch (error) {
@@ -164,13 +183,9 @@
     <Dialog.Portal>
         <Dialog.Overlay class="bg-[#000000]/20" />
         <Dialog.Content class="sm:max-w-[800px] h-[600px]">
-            <!-- <Dialog.Header class="bg-yellow-500">
-            <Dialog.Title>设置</Dialog.Title>
-        </Dialog.Header> -->
             <div class="flex flex-col gap-4">
                 <Label class="text-2xl font-bold">{$t("app.settings.title")}</Label>
                 <div class="grid grid-cols-[200px_1fr] gap-6">
-                    <!-- 左侧导航栏 -->
                     <div class="flex flex-col gap-2">
                         {#each navItems as item}
                             {@const isActive = currentSection === item.id}
@@ -180,16 +195,6 @@
                                 onclick={() => (currentSection = item.id)}
                             >
                                 {#if isActive}
-                                    <!-- 样式相关：
-                                absolute inset-0 - 使 div 绝对定位并填充整个按钮区域
-                                rounded-md - 添加圆角
-                                bg-muted - 设置背景色为浅灰色
-                                动画相关：
-                                in:send 和 out:receive 是 Svelte 的 crossfade 过渡效果
-                                当一个按钮被选中时：
-                                旧的激活背景会通过 out:receive 过渡消失
-                                新的激活背景会通过 in:send 过渡出现
-                                key: "active-settings-tab" 用于标识这些元素是相互关联的，确保它们之间能够正确地进行过 -->
                                     <div
                                         class="absolute inset-0 rounded-md bg-muted"
                                         in:send={{ key: "active-settings-tab" }}
@@ -201,17 +206,8 @@
                         {/each}
                     </div>
 
-                    <!-- 右侧内容区 -->
                     <div class="flex flex-col p-4 rounded-lg gap-4">
                         {#if currentSection === "common"}
-                            <!-- <div>
-                        <h3 class="text-lg font-medium">通用</h3>
-                        <p class="text-muted-foreground text-sm">通用设置</p>
-                    </div> -->
-
-                            <!-- <Separator class="my-4" /> -->
-
-                            <!-- 开机启动 -->
                             <div class="flex items-center justify-between space-x-2">
                                 <Label for="necessary" class="flex flex-col flex-1 space-y-1">
                                     <span>{$t("app.settings.autoStart.title")}</span>
@@ -223,7 +219,6 @@
                             </div>
 
                             <div class="flex flex-col gap-2">
-                                <!-- 语言 -->
                                 <Label for="language">
                                     <span>{$t("app.settings.language")}</span>
                                 </Label>
@@ -241,10 +236,7 @@
                             </div>
                         {:else if currentSection === "notification"}
                             <div class="space-y-4">
-                                <!-- <h3 class="text-lg font-medium">通知</h3> -->
-                                <!-- 通知内容 -->
                                 <div class="flex flex-row gap-2 items-center">
-                                    <!-- 工作开始 -->
                                     <div class="flex flex-col gap-2">
                                         <Label for="work-start">{$t("app.settings.workTime.title")}</Label>
                                         <div class="flex flex-row gap-2 items-center">
@@ -281,6 +273,53 @@
                                             {/each}
                                         </Select.Content>
                                     </Select.Root>
+                                </div>
+                            </div>
+                        {:else if currentSection === "ai"}
+                            <div class="space-y-4">
+                                <div class="flex flex-col gap-2">
+                                    <Label class="text-lg font-medium">AI 配置</Label>
+                                    <p class="text-muted-foreground text-sm">配置 AI 模块相关参数</p>
+                                </div>
+                                <Separator class="my-4" />
+                                <div class="flex items-center justify-between space-x-2">
+                                    <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
+                                        <span>启用 AI 模块</span>
+                                        <span class="text-muted-foreground text-xs font-normal leading-snug">
+                                            启用或禁用 AI 功能模块
+                                        </span>
+                                    </Label>
+                                    <Switch id="ai-enabled" bind:checked={aiEnabled} />
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <Label for="ai-base-url">Base URL</Label>
+                                    <Input
+                                        bind:value={aiBaseUrl}
+                                        class="bg-background"
+                                        type="text"
+                                        id="ai-base-url"
+                                        placeholder="https://api.example.com"
+                                    />
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <Label for="ai-model-id">Model ID</Label>
+                                    <Input
+                                        bind:value={aiModelId}
+                                        type="text"
+                                        class="bg-background"
+                                        id="ai-model-id"
+                                        placeholder="gpt-3.5-turbo"
+                                    />
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <Label for="ai-api-key">API Key</Label>
+                                    <Input
+                                        bind:value={aiApiKey}
+                                        type="password"
+                                        class="bg-background"
+                                        id="ai-api-key"
+                                        placeholder="输入你的 API Key"
+                                    />
                                 </div>
                             </div>
                         {/if}

@@ -7,6 +7,11 @@ export const SETTING_KEY_WORK_START_TIME = "work_start_time";
 export const SETTING_KEY_WORK_END_TIME = "work_end_time";
 export const SETTING_KEY_NOTIFICATION_CHECK_INTERVAL = "notification_check_interval";
 export const SETTING_KEY_NOTIFY_BEFORE_MINUTES = "notify_before_minutes";
+export const SETTING_KEY_AI_ENABLED = "ai_enabled";
+export const SETTING_KEY_AI_BASE_URL = "ai_base_url";
+export const SETTING_KEY_AI_MODEL_ID = "ai_model_id";
+export const SETTING_KEY_AI_API_KEY = "ai_api_key";
+export const SETTING_KEY_AI_SYSTEM_PROMPT = "ai_system_prompt";
 
 // notification: reload_timeline_data
 export const NOTIFICATION_RELOAD_TIMELINE_DATA = "reload_timeline_data";

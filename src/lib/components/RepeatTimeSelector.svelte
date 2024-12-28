@@ -37,7 +37,11 @@
 
     const toggleDay = (dayIndex: number) => {
         const bit = 1 << dayIndex;
-        weekdaysBits = weekdaysBits & bit ? weekdaysBits & ~bit : weekdaysBits | bit;
+        let newBits = weekdaysBits & bit ? weekdaysBits & ~bit : weekdaysBits | bit;
+        if (newBits == 0) {
+            return;
+        }
+        weekdaysBits = newBits;
         updateValue();
     };
 

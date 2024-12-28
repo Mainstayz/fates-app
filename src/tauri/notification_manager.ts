@@ -173,7 +173,7 @@ export class NotificationManager {
             clearInterval(this.checkInterval);
         }
         this.checkInterval = setInterval(async () => {
-            console.log(`Checking notifications at ${new Date().toISOString()}`);
+            console.log(`Checking notifications at ${new Date().toLocaleString()}`);
             await this.checkNotifications();
         }, this.config.checkInterval * 60 * 1000);
     }
@@ -190,7 +190,7 @@ export class NotificationManager {
         // local time
         console.log(`Checking if in work hours: ${now.toLocaleString()}`);
         if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
-
+            console.log(`Not in work hours, skip, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`);
             return;
         }
         console.log("In work hours");

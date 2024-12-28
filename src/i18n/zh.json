@@ -1,4 +1,4 @@
-{
+    {
     "routes": {
         "settings": "设置",
         "timeline": "时间线",
@@ -108,10 +108,17 @@
                 "120": "2 小时",
                 "240": "4 小时",
                 "360": "6 小时"
+            },
+            "ai": {
+                "title": "AI 设置",
+                "enabled": "启用 AI",
+                "baseUrl": "API 地址",
+                "modelId": "模型 ID",
+                "apiKey": "API Key"
             }
         },
         "other": {
-            "confirmDelete": "���定删除吗？",
+            "confirmDelete": "定删除吗？",
             "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
             "cancel": "取消",
             "confirm": "确定",

@@ -4,21 +4,45 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { Card } from "$lib/components/ui/card";
     import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
+    import { getKV, setKV } from "$src/store";
+    import { onMount } from "svelte";
 
-    let baseUrl = "https://api.deepseek.com/v1";
-    let apiKey = "";
-    let model = "deepseek-chat";
-    let systemPrompt = "You are a helpful assistant.";
-    let userInput = "";
-    let chatHistory: ChatMessage[] = [];
-    let client: OpenAIClient | null = null;
+    import {
+        SETTING_KEY_AI_BASE_URL,
+        SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_MODEL_ID,
+        SETTING_KEY_AI_SYSTEM_PROMPT,
+    } from "$src/config";
+
+    let baseUrl = $state("");
+    let apiKey = $state("");
+    let model = $state("");
+    let systemPrompt = $state("");
+    let userInput = $state("");
+
+    let chatHistory: ChatMessage[] = $state([]);
+    let client: OpenAIClient | null = $state(null);
     let conversationId = crypto.randomUUID();
-    let isLoading = false;
-    let error: string | null = null;
+    let isLoading = $state(false);
+    let error: string | null = $state(null);
+
+    // systemPrompt setKV
+    $effect(() => {
+        if (systemPrompt) {
+            setKV(SETTING_KEY_AI_SYSTEM_PROMPT, systemPrompt);
+        }
+    });
+
+    onMount(async () => {
+        baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+        apiKey = await getKV(SETTING_KEY_AI_API_KEY);
+        model = await getKV(SETTING_KEY_AI_MODEL_ID);
+        systemPrompt = await getKV(SETTING_KEY_AI_SYSTEM_PROMPT);
+        initializeChat();
+    });
 
     function initializeChat() {
         try {
-            console.log("initializeChat start ... ");
             client = new OpenAIClient({
                 apiKey,
                 baseURL: baseUrl || undefined,
@@ -61,7 +85,10 @@
     }
 
     async function loadChatHistory() {
-        if (!client) return;
+        if (!client) {
+            error = "请先初始化客户端";
+            return;
+        }
         try {
             chatHistory = await client.getConversationHistory(conversationId);
             error = null;
@@ -92,7 +119,6 @@
                 status: "completed",
             };
             chatHistory = [...chatHistory, userMessage];
-
             await client.sendMessage(conversationId, currentInput, {
                 model,
                 stream: true,
