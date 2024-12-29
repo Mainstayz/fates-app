@@ -74,7 +74,15 @@
             notificationManager = await NotificationManager.initialize(onNotificationMessage);
             await Promise.all([loadMessageBoxData(), setupEventListeners()]);
             document.addEventListener("click", handleGlobalClick);
-            resizeObserver.observe(rootElement);
+
+            setTimeout(() => {
+                if (rootElement) {
+                    console.log("rootElement is now available, setting up observer");
+                    resizeObserver.observe(rootElement);
+                } else {
+                    console.warn("Root element not found after DOM mount");
+                }
+            }, 0);
         } catch (error) {
             handleError("Failed to initialize message box")(error);
         }

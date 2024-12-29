@@ -5,6 +5,7 @@ import { isHolidayDate } from "../i18n/holiday-cn";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import {
+    SETTING_KEY_AI_ENABLED,
     SETTING_KEY_LANGUAGE,
     SETTING_KEY_WORK_START_TIME,
     SETTING_KEY_WORK_END_TIME,
@@ -181,6 +182,7 @@ export class NotificationManager {
     private async checkNotifications() {
         let language = await getKV(SETTING_KEY_LANGUAGE);
         console.log("Current language:", language);
+
         if (language) {
             locale.set(language);
         }
@@ -190,10 +192,9 @@ export class NotificationManager {
         // local time
         console.log(`Checking if in work hours: ${now.toLocaleString()}`);
         if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
-            console.log(`Not in work hours, skip, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`);
+            console.log(`SKIPPED!!! Not in work hours, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`);
             return;
         }
-        console.log("In work hours");
 
         // Get today's matters
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -215,8 +216,18 @@ export class NotificationManager {
             this.onReceiveNotification(title, message, NotificationType.NewTask);
             return;
         }
-        console.log("No new repeat tasks");
 
+        let aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
+        console.log("AI enabled:", aiEnabled);
+        if (aiEnabled === "true") {
+            console.log("AI enabled ... ToDo");
+
+        } else {
+            this.startNormalNotificationCheck(now, matters);
+        }
+    }
+
+    private async startNormalNotificationCheck(now: Date, matters: Matter[]) {
         // Check upcoming tasks
         let shouldCheckUpcoming = await this.shouldCheckUpcoming();
         if (shouldCheckUpcoming) {
