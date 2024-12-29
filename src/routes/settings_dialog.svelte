@@ -30,16 +30,17 @@
         SETTING_KEY_AI_API_KEY,
     } from "../config";
 
-    let language = $state("");
-    let autoStart = $state(false);
-    let checkInterval = $state("120");
+    let language = $state<string | undefined>(undefined);
+    let autoStart = $state<boolean | undefined>(undefined);
+    let checkInterval = $state<string | undefined>(undefined);
     let currentSection = $state("common");
-    let workStart = $state("09:00");
-    let workEnd = $state("18:00");
-    let aiEnabled = $state(false);
-    let aiBaseUrl = $state("");
-    let aiModelId = $state("");
-    let aiApiKey = $state("");
+    let workStart = $state<string | undefined>(undefined);
+    let workEnd = $state<string | undefined>(undefined);
+    let aiEnabled = $state<boolean | undefined>(undefined);
+    let aiBaseUrl = $state<string | undefined>(undefined);
+    let aiModelId = $state<string | undefined>(undefined);
+    let aiApiKey = $state<string | undefined>(undefined);
+    let settingsLoaded = $state(false);
 
     const InternalMap = $derived({
         "120": $t("app.settings.checkInterval.120"),
@@ -54,29 +55,31 @@
     ]);
 
     $effect(() => {
-        if (checkInterval) {
+        if (!settingsLoaded) return;
+
+        if (checkInterval !== undefined) {
             setKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL, checkInterval);
         }
-        if (workStart) {
+        if (workStart !== undefined) {
             setKV(SETTING_KEY_WORK_START_TIME, workStart);
         }
-        if (workEnd) {
+        if (workEnd !== undefined) {
             setKV(SETTING_KEY_WORK_END_TIME, workEnd);
         }
-        if (language.length > 0) {
+        if (language !== undefined && language.length > 0) {
             setKV(SETTING_KEY_LANGUAGE, language);
             locale.set(language);
         }
         if (aiEnabled !== undefined) {
             setKV(SETTING_KEY_AI_ENABLED, aiEnabled.toString());
         }
-        if (aiBaseUrl) {
+        if (aiBaseUrl !== undefined) {
             setKV(SETTING_KEY_AI_BASE_URL, aiBaseUrl);
         }
-        if (aiModelId) {
+        if (aiModelId !== undefined) {
             setKV(SETTING_KEY_AI_MODEL_ID, aiModelId);
         }
-        if (aiApiKey) {
+        if (aiApiKey !== undefined) {
             setKV(SETTING_KEY_AI_API_KEY, aiApiKey);
         }
     });
@@ -86,7 +89,8 @@
         { value: "en", label: "English" },
     ] as const;
 
-    function getLanguageLabel(value: string) {
+    function getLanguageLabel(value: string | undefined) {
+        if (!value) return "选择语言";
         return languages.find((l) => l.value === value)?.label ?? "选择语言";
     }
 
@@ -177,6 +181,7 @@
 
     onMount(async () => {
         await initSettings();
+        settingsLoaded = true;
     });
 </script>
 
@@ -184,149 +189,157 @@
     <Dialog.Portal>
         <Dialog.Overlay class="bg-[#000000]/20" />
         <Dialog.Content class="sm:max-w-[800px] h-[600px]">
-            <div class="flex flex-col gap-4">
-                <Label class="text-2xl font-bold">{$t("app.settings.title")}</Label>
-                <div class="grid grid-cols-[200px_1fr] gap-6">
-                    <div class="flex flex-col gap-2">
-                        {#each navItems as item}
-                            {@const isActive = currentSection === item.id}
-                            <Button
-                                variant="ghost"
-                                class="relative justify-start hover:bg-transparent"
-                                onclick={() => (currentSection = item.id)}
-                            >
-                                {#if isActive}
-                                    <div
-                                        class="absolute inset-0 rounded-md bg-muted"
-                                        in:send={{ key: "active-settings-tab" }}
-                                        out:receive={{ key: "active-settings-tab" }}
-                                    ></div>
-                                {/if}
-                                <span class="relative">{item.title}</span>
-                            </Button>
-                        {/each}
-                    </div>
+            {#if !settingsLoaded}
+                <div class="flex items-center justify-center h-full">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+            {:else}
+                <div class="flex flex-col gap-4">
+                    <Label class="text-2xl font-bold">{$t("app.settings.title")}</Label>
+                    <div class="grid grid-cols-[200px_1fr] gap-6">
+                        <div class="flex flex-col gap-2">
+                            {#each navItems as item}
+                                {@const isActive = currentSection === item.id}
+                                <Button
+                                    variant="ghost"
+                                    class="relative justify-start hover:bg-transparent"
+                                    onclick={() => (currentSection = item.id)}
+                                >
+                                    {#if isActive}
+                                        <div
+                                            class="absolute inset-0 rounded-md bg-muted"
+                                            in:send={{ key: "active-settings-tab" }}
+                                            out:receive={{ key: "active-settings-tab" }}
+                                        ></div>
+                                    {/if}
+                                    <span class="relative">{item.title}</span>
+                                </Button>
+                            {/each}
+                        </div>
 
-                    <div class="flex flex-col p-4 rounded-lg gap-4">
-                        {#if currentSection === "common"}
-                            <div class="flex items-center justify-between space-x-2">
-                                <Label for="necessary" class="flex flex-col flex-1 space-y-1">
-                                    <span>{$t("app.settings.autoStart.title")}</span>
-                                    <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                        {$t("app.settings.autoStart.description")}
-                                    </span>
-                                </Label>
-                                <Switch id="necessary" bind:checked={autoStart} />
-                            </div>
-
-                            <div class="flex flex-col gap-2">
-                                <Label for="language">
-                                    <span>{$t("app.settings.language")}</span>
-                                </Label>
-
-                                <Select.Root type="single" bind:value={language}>
-                                    <Select.Trigger>
-                                        <span>{getLanguageLabel(language)}</span>
-                                    </Select.Trigger>
-                                    <Select.Content>
-                                        {#each languages as language}
-                                            <Select.Item value={language.value}>{language.label}</Select.Item>
-                                        {/each}
-                                    </Select.Content>
-                                </Select.Root>
-                            </div>
-                        {:else if currentSection === "notification"}
-                            <div class="space-y-4">
-                                <div class="flex flex-row gap-2 items-center">
-                                    <div class="flex flex-col gap-2">
-                                        <Label for="work-start">{$t("app.settings.workTime.title")}</Label>
-                                        <div class="flex flex-row gap-2 items-center">
-                                            <Input
-                                                bind:value={workStart}
-                                                type="time"
-                                                id="work-start"
-                                                class="bg-background h-[24px] w-[72px]"
-                                            />
-                                            <span class="text-muted-foreground">{$t("app.settings.workTime.to")}</span>
-                                            <Input
-                                                bind:value={workEnd}
-                                                type="time"
-                                                id="work-end"
-                                                class="bg-background h-[24px] w-[72px]"
-                                            />
-                                        </div>
+                        <div class="flex flex-col p-4 rounded-lg gap-4">
+                            {#if currentSection === "common"}
+                                <div class="flex items-center justify-between space-x-2">
+                                    <Label for="necessary" class="flex flex-col flex-1 space-y-1">
+                                        <span>{$t("app.settings.autoStart.title")}</span>
                                         <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                            {$t("app.settings.workTime.description")}
+                                            {$t("app.settings.autoStart.description")}
                                         </span>
-                                    </div>
+                                    </Label>
+                                    <Switch id="necessary" bind:checked={autoStart} />
                                 </div>
+
                                 <div class="flex flex-col gap-2">
-                                    <Label for="check-interval">{$t("app.settings.checkInterval.title")}</Label>
-                                    <Select.Root type="single" bind:value={checkInterval}>
+                                    <Label for="language">
+                                        <span>{$t("app.settings.language")}</span>
+                                    </Label>
+
+                                    <Select.Root type="single" bind:value={language}>
                                         <Select.Trigger>
-                                            <span>{InternalMap[checkInterval as keyof typeof InternalMap]}</span>
+                                            <span>{getLanguageLabel(language)}</span>
                                         </Select.Trigger>
                                         <Select.Content>
-                                            {#each Object.keys(InternalMap) as key}
-                                                <Select.Item value={key}
-                                                    >{InternalMap[key as keyof typeof InternalMap]}</Select.Item
-                                                >
+                                            {#each languages as language}
+                                                <Select.Item value={language.value}>{language.label}</Select.Item>
                                             {/each}
                                         </Select.Content>
                                     </Select.Root>
                                 </div>
-                            </div>
-                        {:else if currentSection === "ai"}
-                            <div class="space-y-4">
-                                <div class="flex flex-col gap-2">
-                                    <Label class="text-lg font-medium">AI 配置</Label>
-                                    <p class="text-muted-foreground text-sm">配置 AI 模块相关参数</p>
+                            {:else if currentSection === "notification"}
+                                <div class="space-y-4">
+                                    <div class="flex flex-row gap-2 items-center">
+                                        <div class="flex flex-col gap-2">
+                                            <Label for="work-start">{$t("app.settings.workTime.title")}</Label>
+                                            <div class="flex flex-row gap-2 items-center">
+                                                <Input
+                                                    bind:value={workStart}
+                                                    type="time"
+                                                    id="work-start"
+                                                    class="bg-background h-[24px] w-[72px]"
+                                                />
+                                                <span class="text-muted-foreground"
+                                                    >{$t("app.settings.workTime.to")}</span
+                                                >
+                                                <Input
+                                                    bind:value={workEnd}
+                                                    type="time"
+                                                    id="work-end"
+                                                    class="bg-background h-[24px] w-[72px]"
+                                                />
+                                            </div>
+                                            <span class="text-muted-foreground text-xs font-normal leading-snug">
+                                                {$t("app.settings.workTime.description")}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <Label for="check-interval">{$t("app.settings.checkInterval.title")}</Label>
+                                        <Select.Root type="single" bind:value={checkInterval}>
+                                            <Select.Trigger>
+                                                <span>{InternalMap[checkInterval as keyof typeof InternalMap]}</span>
+                                            </Select.Trigger>
+                                            <Select.Content>
+                                                {#each Object.keys(InternalMap) as key}
+                                                    <Select.Item value={key}
+                                                        >{InternalMap[key as keyof typeof InternalMap]}</Select.Item
+                                                    >
+                                                {/each}
+                                            </Select.Content>
+                                        </Select.Root>
+                                    </div>
                                 </div>
-                                <Separator class="my-4" />
-                                <div class="flex items-center justify-between space-x-2">
-                                    <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
-                                        <span>启用 AI 模块</span>
-                                        <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                            启用或禁用 AI 功能模块
-                                        </span>
-                                    </Label>
-                                    <Switch id="ai-enabled" bind:checked={aiEnabled} />
+                            {:else if currentSection === "ai"}
+                                <div class="space-y-4">
+                                    <div class="flex flex-col gap-2">
+                                        <Label class="text-lg font-medium">AI 配置</Label>
+                                        <p class="text-muted-foreground text-sm">配置 AI 模块相关参数</p>
+                                    </div>
+                                    <Separator class="my-4" />
+                                    <div class="flex items-center justify-between space-x-2">
+                                        <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
+                                            <span>启用 AI 模块</span>
+                                            <span class="text-muted-foreground text-xs font-normal leading-snug">
+                                                启用或禁用 AI 功能模块
+                                            </span>
+                                        </Label>
+                                        <Switch id="ai-enabled" bind:checked={aiEnabled} />
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <Label for="ai-base-url">Base URL</Label>
+                                        <Input
+                                            bind:value={aiBaseUrl}
+                                            class="bg-background"
+                                            type="text"
+                                            id="ai-base-url"
+                                            placeholder="https://api.example.com"
+                                        />
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <Label for="ai-model-id">Model ID</Label>
+                                        <Input
+                                            bind:value={aiModelId}
+                                            type="text"
+                                            class="bg-background"
+                                            id="ai-model-id"
+                                            placeholder="gpt-3.5-turbo"
+                                        />
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <Label for="ai-api-key">API Key</Label>
+                                        <Input
+                                            bind:value={aiApiKey}
+                                            type="password"
+                                            class="bg-background"
+                                            id="ai-api-key"
+                                            placeholder="输入你的 API Key"
+                                        />
+                                    </div>
                                 </div>
-                                <div class="flex flex-col gap-2">
-                                    <Label for="ai-base-url">Base URL</Label>
-                                    <Input
-                                        bind:value={aiBaseUrl}
-                                        class="bg-background"
-                                        type="text"
-                                        id="ai-base-url"
-                                        placeholder="https://api.example.com"
-                                    />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <Label for="ai-model-id">Model ID</Label>
-                                    <Input
-                                        bind:value={aiModelId}
-                                        type="text"
-                                        class="bg-background"
-                                        id="ai-model-id"
-                                        placeholder="gpt-3.5-turbo"
-                                    />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <Label for="ai-api-key">API Key</Label>
-                                    <Input
-                                        bind:value={aiApiKey}
-                                        type="password"
-                                        class="bg-background"
-                                        id="ai-api-key"
-                                        placeholder="输入你的 API Key"
-                                    />
-                                </div>
-                            </div>
-                        {/if}
+                            {/if}
+                        </div>
                     </div>
                 </div>
-            </div>
+            {/if}
         </Dialog.Content>
     </Dialog.Portal>
 </Dialog.Root>
