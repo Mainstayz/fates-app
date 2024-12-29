@@ -29,17 +29,18 @@
             label: "timeline",
             translationKey: "routes.timeline",
         },
+
+        // {
+        //     icon: Icons.Tags,
+        //     variant: "default",
+        //     label: "tags",
+        //     translationKey: "routes.tags",
+        // },
         {
-            icon: Icons.CharCombined,
+            icon: Icons.ListTodo,
             variant: "default",
-            label: "statistics",
-            translationKey: "routes.statistics",
-        },
-        {
-            icon: Icons.Tags,
-            variant: "default",
-            label: "tags",
-            translationKey: "routes.tags",
+            label: "todo",
+            translationKey: "routes.todo",
         },
         {
             icon: Icons.Repeat,
@@ -47,11 +48,12 @@
             label: "repeat",
             translationKey: "routes.repeat",
         },
+
         {
-            icon: Icons.ListTodo,
+            icon: Icons.CharCombined,
             variant: "default",
-            label: "todo",
-            translationKey: "routes.todo",
+            label: "statistics",
+            translationKey: "routes.statistics",
         },
         {
             icon: MessageSquare,

@@ -4,7 +4,9 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { Card } from "$lib/components/ui/card";
     import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
-    import { getKV, setKV } from "$src/store";
+    import { getKV, setKV, getMattersByRange, getAllTodos, getActiveRepeatTasks } from "$src/store";
+    import type { Matter, Todo, RepeatTask } from "$src/store";
+    import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
     import { onMount } from "svelte";
 
     import {
@@ -13,6 +15,7 @@
         SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_SYSTEM_PROMPT,
     } from "$src/config";
+    import dayjs from "dayjs";
 
     let baseUrl = $state("");
     let apiKey = $state("");
@@ -95,6 +98,49 @@
         } catch (e) {
             error = e instanceof Error ? e.message : "加载聊天历史失败";
         }
+    }
+
+    async function loadHistoryTasks() {
+        // 获取最新 7 天的任务
+        let txtResult = "";
+        const start = dayjs().subtract(7, "day").startOf("day").toISOString();
+        const end = dayjs().endOf("day").toISOString();
+        let list = await getMattersByRange(start, end);
+        if (list.length > 0) {
+            txtResult += "以下是最近 7 天的任务:\n";
+            txtResult += "```csv\n";
+            txtResult += ["开始时间", "结束时间", "标题", "标签"].join(" | ") + "\n";
+            list.forEach((item: Matter) => {
+                txtResult += `${new Date(item.start_time).toLocaleString()} | ${new Date(item.end_time).toLocaleString()} | ${item.title} | ${item.tags ?? ""}\n`;
+            });
+            txtResult += "```\n";
+        }
+        let todoList = await getAllTodos();
+        todoList = todoList.filter((item: Todo) => item.status === "todo");
+        if (todoList.length > 0) {
+            txtResult += "以下是所有待办事项:\n";
+            txtResult += "```csv\n";
+            txtResult += ["标题"].join(" | ") + "\n";
+            todoList.forEach((item: Todo) => {
+                txtResult += `${item.title}\n`;
+            });
+            txtResult += "```\n";
+        }
+
+        let repeatTask = await getActiveRepeatTasks();
+        if (repeatTask.length > 0) {
+            txtResult += "以下是所有重复任务:\n";
+            txtResult += "```csv\n";
+            txtResult += ["标题", "标签", "重复时间"].join(" | ") + "\n";
+            repeatTask.forEach((item: RepeatTask) => {
+                const { weekdaysBits, startTime, endTime } = parseRepeatTimeString(item.repeat_time);
+                const description = generateDescription(weekdaysBits);
+                const fixedDescription = description.split("|").join(",");
+                txtResult += `${item.title} | ${item.tags} | ${fixedDescription},${startTime}-${endTime}\n`;
+            });
+            txtResult += "```\n";
+        }
+        console.log(txtResult);
     }
 
     async function sendMessage() {
@@ -180,6 +226,8 @@
             <div class="flex gap-2">
                 <Button variant="outline" onclick={() => setSystemPrompt()}>设置提示词</Button>
                 <Button variant="outline" onclick={() => clearHistory()}>清除聊天历史</Button>
+                <!-- 读取历史任务 -->
+                <Button variant="outline" onclick={() => loadHistoryTasks()}>读取历史任务</Button>
             </div>
         </div>
         <!-- 配置最大高度 -->
