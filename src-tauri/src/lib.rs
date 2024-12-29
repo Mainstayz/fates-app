@@ -30,7 +30,7 @@ pub fn run() {
                 .filter(|metadata| {
                     let target = metadata.target();
                     // 仅仅允许 fates 开头的日志
-                    target.starts_with("fates")
+                    target.starts_with("fates") || target.contains("localhost")
                 }),
             Target::new(TargetKind::Webview),
             Target::new(TargetKind::LogDir {

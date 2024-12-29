@@ -7,6 +7,7 @@
     ],
     "permissions": [
         "core:default",
+        "log:default",
         "notification:default",
         "core:event:allow-listen",
         "core:event:allow-emit",
