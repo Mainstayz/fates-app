@@ -78,7 +78,7 @@
                 min: 0,
                 max: 5,
                 orient: "horizontal",
-                right: "center",
+                left: "right",
                 bottom: "0%",
                 text: ["More", "Less"],
                 pieces: getVisualPieces(),
@@ -90,9 +90,7 @@
                 right: 30,
                 range: dayjs().format("YYYY"),
                 itemStyle: {
-                    borderWidth: 0.5,
                     borderColor: "#fff",
-                    borderRadius: 2,
                 },
                 splitLine: {
                     show: false, // 隐藏分隔线
@@ -110,9 +108,16 @@
                 type: "heatmap",
                 coordinateSystem: "calendar",
                 data: formatData(data),
+                itemStyle: {
+                    borderWidth: 4,
+                    borderColor: "#fff",
+                    borderRadius: 4,
+                },
+                emphasis: {
+                    disabled: true, // 禁用鼠标悬浮高亮效果
+                },
             },
         };
-
         myChart.setOption(option);
     }
 
