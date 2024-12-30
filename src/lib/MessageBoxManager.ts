@@ -5,34 +5,89 @@ import debounce from "debounce";
 import type { MouseTrackerState } from "../features/mouse-tracker.svelte";
 import { createWindow, getWindowByLabel } from "../tauri/windows";
 
-
+// Constants
 const OFFSET_Y = 4;
 
-export class MessageBoxManager {
+// Event Listener Manager
+class EventListenerManager {
+    private listeners: Array<() => void> = [];
+
+    add(listener: () => void) {
+        this.listeners.push(listener);
+    }
+
+    removeAll() {
+        this.listeners.forEach(unlisten => unlisten?.());
+        this.listeners = [];
+    }
+}
+
+// Window Position Calculator
+class WindowPositionCalculator {
     private devicePixelRatio: number;
     private messageBoxWidth: number;
     private messageBoxHeight: number;
-    private unlisteners: Array<() => void>;
+
+    constructor(devicePixelRatio: number, width: number, height: number) {
+        this.devicePixelRatio = devicePixelRatio;
+        this.messageBoxWidth = width;
+        this.messageBoxHeight = height;
+    }
+
+    get width() {
+        return this.messageBoxWidth;
+    }
+
+    get height() {
+        return this.messageBoxHeight;
+    }
+
+    calculatePhysicalPosition(x: number) {
+        const platformName = platform().toLowerCase();
+        const y = platformName === "macos"
+            ? MessageBoxManager.CONFIG.macosYOffset
+            : window.screen.availHeight - this.messageBoxHeight;
+
+        return {
+            x: Math.floor(x - this.messageBoxWidth / 2),
+            y: Math.floor(y),
+        };
+    }
+}
+
+// MessageBox State
+enum MessageBoxState {
+    HIDDEN,
+    VISIBLE,
+    TRANSITIONING
+}
+
+export class MessageBoxManager {
+    private positionCalculator: WindowPositionCalculator;
+    private eventListeners: EventListenerManager;
     private mouseTrackerState: MouseTrackerState;
-    private atLeastOnceInside: boolean;
-    private isInMessageBox: boolean;
+    private state: MessageBoxState = MessageBoxState.HIDDEN;
+    private atLeastOnceInside: boolean = false;
+    private isInMessageBox: boolean = false;
     private debouncedShow: ReturnType<typeof debounce>;
     private debouncedHide: ReturnType<typeof debounce>;
 
-    private static readonly CONFIG = {
+    public static readonly CONFIG = {
         hideDelay: 200,
         showDelay: 200,
         macosYOffset: 74,
+        width: 280,
+        initialHeight: 59,
     } as const;
 
     constructor(mouseTrackerState: MouseTrackerState) {
-        this.devicePixelRatio = window.devicePixelRatio;
-        this.messageBoxWidth = 280;
-        this.messageBoxHeight = 59;
-        this.unlisteners = [];
+        this.positionCalculator = new WindowPositionCalculator(
+            window.devicePixelRatio,
+            MessageBoxManager.CONFIG.width,
+            MessageBoxManager.CONFIG.initialHeight
+        );
+        this.eventListeners = new EventListenerManager();
         this.mouseTrackerState = mouseTrackerState;
-        this.atLeastOnceInside = false;
-        this.isInMessageBox = false;
 
         this.debouncedShow = debounce(
             (event: any) => this.showMessageBoxWin(event),
@@ -44,81 +99,90 @@ export class MessageBoxManager {
         );
     }
 
-    private calculatePhysicalPosition(x: number) {
-        // window.screen.availHeight 返回的是以像素（pixels）为单位的屏幕可用高度。这个值表示屏幕的实际可用高度，不包括操作系统任务栏等系统组件占用的空间。
-        const platformName = platform().toLowerCase();
-        const y = platformName === "macos"
-            ? MessageBoxManager.CONFIG.macosYOffset
-            : window.screen.availHeight - this.messageBoxHeight;
-
-        return {
-            x: Math.floor(x - this.messageBoxWidth / 2),
-            y: Math.floor(y),
-        };
-    }
-
     private async showMessageBoxWin(event: any) {
+        if (this.state === MessageBoxState.VISIBLE) {
+            console.log("消息框已显示，跳过显示操作");
+            return;
+        }
+
         const win = await getWindowByLabel("message-box");
-        if (!win || (await win.isVisible())) return;
+        if (!win) {
+            console.log("未找到消息框窗口");
+            return;
+        }
+
+        console.log("正在显示消息框...");
+        this.state = MessageBoxState.TRANSITIONING;
 
         const mouse_position = event.payload.mouse_position as [number, number];
         const tray_rect = event.payload.tray_rect as [number, number, number, number];
 
-        let { x, y } = this.calculatePhysicalPosition(mouse_position[0]);
+        let { x, y } = this.positionCalculator.calculatePhysicalPosition(mouse_position[0]);
 
         const platformName = platform().toLowerCase();
+        y += platformName === "macos" ? OFFSET_Y : -OFFSET_Y;
 
-        if (platformName === "macos") {
-            y += OFFSET_Y;
-        } else {
-            y -= OFFSET_Y;
-        }
+        const physicalWidth = this.positionCalculator.width * window.devicePixelRatio;
+        const physicalHeight = this.positionCalculator.height * window.devicePixelRatio;
 
-        const physicalWidth = this.messageBoxWidth * this.devicePixelRatio;
-        const physicalHeight = this.messageBoxHeight * this.devicePixelRatio;
-
-        console.log(`window available size: width=${window.screen.availWidth}, height=${window.screen.availHeight}`);
-        console.log(`message box position: x=${x}, y=${y}, width=${physicalWidth}, height=${physicalHeight} OFFSET_Y=${OFFSET_Y}`);
+        console.log(`窗口可用尺寸：宽度=${window.screen.availWidth}, 高度=${window.screen.availHeight}`);
+        console.log(`消息框位置：x=${x}, y=${y}, 宽度=${physicalWidth}, 高度=${physicalHeight} Y 轴偏移量=${OFFSET_Y}  Y + 高度 + 偏移量=${y + physicalHeight + OFFSET_Y}`);
 
         await win.setPosition(new PhysicalPosition(x, y));
         await win.setSize(new PhysicalSize(physicalWidth, physicalHeight));
         await win.show();
         await win.setFocus();
 
-
-        const rect1 = { x, y, width: physicalWidth, height: physicalHeight };
-        const rect2 = {
-            x: tray_rect[0],
-            y: tray_rect[1],
-            width: tray_rect[2],
-            height: tray_rect[3]
-        };
-
-        this.mouseTrackerState.updateWindowRect([rect1, rect2]);
+        this.mouseTrackerState.updateWindowRect([
+            { x, y, width: physicalWidth, height: physicalHeight },
+            {
+                x: tray_rect[0],
+                y: tray_rect[1],
+                width: tray_rect[2],
+                height: tray_rect[3]
+            }
+        ]);
         this.mouseTrackerState.resume();
+
+        this.state = MessageBoxState.VISIBLE;
+        console.log("消息框显示完成");
     }
 
     private async hideMessageBoxWin() {
+        if (this.state === MessageBoxState.HIDDEN) {
+            console.log("消息框已隐藏，跳过隐藏操作");
+            return;
+        }
+
+        console.log("正在隐藏消息框...");
+        this.state = MessageBoxState.TRANSITIONING;
         this.atLeastOnceInside = false;
+
         const win = await getWindowByLabel("message-box");
         if (win) {
             this.mouseTrackerState.pause();
             await win.hide();
         }
+
+        this.state = MessageBoxState.HIDDEN;
+        console.log("消息框隐藏完成");
     }
 
     public async initialize() {
+        console.log("初始化消息框管理器...");
         const messageBoxWin = await this.setupMessageBoxWindow();
         await this.setupEventListeners(messageBoxWin);
         this.setupMouseTracker();
+        console.log("消息框管理器初始化完成");
     }
 
     private async setupMessageBoxWindow() {
+        console.log("创建消息框窗口...");
         return await createWindow("message-box", {
             title: "Message Box",
             url: "/message-box",
-            width: this.messageBoxWidth,
-            height: this.messageBoxHeight,
+            width: MessageBoxManager.CONFIG.width,
+            height: this.positionCalculator.height,
             decorations: false,
             resizable: false,
             alwaysOnTop: true,
@@ -131,6 +195,7 @@ export class MessageBoxManager {
     }
 
     private async setupEventListeners(messageBoxWin: Window) {
+        console.log("设置事件监听器...");
         const listeners = [
             ["tray_mouseenter", (event: any) => this.debouncedShow(event)],
             ["tray_mouseleave", () => {}],
@@ -138,23 +203,31 @@ export class MessageBoxManager {
 
         for (const [event, handler] of listeners) {
             const unlisten = await listen(event, handler);
-            this.unlisteners.push(unlisten);
+            this.eventListeners.add(unlisten);
         }
 
-        const unlistenBlur = await messageBoxWin.listen("tauri://blur", () => this.debouncedHide());
-        this.unlisteners.push(unlistenBlur);
+        this.eventListeners.add(
+            await messageBoxWin.listen("tauri://blur", () => this.debouncedHide())
+        );
 
-        const unlistenHideMessageBox = await messageBoxWin.listen("hide-message-box", () => this.hideMessageBoxWin());
-        this.unlisteners.push(unlistenHideMessageBox);
+        this.eventListeners.add(
+            await messageBoxWin.listen("hide-message-box", () => this.hideMessageBoxWin())
+        );
 
-        const unlistenMessageBoxHeight = await messageBoxWin.listen("message-box-height", (event) => {
-            console.log("on message-box-height event:", event.payload);
-            this.messageBoxHeight = event.payload as number;
-        });
-        this.unlisteners.push(unlistenMessageBoxHeight);
+        this.eventListeners.add(
+            await messageBoxWin.listen("message-box-height", (event) => {
+                console.log("收到消息框高度事件：", event.payload);
+                this.positionCalculator = new WindowPositionCalculator(
+                    window.devicePixelRatio,
+                    MessageBoxManager.CONFIG.width,
+                    event.payload as number
+                );
+            })
+        );
     }
 
     private setupMouseTracker() {
+        console.log("设置鼠标跟踪器...");
         this.mouseTrackerState.setIsInsideCallback((isInside: boolean) => {
             this.isInMessageBox = isInside;
 
@@ -170,6 +243,7 @@ export class MessageBoxManager {
     }
 
     public destroy() {
-        this.unlisteners.forEach(unlisten => unlisten?.());
+        console.log("销毁消息框管理器...");
+        this.eventListeners.removeAll();
     }
 }
