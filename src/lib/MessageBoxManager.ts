@@ -78,7 +78,7 @@ export class MessageBoxManager {
         const physicalHeight = this.messageBoxHeight * this.devicePixelRatio;
 
         console.log(`window available size: width=${window.screen.availWidth}, height=${window.screen.availHeight}`);
-        console.log(`message box position: x=${x}, y=${y}, width=${physicalWidth}, height=${physicalHeight}`);
+        console.log(`message box position: x=${x}, y=${y}, width=${physicalWidth}, height=${physicalHeight} OFFSET_Y=${OFFSET_Y}`);
 
         await win.setPosition(new PhysicalPosition(x, y));
         await win.setSize(new PhysicalSize(physicalWidth, physicalHeight));
