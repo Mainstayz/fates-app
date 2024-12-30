@@ -29,6 +29,7 @@
     "cal-heatmap": "^4.2.4",
     "dayjs": "^1.11.13",
     "debounce": "^2.2.0",
+    "echarts": "^5.6.0",
     "handlebars": "^4.7.8",
     "openai": "^4.77.0",
     "svelte-i18n": "^4.0.1",
