@@ -125,6 +125,10 @@
         "baseUrl": "API URL",
         "modelId": "Model ID",
         "apiKey": "API Key"
+      },
+      "aiReminder": {
+        "title": "AI Reminder Assistant",
+        "description": "Configure AI reminder assistant related parameters"
       }
     },
     "statistics": {

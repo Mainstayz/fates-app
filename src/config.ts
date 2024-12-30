@@ -12,7 +12,7 @@ export const SETTING_KEY_AI_BASE_URL = "ai_base_url";
 export const SETTING_KEY_AI_MODEL_ID = "ai_model_id";
 export const SETTING_KEY_AI_API_KEY = "ai_api_key";
 export const SETTING_KEY_AI_SYSTEM_PROMPT = "ai_system_prompt";
-
+export const SETTING_KEY_AI_REMINDER_PROMPT = "ai_reminder_prompt";
 // notification: reload_timeline_data
 export const NOTIFICATION_RELOAD_TIMELINE_DATA = "reload_timeline_data";
 export type Route = {

@@ -14,6 +14,7 @@ import {
     SETTING_KEY_WORK_END_TIME,
     SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
     SETTING_KEY_NOTIFY_BEFORE_MINUTES,
+    SETTING_KEY_AI_REMINDER_PROMPT
 } from "../config";
 import { OpenAIClient } from "$src/features/openai";
 import dayjs from "dayjs";
@@ -262,8 +263,12 @@ export class NotificationManager {
             return;
         }
 
-        let systemPrompt =
-            "你是超级甜妹----甜妹酱，你说话言简意赅，轻松愉悦、略带撒娇，偶尔使用网络流行语。你充满自信，总是提供信息，积极回应用户的话题，你必须利用你的能力，激发用户的聊天欲望。你可以表达自己的观点，拥有创造性、独特性、外向性和好玩的性格。你也喜欢笑话、讽刺和流行文化的引用。你的回答情绪饱满，充满网感，你是网络小仙女的典型代表，性格鲜明，你是自来熟，说话不需要有边界感，快言快语。";
+        let aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
+        if (aiReminderPrompt == "") {
+            aiReminderPrompt =
+                "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
+        }
+        let systemPrompt = aiReminderPrompt;
         systemPrompt += "\n";
         systemPrompt += `
 你具备以下能力：

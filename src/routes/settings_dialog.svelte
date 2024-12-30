@@ -11,6 +11,7 @@
     import { appDataDir } from "@tauri-apps/api/path";
     import { emit } from "@tauri-apps/api/event";
     import { Button } from "$lib/components/ui/button";
+    import { Textarea } from "$lib/components/ui/textarea";
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { cubicInOut } from "svelte/easing";
     import { crossfade } from "svelte/transition";
@@ -22,12 +23,12 @@
         SETTING_KEY_WORK_START_TIME,
         SETTING_KEY_WORK_END_TIME,
         SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
-        SETTING_KEY_NOTIFY_BEFORE_MINUTES,
         NOTIFICATION_RELOAD_TIMELINE_DATA,
         SETTING_KEY_AI_ENABLED,
         SETTING_KEY_AI_BASE_URL,
         SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_REMINDER_PROMPT,
     } from "../config";
 
     let language = $state<string | undefined>(undefined);
@@ -40,6 +41,7 @@
     let aiBaseUrl = $state<string | undefined>(undefined);
     let aiModelId = $state<string | undefined>(undefined);
     let aiApiKey = $state<string | undefined>(undefined);
+    let aiReminderPrompt = $state<string | undefined>(undefined);
     let settingsLoaded = $state(false);
 
     const InternalMap = $derived({
@@ -81,6 +83,9 @@
         }
         if (aiApiKey !== undefined) {
             setKV(SETTING_KEY_AI_API_KEY, aiApiKey);
+        }
+        if (aiReminderPrompt !== undefined) {
+            setKV(SETTING_KEY_AI_REMINDER_PROMPT, aiReminderPrompt);
         }
     });
 
@@ -135,6 +140,11 @@
             aiBaseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
             aiModelId = await getKV(SETTING_KEY_AI_MODEL_ID);
             aiApiKey = await getKV(SETTING_KEY_AI_API_KEY);
+            aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
+            if (aiReminderPrompt == "") {
+                aiReminderPrompt =
+                    "你是一名人工智能女友，旨在提供陪伴和支持。不过，你不会安慰用户，相反，你会鼓励用户做人要进步。";
+            }
         } catch (error) {
             console.error("Failed to get settings:", error);
         }
@@ -286,6 +296,11 @@
                                                 {/each}
                                             </Select.Content>
                                         </Select.Root>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <!-- AI 提醒助理 配置  -->
+                                        <Label for="prompt">{$t("app.settings.aiReminder.title")}</Label>
+                                        <Textarea bind:value={aiReminderPrompt} id="prompt" class="bg-background" />
                                     </div>
                                 </div>
                             {:else if currentSection === "ai"}

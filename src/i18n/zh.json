@@ -115,6 +115,10 @@
                 "baseUrl": "API 地址",
                 "modelId": "模型 ID",
                 "apiKey": "API Key"
+            },
+            "aiReminder": {
+                "title": "AI 提醒助理",
+                "description": "配置 AI 提醒助理相关参数"
             }
         },
         "other": {
