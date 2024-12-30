@@ -22,7 +22,7 @@
 
     function getVisualPieces() {
         return [
-            { min: 5, color: "#216e39" },
+            { min: 5, max: 100, color: "#216e39" },
             { min: 3, max: 4, color: "#30a14e" },
             { min: 2, max: 2, color: "#40c463" },
             { min: 1, max: 1, color: "#9be9a8" },
@@ -118,7 +118,7 @@
                 },
             },
         };
-        myChart.setOption(option);
+        myChart.setOption(option, true);
     }
 
     // 添加重绘方法
