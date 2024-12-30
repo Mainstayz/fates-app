@@ -45,6 +45,7 @@ export class MessageBoxManager {
     }
 
     private calculatePhysicalPosition(x: number) {
+        // window.screen.availHeight 返回的是以像素（pixels）为单位的屏幕可用高度。这个值表示屏幕的实际可用高度，不包括操作系统任务栏等系统组件占用的空间。
         const platformName = platform().toLowerCase();
         const y = platformName === "macos"
             ? MessageBoxManager.CONFIG.macosYOffset
@@ -76,8 +77,8 @@ export class MessageBoxManager {
         const physicalWidth = this.messageBoxWidth * this.devicePixelRatio;
         const physicalHeight = this.messageBoxHeight * this.devicePixelRatio;
 
-        console.log("window available size:", { width: window.screen.availWidth, height: window.screen.availHeight });
-        console.log("message box position:", { x, y, physicalWidth, physicalHeight });
+        console.log(`window available size: width=${window.screen.availWidth}, height=${window.screen.availHeight}`);
+        console.log(`message box position: x=${x}, y=${y}, width=${physicalWidth}, height=${physicalHeight}`);
 
         await win.setPosition(new PhysicalPosition(x, y));
         await win.setSize(new PhysicalSize(physicalWidth, physicalHeight));

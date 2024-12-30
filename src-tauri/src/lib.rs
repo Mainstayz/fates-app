@@ -19,6 +19,15 @@ use tray::try_register_tray_icon;
 async fn auto_launch(app: tauri::AppHandle, enable: bool) {
     let _ = autostart::enable_autostart(app, enable);
 }
+#[tauri::command]
+async fn show_main_window(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        // 依次执行：取消最小化、显示窗口、设置焦点
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -26,12 +35,11 @@ pub fn run() {
         ::new()
         .clear_targets()
         .targets([
-            Target::new(TargetKind::Stdout)
-                .filter(|metadata| {
-                    let target = metadata.target();
-                    // 仅仅允许 fates 开头的日志
-                    target.starts_with("fates") || target.contains("localhost")
-                }),
+            Target::new(TargetKind::Stdout).filter(|metadata| {
+                let target = metadata.target();
+                // 仅仅允许 fates 开头的日志
+                target.starts_with("fates") || target.contains("localhost")
+            }),
             Target::new(TargetKind::Webview),
             Target::new(TargetKind::LogDir {
                 file_name: Some("rust".into()),
@@ -72,7 +80,12 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(logger_builder.build())
         .invoke_handler(
-            tauri::generate_handler![auto_launch, get_tray_flash_state, flash_tray_icon]
+            tauri::generate_handler![
+                auto_launch,
+                get_tray_flash_state,
+                flash_tray_icon,
+                show_main_window
+            ]
         )
         .setup(|app| {
             // 初始化数据库

@@ -23,6 +23,7 @@
         console.log("onNotificationMessage: payload = ", payload);
         title = payload.title;
         description = payload.message;
+        invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to flash tray icon"));
     }
 
     function handleError(message: string) {
@@ -40,6 +41,8 @@
 
     const handleGlobalClick = () => {
         console.log("handleGlobalClick");
+        // 让 main 窗口显示
+        invoke("show_main_window").catch(handleError("Failed to show main window"));
         disableFlashAndHide().catch(handleError("Failed to handle global click"));
     };
 
@@ -65,7 +68,8 @@
     }
 
     async function loadMessageBoxData() {
-        title = description = "";
+        title = "提示";
+        description = "今天又是美好的一天，记得完成任务哦！";
     }
 
     onMount(async () => {

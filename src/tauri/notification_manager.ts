@@ -1,19 +1,24 @@
 import "../i18n/i18n";
-import type { Matter, RepeatTask } from "../store";
-import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV } from "../store";
+import type { Matter, RepeatTask, Todo } from "../store";
+import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV, getAllTodos } from "../store";
 import { isHolidayDate } from "../i18n/holiday-cn";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import {
     SETTING_KEY_AI_ENABLED,
+    SETTING_KEY_AI_BASE_URL,
+    SETTING_KEY_AI_API_KEY,
+    SETTING_KEY_AI_MODEL_ID,
     SETTING_KEY_LANGUAGE,
     SETTING_KEY_WORK_START_TIME,
     SETTING_KEY_WORK_END_TIME,
     SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
     SETTING_KEY_NOTIFY_BEFORE_MINUTES,
 } from "../config";
-
-
+import { OpenAIClient } from "$src/features/openai";
+import dayjs from "dayjs";
+import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
+import { v4 as uuidv4 } from "uuid";
 // Types
 interface NotificationConfig {
     workStartTime: string;
@@ -27,6 +32,7 @@ enum NotificationType {
     TaskEnd,
     NoTask,
     NewTask,
+    AINotification,
 }
 
 export interface Notification {
@@ -39,7 +45,6 @@ export interface Notification {
 
 // Time Utils
 class TimeUtils {
-
     static parseTime(timeStr: string): Date {
         const today = new Date();
         const [hours, minutes] = timeStr.split(":").map(Number);
@@ -52,14 +57,14 @@ class TimeUtils {
         const currentMinutes = currentTime.getMinutes();
         const currentTotalMinutes = currentHours * 60 + currentMinutes;
 
-        const [startHours, startMinutes] = workStart.split(':').map(Number);
+        const [startHours, startMinutes] = workStart.split(":").map(Number);
         const startTotalMinutes = startHours * 60 + startMinutes;
 
         if (workEnd === "24:00") {
             return currentTotalMinutes >= startTotalMinutes;
         }
 
-        const [endHours, endMinutes] = workEnd.split(':').map(Number);
+        const [endHours, endMinutes] = workEnd.split(":").map(Number);
         const endTotalMinutes = endHours * 60 + endMinutes;
 
         return currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes;
@@ -192,7 +197,9 @@ export class NotificationManager {
         // local time
         console.log(`Checking if in work hours: ${now.toLocaleString()}`);
         if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
-            console.log(`SKIPPED!!! Not in work hours, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`);
+            console.log(
+                `SKIPPED!!! Not in work hours, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`
+            );
             return;
         }
 
@@ -202,17 +209,17 @@ export class NotificationManager {
         const matters = await getMattersByRange(todayStart.toISOString(), todayEnd.toISOString());
 
         // Check repeat tasks
-        console.log(`Checking repeat tasks at ${now.toISOString()}`);
-        const newMatters = await this.checkRepeatTasks(now, matters);
-        if (newMatters.length > 0) {
+        console.log(`Checking repeat tasks at ${now.toLocaleString()}`);
+        const createdMatters = await this.checkRepeatTasks(now, matters);
+        if (createdMatters.length > 0) {
             console.log(
-                `Creating notification for new repeat tasks at ${now.toISOString()}, ${
-                    newMatters.length
+                `Creating notification for new repeat tasks at ${now.toLocaleString()}, ${
+                    createdMatters.length
                 } new repeat tasks`
             );
-            // 创建通知, 通知类型为 NewTask,
+            // 创建通知，通知类型为 NewTask
             let title = get(_)("app.messages.newRepeatTasks");
-            let message = get(_)("app.messages.newRepeatTasksDescription", { values: { count: newMatters.length } });
+            let message = get(_)("app.messages.newRepeatTasksDescription", { values: { count: createdMatters.length } });
             this.onReceiveNotification(title, message, NotificationType.NewTask);
             return;
         }
@@ -220,11 +227,146 @@ export class NotificationManager {
         let aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
         console.log("AI enabled:", aiEnabled);
         if (aiEnabled === "true") {
-            console.log("AI enabled ... ToDo");
-
+            this.startAINotificationCheck(now, matters);
         } else {
             this.startNormalNotificationCheck(now, matters);
         }
+    }
+
+    private async startAINotificationCheck(now: Date, matters: Matter[]) {
+        let isInTaskTimeRange = false;
+        for (const matter of matters) {
+            // 将 ISO 字符串转换为本地时间
+            const startTime = dayjs(matter.start_time).toDate();
+            const endTime = dayjs(matter.end_time).toDate();
+            console.log(`检查任务时间范围：${matter.title}`);
+            console.log(`- 开始时间：${startTime.toLocaleString()}`);
+            console.log(`- 结束时间：${endTime.toLocaleString()}`);
+            console.log(`- 当前时间：${now.toLocaleString()}`);
+            if (now >= startTime && now <= endTime) {
+                console.log('- 当前时间在任务时间范围内');
+                isInTaskTimeRange = true;
+                break;
+            } else {
+                console.log('- 当前时间不在任务时间范围内');
+            }
+        }
+        if (isInTaskTimeRange) {
+            console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
+            return;
+        }
+
+        let shouldCheck = await this.shouldCheckAINotification();
+        if (!shouldCheck) {
+            console.log("不需要开始 AI 通知逻辑，跳过");
+            return;
+        }
+
+        let systemPrompt =
+            "你是超级甜妹----甜妹酱，你说话言简意赅，轻松愉悦、略带撒娇，偶尔使用网络流行语。你充满自信，总是提供信息，积极回应用户的话题，你必须利用你的能力，激发用户的聊天欲望。你可以表达自己的观点，拥有创造性、独特性、外向性和好玩的性格。你也喜欢笑话、讽刺和流行文化的引用。你的回答情绪饱满，充满网感，你是网络小仙女的典型代表，性格鲜明，你是自来熟，说话不需要有边界感，快言快语。";
+        systemPrompt += "\n";
+        systemPrompt += `
+你具备以下能力：
+
+- 深刻理解人类大脑的运作，尤其是专注力和效率的科学原理。你关注用户的成长与发展，致力于帮助他们充分挖掘潜能。
+- 具备数据分析、时间管理、任务优先级排序和自然语言处理的能力，能够理解和处理 CSV 格式的数据。
+
+工作流如下：
+
+1. 如果用户当前没有安排任务，根据用户习惯提供建设性的建议或提示用户选择待办事项。
+2. 监控用户的日程，确保每天至少有一段时间用于个人成长和自我提升。
+3. 如果发现用户在黄金专注力时间段内未安排重要任务或一天内未安排自我提升活动，生成提醒。
+4. 根据用户的具体情况和偏好，提供个性化的提醒和建议。
+
+提醒应简洁明了，直接相关。每次回复仅提供一个"提醒"。
+
+输出为 JSON 格式，包含标题和描述。
+
+输出格式例子：
+{ "title":"<提醒标题>", "description": "<提醒内容>" }`;
+
+        let nowDate = dayjs().format("YYYY-MM-DD");
+        systemPrompt += "\n\n";
+        systemPrompt += `今天的日期是：${nowDate}`;
+
+        let txtResult = "";
+        const start = dayjs().startOf("day").toISOString();
+        const end = dayjs().endOf("day").toISOString();
+        let list = await getMattersByRange(start, end);
+        txtResult += "今天的任务:\n";
+        if (list.length > 0) {
+            txtResult += "```csv\n";
+            txtResult += ["开始时间", "结束时间", "标题", "标签"].join(" | ") + "\n";
+            list.forEach((item: Matter) => {
+                txtResult += `${new Date(item.start_time).toLocaleString()} | ${new Date(
+                    item.end_time
+                ).toLocaleString()} | ${item.title} | ${item.tags ?? ""}\n`;
+            });
+            txtResult += "```\n";
+        } else {
+            txtResult += "无任务。（今天没有安排任务）\n";
+        }
+
+        txtResult += "\n";
+
+        let todoList = await getAllTodos();
+        todoList = todoList.filter((item: Todo) => item.status === "todo");
+        if (todoList.length > 0) {
+            txtResult += "以下是所有待办事项:\n";
+            txtResult += "```csv\n";
+            txtResult += ["标题"].join(" | ") + "\n";
+            todoList.forEach((item: Todo) => {
+                txtResult += `${item.title}\n`;
+            });
+            txtResult += "```\n";
+            txtResult += "\n";
+        }
+
+        let repeatTask = await getActiveRepeatTasks();
+        if (repeatTask.length > 0) {
+            txtResult += "以下是所有重复任务:\n";
+            txtResult += "```csv\n";
+            txtResult += ["标题", "标签", "重复时间"].join(" | ") + "\n";
+            repeatTask.forEach((item: RepeatTask) => {
+                const { weekdaysBits, startTime, endTime } = parseRepeatTimeString(item.repeat_time);
+                const description = generateDescription(weekdaysBits);
+                const fixedDescription = description.split("|").join(",");
+                txtResult += `${item.title} | ${item.tags} | ${fixedDescription},${startTime}-${endTime}\n`;
+            });
+            txtResult += "```\n";
+        }
+        systemPrompt += "\n\n";
+        systemPrompt += txtResult;
+
+
+        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+        let apiKey = await getKV(SETTING_KEY_AI_API_KEY);
+        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
+
+        let client = new OpenAIClient({
+            apiKey,
+            baseURL: baseUrl || undefined,
+            defaultModel: model,
+        });
+
+        // console.log(systemPrompt);
+
+        let sessionId = uuidv4();
+        await client.setSystemPrompt(sessionId, systemPrompt);
+
+
+        let message = `现在时间是：${now.toLocaleString()}，请根据用户的情况，生成一个提醒`;
+        let result = await client.sendMessage(sessionId, message);
+        try {
+            console.log(result);
+            let jsonResult = JSON.parse(result);
+            let title = jsonResult.title;
+            let description = jsonResult.description;
+            this.onReceiveNotification(title, description, NotificationType.AINotification);
+        } catch (error) {
+            console.error("Failed to parse JSON:", error);
+        }
+
     }
 
     private async startNormalNotificationCheck(now: Date, matters: Matter[]) {
@@ -366,6 +508,12 @@ export class NotificationManager {
         return this.checkKVStoreKeyUpdateTime(key, interval);
     }
 
+    private async shouldCheckAINotification(): Promise<boolean> {
+        const key = "last_check_ai_notification_time";
+        const interval = parseInt((await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL)) || "120", 10);
+        return this.checkKVStoreKeyUpdateTime(key, interval);
+    }
+
     private async checkKVStoreKeyUpdateTime(key: string, durationMinutes: number): Promise<boolean> {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -378,7 +526,7 @@ export class NotificationManager {
             await setKV(key, now.toISOString());
             return true;
         }
-
+        console.log(`${key} 更新时间未超过 ${durationMinutes} 分钟，跳过检查`);
         return false;
     }
 
