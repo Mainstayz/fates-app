@@ -1,7 +1,7 @@
 pub const APP_NAME: &str = "Fates";
 
 use std::fs;
-use tauri::{ Manager };
+use tauri::Manager;
 
 pub fn get_app_data_dir(app_handle: tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     // 获取基础目录

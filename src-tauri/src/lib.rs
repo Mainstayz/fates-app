@@ -10,8 +10,7 @@ use crate::http_server::start_http_server;
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_log::{ Target, TargetKind, WEBVIEW_TARGET };
-
+use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 
 #[tauri::command]
 async fn auto_launch(app: tauri::AppHandle, enable: bool) {
@@ -29,8 +28,7 @@ async fn show_main_window(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let logger_builder = tauri_plugin_log::Builder
-        ::new()
+    let logger_builder = tauri_plugin_log::Builder::new()
         .clear_targets()
         .targets([
             Target::new(TargetKind::Stdout).filter(|metadata| {
@@ -41,48 +39,44 @@ pub fn run() {
             Target::new(TargetKind::Webview),
             Target::new(TargetKind::LogDir {
                 file_name: Some("rust".into()),
-            }).filter(|metadata| metadata.target() != WEBVIEW_TARGET),
+            })
+            .filter(|metadata| metadata.target() != WEBVIEW_TARGET),
             Target::new(TargetKind::LogDir {
                 file_name: Some("webview".into()),
-            }).filter(|metadata| metadata.target() == WEBVIEW_TARGET),
+            })
+            .filter(|metadata| metadata.target() == WEBVIEW_TARGET),
         ])
         .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal);
 
     // 在构建应用之前设置环境变量
     // std::env::set_var("RUST_LOG", "info,hyper=off,hyper_util=off");
 
-    let builder = tauri::Builder
-        ::default()
-        .plugin(
-            tauri_plugin_single_instance::init(|app, args, cwd| {
-                #[cfg(desktop)]
-                {
-                    let _ = app.get_webview_window("main").expect("no main window").set_focus();
-                }
-            })
-        )
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            #[cfg(desktop)]
+            {
+                let _ = app
+                    .get_webview_window("main")
+                    .expect("no main window")
+                    .set_focus();
+            }
+        }))
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(
-            tauri_plugin_autostart::init(
-                MacosLauncher::LaunchAgent,
-                Some(vec!["--flag1", "--flag2"])
-            )
-        )
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--flag1", "--flag2"]),
+        ))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(logger_builder.build())
-        .invoke_handler(
-            tauri::generate_handler![
-                auto_launch,
-                show_main_window
-            ]
-        )
+        .invoke_handler(tauri::generate_handler![auto_launch, show_main_window])
         .setup(|app| {
             // 初始化数据库
             let db = database::initialize_database(&app.handle()).unwrap();

@@ -11,6 +11,7 @@
     import OpenAIChatPage from "./openai_chat_page.svelte";
     import SettingsDialog from "./settings_dialog.svelte";
     import WeekReportPage from "./week_report_page.svelte";
+
     let timelineComponent: TimelinePage | null = null;
     let statisticsComponent: StatisticsPage | null = null;
     let tagsComponent: TagsManagerPage | null = null;

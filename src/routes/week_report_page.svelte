@@ -7,6 +7,9 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { onMount } from "svelte";
     import { OpenAIClient } from "$src/features/openai";
+    import { Sparkles, LoaderCircle, ClipboardCopy } from "lucide-svelte";
+    import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+
     import dayjs from "dayjs";
     import {
         SETTING_KEY_AI_API_KEY,
@@ -24,6 +27,42 @@
     let showPromptDialog = $state(false);
 
     let aiLoading = $state(false);
+    let copyLoading = $state(false);
+
+    let textareaElement = $state<HTMLTextAreaElement | null>(null);
+
+    function handleTextareaInput(e: Event) {
+        const textarea = e.target as HTMLTextAreaElement;
+        textarea.style.height = "auto";
+        const newHeight = Math.min(textarea.scrollHeight, 600);
+        textarea.style.height = newHeight + "px";
+        textarea.scrollTop = textarea.scrollHeight;
+    }
+
+    $effect(() => {
+        if (outputContent) {
+            setTimeout(() => {
+                const textarea = document.querySelector("textarea");
+                if (textarea) {
+                    const event = new Event("input");
+                    Object.defineProperty(event, "target", { value: textarea });
+                    handleTextareaInput(event);
+                }
+            }, 0);
+        }
+    });
+
+    async function handleCopy() {
+        if (outputContent.length === 0) {
+            return;
+        }
+        copyLoading = true;
+        await writeText(outputContent);
+        // 0.25秒后
+        setTimeout(() => {
+            copyLoading = false;
+        }, 250);
+    }
 
     function handleCustomContentSubmit() {
         showCustomDialog = false;
@@ -84,6 +123,8 @@
             });
         } catch (error) {
             console.error("Error generating title:", error);
+        } finally {
+            aiLoading = false;
         }
     }
 </script>
@@ -96,8 +137,22 @@
     <div class="flex flex-col flex-1 p-6 gap-4">
         <div class="flex flex-row justify-between">
             <div class="flex flex-row gap-2">
-                <Button onclick={handleGenerate}>一键生成</Button>
-                <Button>复制到剪贴板</Button>
+                <Button onclick={handleGenerate}>
+                    {#if aiLoading}
+                        <LoaderCircle class="animate-spin" />
+                    {:else}
+                        <Sparkles />
+                    {/if}
+                    一键生成
+                </Button>
+                <Button onclick={handleCopy}>
+                    {#if copyLoading}
+                        <LoaderCircle class="animate-spin" />
+                    {:else}
+                        <ClipboardCopy />
+                    {/if}
+                    复制到剪贴板
+                </Button>
             </div>
             <div class="flex flex-row gap-2">
                 <Button
@@ -115,7 +170,8 @@
             <Textarea
                 bind:value={outputContent}
                 readonly
-                class="bg-background shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[200px] max-h-[600px]"
+                oninput={handleTextareaInput}
+                class="bg-background shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[200px] resize-none overflow-y-auto"
             />
         </div>
     </div>

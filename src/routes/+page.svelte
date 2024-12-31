@@ -1,6 +1,8 @@
 <script lang="ts">
     import "../i18n/i18n";
     import Tray from "$src/tray.svelte";
+    import "overlayscrollbars/styles/overlayscrollbars.css";
+    import { OverlayScrollbarsComponent } from "overlayscrollbars-svelte";
     import App from "./app.svelte";
     import { onMount } from "svelte";
     import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";
@@ -63,7 +65,9 @@
 </script>
 
 <main class="noSelect w-full h-full">
-    <App />
+    <OverlayScrollbarsComponent defer>
+        <App />
+    </OverlayScrollbarsComponent>
 </main>
 
 <style>

@@ -1,9 +1,9 @@
 // https://github.com/RandomEngy/tauri-sqlite/blob/main/src-tauri/src/database.rs
 
 use crate::utils;
-use chrono::{ DateTime, TimeZone, Utc };
-use rusqlite::{ params, Connection, OpenFlags, OptionalExtension, Result };
-use serde::{ Deserialize, Serialize };
+use chrono::{DateTime, TimeZone, Utc};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, Result};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::RwLock;
 use tauri::AppHandle;
@@ -61,8 +61,8 @@ pub struct RepeatTask {
     pub id: String, // UUID 作为主键更合适
     pub title: String,
     pub tags: Option<String>, // 用逗号分隔的标签字符串
-    pub repeat_time: String, // 重复时间段值
-    pub status: i32, // 使用枚举：1=Active, 0=Stopped, -1=Archived
+    pub repeat_time: String,  // 重复时间段值
+    pub status: i32,          // 使用枚举：1=Active, 0=Stopped, -1=Archived
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
@@ -148,10 +148,9 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
     let app_dir = utils::get_app_data_dir(app_handle.clone()).unwrap();
     let db_path = app_dir.join(DB_NAME);
 
-    let flags =
-        OpenFlags::SQLITE_OPEN_READ_WRITE |
-        OpenFlags::SQLITE_OPEN_CREATE |
-        OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+        | OpenFlags::SQLITE_OPEN_CREATE
+        | OpenFlags::SQLITE_OPEN_NO_MUTEX;
 
     let conn = Connection::open_with_flags(db_path, flags)?;
 
@@ -174,7 +173,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             reserved_4 TEXT DEFAULT '',
             reserved_5 TEXT DEFAULT ''
         )",
-        []
+        [],
     )?;
 
     // 创建 kvstore 表
@@ -185,7 +184,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
         )",
-        []
+        [],
     )?;
 
     // 创建 tags 表
@@ -195,11 +194,14 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             created_at DATETIME NOT NULL,
             last_used_at DATETIME NOT NULL
         )",
-        []
+        [],
     )?;
 
     // 创建索引
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_matter_time ON matter(start_time, end_time)", [])?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_matter_time ON matter(start_time, end_time)",
+        [],
+    )?;
 
     // 创建 repeat_task 表
     conn.execute(
@@ -214,7 +216,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             priority INTEGER DEFAULT 0,
             description TEXT DEFAULT ''
         )",
-        []
+        [],
     )?;
 
     // 创建 todo 表
@@ -226,7 +228,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
         )",
-        []
+        [],
     )?;
 
     // 创建通知表
@@ -248,7 +250,7 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
             reserved_4 TEXT,
             reserved_5 TEXT
         )",
-        []
+        [],
     )?;
 
     Ok(Arc::new(SafeConnection::new(conn)))
@@ -282,7 +284,7 @@ impl Matter {
                 matter.reserved_3,
                 matter.reserved_4,
                 matter.reserved_5
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -346,7 +348,7 @@ impl Matter {
     pub fn get_by_time_range(
         conn: &Arc<SafeConnection>,
         start: DateTime<Utc>,
-        end: DateTime<Utc>
+        end: DateTime<Utc>,
     ) -> Result<Vec<Matter>> {
         let conn = conn.conn.read().unwrap();
         let mut stmt = conn.prepare(
@@ -354,7 +356,7 @@ impl Matter {
             WHERE (start_time BETWEEN ?1 AND ?2)
             OR (end_time BETWEEN ?1 AND ?2)
             OR (start_time <= ?1 AND end_time >= ?2)
-            ORDER BY start_time"
+            ORDER BY start_time",
         )?;
 
         let matters = stmt
@@ -407,7 +409,7 @@ impl Matter {
                 self.reserved_4,
                 self.reserved_5,
                 self.id
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -422,21 +424,31 @@ impl Matter {
         conn: &Arc<SafeConnection>,
         field: &str,
         value: &str,
-        exact_match: bool
+        exact_match: bool,
     ) -> Result<Vec<Matter>> {
         let conn = conn.conn.read().unwrap();
 
         // 构建查询语句
         let query = if exact_match {
-            format!("SELECT * FROM matter WHERE {} = ?1 ORDER BY start_time", field)
+            format!(
+                "SELECT * FROM matter WHERE {} = ?1 ORDER BY start_time",
+                field
+            )
         } else {
-            format!("SELECT * FROM matter WHERE {} LIKE ?1 ORDER BY start_time", field)
+            format!(
+                "SELECT * FROM matter WHERE {} LIKE ?1 ORDER BY start_time",
+                field
+            )
         };
 
         let mut stmt = conn.prepare(&query)?;
 
         // 如果不是精确匹配，则使用模糊查询
-        let search_value = if exact_match { value.to_string() } else { format!("%{}%", value) };
+        let search_value = if exact_match {
+            value.to_string()
+        } else {
+            format!("%{}%", value)
+        };
 
         let matters = stmt
             .query_map([search_value], |row| {
@@ -474,7 +486,7 @@ impl KVStore {
             VALUES (?1, ?2, ?3, ?3)
             ON CONFLICT(key) DO UPDATE SET
             value = ?2, updated_at = ?3",
-            params![key, value, now]
+            params![key, value, now],
         )?;
         Ok(())
     }
@@ -499,7 +511,7 @@ impl Tag {
         let conn = conn.conn.write().unwrap();
         conn.execute(
             "INSERT OR IGNORE INTO tags (name, created_at, last_used_at) VALUES (?1, ?2, ?3)",
-            params![name, Utc::now(), Utc::now()]
+            params![name, Utc::now(), Utc::now()],
         )?;
         Ok(())
     }
@@ -523,7 +535,7 @@ impl Tag {
         let conn = conn.conn.write().unwrap();
         conn.execute(
             "UPDATE tags SET last_used_at = ?1 WHERE name = ?2",
-            params![Utc::now(), name]
+            params![Utc::now(), name],
         )?;
         Ok(())
     }
@@ -556,7 +568,7 @@ impl RepeatTask {
                 task.updated_at,
                 task.priority,
                 task.description
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -607,9 +619,8 @@ impl RepeatTask {
 
     pub fn get_active_tasks(conn: &Arc<SafeConnection>) -> Result<Vec<RepeatTask>> {
         let conn = conn.conn.read().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT * FROM repeat_task WHERE status = 1 ORDER BY created_at DESC"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT * FROM repeat_task WHERE status = 1 ORDER BY created_at DESC")?;
         let tasks = stmt
             .query_map([], |row| {
                 Ok(RepeatTask {
@@ -649,7 +660,7 @@ impl RepeatTask {
                 self.priority,
                 self.description,
                 self.id
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -664,7 +675,7 @@ impl RepeatTask {
         let conn = conn.conn.write().unwrap();
         conn.execute(
             "UPDATE repeat_task SET status = ?1, updated_at = ?2 WHERE id = ?3",
-            params![new_status, Utc::now(), id]
+            params![new_status, Utc::now(), id],
         )?;
         Ok(())
     }
@@ -676,7 +687,13 @@ impl Todo {
         conn.execute(
             "INSERT INTO todo (id, title, status, created_at, updated_at)
     VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![todo.id, todo.title, todo.status, todo.created_at, todo.updated_at]
+            params![
+                todo.id,
+                todo.title,
+                todo.status,
+                todo.created_at,
+                todo.updated_at
+            ],
         )?;
         Ok(())
     }
@@ -721,7 +738,7 @@ impl Todo {
         status = ?2,
         updated_at = ?3
         WHERE id = ?4",
-            params![self.title, self.status, self.updated_at, self.id]
+            params![self.title, self.status, self.updated_at, self.id],
         )?;
         Ok(())
     }
@@ -760,7 +777,7 @@ impl NotificationRecord {
                 notification.reserved_3,
                 notification.reserved_4,
                 notification.reserved_5
-            ]
+            ],
         )?;
         Ok(())
     }
@@ -770,7 +787,7 @@ impl NotificationRecord {
         let mut stmt = conn.prepare(
             "SELECT * FROM notification_records
             WHERE status = 0
-            ORDER BY created_at DESC"
+            ORDER BY created_at DESC",
         )?;
 
         let notifications = stmt
@@ -804,7 +821,7 @@ impl NotificationRecord {
             "UPDATE notification_records
             SET status = ?1, read_at = ?2
             WHERE id = ?3",
-            params![NotificationStatus::Read as i32, Utc::now(), id]
+            params![NotificationStatus::Read as i32, Utc::now(), id],
         )?;
         Ok(())
     }
@@ -812,7 +829,7 @@ impl NotificationRecord {
         let conn = conn.conn.write().unwrap();
         conn.execute(
             "UPDATE notification_records SET status = ?1, read_at = ?2 WHERE type = ?3",
-            params![NotificationStatus::Read as i32, Utc::now(), type_]
+            params![NotificationStatus::Read as i32, Utc::now(), type_],
         )?;
         Ok(())
     }
@@ -822,7 +839,11 @@ impl NotificationRecord {
             "UPDATE notification_records
             SET status = ?1, read_at = ?2
             WHERE status = ?3",
-            params![NotificationStatus::Read as i32, Utc::now(), NotificationStatus::Unread as i32]
+            params![
+                NotificationStatus::Read as i32,
+                Utc::now(),
+                NotificationStatus::Unread as i32
+            ],
         )?;
         Ok(())
     }
@@ -887,14 +908,17 @@ impl NotificationRecord {
                 self.reserved_4,
                 self.reserved_5,
                 self.id
-            ]
+            ],
         )?;
         Ok(())
     }
 
     pub fn delete(conn: &Arc<SafeConnection>, id: &str) -> Result<()> {
         let conn = conn.conn.write().unwrap();
-        conn.execute("DELETE FROM notification_records WHERE id = ?1", params![id])?;
+        conn.execute(
+            "DELETE FROM notification_records WHERE id = ?1",
+            params![id],
+        )?;
         Ok(())
     }
 }
