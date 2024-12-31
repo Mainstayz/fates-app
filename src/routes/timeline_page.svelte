@@ -4,35 +4,32 @@
     import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
-
-    // 导入组件
-    import Timeline from "$lib/components/Timeline.svelte";
-    import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
+// 导入组件
     import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
-    import { Button } from "$lib/components/ui/button";
-    import { Label } from "$lib/components/ui/label";
+    import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
+    import Timeline from "$lib/components/Timeline.svelte";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog/index";
+    import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { v4 as uuidv4 } from "uuid";
-
-    // 导入类型和工具函数
-    import type { TimelineGroup, TimelineItem, TimelineData } from "$lib/types";
+// 导入类型和工具函数
+    import Input from "$lib/components/ui/input/input.svelte";
+    import type { TimelineData, TimelineGroup, TimelineItem } from "$lib/types";
     import { Plus } from "lucide-svelte";
     import {
-        getAllMatters,
-        updateMatter,
-        getMatterById,
         createMatter,
-        deleteMatter,
-        getAllTags,
         createTag,
+        deleteMatter,
+        getAllMatters,
+        getAllTags,
+        getMatterById,
+        updateMatter,
         updateTagLastUsedAt,
         type Matter,
     } from "../store";
-    import Input from "$lib/components/ui/input/input.svelte";
-
-    // 导入 dayjs
+// 导入 dayjs
     import dayjs from "dayjs";
 
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";

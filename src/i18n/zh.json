@@ -1,4 +1,4 @@
-    {
+{
     "routes": {
         "settings": "设置",
         "timeline": "时间线",
@@ -120,6 +120,17 @@
                 "title": "AI 提醒助理",
                 "description": "配置 AI 提醒助理相关参数"
             }
+        },
+        "week_report": {
+            "title": "「周报」",
+            "description": "一写周报就头大？我来帮你！",
+            "generate_button": "一键生成",
+            "copy_button": "复制到剪贴板",
+            "custom_content_button": "自定义内容",
+            "modify_prompt_button": "修改提示词",
+            "custom_content_title": "自定义内容",
+            "modify_prompt_title": "修改提示词"
+
         },
         "other": {
             "confirmDelete": "定删除吗？",

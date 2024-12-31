@@ -1,35 +1,36 @@
 <script lang="ts">
+    import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog";
-    import * as Select from "$lib/components/ui/select";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Switch } from "$lib/components/ui/switch";
+    import * as Select from "$lib/components/ui/select";
     import { Separator } from "$lib/components/ui/separator";
-    import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
-    import { onMount, onDestroy } from "svelte";
-    import { open as openPath } from "@tauri-apps/plugin-shell";
-    import { appDataDir } from "@tauri-apps/api/path";
-    import { emit } from "@tauri-apps/api/event";
-    import { Button } from "$lib/components/ui/button";
+    import { Switch } from "$lib/components/ui/switch";
     import { Textarea } from "$lib/components/ui/textarea";
+    import { emit } from "@tauri-apps/api/event";
+    import { appDataDir } from "@tauri-apps/api/path";
+    import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
     import { confirm } from "@tauri-apps/plugin-dialog";
+    import { open as openPath } from "@tauri-apps/plugin-shell";
+    import { onMount } from "svelte";
+    import { locale, t } from "svelte-i18n";
     import { cubicInOut } from "svelte/easing";
     import { crossfade } from "svelte/transition";
-    import { getKV, setKV } from "../store";
-    let { open = $bindable(), ...props } = $props();
-    import { t, locale } from "svelte-i18n";
     import {
-        SETTING_KEY_LANGUAGE,
-        SETTING_KEY_WORK_START_TIME,
-        SETTING_KEY_WORK_END_TIME,
-        SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
         NOTIFICATION_RELOAD_TIMELINE_DATA,
-        SETTING_KEY_AI_ENABLED,
-        SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_BASE_URL,
+        SETTING_KEY_AI_ENABLED,
+        SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_REMINDER_PROMPT,
+        SETTING_KEY_LANGUAGE,
+        SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
+        SETTING_KEY_WORK_END_TIME,
+        SETTING_KEY_WORK_START_TIME,
     } from "../config";
+    import { getKV, setKV } from "../store";
+
+    let {open =$bindable()} = $props();
 
     let language = $state<string | undefined>(undefined);
     let autoStart = $state<boolean | undefined>(undefined);

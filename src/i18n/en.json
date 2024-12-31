@@ -87,6 +87,16 @@
         }
       }
     },
+    "week_report": {
+      "title": "Weekly Report",
+      "description": "Having trouble writing weekly reports? Let me help you!",
+      "generate_button": "Generate",
+      "copy_button": "Copy to Clipboard",
+      "custom_content_button": "Custom Content",
+      "modify_prompt_button": "Modify Prompt",
+      "custom_content_title": "Custom Content",
+      "modify_prompt_title": "Modify Prompt"
+    },
     "other": {
       "confirmDelete": "Are you sure to delete?",
       "confirmDeleteDescription": "Once deleted, it cannot be recovered, please be careful!",

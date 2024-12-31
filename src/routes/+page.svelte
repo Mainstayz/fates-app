@@ -1,6 +1,6 @@
 <script lang="ts">
     import "../i18n/i18n";
-    import Tray from "$src/tray.svelte";
+    import _ from "$src/tray.svelte";
     import App from "./app.svelte";
     import { onMount } from "svelte";
     import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";

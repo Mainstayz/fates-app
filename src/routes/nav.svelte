@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { Route } from "../config";
     import { Button } from "$lib/components/ui/button";
     import * as Tooltip from "$lib/components/ui/tooltip/index";
     import { t } from "svelte-i18n";
+    import type { Route } from "../config";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;

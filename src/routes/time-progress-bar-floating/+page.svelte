@@ -1,11 +1,10 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/TimeProgressBar.svelte";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-    import { onMount, onDestroy } from "svelte";
-    import { getMattersByRange, type Matter } from "../../store";
+    import { getCurrentWindow } from "@tauri-apps/api/window";
     import dayjs from "dayjs";
-    let unlisten: UnlistenFn | void;
+    import { onMount } from "svelte";
+    import { getMattersByRange, type Matter } from "../../store";
 
     let resizeObserver: ResizeObserver | null = null;
     let rootElement: HTMLElement;

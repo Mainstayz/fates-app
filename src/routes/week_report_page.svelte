@@ -1,25 +1,21 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
-    import * as Accordion from "$lib/components/ui/accordion";
-    import { Textarea } from "$lib/components/ui/textarea";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Label } from "$lib/components/ui/label";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import { onMount } from "svelte";
+    import { Button } from "$lib/components/ui/button";
+    import { Textarea } from "$lib/components/ui/textarea";
     import { OpenAIClient } from "$src/features/openai";
-    import { Sparkles, LoaderCircle, ClipboardCopy } from "lucide-svelte";
     import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+    import { ClipboardCopy, LoaderCircle, Sparkles } from "lucide-svelte";
+    import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
 
-    import dayjs from "dayjs";
     import {
         SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_SYSTEM_PROMPT,
-        SETTING_KEY_AI_ENABLED,
-        SETTING_KEY_AI_WORK_REPORT_PROMPT,
+        SETTING_KEY_AI_MODEL_ID,
+        SETTING_KEY_AI_WORK_REPORT_PROMPT
     } from "$src/config";
-    import { getKV, setKV, getMattersByRange, type Matter } from "$src/store";
+    import { getKV, getMattersByRange, setKV, type Matter } from "$src/store";
+    import dayjs from "dayjs";
     import { v4 as uuidv4 } from "uuid";
     let outputContent = $state("");
     let customContent = $state("");
@@ -145,8 +141,8 @@
 
 <div class="flex flex-col h-full">
     <div class="px-6 pt-6">
-        <h2 class="text-2xl font-bold tracking-tight">「周报」</h2>
-        <p class="text-muted-foreground">一写周报就头大？我来帮你！</p>
+        <h2 class="text-2xl font-bold tracking-tight">{$_("app.week_report.title")}</h2>
+        <p class="text-muted-foreground">{$_("app.week_report.description")}</p>
     </div>
     <div class="flex flex-col flex-1 p-6 gap-4">
         <div class="flex flex-row justify-between">
@@ -157,7 +153,7 @@
                     {:else}
                         <Sparkles />
                     {/if}
-                    一键生成
+                    {$_("app.week_report.generate_button")}
                 </Button>
                 <Button onclick={handleCopy}>
                     {#if copyLoading}
@@ -165,17 +161,17 @@
                     {:else}
                         <ClipboardCopy />
                     {/if}
-                    复制到剪贴板
+                    {$_("app.week_report.copy_button")}
                 </Button>
             </div>
             <div class="flex flex-row gap-2">
                 <Button
                     variant={customContent.length > 0 ? "default" : "ghost"}
-                    onclick={() => (showCustomDialog = true)}>自定义内容</Button
+                    onclick={() => (showCustomDialog = true)}>{$_("app.week_report.custom_content_button")}</Button
                 >
                 <Button
                     variant={promptContent.length > 0 ? "default" : "ghost"}
-                    onclick={() => (showPromptDialog = true)}>修改提示词</Button
+                    onclick={() => (showPromptDialog = true)}>{$_("app.week_report.modify_prompt_button")}</Button
                 >
             </div>
         </div>
@@ -195,15 +191,10 @@
     <AlertDialog.Overlay class="bg-[#000000]/20" />
     <AlertDialog.Content class="w-[640px] max-w-[640px]">
         <AlertDialog.Header>
-            <AlertDialog.Title>自定义内容</AlertDialog.Title>
-            <AlertDialog.Description>请输入你想要的自定义内容</AlertDialog.Description>
+            <AlertDialog.Title>{$_("app.week_report.custom_content_title")}</AlertDialog.Title>
         </AlertDialog.Header>
         <div class="grid gap-4 py-4">
-            <Textarea
-                bind:value={customContent}
-                placeholder="请输入自定义内容..."
-                class="bg-background min-h-[200px]"
-            />
+            <Textarea bind:value={customContent} class="bg-background min-h-[200px]" />
         </div>
         <AlertDialog.Footer>
             <AlertDialog.Cancel>取消</AlertDialog.Cancel>
@@ -216,11 +207,10 @@
     <AlertDialog.Overlay class="bg-[#000000]/20" />
     <AlertDialog.Content class="w-[640px] max-w-[640px]">
         <AlertDialog.Header>
-            <AlertDialog.Title>修改提示词</AlertDialog.Title>
-            <AlertDialog.Description>请输入新的提示词</AlertDialog.Description>
+            <AlertDialog.Title>{$_("app.week_report.modify_prompt_title")}</AlertDialog.Title>
         </AlertDialog.Header>
         <div class="grid gap-4 py-4">
-            <Textarea bind:value={promptContent} placeholder="请输入提示词..." class="bg-background min-h-[200px]" />
+            <Textarea bind:value={promptContent} class="bg-background min-h-[200px]" />
         </div>
         <AlertDialog.Footer>
             <AlertDialog.Cancel>取消</AlertDialog.Cancel>

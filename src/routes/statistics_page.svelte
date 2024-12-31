@@ -1,10 +1,9 @@
 <script lang="ts">
     import Statistics from "$lib/components/Statistics.svelte";
     import { Label } from "$lib/components/ui/label";
-    import { getAllMatters } from "../store";
-    import type { TimelineItem } from "$lib/types";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
+    import { getAllMatters } from "../store";
 
     let timelineItems: any[] = $state([]);
     onMount(async () => {

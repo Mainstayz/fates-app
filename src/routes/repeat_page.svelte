@@ -1,25 +1,25 @@
 <script lang="ts">
-    import { Label } from "$lib/components/ui/label";
-    import { Input } from "$lib/components/ui/input";
-    import { Button } from "$lib/components/ui/button";
-    import * as Table from "$lib/components/ui/table/index";
-    import { v4 as uuidv4 } from "uuid";
     import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
+    import * as Table from "$lib/components/ui/table/index";
     import { t } from "svelte-i18n";
+    import { v4 as uuidv4 } from "uuid";
 
-    import { TableHandler, Datatable, ThSort, ThFilter } from "@vincjo/datatables";
+    import { TableHandler } from "@vincjo/datatables";
 
-    import DataTableTagsCell from "./data_table_tags_cell.svelte";
-    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
-    import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
     import DataTablePriorityCell from "./data_table_priority_cell.svelte";
     import DataTableRepeatActionCell from "./data_table_repeat_action_cell.svelte";
+    import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
+    import DataTableTagsCell from "./data_table_tags_cell.svelte";
+    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
 
     import { Priority } from "$lib/types";
-    import { onMount, onDestroy } from "svelte";
-    import { repeatTaskAPI } from "../features/repeat-task.svelte";
-    import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { emit } from "@tauri-apps/api/event";
+    import { ChevronLeft, ChevronRight } from "lucide-svelte";
+    import { onMount } from "svelte";
+    import { repeatTaskAPI } from "../features/repeat-task.svelte";
 
     let localAllTags = $state<string[]>([]);
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });

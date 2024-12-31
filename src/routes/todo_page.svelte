@@ -1,21 +1,20 @@
 <script lang="ts">
-    import { Label } from "$lib/components/ui/label";
-    import { Input } from "$lib/components/ui/input";
-    import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
+    import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
 
-    import { TableHandler } from "@vincjo/datatables";
-    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
-    import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
-    import * as store from "../store";
-    import type { Todo } from "../store";
-    import type { Matter } from "../store";
-    import { onMount } from "svelte";
-    import { emit } from "@tauri-apps/api/event";
     import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import { emit } from "@tauri-apps/api/event";
+    import { TableHandler } from "@vincjo/datatables";
+    import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
+    import { onMount } from "svelte";
     import { t } from "svelte-i18n";
+    import type { Matter, Todo } from "../store";
+    import * as store from "../store";
+    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
 
     let alertOpen = $state(false);
     let alertTitle = $state("");

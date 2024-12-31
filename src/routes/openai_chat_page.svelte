@@ -1,17 +1,17 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
+    import { Card } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
     import { Textarea } from "$lib/components/ui/textarea";
-    import { Card } from "$lib/components/ui/card";
-    import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
-    import { getKV, setKV, getMattersByRange, getAllTodos, getActiveRepeatTasks } from "$src/store";
-    import type { Matter, Todo, RepeatTask } from "$src/store";
     import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
+    import type { Matter, RepeatTask, Todo } from "$src/store";
+    import { getActiveRepeatTasks, getAllTodos, getKV, getMattersByRange, setKV } from "$src/store";
     import { onMount } from "svelte";
+    import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
 
     import {
-        SETTING_KEY_AI_BASE_URL,
         SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_BASE_URL,
         SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_SYSTEM_PROMPT,
     } from "$src/config";

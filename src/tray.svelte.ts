@@ -1,12 +1,11 @@
 // https://github.com/EcoPasteHub/EcoPaste/blob/tauri-v2/src/components/Tray/index.tsx
 
-import { emit } from "@tauri-apps/api/event";
-import { platform } from "@tauri-apps/plugin-os";
-import { Menu, MenuItem, PredefinedMenuItem } from "@tauri-apps/api/menu";
+import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
 import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from "@tauri-apps/api/tray";
-import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { platform } from "@tauri-apps/plugin-os";
+import { exit, relaunch } from "@tauri-apps/plugin-process";
 
 let hasTray = false;
 
@@ -99,7 +98,7 @@ class Tray {
                     case "Click":
                         console.log(`mouse ${event.button} button pressed, state: ${event.buttonState}`);
                         if (event.button === "Left") {
-                            // 左键点击, 显示主窗口
+                            // 左键点击，显示主窗口
                             if (this.isMacos()) {
                                 return;
                             }
@@ -114,11 +113,11 @@ class Tray {
                         }
                         break;
                     case "Enter":
-                        // 鼠标悬浮, 显示主窗口
+                        // 鼠标悬浮，显示主窗口
                         console.log(`mouse hovered tray at ${event.rect.position.x}, ${event.rect.position.y}`);
                         break;
                     case "Leave":
-                        // 鼠标悬浮, 隐藏主窗口
+                        // 鼠标悬浮，隐藏主窗口
                         console.log(`mouse left tray at ${event.rect.position.x}, ${event.rect.position.y}`);
                         break;
                     default:
