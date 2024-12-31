@@ -171,7 +171,7 @@
                 bind:value={outputContent}
                 readonly
                 oninput={handleTextareaInput}
-                class="bg-background shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[200px] resize-none overflow-y-auto"
+                class="bg-background shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[200px] resize-none overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             />
         </div>
     </div>
