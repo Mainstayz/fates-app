@@ -1,5 +1,5 @@
 <script lang="ts">
-    import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import AlertDialog from "$lib/components/alert-dialog.svelte";
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
@@ -9,11 +9,11 @@
 
     import { TableHandler } from "@vincjo/datatables";
 
-    import DataTablePriorityCell from "./data_table_priority_cell.svelte";
-    import DataTableRepeatActionCell from "./data_table_repeat_action_cell.svelte";
-    import DataTableRepeatTimeCell from "./data_table_repeat_time_cell.svelte";
-    import DataTableTagsCell from "./data_table_tags_cell.svelte";
-    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
+    import DataTablePriorityCell from "./data-table-priority-cell.svelte";
+    import DataTableRepeatActionCell from "./data-table-repeat-action-cell.svelte";
+    import DataTableRepeatTimeCell from "./data-table-repeat-time-cell.svelte";
+    import DataTableTagsCell from "./data-table-tags-cell.svelte";
+    import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
 
     import { Priority } from "$lib/types";
     import { emit } from "@tauri-apps/api/event";

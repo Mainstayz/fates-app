@@ -1,9 +1,9 @@
 <script lang="ts">
     import "../i18n/i18n";
-    import _ from "$src/tray.svelte";
+    import _ from "$src/tray-manager.svelte";
     import App from "./app.svelte";
     import { onMount } from "svelte";
-    import { TimeProgressBarManager } from "$lib/TimeProgressBarManager";
+    import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
     import NotificationManager, { type Notification } from "$src/tauri/notification_manager";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 

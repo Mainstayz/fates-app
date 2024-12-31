@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TagsAddButton from "$lib/components/TagsAddButton.svelte";
+    import TagsAddButton from "$lib/components/tags-add-button.svelte";
 
     export let rowId: string;
     export let allTags: string[];

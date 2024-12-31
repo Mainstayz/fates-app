@@ -4,17 +4,17 @@
     import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
-// 导入组件
-    import DailyHeatMap from "$lib/components/DailyHeatMap.svelte";
-    import TaskDetailForm from "$lib/components/TaskDetailForm.svelte";
-    import Timeline from "$lib/components/Timeline.svelte";
+    // 导入组件
+    import DailyHeatMap from "$lib/components/daily-heat-map.svelte";
+    import TaskDetailForm from "$lib/components/task-detail-form.svelte";
+    import Timeline from "$lib/components/timeline.svelte";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog/index";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { v4 as uuidv4 } from "uuid";
-// 导入类型和工具函数
+    // 导入类型和工具函数
     import Input from "$lib/components/ui/input/input.svelte";
     import type { TimelineData, TimelineGroup, TimelineItem } from "$lib/types";
     import { Plus } from "lucide-svelte";
@@ -29,7 +29,7 @@
         updateTagLastUsedAt,
         type Matter,
     } from "../store";
-// 导入 dayjs
+    // 导入 dayjs
     import dayjs from "dayjs";
 
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";

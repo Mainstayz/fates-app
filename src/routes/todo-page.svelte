@@ -6,7 +6,7 @@
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
 
-    import AlertDialog from "$lib/components/AleatDialog.svelte";
+    import AlertDialog from "$lib/components/alert-dialog.svelte";
     import { emit } from "@tauri-apps/api/event";
     import { TableHandler } from "@vincjo/datatables";
     import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
@@ -14,7 +14,7 @@
     import { t } from "svelte-i18n";
     import type { Matter, Todo } from "../store";
     import * as store from "../store";
-    import DataTableTextInputCell from "./data_table_text_input_cell.svelte";
+    import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
 
     let alertOpen = $state(false);
     let alertTitle = $state("");

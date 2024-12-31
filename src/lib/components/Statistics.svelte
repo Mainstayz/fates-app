@@ -1,8 +1,8 @@
 <script lang="ts">
     import * as Select from "$lib/components/ui/select";
-    import PieChart from "./charts/PieChart.svelte";
-    import BarChart from "./charts/BarChart.svelte";
-    import TagDetailChart from "./charts/TagDetailChart.svelte";
+    import PieChart from "./charts/pie-chart.svelte";
+    import BarChart from "./charts/bar-chart.svelte";
+    import TagDetailChart from "./charts/tag-detail-chart.svelte";
     import type { TimelineItem } from "$lib/types";
     import {
         calculateTagStats,

@@ -1,27 +1,25 @@
 <script lang="ts">
+    import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Textarea } from "$lib/components/ui/textarea";
-    import { Button } from "$lib/components/ui/button";
-    import { PanelTop, Sparkles, Text, LoaderCircle } from "lucide-svelte";
     import * as Tooltip from "$lib/components/ui/tooltip";
-    import TagsAddButton from "./TagsAddButton.svelte";
-    import DateRangePicker from "./DateRangePicker.svelte";
-    import { onMount, onDestroy } from "svelte";
     import type { TimelineItem } from "$lib/types";
     import { Priority } from "$lib/types";
-    import PrioritySelector from "./PrioritySelector.svelte";
-
-    import { OpenAIClient } from "$src/features/openai";
     import {
         SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_MODEL_ID,
         SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_SYSTEM_PROMPT,
         SETTING_KEY_AI_ENABLED,
+        SETTING_KEY_AI_MODEL_ID,
     } from "$src/config";
+    import { OpenAIClient } from "$src/features/openai";
     import { getKV } from "$src/store";
+    import { LoaderCircle, PanelTop, Sparkles, Text } from "lucide-svelte";
+    import { onDestroy, onMount } from "svelte";
     import { v4 as uuidv4 } from "uuid";
+    import DateRangePicker from "./date-range-picker.svelte";
+    import PrioritySelector from "./priority-selector.svelte";
+    import TagsAddButton from "./tags-add-button.svelte";
 
     let {
         item,

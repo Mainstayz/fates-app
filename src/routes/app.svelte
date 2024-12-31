@@ -3,14 +3,14 @@
     import type { Route } from "../config";
     import * as Icons from "../icons";
     import Nav from "./nav.svelte";
-    import OpenAIChatPage from "./openai_chat_page.svelte";
-    import RepeatPage from "./repeat_page.svelte";
-    import SettingsDialog from "./settings_dialog.svelte";
-    import StatisticsPage from "./statistics_page.svelte";
-    import TagsManagerPage from "./tags_manager_page.svelte";
-    import TimelinePage from "./timeline_page.svelte";
-    import TodoPage from "./todo_page.svelte";
-    import WeekReportPage from "./week_report_page.svelte";
+    import OpenAIChatPage from "./openai-chat-page.svelte";
+    import RepeatPage from "./repeat-page.svelte";
+    import SettingsDialog from "./settings-dialog.svelte";
+    import StatisticsPage from "./statistics-page.svelte";
+    import TagsManagerPage from "./tags-manager-page.svelte";
+    import TimelinePage from "./timeline-page.svelte";
+    import TodoPage from "./todo-page.svelte";
+    import WeekReportPage from "./week-report-page.svelte";
 
     let timelineComponent: TimelinePage | null = null;
     let statisticsComponent: StatisticsPage | null = null;

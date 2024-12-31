@@ -1,5 +1,5 @@
 <script lang="ts">
-    import PrioritySelector from "$lib/components/PrioritySelector.svelte";
+    import PrioritySelector from "$lib/components/priority-selector.svelte";
     import { Priority } from "$lib/types";
 
     export let rowId: string;

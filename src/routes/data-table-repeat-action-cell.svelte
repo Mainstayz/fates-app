@@ -7,7 +7,7 @@
     import { v4 as uuidv4 } from "uuid";
     import { t } from "svelte-i18n";
 
-    import StatusSelector from "$lib/components/StatusSelector.svelte";
+    import StatusSelector from "$lib/components/status-selector.svelte";
 
     export let rowId: string;
     export let original: any;

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TimeProgressBar from "$lib/components/TimeProgressBar.svelte";
+    import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import dayjs from "dayjs";

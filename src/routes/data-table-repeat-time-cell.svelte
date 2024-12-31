@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
-    import RepeatTimeSelector from "$lib/components/RepeatTimeSelector.svelte";
+    import RepeatTimeSelector from "$lib/components/repeat-time-selector.svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
 
