@@ -4,16 +4,14 @@ mod autostart;
 mod database;
 mod http_server;
 mod models;
-mod tray;
 mod utils;
 
 use crate::http_server::start_http_server;
-use crate::tray::{ flash_tray_icon, get_tray_flash_state };
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{ Target, TargetKind, WEBVIEW_TARGET };
-use tray::try_register_tray_icon;
+
 
 #[tauri::command]
 async fn auto_launch(app: tauri::AppHandle, enable: bool) {
@@ -82,8 +80,6 @@ pub fn run() {
         .invoke_handler(
             tauri::generate_handler![
                 auto_launch,
-                get_tray_flash_state,
-                flash_tray_icon,
                 show_main_window
             ]
         )
@@ -95,9 +91,6 @@ pub fn run() {
             if let Err(e) = start_http_server(8523, db.clone()) {
                 log::error!("Failed to start HTTP server: {}", e);
             }
-
-            // 注册托盘图标
-            // let _ = try_register_tray_icon(app);
             Ok(())
         })
         .on_window_event(handle_window_event)
@@ -121,10 +114,12 @@ fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
 fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
     match event {
         tauri::RunEvent::ExitRequested { api, .. } => {
-            api.prevent_exit();
+            log::warn!("ExitRequested");
+            // api.prevent_exit();
         }
         tauri::RunEvent::Exit => {
             // 确保在应用退出时关闭 HTTP 服务器
+            log::warn!("Exit");
             if let Err(e) = http_server::stop_http_server() {
                 log::error!("Failed to stop HTTP server: {}", e);
             }

@@ -23,7 +23,7 @@
         console.log("onNotificationMessage: payload = ", payload);
         title = payload.title;
         description = payload.message;
-        invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to flash tray icon"));
+        // invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to flash tray icon"));
     }
 
     function handleError(message: string) {
@@ -34,7 +34,7 @@
 
     async function disableFlashAndHide() {
         await Promise.all([
-            invoke("flash_tray_icon", { flash: false }).catch(handleError("Failed to disable tray icon flash")),
+            // invoke("flash_tray_icon", { flash: false }).catch(handleError("Failed to disable tray icon flash")),
             emit("hide-message-box").catch(handleError("Failed to hide message box")),
         ]);
     }

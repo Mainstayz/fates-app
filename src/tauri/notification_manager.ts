@@ -179,6 +179,7 @@ export class NotificationManager {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
+        console.log("Start notification loop ...");
         this.checkInterval = setInterval(async () => {
             console.log(`Checking notifications at ${new Date().toLocaleString()}`);
             await this.checkNotifications();
@@ -252,16 +253,16 @@ export class NotificationManager {
                 console.log('- 当前时间不在任务时间范围内');
             }
         }
-        if (isInTaskTimeRange) {
-            console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
-            return;
-        }
+        // if (isInTaskTimeRange) {
+        //     console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
+        //     return;
+        // }
 
-        let shouldCheck = await this.shouldCheckAINotification();
-        if (!shouldCheck) {
-            console.log("不需要开始 AI 通知逻辑，跳过");
-            return;
-        }
+        // let shouldCheck = await this.shouldCheckAINotification();
+        // if (!shouldCheck) {
+        //     console.log("不需要开始 AI 通知逻辑，跳过");
+        //     return;
+        // }
 
         let aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
         if (aiReminderPrompt == "") {
