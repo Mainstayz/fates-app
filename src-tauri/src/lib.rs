@@ -97,7 +97,7 @@ pub fn run() {
             }
 
             // 注册托盘图标
-            let _ = try_register_tray_icon(app);
+            // let _ = try_register_tray_icon(app);
             Ok(())
         })
         .on_window_event(handle_window_event)

@@ -21,6 +21,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [
     "macos-private-api",
     "tray-icon",
+    "image-ico",
+    "image-png",
     # "custom-protocol", 开启后，无法使用 Dev 启动
 ] }
 rusqlite = { version = "0.32.1", features = ["bundled", "chrono"] }
