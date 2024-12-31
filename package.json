@@ -47,7 +47,7 @@
     "@types/uuid": "^10.0.0",
     "@vincjo/datatables": "^2.2.0",
     "autoprefixer": "^10.4.20",
-    "bits-ui": "1.0.0-next.74",
+    "bits-ui": "1.0.0-next.76",
     "clsx": "^2.1.1",
     "daisyui": "^4.12.20",
     "esno": "^4.8.0",
