@@ -20,13 +20,6 @@ import { OpenAIClient } from "$src/features/openai";
 import dayjs from "dayjs";
 import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
 import { v4 as uuidv4 } from "uuid";
-// Types
-interface NotificationConfig {
-    workStartTime: string;
-    workEndTime: string;
-    checkInterval: number;
-    notifyBefore: number;
-}
 
 enum NotificationType {
     TaskStart,
@@ -149,28 +142,15 @@ class RepeatTaskHandler {
 
 // Notification Manager
 export class NotificationManager {
-    private config: NotificationConfig;
     private checkInterval: NodeJS.Timeout | null = null;
     private notificationCallback: (notification: Notification) => void;
 
-    constructor(config: NotificationConfig, notificationCallback: (notification: Notification) => void) {
-        this.config = config;
+    constructor(notificationCallback: (notification: Notification) => void) {
         this.notificationCallback = notificationCallback;
     }
 
     static async initialize(callback: (notification: Notification) => void): Promise<NotificationManager> {
-        const startTime = (await getKV(SETTING_KEY_WORK_START_TIME)) || "00:01";
-        const endTime = (await getKV(SETTING_KEY_WORK_END_TIME)) || "23:59";
-        const notifyBefore = (await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES)) || "15";
-
-        const config: NotificationConfig = {
-            workStartTime: startTime,
-            workEndTime: endTime,
-            checkInterval: 1,
-            notifyBefore: parseInt(notifyBefore, 10),
-        };
-
-        const manager = new NotificationManager(config, callback);
+        const manager = new NotificationManager(callback);
         manager.startNotificationLoop();
         return manager;
     }
@@ -183,11 +163,16 @@ export class NotificationManager {
         this.checkInterval = setInterval(async () => {
             console.log(`Checking notifications at ${new Date().toLocaleString()}`);
             await this.checkNotifications();
-        }, this.config.checkInterval * 60 * 1000);
+        }, 1 * 60 * 1000); // 1 min
     }
 
     private async checkNotifications() {
         let language = await getKV(SETTING_KEY_LANGUAGE);
+
+        const startTime = (await getKV(SETTING_KEY_WORK_START_TIME)) || "00:01";
+        const endTime = (await getKV(SETTING_KEY_WORK_END_TIME)) || "23:59";
+
+
         console.log("Current language:", language);
 
         if (language) {
@@ -198,9 +183,9 @@ export class NotificationManager {
 
         // local time
         console.log(`Checking if in work hours: ${now.toLocaleString()}`);
-        if (!TimeUtils.isInWorkHours(now, this.config.workStartTime, this.config.workEndTime)) {
+        if (!TimeUtils.isInWorkHours(now, startTime, endTime)) {
             console.log(
-                `SKIPPED!!! Not in work hours, start time: ${this.config.workStartTime}, end time: ${this.config.workEndTime}`
+                `SKIPPED!!! Not in work hours, start time: ${startTime}, end time: ${endTime}`
             );
             return;
         }
@@ -380,7 +365,8 @@ export class NotificationManager {
         let shouldCheckUpcoming = await this.shouldCheckUpcoming();
         if (shouldCheckUpcoming) {
             console.log(`Checking upcoming tasks at ${now.toISOString()}`);
-            const upcomingNotifications = this.checkUpcomingTasks(now, matters);
+            const notifyBefore = (await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES)) || "15";
+            const upcomingNotifications = this.checkUpcomingTasks(now, matters, parseInt(notifyBefore));
             if (upcomingNotifications.length == 0) {
                 console.log("No upcoming tasks");
             } else {
@@ -440,7 +426,7 @@ export class NotificationManager {
         return createdMatters;
     }
 
-    private checkUpcomingTasks(now: Date, matters: Matter[]): Notification[] {
+    private checkUpcomingTasks(now: Date, matters: Matter[], notifyBefore: number): Notification[] {
         const notifications: Notification[] = [];
 
         for (const matter of matters) {
@@ -450,7 +436,7 @@ export class NotificationManager {
             const minutesToEnd = Math.floor((endTime.getTime() - now.getTime()) / (1000 * 60));
             const minutesToStart = Math.floor((startTime.getTime() - now.getTime()) / (1000 * 60));
 
-            if (minutesToEnd <= this.config.notifyBefore && minutesToEnd > 0) {
+            if (minutesToEnd <= notifyBefore && minutesToEnd > 0) {
                 let title = get(_)("app.messages.taskEndingSoon");
                 let message = get(_)("app.messages.taskEndingSoonDescription", {
                     values: { title: matter.title, minutes: minutesToEnd },
@@ -462,7 +448,7 @@ export class NotificationManager {
                     timestamp: now.toISOString(),
                     notificationType: NotificationType.TaskEnd,
                 });
-            } else if (minutesToStart <= this.config.notifyBefore && minutesToStart >= 0) {
+            } else if (minutesToStart <= notifyBefore && minutesToStart >= 0) {
                 let title = get(_)("app.messages.taskStartingSoon");
                 let message = get(_)("app.messages.taskStartingSoonDescription", {
                     values: { title: matter.title, minutes: minutesToStart },
