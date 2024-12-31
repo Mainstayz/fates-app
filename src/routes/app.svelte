@@ -1,15 +1,15 @@
 <script lang="ts">
+    import { MessageSquare } from "lucide-svelte";
     import type { Route } from "../config";
     import * as Icons from "../icons";
-    import { MessageSquare } from "lucide-svelte";
     import Nav from "./nav.svelte";
-    import TimelinePage from "./timeline_page.svelte";
+    import OpenAIChatPage from "./openai_chat_page.svelte";
+    import RepeatPage from "./repeat_page.svelte";
+    import SettingsDialog from "./settings_dialog.svelte";
     import StatisticsPage from "./statistics_page.svelte";
     import TagsManagerPage from "./tags_manager_page.svelte";
-    import RepeatPage from "./repeat_page.svelte";
+    import TimelinePage from "./timeline_page.svelte";
     import TodoPage from "./todo_page.svelte";
-    import OpenAIChatPage from "./openai_chat_page.svelte";
-    import SettingsDialog from "./settings_dialog.svelte";
     import WeekReportPage from "./week_report_page.svelte";
 
     let timelineComponent: TimelinePage | null = null;
