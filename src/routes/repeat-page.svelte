@@ -186,7 +186,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class=" max-w-[250px] overflow-auto">
                                     <DataTableRepeatTimeCell
                                         rowId={row.id}
                                         value={row.repeat_time}
