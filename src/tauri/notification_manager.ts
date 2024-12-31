@@ -14,7 +14,7 @@ import {
     SETTING_KEY_WORK_END_TIME,
     SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
     SETTING_KEY_NOTIFY_BEFORE_MINUTES,
-    SETTING_KEY_AI_REMINDER_PROMPT
+    SETTING_KEY_AI_REMINDER_PROMPT,
 } from "../config";
 import { OpenAIClient } from "$src/features/openai";
 import dayjs from "dayjs";
@@ -221,7 +221,9 @@ export class NotificationManager {
             );
             // 创建通知，通知类型为 NewTask
             let title = get(_)("app.messages.newRepeatTasks");
-            let message = get(_)("app.messages.newRepeatTasksDescription", { values: { count: createdMatters.length } });
+            let message = get(_)("app.messages.newRepeatTasksDescription", {
+                values: { count: createdMatters.length },
+            });
             this.onReceiveNotification(title, message, NotificationType.NewTask);
             return;
         }
@@ -235,39 +237,39 @@ export class NotificationManager {
         }
     }
 
-    private async startAINotificationCheck(now: Date, matters: Matter[]) {
-        let isInTaskTimeRange = false;
-        for (const matter of matters) {
-            // 将 ISO 字符串转换为本地时间
-            const startTime = dayjs(matter.start_time).toDate();
-            const endTime = dayjs(matter.end_time).toDate();
-            console.log(`检查任务时间范围：${matter.title}`);
-            console.log(`- 开始时间：${startTime.toLocaleString()}`);
-            console.log(`- 结束时间：${endTime.toLocaleString()}`);
-            console.log(`- 当前时间：${now.toLocaleString()}`);
-            if (now >= startTime && now <= endTime) {
-                console.log('- 当前时间在任务时间范围内');
-                isInTaskTimeRange = true;
-                break;
-            } else {
-                console.log('- 当前时间不在任务时间范围内');
+    private async startAINotificationCheck(now: Date, matters: Matter[], ignoreRestriction: boolean = false) {
+        if (!ignoreRestriction) {
+            let isInTaskTimeRange = false;
+            for (const matter of matters) {
+                // 将 ISO 字符串转换为本地时间
+                const startTime = dayjs(matter.start_time).toDate();
+                const endTime = dayjs(matter.end_time).toDate();
+                console.log(`检查任务时间范围：${matter.title}`);
+                console.log(`- 开始时间：${startTime.toLocaleString()}`);
+                console.log(`- 结束时间：${endTime.toLocaleString()}`);
+                console.log(`- 当前时间：${now.toLocaleString()}`);
+                if (now >= startTime && now <= endTime) {
+                    console.log("- 当前时间在任务时间范围内");
+                    isInTaskTimeRange = true;
+                    break;
+                } else {
+                    console.log("- 当前时间不在任务时间范围内");
+                }
+            }
+            if (isInTaskTimeRange) {
+                console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
+                return;
+            }
+
+            let shouldCheck = await this.shouldCheckAINotification();
+            if (!shouldCheck) {
+                console.log("不需要开始 AI 通知逻辑，跳过");
+                return;
             }
         }
-        // if (isInTaskTimeRange) {
-        //     console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
-        //     return;
-        // }
-
-        // let shouldCheck = await this.shouldCheckAINotification();
-        // if (!shouldCheck) {
-        //     console.log("不需要开始 AI 通知逻辑，跳过");
-        //     return;
-        // }
-
         let aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
         if (aiReminderPrompt == "") {
-            aiReminderPrompt =
-                "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
+            aiReminderPrompt = "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
         }
         let systemPrompt = aiReminderPrompt;
         systemPrompt += "\n";
@@ -286,10 +288,11 @@ export class NotificationManager {
 
 提醒应简洁明了，直接相关。每次回复仅提供一个"提醒"。
 
-输出为 JSON 格式，包含标题和描述。
+请确保输出内容严格遵守 JSON 格式，例子：
 
-输出格式例子：
-{ "title":"<提醒标题>", "description": "<提醒内容>" }`;
+{ "title":"<提醒标题>", "description": "<提醒内容>" }
+
+`;
 
         let nowDate = dayjs().format("YYYY-MM-DD");
         systemPrompt += "\n\n";
@@ -344,7 +347,6 @@ export class NotificationManager {
         systemPrompt += "\n\n";
         systemPrompt += txtResult;
 
-
         let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
         let apiKey = await getKV(SETTING_KEY_AI_API_KEY);
         let model = await getKV(SETTING_KEY_AI_MODEL_ID);
@@ -360,7 +362,6 @@ export class NotificationManager {
         let sessionId = uuidv4();
         await client.setSystemPrompt(sessionId, systemPrompt);
 
-
         let message = `现在时间是：${now.toLocaleString()}，请根据用户的情况，生成一个提醒`;
         let result = await client.sendMessage(sessionId, message);
         try {
@@ -372,7 +373,6 @@ export class NotificationManager {
         } catch (error) {
             console.error("Failed to parse JSON:", error);
         }
-
     }
 
     private async startNormalNotificationCheck(now: Date, matters: Matter[]) {

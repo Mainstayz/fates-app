@@ -132,22 +132,22 @@ class Tray {
 
     async createMenu() {
         const items = await Promise.all([
-            MenuItem.new({
-                id: "flash",
-                text: "闪烁",
-                action: async (id: string) => {
-                    console.log("onClick flash ... ");
-                    await this.flash(true);
-                },
-            }),
-            MenuItem.new({
-                id: "flash_off",
-                text: "停止闪烁",
-                action: async (id: string) => {
-                    console.log("onClick flash_off ... ");
-                    await this.flash(false);
-                },
-            }),
+            // MenuItem.new({
+            //     id: "flash",
+            //     text: "闪烁",
+            //     action: async (id: string) => {
+            //         console.log("onClick flash ... ");
+            //         await this.flash(true);
+            //     },
+            // }),
+            // MenuItem.new({
+            //     id: "flash_off",
+            //     text: "停止闪烁",
+            //     action: async (id: string) => {
+            //         console.log("onClick flash_off ... ");
+            //         await this.flash(false);
+            //     },
+            // }),
             MenuItem.new({
                 id: "exit",
                 text: "退出",
