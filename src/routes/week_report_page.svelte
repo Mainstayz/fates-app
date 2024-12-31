@@ -17,8 +17,9 @@
         SETTING_KEY_AI_BASE_URL,
         SETTING_KEY_AI_SYSTEM_PROMPT,
         SETTING_KEY_AI_ENABLED,
+        SETTING_KEY_AI_WORK_REPORT_PROMPT,
     } from "$src/config";
-    import { getKV, getMattersByRange, type Matter } from "$src/store";
+    import { getKV, setKV, getMattersByRange, type Matter } from "$src/store";
     import { v4 as uuidv4 } from "uuid";
     let outputContent = $state("");
     let customContent = $state("");
@@ -30,6 +31,14 @@
     let copyLoading = $state(false);
 
     let textareaElement = $state<HTMLTextAreaElement | null>(null);
+
+    // 监听 promptContent 的变化
+    let isInitialized = $state(false);
+    $effect(() => {
+        if (isInitialized && promptContent !== undefined) {
+            setKV(SETTING_KEY_AI_WORK_REPORT_PROMPT, promptContent);
+        }
+    });
 
     function handleTextareaInput(e: Event) {
         const textarea = e.target as HTMLTextAreaElement;
@@ -127,6 +136,11 @@
             aiLoading = false;
         }
     }
+
+    onMount(async () => {
+        promptContent = (await getKV(SETTING_KEY_AI_WORK_REPORT_PROMPT)) ?? "";
+        isInitialized = true;
+    });
 </script>
 
 <div class="flex flex-col h-full">
