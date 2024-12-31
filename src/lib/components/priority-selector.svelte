@@ -8,8 +8,13 @@
 
     const dispatch = createEventDispatcher();
 
-    export let priority: Priority;
-    export let variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
+    let {
+        priority,
+        variant,
+    }: {
+        priority: Priority;
+        variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
+    } = $props();
 
     const COLOR_MAP = {
         [Priority.Low]: "text-green-500",
@@ -22,7 +27,8 @@
         { value: Priority.High, label: $t("app.repeat.priority.high") },
     ];
 
-    let open = false;
+    let myOpen = $state(false);
+    $inspect(myOpen);
 
     function getPriorityLabel(value: any) {
         return PRIORITY_COLORS.find((c) => c.value === value)?.label ?? $t("app.repeat.priority.select");
@@ -31,27 +37,21 @@
     function handlePriorityChange(newPriority: any) {
         priority = newPriority;
         dispatch("change", { priority: newPriority });
-        open = false;
-    }
-
-    function getIconComponent(priority: Priority | undefined) {
-        switch (priority) {
-            case Priority.High:
-                return Flame;
-            case Priority.Medium:
-                return Bookmark;
-            case Priority.Low:
-            default:
-                return Circle;
-        }
+        myOpen = false;
     }
 </script>
 
-<Popover.Root bind:open>
+<Popover.Root bind:open={myOpen}>
     <Popover.Trigger>
-        <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
+        <Button {variant} class="h-[32px] justify-start shadow-none" onclick={() => (myOpen = true)}>
             <div class="flex items-center gap-2">
-                <svelte:component this={getIconComponent(priority)} class={`w-4 h-4 ${COLOR_MAP[priority]}`} />
+                {#if priority === Priority.High}
+                    <Flame class={`w-4 h-4 ${COLOR_MAP[priority]}`} />
+                {:else if priority === Priority.Medium}
+                    <Bookmark class={`w-4 h-4 ${COLOR_MAP[priority]}`} />
+                {:else}
+                    <Circle class={`w-4 h-4 ${COLOR_MAP[priority]}`} />
+                {/if}
                 {getPriorityLabel(priority)}
             </div>
         </Button>
@@ -64,10 +64,13 @@
                     class="w-full justify-start"
                     onclick={() => handlePriorityChange(priorityOption.value)}
                 >
-                    <svelte:component
-                        this={getIconComponent(priorityOption.value)}
-                        class={`w-4 h-4 ${COLOR_MAP[priorityOption.value]}`}
-                    />
+                    {#if priorityOption.value === Priority.High}
+                        <Flame class={`w-4 h-4 ${COLOR_MAP[priorityOption.value]}`} />
+                    {:else if priorityOption.value === Priority.Medium}
+                        <Bookmark class={`w-4 h-4 ${COLOR_MAP[priorityOption.value]}`} />
+                    {:else}
+                        <Circle class={`w-4 h-4 ${COLOR_MAP[priorityOption.value]}`} />
+                    {/if}
                     {priorityOption.label}
                 </Button>
             {/each}
