@@ -10,13 +10,14 @@
     import TodoPage from "./todo_page.svelte";
     import OpenAIChatPage from "./openai_chat_page.svelte";
     import SettingsDialog from "./settings_dialog.svelte";
-
+    import WeekReportPage from "./week_report_page.svelte";
     let timelineComponent: TimelinePage | null = null;
     let statisticsComponent: StatisticsPage | null = null;
     let tagsComponent: TagsManagerPage | null = null;
     let repeatComponent: RepeatPage | null = null;
     let todoComponent: TodoPage | null = null;
     let openaiComponent: OpenAIChatPage | null = null;
+    let weekReportComponent: WeekReportPage | null = null;
     let settingsOpen = false;
 
     const navCollapsedSize = 50;
@@ -54,6 +55,12 @@
             variant: "default",
             label: "statistics",
             translationKey: "routes.statistics",
+        },
+        {
+            icon: Icons.PencilLine,
+            variant: "default",
+            label: "week_report",
+            translationKey: "routes.week_report",
         },
         {
             icon: MessageSquare,
@@ -101,6 +108,9 @@
             {/if}
             {#if selectedRoute === "openai"}
                 <OpenAIChatPage bind:this={openaiComponent} />
+            {/if}
+            {#if selectedRoute === "week_report"}
+                <WeekReportPage bind:this={weekReportComponent} />
             {/if}
         </div>
     </div>

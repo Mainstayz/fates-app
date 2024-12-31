@@ -20,3 +20,5 @@ export { default as Repeat } from "lucide-svelte/icons/repeat";
 export { default as ListTodo } from "lucide-svelte/icons/list-todo";
 // calendar-range
 export { default as CalendarRange } from "lucide-svelte/icons/calendar-range";
+// pencil-line
+export { default as PencilLine } from "lucide-svelte/icons/pencil-line";
