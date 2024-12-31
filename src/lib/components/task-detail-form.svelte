@@ -223,7 +223,7 @@
                 <div class="text-xs text-gray-500 mb-1">优先级</div>
                 <div class="h-[32px]">
                     <PrioritySelector
-                        bind:priority
+                        {priority}
                         variant="outline"
                         class="w-[160px]"
                         on:change={({ detail }) => {

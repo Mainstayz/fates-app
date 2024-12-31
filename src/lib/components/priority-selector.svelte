@@ -5,15 +5,18 @@
     import { createEventDispatcher } from "svelte";
     import { Priority } from "$lib/types";
     import { t } from "svelte-i18n";
+    import { cn } from "$lib/utils.js";
 
     const dispatch = createEventDispatcher();
 
     let {
         priority,
         variant,
+        class: className,
     }: {
         priority: Priority;
         variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;
+        class: string;
     } = $props();
 
     const COLOR_MAP = {
@@ -43,7 +46,7 @@
 
 <Popover.Root bind:open={myOpen}>
     <Popover.Trigger>
-        <Button {variant} class="h-[32px] justify-start shadow-none" onclick={() => (myOpen = true)}>
+        <Button {variant} class={cn("h-[32px] justify-start shadow-none", className)}>
             <div class="flex items-center gap-2">
                 {#if priority === Priority.High}
                     <Flame class={`w-4 h-4 ${COLOR_MAP[priority]}`} />

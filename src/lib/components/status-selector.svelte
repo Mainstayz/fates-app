@@ -39,7 +39,7 @@
 
 <Popover.Root bind:open>
     <Popover.Trigger>
-        <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}" onclick={() => (open = true)}>
+        <Button {variant} class="h-[32px] justify-start shadow-none {$$props.class}">
             <div class="flex items-center gap-2">
                 {#if status != null}
                     <svelte:component this={getStatusIcon(status)} class="w-4 h-4" />
