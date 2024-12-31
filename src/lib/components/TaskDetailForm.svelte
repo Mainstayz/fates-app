@@ -145,7 +145,6 @@
         client.setSystemPrompt(conversationId, systemPrompt);
         try {
             const responseJson = await client.sendMessage(conversationId, content);
-            aiLoading = false;
             let responseObject = JSON.parse(responseJson);
             let newTitle = responseObject.title;
             let newSummary = responseObject.summary;
@@ -153,6 +152,8 @@
             content = newTitle;
         } catch (error) {
             console.error("Error generating title:", error);
+        } finally {
+            aiLoading = false;
         }
     }
 

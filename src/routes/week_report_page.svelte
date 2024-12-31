@@ -4,16 +4,88 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { Switch } from "$lib/components/ui/switch";
     import { Label } from "$lib/components/ui/label";
-    import * as Popover from "$lib/components/ui/popover";
-
-    let useCustomContent = $state(false);
-    let accordionValue = $state<string | undefined>(undefined);
+    import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import { onMount } from "svelte";
+    import { OpenAIClient } from "$src/features/openai";
+    import dayjs from "dayjs";
+    import {
+        SETTING_KEY_AI_API_KEY,
+        SETTING_KEY_AI_MODEL_ID,
+        SETTING_KEY_AI_BASE_URL,
+        SETTING_KEY_AI_SYSTEM_PROMPT,
+        SETTING_KEY_AI_ENABLED,
+    } from "$src/config";
+    import { getKV, getMattersByRange, type Matter } from "$src/store";
+    import { v4 as uuidv4 } from "uuid";
     let outputContent = $state("");
+    let customContent = $state("");
+    let promptContent = $state("");
+    let showCustomDialog = $state(false);
+    let showPromptDialog = $state(false);
 
-    $effect(() => {
-        // 当 Switch 打开时展开 Accordion，关闭时折叠
-        accordionValue = useCustomContent ? "item-1" : undefined;
-    });
+    let aiLoading = $state(false);
+
+    function handleCustomContentSubmit() {
+        showCustomDialog = false;
+    }
+
+    function handlePromptSubmit() {
+        showPromptDialog = false;
+    }
+
+    async function handleGenerate() {
+        aiLoading = true;
+        let apikey = await getKV(SETTING_KEY_AI_API_KEY);
+        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
+        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+        let client = new OpenAIClient({
+            apiKey: apikey,
+            baseURL: baseUrl,
+            defaultModel: model,
+        });
+
+        let systemPrompt = `
+你是一位经验丰富的数据分析师和报告撰写专家，擅长将复杂的数据信息转化为清晰、有条理的报告文档。
+根据用户提供的数据，生成一份结构清晰、内容丰富的周报，包括工作总结、关键成就和待解决的问题。
+报告应保持客观性和准确性，不得包含任何主观臆断或不实信息。报告格式应符合专业标准，语言简洁明了。
+`;
+        let conversationId = uuidv4();
+        client.setSystemPrompt(conversationId, systemPrompt);
+        let content = "";
+        if (customContent.length > 0) {
+            content = customContent;
+        } else {
+            const start = dayjs().startOf("day").subtract(1, "week").toISOString();
+            const end = dayjs().endOf("day").toISOString();
+            let list = await getMattersByRange(start, end);
+            content += "最近一周的任务:\n";
+            if (list.length > 0) {
+                content += "```csv\n";
+                content += ["开始时间", "结束时间", "标题", "标签"].join(" | ") + "\n";
+                list.forEach((item: Matter) => {
+                    content += `${new Date(item.start_time).toLocaleString()} | ${new Date(
+                        item.end_time
+                    ).toLocaleString()} | ${item.title} | ${item.tags ?? ""}\n`;
+                });
+                content += "```\n";
+            } else {
+                content += "无任务。（最近一周没有安排任务）\n";
+            }
+        }
+        try {
+            outputContent = "";
+            await client.sendMessage(conversationId, content, {
+                stream: true,
+                streamCallbacks: {
+                    onMessage: (message) => {
+                        outputContent += message;
+                    },
+                },
+            });
+        } catch (error) {
+            console.error("Error generating title:", error);
+        }
+    }
 </script>
 
 <div class="flex flex-col h-full">
@@ -24,15 +96,18 @@
     <div class="flex flex-col flex-1 p-6 gap-4">
         <div class="flex flex-row justify-between">
             <div class="flex flex-row gap-2">
-                <!-- 一键生成周报 -->
-                <Button>一键生成</Button>
-                <!-- 复制到剪贴板 -->
+                <Button onclick={handleGenerate}>一键生成</Button>
                 <Button>复制到剪贴板</Button>
             </div>
-            <!-- 选择周报模板 -->
             <div class="flex flex-row gap-2">
-                <Button variant="ghost">自定义内容</Button>
-                <Button variant="ghost">修改提示词</Button>
+                <Button
+                    variant={customContent.length > 0 ? "default" : "ghost"}
+                    onclick={() => (showCustomDialog = true)}>自定义内容</Button
+                >
+                <Button
+                    variant={promptContent.length > 0 ? "default" : "ghost"}
+                    onclick={() => (showPromptDialog = true)}>修改提示词</Button
+                >
             </div>
         </div>
 
@@ -40,8 +115,46 @@
             <Textarea
                 bind:value={outputContent}
                 readonly
-                class="bg-background  shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[200px] max-h-[600px]"
+                class="bg-background shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[200px] max-h-[600px]"
             />
         </div>
     </div>
 </div>
+
+<AlertDialog.Root bind:open={showCustomDialog}>
+    <AlertDialog.Overlay class="bg-[#000000]/20" />
+    <AlertDialog.Content class="w-[640px] max-w-[640px]">
+        <AlertDialog.Header>
+            <AlertDialog.Title>自定义内容</AlertDialog.Title>
+            <AlertDialog.Description>请输入你想要的自定义内容</AlertDialog.Description>
+        </AlertDialog.Header>
+        <div class="grid gap-4 py-4">
+            <Textarea
+                bind:value={customContent}
+                placeholder="请输入自定义内容..."
+                class="bg-background min-h-[200px]"
+            />
+        </div>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel>取消</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={handleCustomContentSubmit}>确定</AlertDialog.Action>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+</AlertDialog.Root>
+
+<AlertDialog.Root bind:open={showPromptDialog}>
+    <AlertDialog.Overlay class="bg-[#000000]/20" />
+    <AlertDialog.Content class="w-[640px] max-w-[640px]">
+        <AlertDialog.Header>
+            <AlertDialog.Title>修改提示词</AlertDialog.Title>
+            <AlertDialog.Description>请输入新的提示词</AlertDialog.Description>
+        </AlertDialog.Header>
+        <div class="grid gap-4 py-4">
+            <Textarea bind:value={promptContent} placeholder="请输入提示词..." class="bg-background min-h-[200px]" />
+        </div>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel>取消</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={handlePromptSubmit}>确定</AlertDialog.Action>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+</AlertDialog.Root>
