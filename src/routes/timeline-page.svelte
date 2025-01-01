@@ -283,7 +283,7 @@
         constructor(private timelineComponent: Timeline) {}
 
         async handleAdd(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
-            if (item.content == "#新任务") {
+            if (item.content == `#${$t("app.timeline.newTaskTitle")}`) {
                 createTimelineItem(newTaskTitle, item);
             }
             callback(item);

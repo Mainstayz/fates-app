@@ -10,6 +10,7 @@
     },
     "app": {
         "timeline": {
+            "newTaskTitle": "新任务",
             "title": "任务管理",
             "description": "用文字描绘每一个瞬间！",
             "addTask": "添加任务",
@@ -68,10 +69,10 @@
             "addedTip": "提示",
             "addedDescription": "已添加，可前往时间线查看",
             "priority": {
-                "low": "低优先级",
-                "medium": "中优先级",
-                "high": "高优先级",
-                "select": "选择优先级"
+                "low": "低",
+                "medium": "中",
+                "high": "高",
+                "select": "选择"
             },
             "repeatTime": {
                 "title": "任务重复添加时间段",

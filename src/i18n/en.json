@@ -10,6 +10,7 @@
   },
   "app": {
     "timeline": {
+      "newTaskTitle": "New Task",
       "title": "Task Management",
       "description": "Use text to describe every moment!",
       "addTask": "Add Task",
@@ -68,10 +69,10 @@
       "addedTip": "Tip",
       "addedDescription": "Added, you can check it in the timeline",
       "priority": {
-        "low": "Low Priority",
-        "medium": "Medium Priority",
-        "high": "High Priority",
-        "select": "Select Priority"
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "select": "Select"
       },
       "repeatTime": {
         "title": "Task Repeat Time Range",

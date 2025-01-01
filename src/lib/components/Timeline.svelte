@@ -4,6 +4,7 @@
     import { Timeline, DataSet, type TimelineOptions } from "vis-timeline/standalone";
     import "vis-timeline/styles/vis-timeline-graph2d.css";
     import type { TimelineItem, TimelineItemInternal } from "$lib/types";
+    import { t } from "svelte-i18n";
 
     // 定义回调函数的类型
     type TimelineCallback<T> = (item: T | null) => void;
@@ -112,7 +113,7 @@
         // if item._raw is not exist, create one, it may be added by double click
         if (!item.end && item.content == "new item") {
             // if end is not exist, set it to start + 2 hours
-            item.content = "#新任务";
+            item.content = `#${$t("app.timeline.newTaskTitle")}`;
             item.end = new Date(item.start.getTime() + 2 * 60 * 60 * 1000);
             // set to blue
             item.className = "blue";
