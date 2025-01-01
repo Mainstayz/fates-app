@@ -62,7 +62,6 @@
         }
         copyLoading = true;
         await writeText(outputContent);
-        // 0.25秒后
         setTimeout(() => {
             copyLoading = false;
         }, 250);
