@@ -176,7 +176,7 @@
         </div>
         <Input
             type="text"
-            class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
+            class="flex-1 bg-background border-0 shadow-none font-bold md:text-xl pl-[12px]"
             bind:value={content}
             placeholder={$t("app.taskDetail.taskTitlePlaceholder")}
             autofocus={false}
@@ -186,12 +186,13 @@
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
                     <Tooltip.Trigger>
-                        <Button variant="ghost" size="icon" onclick={generateTitle}>
+                        <Button variant="ghost" size="sm" onclick={generateTitle}>
                             {#if aiLoading}
                                 <LoaderCircle class="animate-spin" />
                             {:else}
                                 <Sparkles />
                             {/if}
+                            <Label class="text-muted-foreground text-default">AI</Label>
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content>
@@ -241,7 +242,7 @@
         </div>
     </div>
 
-    <div class="flex flex-row gap-2 pt-[8px]">
+    <!-- <div class="flex flex-row gap-2 pt-[8px]">
         <div class="pt-[2px] w-[24px]">
             <Text size={24} />
         </div>
@@ -254,7 +255,7 @@
                 class="bg-secondary w-full h-[100px] border-0 shadow-none resize-none"
             />
         </div>
-    </div>
+    </div> -->
 </div>
 
 <style>

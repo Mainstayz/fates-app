@@ -47,11 +47,11 @@
         <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
                 <div class="relative flex-1">
-                    <Input type="datetime-local" bind:value={startDate} class="bg-background h-[32px] w-[152px]" />
+                    <Input type="datetime-local" bind:value={startDate} class="bg-background h-[32px] w-[158px]" />
                 </div>
                 <span class="text-gray-500">-</span>
                 <div class="relative flex-1">
-                    <Input type="datetime-local" bind:value={endDate} class="bg-background h-[32px] w-[152px]" />
+                    <Input type="datetime-local" bind:value={endDate} class="bg-background h-[32px] w-[158px]" />
                 </div>
                 <Button variant="ghost" size="icon" class="h-[32px] w-[32px]" onclick={handleConfirm}>
                     <Check class="h-4 w-4" />
