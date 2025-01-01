@@ -28,6 +28,7 @@
     let alertOpen = $state(false);
     let alertTitle = $state("");
     let alertContent = $state("");
+    let alertShowCancel = $state(false);
     let alertConfirm: () => Promise<void> = $state(async () => {});
     $effect(() => {
         repeatTaskAPI.data;
@@ -38,6 +39,7 @@
     const handleDelete = async (rowId: string) => {
         alertTitle = $t("app.other.confirmDelete");
         alertContent = $t("app.other.confirmDeleteDescription");
+        alertShowCancel = true;
         alertConfirm = async () => {
             await repeatTaskAPI.deleteRepeatTask(rowId);
         };
@@ -78,6 +80,7 @@
         await emit("refresh-time-progress", {});
         alertTitle = $t("app.repeat.addedTip");
         alertContent = $t("app.repeat.addedDescription");
+        alertShowCancel = false;
         alertConfirm = async () => {};
         alertOpen = true;
     };
@@ -255,4 +258,10 @@
     </div>
 </div>
 
-<AlertDialog bind:open={alertOpen} title={alertTitle} content={alertContent} onConfirm={alertConfirm} />
+<AlertDialog
+    bind:open={alertOpen}
+    title={alertTitle}
+    content={alertContent}
+    onConfirm={alertConfirm}
+    showCancel={alertShowCancel}
+/>

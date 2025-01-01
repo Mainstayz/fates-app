@@ -55,7 +55,13 @@
             {/if}
         </Button>
     </Popover.Trigger>
-    <Popover.Content class="w-[300px] p-0">
+    <Popover.Content
+        class="w-[300px] p-0"
+        trapFocus={false}
+        onOpenAutoFocus={(e) => {
+            e.preventDefault();
+        }}
+    >
         <RepeatTimeSelector value={repeatTimeValue} onUpdateValue={handleChange} />
     </Popover.Content>
 </Popover.Root>

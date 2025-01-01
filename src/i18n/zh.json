@@ -51,7 +51,8 @@
             },
             "todoInProgress": "添加",
             "todoInProgressDescription": "已添加，可前往时间线中查看",
-            "createTodo": "创建待办"
+            "createTodo": "创建待办",
+            "searchPlaceholder": "搜索待办标题..."
         },
         "repeat": {
             "title": "重复任务",

@@ -185,7 +185,7 @@
         <div class="flex items-center justify-between">
             <div class="flex flex-1 items-center space-x-2">
                 <Input
-                    placeholder="搜索待办标题..."
+                    placeholder={$t("app.todo.searchPlaceholder")}
                     class="bg-background h-8 w-[150px] lg:w-[250px]"
                     type="search"
                     bind:value={search.value}
@@ -298,5 +298,5 @@
     title={alertTitle}
     content={alertContent}
     onConfirm={alertConfirm}
-    showCancel={true}
+    showCancel={false}
 />

@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as Popover from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
-    import { Archive, Pause, Play } from "lucide-svelte";
+    import { Archive, Pause, RefreshCcw } from "lucide-svelte";
     import { TaskStatus } from "$lib/types";
     import { t } from "svelte-i18n";
 
@@ -10,7 +10,7 @@
     export let onStatusValueChange: (status: number) => void;
 
     const STATUS_CONFIGS = [
-        { value: TaskStatus.Active, label: $t("app.status.active"), icon: Play },
+        { value: TaskStatus.Active, label: $t("app.status.active"), icon: RefreshCcw },
         { value: TaskStatus.Stopped, label: $t("app.status.stopped"), icon: Pause },
         { value: TaskStatus.Archived, label: $t("app.status.archived"), icon: Archive },
     ];
@@ -23,7 +23,7 @@
 
     function getStatusIcon(value: TaskStatus) {
         const config = STATUS_CONFIGS.find((c) => c.value === value);
-        return config?.icon ?? Play;
+        return config?.icon ?? RefreshCcw;
     }
 
     function handleStatusChange(newStatus: TaskStatus) {

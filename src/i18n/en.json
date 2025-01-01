@@ -51,7 +51,8 @@
       },
       "todoInProgress": "Added",
       "todoInProgressDescription": "Added, you can check it in the timeline",
-      "createTodo": "Create Todo"
+      "createTodo": "Create Todo",
+      "searchPlaceholder": "Search todo title..."
     },
     "repeat": {
       "title": "Repeat Tasks",
