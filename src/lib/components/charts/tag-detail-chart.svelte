@@ -13,7 +13,7 @@
         return {
             series: [
                 {
-                    name: "时长（小时）",
+                    name: $t("app.statistics.durationHours"),
                     data: data.map((d) => d.duration),
                 },
             ],
