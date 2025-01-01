@@ -41,7 +41,6 @@
 
     const handleGlobalClick = () => {
         console.log("handleGlobalClick");
-        // 让 main 窗口显示
         invoke("show_main_window").catch(handleError("Failed to show main window"));
         disableFlashAndHide().catch(handleError("Failed to handle global click"));
     };

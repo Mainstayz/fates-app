@@ -155,7 +155,8 @@
             "selectTimeRange": "选择时间范围",
             "tagDetailChart": {
                 "topTen": "前 10 条 {tag}"
-            }
+            },
+            "noChartData": "无法生成图表数据"
         },
         "messages": {
             "newRepeatTasks": "新重复任务",

@@ -65,7 +65,6 @@ impl IntoResponse for ServerError {
     }
 }
 
-// 服务器状态结构体
 pub struct AppState {
     shutdown_tx: Option<oneshot::Sender<()>>,
     db: Arc<SafeConnection>,
@@ -77,12 +76,10 @@ pub struct TimeRangeQuery {
     end: DateTime<Utc>,
 }
 
-// 路由配置 trait
 trait RouteConfig {
     fn configure(self, state: Arc<Mutex<AppState>>) -> Router;
 }
 
-// API 路由配置
 struct ApiRoutes;
 
 impl RouteConfig for ApiRoutes {
@@ -549,12 +546,12 @@ async fn delete_todo(
     Ok(Json(ApiResponse::<()>::success(())))
 }
 
-// 添加静态变量来追踪服务器状态
+
 static HTTP_SERVER: OnceCell<HttpServer> = OnceCell::new();
 static SERVER_PORT: AtomicU16 = AtomicU16::new(0);
 
 pub fn start_http_server(port: u16, db: Arc<SafeConnection>) -> Result<(), String> {
-    // 如果服务器已经在运行，检查端口是否相同
+
     if let Some(server) = HTTP_SERVER.get() {
         let current_port = SERVER_PORT.load(Ordering::Relaxed);
         if current_port == port {
@@ -567,35 +564,28 @@ pub fn start_http_server(port: u16, db: Arc<SafeConnection>) -> Result<(), Strin
         }
     }
 
-    // 创建新服务器实例
     let server = HttpServer::new(db);
     let server_clone = server.clone();
 
-    // 存储端口号
     SERVER_PORT.store(port, Ordering::Relaxed);
 
-    // 启动服务器
     tauri::async_runtime::spawn(async move {
         if let Err(e) = server_clone.start(port).await {
             log::error!("HTTP server failed to start: {}", e);
         }
     });
 
-    // 存储服务��例
     match HTTP_SERVER.set(server) {
         Ok(_) => Ok(()),
         Err(_) => Err("Failed to store HTTP server instance".into()),
     }
 }
 
-// 将 stop_http_server 修改为同步函数
 pub fn stop_http_server() -> Result<(), ServerError> {
     if let Some(server) = HTTP_SERVER.get() {
-        // 使用 block_on 同步执行异步代码
         tauri::async_runtime::block_on(async {
             server.stop().await;
         });
-        // 重置端口号
         SERVER_PORT.store(0, Ordering::Relaxed);
         Ok(())
     } else {

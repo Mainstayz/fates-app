@@ -1,18 +1,18 @@
-# 更新 tauri 依赖
+# update tauri dependencies
 
-文档：
+document:
 
 https://v2.tauri.app/develop/updating-dependencies/
 
 ```bash
-# 更新 tauri 依赖
+# update tauri dependencies
 pnpm update @tauri-apps/cli @tauri-apps/api --latest
 
-# 检查 tauri 依赖
+# check tauri dependencies
 pnpm outdated @tauri-apps/cli
 ```
 
-## 更新 tauri 版本
+## update tauri version
 
 https://github.com/killercup/cargo-edit
 

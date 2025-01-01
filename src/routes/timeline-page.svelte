@@ -14,7 +14,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { v4 as uuidv4 } from "uuid";
-    // 导入类型和工具函数
+
     import Input from "$lib/components/ui/input/input.svelte";
     import type { TimelineData, TimelineGroup, TimelineItem } from "$lib/types";
     import { Plus } from "lucide-svelte";
@@ -29,7 +29,7 @@
         updateTagLastUsedAt,
         type Matter,
     } from "../store";
-    // 导入 dayjs
+
     import dayjs from "dayjs";
 
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";
@@ -39,26 +39,21 @@
         last_used_at: string;
     }
 
-    // 组件状态管理
     let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
     let switchAddTaskInput = $state(false);
 
-    // 编辑状态管理
     let editingItem: TimelineItem | null = $state(null);
     let editDialogOpen = $state(false);
 
-    // 删除状态管理
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
 
     let tags = $state<Tag[]>([]);
 
-    // 时间范围选择状态管理
-    let selectedRange = $state("1d"); // 默认选择 3 天
+    let selectedRange = $state("1d");
 
-    // 时间范围选项
     const timeRanges = $derived([
         { value: "6h", label: $t("app.timeline.timeRanges.6h") },
         { value: "12h", label: $t("app.timeline.timeRanges.12h") },
@@ -67,10 +62,8 @@
         { value: "7d", label: $t("app.timeline.timeRanges.7d") },
     ]);
 
-    // 添加任务输入框
     let newTaskTitle = $state("");
 
-    // 添加更新热力图数据的函数
     async function updateHeatMapData() {
         try {
             const matters = await getAllMatters();
@@ -93,7 +86,6 @@
         }
     }
 
-    // 修改 saveTimelineItem
     async function saveTimelineItem(item: TimelineItem) {
         try {
             let matter = await getMatterById(item.id);
@@ -120,7 +112,6 @@
         }
     }
 
-    // 修改 deleteTimelineItem
     async function deleteTimelineItem(id: string) {
         try {
             console.log("delete matter: ", id);
@@ -132,7 +123,6 @@
         }
     }
 
-    // 修改 createTimelineItem
     async function createTimelineItem(title: string, inputItem?: TimelineItem) {
         if (!timelineComponent) return;
 
@@ -183,7 +173,6 @@
         }
     }
 
-    // 将标签管理相关的代码抽取为一个独立的类
     class TagManager {
         async createTags(tags: string[]) {
             try {
@@ -219,7 +208,6 @@
         }
     }
 
-    // 添加热力图数据类型和状态
     interface HeatMapData {
         date: string;
         value: number;
@@ -228,7 +216,6 @@
     let heatmapComponent: DailyHeatMap;
     let heatmapData: HeatMapData[] = $state([]);
 
-    // 将数据操作相关的代码抽取为一个独立的类
     class TimelineDataManager {
         constructor(private timelineComponent: Timeline) {}
 
@@ -292,12 +279,10 @@
         }
     }
 
-    // 将事件处理相关的代码抽取为一个独立的类
     class TimelineEventHandler {
         constructor(private timelineComponent: Timeline) {}
 
         async handleAdd(item: TimelineItem, callback: (item: TimelineItem | null) => void) {
-            // 可能是双击添加的
             if (item.content == "#新任务") {
                 createTimelineItem(newTaskTitle, item);
             }
@@ -331,13 +316,11 @@
         }
     }
 
-    // 对话框相关处理函数
     function handleDialogClose() {
         editingItem = null;
         editDialogOpen = false;
     }
 
-    // 获取所有时间线项目
     export function getAllItems(): TimelineData {
         if (!timelineComponent) {
             return { groups: [], items: [] };
@@ -349,7 +332,6 @@
         };
     }
 
-    // 定义事件监听器配置
     const EVENT_LISTENERS = [
         {
             event: NOTIFICATION_RELOAD_TIMELINE_DATA,
@@ -358,16 +340,10 @@
                 timelineDataManager?.loadTimelineData();
             },
         },
-        {
-            event: "tray_flash_did_click",
-            handler: () => {},
-        },
     ] as const;
 
-    // 统一管理事件监听器
     let unlisteners: Array<() => void> = [];
 
-    // 设置所有事件监听器
     async function setupEventListeners() {
         for (const { event, handler } of EVENT_LISTENERS) {
             console.log("add event listener: ", event);
@@ -376,14 +352,12 @@
         }
     }
 
-    // 清理所有事件监听器
     function cleanupEventListeners() {
         console.log("cleanup all event listeners ...");
         unlisteners.forEach((unlisten) => unlisten?.());
         unlisteners = [];
     }
 
-    // 将时间范围管理相关的代码抽取为一个独立的类
     class TimeRangeManager {
         public readonly TIME_RANGES = {
             "6h": 3 * 60 * 60 * 1000,
@@ -403,7 +377,6 @@
         }
     }
 
-    // 添加处理时间范围变化的函数
     function handleTimeRangeChange(value: string) {
         if (!timelineComponent) return;
 
@@ -435,53 +408,43 @@
         timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
     }
 
-    // 加 effect 监听 selectedRange 的变化
     $effect(() => {
         if (timelineComponent) {
             handleTimeRangeChange(selectedRange);
         }
     });
 
-    // 首先声明管理器实例变量
     let timelineDataManager: TimelineDataManager;
     let tagManager: TagManager;
     let timeRangeManager: TimeRangeManager;
     let eventHandler: TimelineEventHandler;
 
-    // 修改 onMount，删除重复的 onMount 调用
     onMount(() => {
         console.log("timeline page onMount ...");
 
-        // 确保 timelineComponent 已经初始化
         if (!timelineComponent) {
             error("Timeline component not initialized");
             return;
         }
 
-        // 初始化各个管理器
         timelineDataManager = new TimelineDataManager(timelineComponent);
         tagManager = new TagManager();
         timeRangeManager = new TimeRangeManager(timelineComponent);
         eventHandler = new TimelineEventHandler(timelineComponent);
 
-        // 设置事件监听器
         setupEventListeners();
 
-        // 加载数据
         timelineDataManager.loadTimelineData();
         tagManager.loadTags();
 
-        // 设置时间范围
         timeRangeManager.handleTimeRangeChange(selectedRange as keyof typeof timeRangeManager.TIME_RANGES);
 
-        // 清理函数
         return () => {
             console.log("timeline page onUnmount ...");
             cleanupEventListeners();
         };
     });
 
-    // 将事件处理相关的代码修改为普通函数
     const handleAdd = async (item: TimelineItem, callback: (item: TimelineItem | null) => void) => {
         if (eventHandler) {
             await eventHandler.handleAdd(item, callback);
@@ -530,7 +493,6 @@
             <Label class="text-base text-muted-foreground">{$t("app.timeline.description")}</Label>
         </div>
         <div class="flex flex-col py-6 gap-2">
-            <!-- 时间范围选择 -->
             <div class="flex gap-2 justify-between">
                 <div class="flex gap-2">
                     <Select.Root type="single" bind:value={selectedRange}>
@@ -553,9 +515,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <!-- 比较宽 -->
                     {#if switchAddTaskInput}
-                        <!-- 输入回车提交,自动获取焦点 -->
                         <Input
                             type="text"
                             placeholder={$t("app.timeline.addTaskPlaceholder")}
@@ -568,7 +528,6 @@
                             }}
                             onkeydown={async (e) => {
                                 if (e.key === "Enter") {
-                                    // 过滤空字符串
                                     switchAddTaskInput = false;
                                     if (newTaskTitle.trim() === "") return;
                                     await createTimelineItem(newTaskTitle);
@@ -581,14 +540,9 @@
                             {$t("app.timeline.addTask")}
                         </Button>
                     {/if}
-                    <!-- <Button variant="default">
-                        <Plus />
-                        添加模版任务
-                    </Button> -->
                 </div>
             </div>
 
-            <!-- 时间线 -->
             <div class="pt-0">
                 <Timeline
                     bind:this={timelineComponent}
@@ -605,7 +559,6 @@
                 />
             </div>
 
-            <!-- 历史热力图 -->
             <div class="flex flex-col pt-4 gap-2">
                 <Label class="text-lg text-muted-foreground">{$t("app.timeline.taskCompletionStatusLastYear")}</Label>
                 <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />
@@ -613,7 +566,6 @@
         </div>
     </div>
 
-    <!-- 编辑页面 -->
     <Dialog.Root bind:open={editDialogOpen} onOpenChange={handleDialogClose}>
         <Dialog.Portal>
             <Dialog.Overlay class="bg-[#000000]/20" />

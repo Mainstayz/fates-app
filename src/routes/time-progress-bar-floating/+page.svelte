@@ -41,29 +41,22 @@
     let unlistens: UnlistenFn[] = [];
 
     let updateInterval: ReturnType<typeof setInterval> | undefined;
-    // 设置定时更新
-    function setupUpdateInterval() {
-        // 立即执行一次
-        getTimeProgress();
 
-        // 每分钟更新一次
+    function setupUpdateInterval() {
+        getTimeProgress();
         updateInterval = setInterval(() => {
             getTimeProgress();
         }, 60 * 1000);
     }
 
     async function getTimeProgress() {
-        // 获取今天的时间范围
         const start = dayjs().startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();
         const matters = await getMattersByRange(start, end);
 
-        // 将 Matter 转换为 TimeSegment 格式
         timeSegments = matters.map((matter: Matter) => {
-            // 默认颜色为灰色
             let color = "#808080";
 
-            // 根据 reserved_1 设置颜色
             if (matter.reserved_1) {
                 switch (matter.reserved_1.toLowerCase()) {
                     case "red":
@@ -88,7 +81,7 @@
             };
         });
 
-        console.log("转换后的 timeSegments:", timeSegments);
+        console.log("transform timeSegments:", timeSegments);
     }
 
     onMount(() => {
@@ -101,27 +94,23 @@
             unlistens.forEach((unlisten) => unlisten());
             unlistens = [];
             resizeObserver?.disconnect();
-            // 清除定时器
+
             if (updateInterval) {
                 clearInterval(updateInterval);
             }
         };
     });
 
-    // 添加手动刷新方法
     async function refreshTimeProgress() {
         await getTimeProgress();
     }
 
-    // 监听刷新事件
     async function setupListeners() {
-        // 原有的监听器保持不变
         const unlistenVisibility = await listen("toggle-time-progress", async (event) => {
             const win = await getCurrentWindow();
             const shouldShow = event.payload as boolean;
             if (shouldShow) {
                 await win.show();
-                // 显示时刷新数据
                 await refreshTimeProgress();
             } else {
                 await win.hide();
@@ -136,7 +125,6 @@
         });
         unlistens.push(unlistenAlwaysOnTop);
 
-        // 添加刷新事件监听
         const unlistenRefresh = await listen("refresh-time-progress", async () => {
             await refreshTimeProgress();
         });

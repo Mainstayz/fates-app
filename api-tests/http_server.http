@@ -4,9 +4,9 @@
 @tagId = 1
 @kvKey = test-key
 
-### Matter 相关测试
+### Matter test
 
-# 创建 Matter
+# Create Matter
 POST {{baseUrl}}/matter
 Content-Type: application/json
 
@@ -20,13 +20,13 @@ Content-Type: application/json
     "end_time": "2024-12-11T12:00:00Z"
 }
 
-### 获取单个 Matter
+### Get single Matter
 GET {{baseUrl}}/matter/{{matterId}}
 
-### 获取所有 Matter
+### Get all Matter
 GET {{baseUrl}}/matter
 
-### 更新 Matter
+### Update Matter
 
 @matterId = df7b6110-15e3-4e8a-8a15-06c8045d9d34
 PUT {{baseUrl}}/matter/{{matterId}}
@@ -42,42 +42,42 @@ Content-Type: application/json
     "end_time": "2024-12-11T12:00:00Z"
 }
 
-### 按时间范围获取 Matter
+### Get Matter by time range
 GET {{baseUrl}}/matter/range?start=2024-01-01T00:00:00Z&end=2024-12-31T23:59:59Z
 
-### 删除 Matter
+### Delete Matter
 @matterId = 429d976b-b9a0-4cbd-9c51-e33b032975b8
 DELETE {{baseUrl}}/matter/{{matterId}}
 
-### KV 存储相关测试
+### KV storage test
 
-# 设置 KV
+# Set KV
 PUT {{baseUrl}}/kv/{{kvKey}}
 
 "测试值"
 
-### 获�� KV
+### Get KV
 GET {{baseUrl}}/kv/{{kvKey}}
 
-### 删除 KV
+### Delete KV
 DELETE {{baseUrl}}/kv/{{kvKey}}
 
-### Tag 相关测试
+### Tag test
 
-# 创建 Tag
+# Create Tag
 POST {{baseUrl}}/tags
 Content-Type: application/json
 
 新标签
 
-### 获取所有 Tag
+### Get all Tag
 GET {{baseUrl}}/tags
 
 
-#### 更新 Tag
+#### Update Tag
 @tagName = 新标签
 POST {{baseUrl}}/tags/update/{{tagName}}
 
-### 删除 Tag
+### Delete Tag
 @tagName={\"names\":\"你尽快\"}
 DELETE {{baseUrl}}/tags/{{tagName}}

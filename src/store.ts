@@ -61,7 +61,6 @@ const delete_ = async (url: string, options?: RequestOptions) => {
     return JSON.parse(responseText);
 };
 
-// 定义接口
 export interface Matter {
     id: string;
     title: string;
@@ -70,10 +69,10 @@ export interface Matter {
     start_time: string;
     end_time: string;
     priority: number;
-    type_: number; // 0: 普通任务，1: 循环任务，2: 待办事项
+    type_: number; // 0: normal task, 1: repeat task, 2: todo item
     created_at: string;
     updated_at: string;
-    reserved_1?: string; // 用于 className
+    reserved_1?: string; // for className
     reserved_2?: string;
     reserved_3?: string;
     reserved_4?: string;

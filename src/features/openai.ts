@@ -21,16 +21,16 @@ export interface ChatOptions {
 export type ChatRole = "system" | "user" | "assistant";
 
 export interface ChatMessage {
-    id: string; // 消息唯一标识符
-    conversationId: string; // 所属对话的 ID
-    content: string; // 消息内容
-    role: ChatRole; // 消息角色
-    createTime: number; // 消息创建时间
-    updateTime: number; // 消息更新时间
-    tokenCount?: number; // 消息的 token 数量（可选）
-    status: "pending" | "completed" | "error"; // 消息状态
-    error?: string; // 错误信息（如果有）
-    metadata?: Record<string, any>; // 额外的元数据
+    id: string; // message unique identifier
+    conversationId: string; // id of the conversation it belongs to
+    content: string; // message content
+    role: ChatRole; // message role
+    createTime: number; // message creation time
+    updateTime: number; // message update time
+    tokenCount?: number; // message token count (optional)
+    status: "pending" | "completed" | "error"; // message status
+    error?: string; // error message (if any)
+    metadata?: Record<string, any>; // extra metadata
 }
 
 export interface Conversation {
@@ -169,7 +169,7 @@ export class OpenAIClient {
             };
         }
 
-        // 确保系统消息与 systemPrompt 一致
+        // ensure system message is consistent with systemPrompt
         if (conversation.systemPrompt) {
             const systemMessage = conversation.messages.find((msg) => msg.role === "system");
             if (!systemMessage) {

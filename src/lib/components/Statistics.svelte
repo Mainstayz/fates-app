@@ -13,14 +13,14 @@
     } from "$lib/utils/statistics";
     import { t } from "svelte-i18n";
 
-    // 定义组件的属性和状态
-    let { items }: { items: TimelineItem[] } = $props(); // 接收时间项数组作为属性
+    // define component properties and state
+    let { items }: { items: TimelineItem[] } = $props(); // receive timeline items as props
 
-    // 定义响应式状态
-    let selectedRange: TimeRange = $state("all"); // 选中的时间范围，默认为"全部"
-    let selectedTag: string | null = $state(null); // 选中的标签，默认为 null
+    // define reactive state
+    let selectedRange: TimeRange = $state("all"); // selected time range, default is "all"
+    let selectedTag: string | null = $state(null); // selected tag, default is null
 
-    // 定义时间范围选项
+    // define time range options
     const timeRanges = $derived([
         { value: "all", label: $t("app.statistics.timeRanges.all") },
         { value: "year", label: $t("app.statistics.timeRanges.year") },
@@ -28,13 +28,13 @@
         { value: "week", label: $t("app.statistics.timeRanges.week") },
     ]);
 
-    // 处理标签选择的函数
+    // handle tag selection
     function handleTagSelect(tag: string) {
         console.log("Selected Tag:", tag);
         selectedTag = tag;
     }
 
-    // 获取图表数据的函数
+    // get chart data
     function getChartData() {
         try {
             const stats = calculateTagStats(items, selectedRange);
@@ -55,63 +55,56 @@
         }
     }
 
-    // 获取标签详细数据的函数
-    /**
-     * 获取标签详细数据的函数
-     * 根据选中的标签返回相关时间项的详细信息
-     * @returns {Array<{content: string, duration: number}>} 返回包含内容和时长的数组
-     */
     function getTagDetailData() {
-        // 如果没有选中标签，返回空数组
+        // if no tag selected, return empty array
         if (!selectedTag) return [];
 
-        // 根据时间范围筛选项目
+        // filter items by time range
         const filteredItems = filterItemsByRange(items, selectedRange);
 
-        // 处理"其他"标签的特殊情况
-        // 获取排名靠后的标签（第 10 个之后的所有标签）
+        // handle "other" tag special case
+        // get tags ranked lower (all tags after the 10th)
         if (selectedTag === OTHER_TAG) {
-            console.log('Processing "其他" tag');
-            // 用于存储每个标签的总时长
+            // store total duration of each tag
             const tagDurations: { [key: string]: number } = {};
 
-            // 计算每个标签的总时长
+            // calculate total duration of each tag
             filteredItems.forEach((item) => {
                 if (!item.start || !item.end) return;
                 const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
-                // 如果没有标签则使用空字符串
+                // if no tags, use empty string
                 const tags = !item.tags || item.tags.length === 0 ? [""] : item.tags;
 
-                // 为每个标签累加时长
+                // add duration to each tag
                 tags.forEach((tag) => {
                     const tagName = tag.trim() || UNCLASSIFIED_TAG;
                     tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
                 });
             });
 
-            // 按时长降序排序标签
+            // sort tags by duration in descending order
             const sortedEntries = Object.entries(tagDurations).sort(([, a], [, b]) => b - a);
 
             console.log("Total tags before filtering:", sortedEntries.length);
 
-            // 如果标签总数不超过 10 个，则不需要"其他"分类
+            // if tag count is not more than 10, no need to "other" category
             if (sortedEntries.length <= 10) {
-                console.log("Not enough tags for '其他' category");
+                console.log("Not enough tags for 'other' category");
                 return [];
             }
 
-            // 获取排名靠后的标签（第10个之后的所有标签）
+            // get tags ranked lower (all tags after the 10th)
             const otherTags = sortedEntries.slice(9).map(([tag]) => tag);
-            console.log("Tags in '其他' category:", otherTags);
+            console.log("Tags in 'other' category:", otherTags);
 
-            // 筛选包含"其他"标签的时间项
+            // filter items containing "other" tag
             const result = filteredItems
                 .filter((item) => {
                     const hasOtherTag = item.tags?.some((tag) => otherTags.includes(tag));
                     console.log("Item:", item.content, "has other tag:", hasOtherTag);
                     return hasOtherTag;
                 })
-                // 转换为所需的数据格式
+                // convert to required data format
                 .map((item) => {
                     const duration = +(
                         (new Date(item.end!).getTime() - new Date(item.start).getTime()) /
@@ -123,18 +116,18 @@
                         duration,
                     };
                 })
-                // 按时长降序排序并只取前 10 个
+                // sort by duration in descending order and only take top 10
                 .sort((a, b) => b.duration - a.duration)
                 .slice(0, 10);
 
-            console.log('Final result for "其他":', result);
+            console.log('Final result for "other":', result);
             return result;
         }
 
-        // 处理"未分类"标签的特殊情况
+        // handle "unclassified" tag special case
         if (selectedTag === UNCLASSIFIED_TAG) {
-            console.log('Processing "未分类" tag');
-            // 筛选没有标签或标签为空的时间项
+            console.log('Processing "unclassified" tag');
+            // filter items without tags or tags are empty
             const result = filteredItems
                 .filter((item) => !item.tags?.length || (item.tags.length === 1 && item.tags[0] === ""))
                 .map((item) => ({
@@ -147,20 +140,20 @@
                 .sort((a, b) => b.duration - a.duration)
                 .slice(0, 10);
 
-            console.log('Final result for "未分类":', result);
+            console.log('Final result for "unclassified":', result);
             return result;
         }
 
-        // 处理普通标签
+        // handle regular tag
         console.log("Processing regular tag:", selectedTag);
-        // 筛选包含所选标签的时间项
+        // filter items containing selected tag
         const result = filteredItems
             .filter((item) => {
                 const hasTag = item.tags?.includes(selectedTag ?? "");
                 console.log("Item:", item.content, "has tag:", hasTag);
                 return hasTag;
             })
-            // 转换为所需的数据格式
+            // convert to required data format
             .map((item) => ({
                 content: item.content,
                 duration: +(
@@ -168,7 +161,6 @@
                     (1000 * 60 * 60)
                 ).toFixed(2),
             }))
-            // 按时长降序排序并只取前 10 个
             .sort((a, b) => b.duration - a.duration)
             .slice(0, 10);
 
@@ -214,7 +206,6 @@
         </div>
 
         <div class="flex-1 flex flex-col pt-2 gap-2">
-            <!-- 上部分图表 -->
             <div class="flex flex-row w-full flex-none h-2/4 border rounded-lg">
                 <div class="w-1/3 flex items-center justify-center">
                     {#if items?.length > 0}
@@ -230,7 +221,7 @@
                             />
                         {:else}
                             <div class="flex items-center justify-center h-full text-gray-500">
-                                <p>无法生成图表数据</p>
+                                <p>{$t("app.statistics.noChartData")}</p>
                             </div>
                         {/if}
                     {/if}
@@ -248,14 +239,13 @@
                             />
                         {:else}
                             <div class="flex items-center justify-center h-full text-gray-500">
-                                <p>无法生成图表数据</p>
+                                <p>{$t("app.statistics.noChartData")}</p>
                             </div>
                         {/if}
                     {/if}
                 </div>
             </div>
 
-            <!-- 下部分标签详情图表 -->
             <div class="w-full flex-1 border rounded-lg">
                 {#if selectedTag}
                     {@const detailData = getTagDetailData()}

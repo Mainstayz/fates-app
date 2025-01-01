@@ -31,23 +31,20 @@
         callback: (item: TimelineItem, newTags: string[], selectedTags: string[]) => void;
     } = $props();
 
-    let localItem = $state({ ...item }); // 创建本地副本
+    let localItem = $state({ ...item }); // create local copy
 
     let aiEnabled = $state(false);
     let aiLoading = $state(false);
 
-    // 使用 $state 绑定到 item 的属性
     let content = $state(item.content);
     let description = $state(item.description || "");
-    // 声明可选值范围
     let priority = $state<Priority>(item.priority || Priority.Medium);
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
 
-    let localTagsList: string[] = [...(initialTagsList || [])]; // 创建本地副本
+    let localTagsList: string[] = [...(initialTagsList || [])];
     let localSelectedTags: string[] = [...(item.tags || [])];
 
-    // 监听变化并更新 item
     function updateItem() {
         let className = "";
         let priorityNumber = 0;
@@ -67,7 +64,7 @@
         }
 
         let newTags = localSelectedTags.filter((tag) => tag !== "");
-        // 过滤空字符串
+
         const updatedItem = {
             ...localItem,
             content,
@@ -81,7 +78,6 @@
         return updatedItem;
     }
 
-    // 格式化日期为 YYYY-MM-DD
     export function formatDateForInput(date: Date): string {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -91,7 +87,6 @@
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
-    // 格式化时间为 HH:mm 格式
     export function formatTimeForInput(date: Date): string {
         const hours = String(date.getHours()).padStart(2, "0");
         const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -156,14 +151,6 @@
     }
 
     onMount(() => {
-        // 获取输入框元素
-        // const inputElement = document.querySelector('input[placeholder="任务标题"]');
-        // if (inputElement) {
-        //     // 移除焦点
-        //     (inputElement as HTMLElement).blur();
-        //     // 防止自动获取焦点
-        //     (inputElement as HTMLElement).setAttribute("tabindex", "-1");
-        // }
         getKV(SETTING_KEY_AI_ENABLED).then((enabled) => {
             console.log("aiEnabled:", enabled);
             aiEnabled = enabled === "true";
@@ -182,12 +169,10 @@
 </script>
 
 <div class="flex flex-1 flex-col pr-[20px] gap-4">
-    <!-- 标题 -->
     <div class="flex flex-row gap-2">
         <div class="w-[24px] pt-[6px]">
             <PanelTop size={24} />
         </div>
-        <!-- 关闭自动焦点 -->
         <Input
             type="text"
             class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
@@ -250,22 +235,19 @@
             <!-- <Timer size={24} /> -->
         </div>
         <div class="flex flex-1 pl-[12px]">
-            <!-- 添加线框 -->
             <div>
                 <Label class="text-xs text-gray-500 mb-1">日期</Label>
                 <DateRangePicker bind:startDate bind:endDate />
             </div>
         </div>
     </div>
-    <!-- 详情 -->
+
     <div class="flex flex-row gap-2 pt-[8px]">
         <div class="pt-[2px] w-[24px]">
             <Text size={24} />
         </div>
         <div class="flex flex-col gap-1 flex-1 pl-[12px]">
-            <!-- 描述 -->
             <Label for="description" class="text-lg text-gray-500">描述</Label>
-            <!-- 关闭自动高度 -->
             <Textarea
                 id="description"
                 placeholder="添加详细描述..."

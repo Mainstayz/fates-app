@@ -49,22 +49,22 @@
         if (!start || !end) return false;
 
         try {
-            // 使用固定日期来创建 Date 对象，只比较时间部分
+            // use fixed date to create Date object, only compare time part
             const startDate = new Date(`2000-01-01T${start}`);
             const endDate = new Date(`2000-01-01T${end}`);
 
-            // 检查是否为有效的 Date 对象
+            // check if it is a valid Date object
             if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                 return false;
             }
 
-            // 转换为分钟进行比较，避免毫秒级的误差
+            // convert to minutes for comparison, avoid milliseconds error
             const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
             const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
 
             return startMinutes < endMinutes;
         } catch (error) {
-            console.error("时间格式验证错误：", error);
+            console.error("time format validation error:", error);
             return false;
         }
     }

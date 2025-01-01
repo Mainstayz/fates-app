@@ -12,7 +12,7 @@
         SETTING_KEY_AI_API_KEY,
         SETTING_KEY_AI_BASE_URL,
         SETTING_KEY_AI_MODEL_ID,
-        SETTING_KEY_AI_WORK_REPORT_PROMPT
+        SETTING_KEY_AI_WORK_REPORT_PROMPT,
     } from "$src/config";
     import { getKV, getMattersByRange, setKV, type Matter } from "$src/store";
     import dayjs from "dayjs";
@@ -28,7 +28,6 @@
 
     let textareaElement = $state<HTMLTextAreaElement | null>(null);
 
-    // 监听 promptContent 的变化
     let isInitialized = $state(false);
     $effect(() => {
         if (isInitialized && promptContent !== undefined) {

@@ -25,8 +25,6 @@
     export let tagsList: string[] = [];
     export let onTagsChange: (tagsList: string[], selectedTags: string[]) => void;
 
-    console.log(`第四步 ==> tagsList: ${tagsList} selectedTags: ${selectedTags}`);
-    // tagsList 始终包含 selectedTags 中的标签
     tagsList = [...new Set([...selectedTags, ...tagsList])];
 
     let open = false;
@@ -88,7 +86,6 @@
     }
 
     function handleTagChange() {
-        // 在标签实际改变时派发事件
         console.log(`tagsList: ${tagsList} selectedTags: ${selectedTags}`);
         onTagsChange(tagsList, selectedTags);
     }

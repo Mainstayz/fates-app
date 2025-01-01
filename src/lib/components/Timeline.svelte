@@ -22,22 +22,19 @@
         onRemove?: TimelineHandler;
     }>();
 
-    // 默认配置
     const DEFAULT_CONFIG = {
-        ZOOM_MIN: 1000 * 60 * 1, // 1 分钟
-        ZOOM_MAX: 1000 * 60 * 60 * 24 * 1.5, // 1.5 天
-        START: new Date(new Date().setHours(new Date().getHours() - 3)), // 当前时间前 3 小时
-        END: new Date(new Date().setHours(new Date().getHours() + 3)), // 当前时间后 3 小时
+        ZOOM_MIN: 1000 * 60 * 1,
+        ZOOM_MAX: 1000 * 60 * 60 * 24 * 1.5,
+        START: new Date(new Date().setHours(new Date().getHours() - 3)),
+        END: new Date(new Date().setHours(new Date().getHours() + 3)),
     } as const;
 
-    // 组件状态
     let timeline: Timeline;
     let container: HTMLElement;
     let resetTimeout: number | undefined;
     let itemsDataSet: DataSet<TimelineItemInternal>;
     // let groupsDataSet: DataSet<TimelineGroup>;
 
-    // Handlebars 模板
     const template = Handlebars.compile(`
         <div class="gantt-item" tabindex="0" role="button" data-item-id="{{id}}">
             <div class="gantt-item-content">
@@ -56,8 +53,7 @@
             </div>
         </div>
     `);
-    // 实现一个 tooltip 的模板
-    // 内 item 的 start 和 end
+
     const tooltipTemplate = Handlebars.compile(`
         <div class="flex flex-col p-0.5 whitespace-nowrap">
             <div class="flex items-center">
@@ -72,7 +68,6 @@
     `);
 
     Handlebars.registerHelper("formatDate", function (date) {
-        // 格式化日期 11/27 10:00
         return new Date(date).toLocaleString("zh-CN", {
             month: "2-digit",
             day: "2-digit",
@@ -81,7 +76,6 @@
         });
     });
 
-    // Handlebars 输入 start 和 end ,返回可读性更高的字符串，如 15m, 1.5h, 2d
     Handlebars.registerHelper("formatDateRange", function (start: string, end: string) {
         const diff = new Date(end).getTime() - new Date(start).getTime();
         // 保留一位小数
@@ -93,7 +87,6 @@
         return `${days}d`;
     });
 
-    // 数据转换函数
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
         console.log(">>>>> item", item);
         const renderedContent = template({
@@ -116,12 +109,12 @@
     }
 
     function convertToExternalItem(item: TimelineItemInternal): TimelineItem {
-        // 如果 item._raw 不存在，则创建一个, 可能是双击添加的
+        // if item._raw is not exist, create one, it may be added by double click
         if (!item.end && item.content == "new item") {
-            // 如果 end 不存在，则设置为 start + 2 小时
+            // if end is not exist, set it to start + 2 hours
             item.content = "#新任务";
             item.end = new Date(item.start.getTime() + 2 * 60 * 60 * 1000);
-            // 设置为蓝色
+            // set to blue
             item.className = "blue";
         }
         if (!item._raw) {
@@ -130,7 +123,7 @@
                 tags: [],
             };
         }
-        // 将 _raw 中的 content 和 tags 转换为 item 的 content 和 tags
+        // convert content and tags from _raw to item
         let ret: TimelineItem = {
             ...item,
             content: item._raw.content,
@@ -139,7 +132,7 @@
         return ret;
     }
 
-    // 创建事处理器
+    // create event handler
     function createEventHandler(handler?: TimelineHandler) {
         if (!handler) return undefined;
 
@@ -150,11 +143,9 @@
         };
     }
 
-    // 在 script 标签开始处添加批量处理相关的常量
-    const BATCH_SIZE = 100; // 批量处理的数量
-    const DEBOUNCE_DELAY = 200; // 防抖延迟时间 (ms)
+    const BATCH_SIZE = 100; // batch size
+    const DEBOUNCE_DELAY = 200; // debounce delay (ms)
 
-    // 添加防抖函数
     function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
         let timeoutId: number;
         return (...args: Parameters<T>) => {
@@ -164,7 +155,7 @@
     }
 
     onMount(() => {
-        // 初始化数据集
+        // init data set
         itemsDataSet = new DataSet((props.items || []).map(convertToInternalItem));
         // groupsDataSet = props.groups?.length ? new DataSet(props.groups) : new DataSet([]);
 
@@ -215,7 +206,7 @@
                     });
                 },
             },
-            // 事件处理
+
             onAdd: createEventHandler(props.onAdd),
             onMove: createEventHandler(props.onMove),
             onMoving: createEventHandler(props.onMoving),
@@ -224,45 +215,31 @@
             xss: {
                 disabled: true,
             },
-            // 添加数据加载策略
-            // loadingScreenTemplate: function () {
-            //     return '<div class="loading-screen">加载中...</div>';
-            // },
 
-            // 限制可见范围
-            min: new Date(new Date().setFullYear(new Date().getFullYear() - 1)), // 最多显示一年前的数据
-            max: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 最多显示一年后的数据
+            min: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+            max: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
 
-            // 添加分组策略
-            groupOrder: "content", // 按内容排序
-
-            // 添加虚拟滚动配置
-            // verticalScroll: true,
-            // horizontalScroll: true,
-            // zoomKey: "ctrlKey",
-
-            // 优化渲染性能
-            // throttleRedraw: 16, // 限重绘频率 (ms)
+            groupOrder: "content",
         };
 
-        // 初始化 Timeline
+        // init timeline
         timeline = new Timeline(container, itemsDataSet, options);
 
-        // 添加时间窗口重置定时器
+        // add time window reset timer
         // timeline.on("rangechanged", () => {
         //     if (resetTimeout) window.clearTimeout(resetTimeout);
         //     resetTimeout = window.setTimeout(debouncedCheckTimeWindow, 3000);
         // });
 
-        // 添加 Timeline 事件监听
-        // 键盘事件依赖于 select 事件
+        // add timeline event listener
+        // keyboard event depends on select event
         timeline.on("select", function (properties: { items: (string | number)[] }) {
             if (!properties.items || properties.items.length === 0) return;
 
             const selectedId = properties.items[0];
             const selectedItem = itemsDataSet.get(selectedId);
             if (selectedItem) {
-                // 找到对应的 DOM 元素并设置焦点
+                // find corresponding DOM element and set focus
                 const element = container.querySelector(`[data-item-id="${selectedId}"]`);
                 if (element instanceof HTMLElement) {
                     element.focus();
@@ -270,16 +247,16 @@
             }
         });
 
-        // rangechanged, 由于 rangechanged 事件会频繁触发，1s 内触发一次
+        // rangechanged, since rangechanged event is triggered frequently, once per second
         // timeline.on("rangechanged", function (event: any) {
         //     console.log(">>>>> rangechanged", event);
         // });
 
-        // 直接在容器上监听事件，使用事件委托
+        // listen on container
         container.addEventListener("keydown", handleKeyDown);
     });
 
-    // 检查时间窗口
+    // check time window
     function checkTimeWindow() {
         const window = timeline.getWindow();
         const currentTime = new Date();
@@ -291,10 +268,10 @@
         }
     }
 
-    // 优化 checkTimeWindow 函数，添加防抖
+    // optimize checkTimeWindow function, add debounce
     const debouncedCheckTimeWindow = debounce(checkTimeWindow, DEBOUNCE_DELAY);
 
-    // 数据同步
+    // data sync
     $effect(() => {
         if (!itemsDataSet || !props.items) return;
 
@@ -303,7 +280,7 @@
         const adds: TimelineItemInternal[] = [];
         const removes: string[] = [];
 
-        // 收集需要更新和添加的项
+        // collect items to update and add
         props.items.forEach((item: TimelineItem) => {
             const internalItem = convertToInternalItem(item);
             if (currentIds.has(item.id)) {
@@ -314,29 +291,29 @@
             currentIds.delete(item.id);
         });
 
-        // 收集需要删除的项
+        // collect items to remove
         currentIds.forEach((id) => removes.push(id.toString()));
 
-        // 批量处理更新
+        // batch update
         for (let i = 0; i < updates.length; i += BATCH_SIZE) {
             const batch = updates.slice(i, i + BATCH_SIZE);
             itemsDataSet.update(batch);
         }
 
-        // 批量处理添加
+        // batch add
         for (let i = 0; i < adds.length; i += BATCH_SIZE) {
             const batch = adds.slice(i, i + BATCH_SIZE);
             itemsDataSet.add(batch);
         }
 
-        // 批量处理删除
+        // batch remove
         for (let i = 0; i < removes.length; i += BATCH_SIZE) {
             const batch = removes.slice(i, i + BATCH_SIZE);
             itemsDataSet.remove(batch);
         }
     });
 
-    // 导出的方法 - 直接导出而不是通过对象
+    // export methods - directly export instead of through object
     export function setWindow(start: Date, end: Date) {
         timeline?.setWindow(start, end);
     }
@@ -361,7 +338,7 @@
         return itemsDataSet?.get().map(convertToExternalItem) ?? [];
     }
 
-    // 优化导出方法，添加量处理
+    // optimize export methods, add batch processing
     export function addItems(items: TimelineItem[]) {
         if (!itemsDataSet) return;
 
@@ -381,14 +358,14 @@
         }
     }
 
-    // 添加键盘事件处理函数
+    // add keyboard event handler
     function handleKeyDown(event: KeyboardEvent) {
         const target = event.target as HTMLElement;
         // Returns the first (starting at element) inclusive ancestor that matches selectors, and null otherwise.
         const ganttItem = target.closest(".gantt-item") as HTMLElement;
         if (!ganttItem) return;
 
-        // 阻止事件冒泡和默认行为
+        // stop event bubbling and default behavior
         event.stopPropagation();
         event.preventDefault();
         //
@@ -439,16 +416,16 @@
 <div class="w-full h-[300px]" bind:this={container}></div>
 
 <style>
-    /* 时间线容器样式 */
+    /* timeline container style */
     :global(.vis-timeline) {
-        contain: content; /* 开启内容隔离，提升渲染性能 */
-        will-change: transform; /* 提示浏览器即将进行变换 */
+        contain: content; /* enable content isolation, improve rendering performance */
+        will-change: transform; /* hint browser that transform is coming */
         border: 1px solid var(--border) !important;
         border-radius: var(--radius) !important;
         @apply bg-background;
     }
 
-    /* 标签集中的标签样式 */
+    /* label set style */
     :global(.vis-timeline .vis-labelset .vis-label) {
         display: flex;
         align-items: center;
@@ -459,12 +436,12 @@
         font-weight: 500;
     }
 
-    /* 前景中组的边框样式 */
+    /* foreground group style */
     :global(.vis-timeline .vis-foreground .vis-group) {
         border-bottom: none;
     }
 
-    /* 时间线项目的基本样式 */
+    /* timeline item style */
     :global(.vis-timeline .vis-item) {
         contain: layout;
         will-change: transform;
@@ -489,41 +466,41 @@
         @apply bg-green-300 text-foreground border-green-300;
     }
 
-    /* 时间线项目内容样式 */
+    /* timeline item content style */
     :global(.vis-timeline .vis-item .vis-item-content) {
         padding: 0.75rem 1rem;
         width: 100%;
         transform: none !important;
     }
 
-    /* 时间轴样式 */
+    /* timeline time axis style */
     :global(.vis-timeline .vis-time-axis) {
         font-size: 0.95rem;
         text-transform: uppercase;
         font-weight: 500;
     }
 
-    /* 时轴文本样式 */
+    /* time axis text style */
     :global(.vis-timeline .vis-time-axis .vis-text) {
         @apply text-muted-foreground;
     }
 
-    /* 时轴次要网格线样式 */
+    /* time axis minor grid line style */
     :global(.vis-timeline .vis-time-axis .vis-grid.vis-minor) {
         @apply border-gray-300;
     }
 
-    /* 时间轴垂直网格线样式 */
+    /* time axis vertical grid line style */
     :global(.vis-timeline .vis-time-axis .vis-grid.vis-vertical) {
         border-left-style: dashed !important;
     }
 
-    /* 移除面板阴影 */
+    /* remove panel shadow */
     :global(.vis-timeline .vis-panel .vis-shadow) {
         box-shadow: none !important;
     }
 
-    /* 面板边框颜色设置 */
+    /* panel border color */
     :global(
             .vis-timeline .vis-panel.vis-bottom,
             .vis-timeline .vis-panel.vis-center,
@@ -534,7 +511,7 @@
         border-color: var(--border) !important;
     }
 
-    /* 当前时间指示器样式 */
+    /* current time indicator style */
     :global(.vis-timeline .vis-current-time) {
         background-color: transparent !important;
         width: 200px !important;
@@ -559,22 +536,22 @@
         border: 0px solid;
     } */
 
-    /* 主要刻度文字（日期） */
+    /* major tick text (date) */
     /* :global(.vis-time-axis .vis-text.vis-major) {
         font-weight: bold;
     } */
 
-    /* 次要刻度（小时、分钟） */
+    /* minor tick (hour, minute) */
     /* :global(.vis-time-axis .vis-grid.vis-minor) {
         border-color: transparent;
     } */
 
-    /* 主要刻度（日期） */
+    /* major tick (date) */
     /* :global(.vis-time-axis .vis-grid.vis-major) {
         border-color: orange;
     } */
 
-    /* 今天日期背景颜色 */
+    /* today date background color */
     /* background: var(--destructive); */
     /* :global(.vis-time-axis .vis-grid.vis-today) {
 
@@ -590,7 +567,7 @@
     }
     /* .vis-editable.vis-selected */
     :global(.vis-editable.vis-selected) {
-        /* 添加阴影 */
+        /* add shadow */
         box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -600,11 +577,11 @@
         align-items: center;
         cursor: pointer;
         outline: none;
-        user-select: none; /* 防止文本选择影响焦点 */
+        user-select: none; /* prevent text selection affect focus */
         -webkit-user-select: none;
     }
 
-    /* 添加焦点背景色 */
+    /* add focus background color */
     /* :global(.gantt-item:focus) {
         outline: 2px solid var(--primary);
         outline-offset: -2px;
@@ -612,17 +589,17 @@
         background-color: rgba(0, 0, 0, 0.05);
     } */
 
-    /* 焦点时的悬停效果 */
+    /* focus hover effect */
     /* :global(.gantt-item:focus:hover) {
         background-color: rgba(0, 0, 0, 0.08);
     } */
 
-    /* 添加悬停效果 */
+    /* hover effect */
     /* :global(.gantt-item:hover) {
         background-color: rgba(0, 0, 0, 0.05);
     } */
 
-    /* 字体大小 */
+    /* font size */
     :global(.gantt-item-title) {
         font-size: 14px;
         font-weight: 700;
@@ -656,15 +633,15 @@
 
     :global(.vis-item .vis-onUpdateTime-tooltip) {
         border-radius: var(--radius) !important;
-        /* 添加阴影 */
+        /* add shadow */
         box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
-        /* 背景颜色，80% 透明度 */
+        /* background color, 80% transparent */
         background: #262626 !important;
         width: 160px;
         padding: 1px;
     }
 
-    /* 添加加载中的样式 */
+    /* loading style */
     :global(.loading-screen) {
         position: absolute;
         top: 50%;

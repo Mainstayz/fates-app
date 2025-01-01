@@ -5,21 +5,21 @@ import { promisify } from 'node:util'
 
 async function build() {
     const cwd = process.cwd()
-    const readFileAsync = promisify(readFile) // 将 readFile 转为 Promise API
+    const readFileAsync = promisify(readFile) // convert readFile to Promise API
     let key = ''
     let pwd = ''
 
     try {
-        // 读取公钥
-        key = await readFileAsync(resolve(cwd, '.tauri/app.key'), 'utf-8') // 读取私钥
-        pwd = await readFileAsync(resolve(cwd, '.tauri/password.key'), 'utf-8') // 读取密码
+        // read public key
+        key = await readFileAsync(resolve(cwd, '.tauri/app.key'), 'utf-8') // read private key
+        pwd = await readFileAsync(resolve(cwd, '.tauri/password.key'), 'utf-8') // read password
         console.log('key:', key)
         console.log('pwd:', pwd)
     }
     catch(_) {
         throw new Error('No private key found, private key is used to sign updates, see https://v2.tauri.app/plugin/updater')
     }
-    // 执行打包命令，通过 env 配置环境变量，注意不要忘了原始环境 process.env
+    // execute build command, pass env to configure environment variables, note that the original environment process.env is not forgotten
     const build_process = spawn('pnpm tauri build', [], {
         cwd,
         env: {

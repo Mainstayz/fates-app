@@ -25,16 +25,14 @@
         private matters: Matter[] = [];
 
         async syncTodoStatus() {
-            // 获取所有类型为 2 的 matter
             console.log("syncTodoStatus ... ");
             const matters = await store.queryMattersByField("type", "2", true);
             this.matters = matters;
             const now = new Date();
 
-            // 获取最新的待办事项数据
             const todos = await store.getAllTodos();
             const getTodoById = (id: string) => todos.find((item) => item.id === id);
-            // 如果 todos 存在，但是 matter 不存在，则重置  todo.status 为 todo
+
             for (const todo of todos) {
                 if (!this.matters.some((matter) => matter.reserved_2 === todo.id)) {
                     await store.updateTodo(todo.id, { ...todo, status: "todo" });
@@ -142,7 +140,6 @@
 
     const handleExecute = async (row: Todo) => {
         let start_time = new Date();
-        // end_time 为 2 小时后
         const end_time = new Date(start_time.getTime() + 2 * 60 * 60 * 1000);
 
         const matter: Matter = {

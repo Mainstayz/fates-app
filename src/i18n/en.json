@@ -154,7 +154,8 @@
       "selectTimeRange": "Select Time Range",
       "tagDetailChart": {
         "topTen": "Top 10 {tag}"
-      }
+      },
+      "noChartData": "No Chart Data"
     },
     "messages": {
       "newRepeatTasks": "New Repeat Tasks",

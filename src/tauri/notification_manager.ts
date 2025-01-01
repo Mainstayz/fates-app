@@ -90,7 +90,6 @@ class RepeatTaskHandler {
         // Check holidays (simplified - you may want to add actual holiday checking logic)
         const excludeHolidays = (bits & (1 << 7)) !== 0;
         if (excludeHolidays) {
-            // 使用 HolidayManager 检查是否为节假日
             const isHoliday = isHolidayDate(now);
             if (isHoliday) {
                 console.log(`Current time ${now} is a holiday`);
@@ -204,7 +203,7 @@ export class NotificationManager {
                     createdMatters.length
                 } new repeat tasks`
             );
-            // 创建通知，通知类型为 NewTask
+
             let title = get(_)("app.messages.newRepeatTasks");
             let message = get(_)("app.messages.newRepeatTasksDescription", {
                 values: { count: createdMatters.length },
@@ -215,6 +214,7 @@ export class NotificationManager {
 
         let aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
         console.log("AI enabled:", aiEnabled);
+
         if (aiEnabled === "true") {
             this.startAINotificationCheck(now, matters);
         } else {
@@ -226,29 +226,28 @@ export class NotificationManager {
         if (!ignoreRestriction) {
             let isInTaskTimeRange = false;
             for (const matter of matters) {
-                // 将 ISO 字符串转换为本地时间
                 const startTime = dayjs(matter.start_time).toDate();
                 const endTime = dayjs(matter.end_time).toDate();
-                console.log(`检查任务时间范围：${matter.title}`);
-                console.log(`- 开始时间：${startTime.toLocaleString()}`);
-                console.log(`- 结束时间：${endTime.toLocaleString()}`);
-                console.log(`- 当前时间：${now.toLocaleString()}`);
+                console.log(`check task time range: ${matter.title}`);
+                console.log(`- start time: ${startTime.toLocaleString()}`);
+                console.log(`- end time: ${endTime.toLocaleString()}`);
+                console.log(`- current time: ${now.toLocaleString()}`);
                 if (now >= startTime && now <= endTime) {
-                    console.log("- 当前时间在任务时间范围内");
+                    console.log("- current time in task time range");
                     isInTaskTimeRange = true;
                     break;
                 } else {
-                    console.log("- 当前时间不在任务时间范围内");
+                    console.log("- current time not in task time range");
                 }
             }
             if (isInTaskTimeRange) {
-                console.log("当前时间在任务时间范围内，不需要开始 AI 通知逻辑，跳过");
+                console.log("current time in task time range, skip ai notification");
                 return;
             }
 
             let shouldCheck = await this.shouldCheckAINotification();
             if (!shouldCheck) {
-                console.log("不需要开始 AI 通知逻辑，跳过");
+                console.log("skip ai notification");
                 return;
             }
         }

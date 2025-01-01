@@ -101,7 +101,6 @@
     }
 
     async function loadHistoryTasks() {
-        // 获取最新 7 天的任务
         let txtResult = "";
         const start = dayjs().subtract(7, "day").startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();

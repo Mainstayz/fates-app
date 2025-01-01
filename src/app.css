@@ -87,7 +87,7 @@
 }
 
 @layer components {
-    /* 隐藏 */
+    /* hide datetime-local picker */
     input[type="datetime-local"]::-webkit-calendar-picker-indicator {
         @apply hidden;
     }

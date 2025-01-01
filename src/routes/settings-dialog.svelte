@@ -30,7 +30,7 @@
     } from "../config";
     import { getKV, setKV } from "../store";
 
-    let {open =$bindable()} = $props();
+    let { open = $bindable() } = $props();
 
     let language = $state<string | undefined>(undefined);
     let autoStart = $state<boolean | undefined>(undefined);
@@ -299,7 +299,6 @@
                                         </Select.Root>
                                     </div>
                                     <div class="flex flex-col gap-2">
-                                        <!-- AI 提醒助理 配置  -->
                                         <Label for="prompt">{$t("app.settings.aiReminder.title")}</Label>
                                         <Textarea bind:value={aiReminderPrompt} id="prompt" class="bg-background" />
                                     </div>

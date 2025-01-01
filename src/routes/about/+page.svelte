@@ -1,9 +1,7 @@
-<!-- 获取入参 -->
 <script>
-	const props = $props();
-	let { name } = props;
-	//  把 $props 所有属性输出到 console
-	console.log(props);
+    const props = $props();
+    let { name } = props;
+    console.log(props);
 </script>
 
 <h1>About</h1>

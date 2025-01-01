@@ -19,7 +19,6 @@ async fn auto_launch(app: tauri::AppHandle, enable: bool) {
 #[tauri::command]
 async fn show_main_window(app: tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        // 依次执行：取消最小化、显示窗口、设置焦点
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
@@ -33,7 +32,6 @@ pub fn run() {
         .targets([
             Target::new(TargetKind::Stdout).filter(|metadata| {
                 let target = metadata.target();
-                // 仅仅允许 fates 开头的日志
                 target.starts_with("fates") || target.contains("localhost")
             }),
             Target::new(TargetKind::Webview),
@@ -47,9 +45,6 @@ pub fn run() {
             .filter(|metadata| metadata.target() == WEBVIEW_TARGET),
         ])
         .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal);
-
-    // 在构建应用之前设置环境变量
-    // std::env::set_var("RUST_LOG", "info,hyper=off,hyper_util=off");
 
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -78,10 +73,8 @@ pub fn run() {
         .plugin(logger_builder.build())
         .invoke_handler(tauri::generate_handler![auto_launch, show_main_window])
         .setup(|app| {
-            // 初始化数据库
             let db = database::initialize_database(&app.handle()).unwrap();
 
-            // 开启 http 服务
             if let Err(e) = start_http_server(8523, db.clone()) {
                 log::error!("Failed to start HTTP server: {}", e);
             }
@@ -90,21 +83,20 @@ pub fn run() {
         .on_window_event(handle_window_event)
         .build(tauri::generate_context!())
         .expect("Tauri 应用程序初始化失败");
-    // 打印日志目录
-    log::info!("初始化完成");
+
     builder.run(handle_run_event);
 }
 
-/// 处理窗口事件
+
 fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-        // 关闭窗口时隐藏而不是退出
+
         window.hide().unwrap_or_default();
         api.prevent_close();
     }
 }
 
-/// 处理运行时事件
+
 fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
     match event {
         tauri::RunEvent::ExitRequested { api, .. } => {
@@ -112,7 +104,7 @@ fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
             // api.prevent_exit();
         }
         tauri::RunEvent::Exit => {
-            // 确保在应用退出时关闭 HTTP 服务器
+
             log::warn!("Exit");
             if let Err(e) = http_server::stop_http_server() {
                 log::error!("Failed to stop HTTP server: {}", e);

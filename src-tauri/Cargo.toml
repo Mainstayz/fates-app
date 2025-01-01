@@ -23,7 +23,7 @@ tauri = { version = "2", features = [
     "tray-icon",
     "image-ico",
     "image-png",
-    # "custom-protocol", 开启后，无法使用 Dev 启动
+    # "custom-protocol",
 ] }
 rusqlite = { version = "0.32.1", features = ["bundled", "chrono"] }
 axum = { version = "0.7.1", features = ["tokio", "http1"] }

@@ -12,14 +12,11 @@ const CURRENT_DB_VERSION: u32 = 1;
 
 const DB_NAME: &str = "fates.db";
 
-// 添加默认时间函数
 fn default_datetime() -> DateTime<Utc> {
-    // 使用新的 with_ymd_and_hms API
     Utc.with_ymd_and_hms(1970, 1, 1, 0, 0, 0).unwrap()
 }
 
 fn check_is_default_datetime(datetime: DateTime<Utc>) -> bool {
-    // 比较时间戳更可靠，避免时区问题
     datetime.timestamp() == 0 && datetime.timestamp_subsec_nanos() == 0
 }
 
@@ -39,7 +36,7 @@ pub struct Matter {
     #[serde(default)]
     pub priority: i32,
     #[serde(default)]
-    pub type_: i32, // type 是 Rust 关键字，所以使用 type_, 0 为普通任务，1 为循环任务，2 为待办事项
+    pub type_: i32, // 0 normal, 1 repeat, 2 todo
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
@@ -58,16 +55,16 @@ pub struct Matter {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RepeatTask {
-    pub id: String, // UUID 作为主键更合适
+    pub id: String,
     pub title: String,
-    pub tags: Option<String>, // 用逗号分隔的标签字符串
-    pub repeat_time: String,  // 重复时间段值
-    pub status: i32,          // 使用枚举：1=Active, 0=Stopped, -1=Archived
+    pub tags: Option<String>,
+    pub repeat_time: String,
+    pub status: i32, // 1=Active, 0=Stopped, -1=Archived
     #[serde(default = "default_datetime")]
     pub created_at: DateTime<Utc>,
     #[serde(default = "default_datetime")]
     pub updated_at: DateTime<Utc>,
-    pub priority: i32, // 与 Matter 保持一致的优先级
+    pub priority: i32,
     #[serde(default)]
     pub description: Option<String>,
 }
@@ -127,7 +124,6 @@ pub enum NotificationStatus {
     Read = 1,
 }
 
-// 创建一个线程安全的数据库连接包装器
 pub struct SafeConnection {
     conn: RwLock<Connection>,
 }
@@ -140,7 +136,6 @@ impl SafeConnection {
     }
 }
 
-// 为 SafeConnection 实现 Send 和 Sync
 unsafe impl Send for SafeConnection {}
 unsafe impl Sync for SafeConnection {}
 
@@ -154,7 +149,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
 
     let conn = Connection::open_with_flags(db_path, flags)?;
 
-    // 创建 matter 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS matter (
             id TEXT PRIMARY KEY,
@@ -176,7 +170,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
         [],
     )?;
 
-    // 创建 kvstore 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS kvstore (
             key TEXT PRIMARY KEY,
@@ -187,7 +180,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
         [],
     )?;
 
-    // 创建 tags 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tags (
             name TEXT PRIMARY KEY,
@@ -197,13 +189,11 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
         [],
     )?;
 
-    // 创建索引
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_matter_time ON matter(start_time, end_time)",
         [],
     )?;
 
-    // 创建 repeat_task 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS repeat_task (
             id TEXT PRIMARY KEY,
@@ -219,7 +209,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
         [],
     )?;
 
-    // 创建 todo 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS todo (
             id TEXT PRIMARY KEY,
@@ -231,7 +220,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
         [],
     )?;
 
-    // 创建通知表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS notification_records (
             id TEXT PRIMARY KEY,
@@ -256,7 +244,6 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Arc<SafeConnection>
     Ok(Arc::new(SafeConnection::new(conn)))
 }
 
-// Matter 相关操作
 impl Matter {
     pub fn create(conn: &Arc<SafeConnection>, matter: &Matter) -> Result<()> {
         let conn = conn.conn.write().unwrap();

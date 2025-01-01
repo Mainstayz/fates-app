@@ -16,11 +16,11 @@ pnpm tauri dev
 
 ```
 
-### 添加 shadcn 组件库
+### add shadcn
 
-1. 添加 tailwindcss 支持
-2. 初始化 shadcn 组件库
-3. 安装 shadcn 组件库
+1. add tailwindcss support
+2. initialize shadcn component library
+3. install shadcn component library
 
 ```bash
 
@@ -28,13 +28,13 @@ npx sv add tailwindcss
 npx shadcn-svelte@next init
 npx shadcn-svelte@next add button
 
-# 重新生成组件库
+# regenerate component library
 
 ```bash
 npx shadcn-svelte@next add alert-dialog button calendar card dialog dropdown-menu form input label popover resizable select separator tabs tooltip
 ```
 
-### 系统托盘教程
+### system tray tutorial
 
-[系统托盘教程](https://v2.tauri.app/zh-cn/learn/system-tray/)
+[system tray tutorial](https://v2.tauri.app/zh-cn/learn/system-tray/)
 
