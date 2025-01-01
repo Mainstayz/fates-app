@@ -186,6 +186,15 @@
       "moreTagsHidden": "More tags hidden ({count})",
       "searchTags": "Search tags",
       "newTagPlaceholder": "New tag name"
+    },
+    "taskDetail": {
+      "taskTitlePlaceholder": "Task title",
+      "aiGenerateTitle": "AI generate title",
+      "priorityLabel": "Priority",
+      "tagsLabel": "Tags",
+      "dateLabel": "Date",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Add detailed description..."
     }
   }
 }

@@ -20,6 +20,7 @@
     import DateRangePicker from "./date-range-picker.svelte";
     import PrioritySelector from "./priority-selector.svelte";
     import TagsAddButton from "./tags-add-button.svelte";
+    import { t } from "svelte-i18n";
 
     let {
         item,
@@ -177,7 +178,7 @@
             type="text"
             class="flex-1 bg-background border-0 shadow-none font-bold text-xl pl-[12px]"
             bind:value={content}
-            placeholder="任务标题"
+            placeholder={$t("app.taskDetail.taskTitlePlaceholder")}
             autofocus={false}
             tabindex={-1}
         />
@@ -194,7 +195,7 @@
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content>
-                        <p>AI 生成标题</p>
+                        <p>{$t("app.taskDetail.aiGenerateTitle")}</p>
                     </Tooltip.Content>
                 </Tooltip.Root>
             </Tooltip.Provider>
@@ -204,7 +205,7 @@
         <div class="w-[24px]"></div>
         <div class="flex flex-1 gap-8 pl-[12px]">
             <div class="w-[160px]">
-                <div class="text-xs text-gray-500 mb-1">优先级</div>
+                <div class="text-xs text-gray-500 mb-1">{$t("app.taskDetail.priorityLabel")}</div>
                 <div class="h-[32px]">
                     <PrioritySelector
                         {priority}
@@ -217,7 +218,7 @@
                 </div>
             </div>
             <div class="flex-1">
-                <div class="text-xs text-gray-500 mb-1">标签</div>
+                <div class="text-xs text-gray-500 mb-1">{$t("app.taskDetail.tagsLabel")}</div>
                 <div>
                     <TagsAddButton
                         tagsList={localTagsList}
@@ -234,7 +235,7 @@
         </div>
         <div class="flex flex-1 pl-[12px]">
             <div>
-                <Label class="text-xs text-gray-500 mb-1">日期</Label>
+                <Label class="text-xs text-gray-500 mb-1">{$t("app.taskDetail.dateLabel")}</Label>
                 <DateRangePicker bind:startDate bind:endDate />
             </div>
         </div>
@@ -245,10 +246,10 @@
             <Text size={24} />
         </div>
         <div class="flex flex-col gap-1 flex-1 pl-[12px]">
-            <Label for="description" class="text-lg text-gray-500">描述</Label>
+            <Label for="description" class="text-lg text-gray-500">{$t("app.taskDetail.descriptionLabel")}</Label>
             <Textarea
                 id="description"
-                placeholder="添加详细描述..."
+                placeholder={$t("app.taskDetail.descriptionPlaceholder")}
                 bind:value={description}
                 class="bg-secondary w-full h-[100px] border-0 shadow-none resize-none"
             />
