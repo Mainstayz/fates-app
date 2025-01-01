@@ -225,11 +225,9 @@
             <div class="flex gap-2">
                 <Button variant="outline" onclick={() => setSystemPrompt()}>设置提示词</Button>
                 <Button variant="outline" onclick={() => clearHistory()}>清除聊天历史</Button>
-                <!-- 读取历史任务 -->
                 <Button variant="outline" onclick={() => loadHistoryTasks()}>读取历史任务</Button>
             </div>
         </div>
-        <!-- 配置最大高度 -->
         <div class="flex-1 overflow-y-auto space-y-4 max-h-[calc(100vh-524px)]">
             {#each chatHistory as message}
                 <div

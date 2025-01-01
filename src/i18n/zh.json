@@ -114,7 +114,11 @@
                 "enabled": "启用 AI",
                 "baseUrl": "API 地址",
                 "modelId": "模型 ID",
-                "apiKey": "API Key"
+                "apiKey": "API Key",
+                "configTitle": "AI 配置",
+                "configDescription": "配置 AI 模块相关参数",
+                "enableDescription": "启用或禁用 AI 功能模块",
+                "apiKeyPlaceholder": "输入你的 API Key"
             },
             "aiReminder": {
                 "title": "AI 提醒助理",

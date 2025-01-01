@@ -200,7 +200,6 @@
             </Tooltip.Provider>
         {/if}
     </div>
-    <!-- Tags，以及 先级 -->
     <div class="flex flex-row gap-2">
         <div class="w-[24px]"></div>
         <div class="flex flex-1 gap-8 pl-[12px]">
@@ -229,7 +228,6 @@
             </div>
         </div>
     </div>
-    <!-- 时间 -->
     <div class="flex flex-row gap-2">
         <div class="w-[24px] pt-[6px]">
             <!-- <Timer size={24} /> -->

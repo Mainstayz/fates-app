@@ -96,8 +96,8 @@
     ] as const;
 
     function getLanguageLabel(value: string | undefined) {
-        if (!value) return "选择语言";
-        return languages.find((l) => l.value === value)?.label ?? "选择语言";
+        if (!value) return $t("app.settings.language");
+        return languages.find((l) => l.value === value)?.label ?? $t("app.settings.language");
     }
 
     async function toggleAutoStart(enabled: boolean) {
@@ -306,21 +306,23 @@
                             {:else if currentSection === "ai"}
                                 <div class="space-y-4">
                                     <div class="flex flex-col gap-2">
-                                        <Label class="text-lg font-medium">AI 配置</Label>
-                                        <p class="text-muted-foreground text-sm">配置 AI 模块相关参数</p>
+                                        <Label class="text-lg font-medium">{$t("app.settings.ai.configTitle")}</Label>
+                                        <p class="text-muted-foreground text-sm">
+                                            {$t("app.settings.ai.configDescription")}
+                                        </p>
                                     </div>
                                     <Separator class="my-4" />
                                     <div class="flex items-center justify-between space-x-2">
                                         <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
-                                            <span>启用 AI 模块</span>
+                                            <span>{$t("app.settings.ai.enabled")}</span>
                                             <span class="text-muted-foreground text-xs font-normal leading-snug">
-                                                启用或禁用 AI 功能模块
+                                                {$t("app.settings.ai.enableDescription")}
                                             </span>
                                         </Label>
                                         <Switch id="ai-enabled" bind:checked={aiEnabled} />
                                     </div>
                                     <div class="flex flex-col gap-2">
-                                        <Label for="ai-base-url">Base URL</Label>
+                                        <Label for="ai-base-url">{$t("app.settings.ai.baseUrl")}</Label>
                                         <Input
                                             bind:value={aiBaseUrl}
                                             class="bg-background"
@@ -330,7 +332,7 @@
                                         />
                                     </div>
                                     <div class="flex flex-col gap-2">
-                                        <Label for="ai-model-id">Model ID</Label>
+                                        <Label for="ai-model-id">{$t("app.settings.ai.modelId")}</Label>
                                         <Input
                                             bind:value={aiModelId}
                                             type="text"
@@ -340,13 +342,13 @@
                                         />
                                     </div>
                                     <div class="flex flex-col gap-2">
-                                        <Label for="ai-api-key">API Key</Label>
+                                        <Label for="ai-api-key">{$t("app.settings.ai.apiKey")}</Label>
                                         <Input
                                             bind:value={aiApiKey}
                                             type="password"
                                             class="bg-background"
                                             id="ai-api-key"
-                                            placeholder="输入你的 API Key"
+                                            placeholder={$t("app.settings.ai.apiKeyPlaceholder")}
                                         />
                                     </div>
                                 </div>
