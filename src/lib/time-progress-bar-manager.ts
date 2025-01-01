@@ -34,7 +34,7 @@ export class TimeProgressBarManager {
             visible: true,
             shadow: false,
             skipTaskbar: true,
-            y: 0, // 放置在屏幕顶部
+            y: 0, // screen top
         });
     }
 

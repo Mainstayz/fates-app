@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
     import ApexCharts from "apexcharts";
+    import { t } from "svelte-i18n";
 
     export let data: { tags: string[]; durationHours: number[] };
     export let onTagSelect: (tag: string) => void;
@@ -12,7 +13,7 @@
         return {
             series: [
                 {
-                    name: "时长（小时）",
+                    name: $t("app.statistics.durationHours"),
                     data: data.durationHours,
                     color: "#3B82F6",
                 },

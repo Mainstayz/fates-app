@@ -100,7 +100,7 @@ class RepeatTaskAPI {
             start_time: startTimeLocal.toISOString(),
             end_time: endTimeLocal.toISOString(),
             priority: repeatTask.priority,
-            type_: 1, // 循环任务
+            type_: 1, // repeat task
             created_at: now.toISOString(),
             updated_at: now.toISOString(),
             reserved_1: color,

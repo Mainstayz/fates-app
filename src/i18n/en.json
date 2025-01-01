@@ -159,7 +159,8 @@
       "tagDetailChart": {
         "topTen": "Top 10 {tag}"
       },
-      "noChartData": "No Chart Data"
+            "noChartData": "No Chart Data",
+            "durationHours": "Duration (hours)"
     },
     "messages": {
       "newRepeatTasks": "New Repeat Tasks",

@@ -38,7 +38,7 @@
         return (seconds / SECONDS_PER_DAY) * 100;
     }
 
-    // 处理时间重叠的函数
+    // handle time overlap
     function handleTimeOverlap(segments: Array<{ seconds: { start: number; end: number } } & TimeSegment>) {
         if (segments.length === 0) return [];
 
@@ -48,11 +48,11 @@
             const current = segments[i];
             const previous = result[result.length - 1];
 
-            // 如果当前段的开始时间小于前一段的结束时间（重叠）
+            // if current segment start time less than previous segment end time (overlap)
             if (current.seconds.start < previous.seconds.end) {
-                // 如果当前段的结束时间大于前一段的结束时间
+                // if current segment end time greater than previous segment end time
                 if (current.seconds.end > previous.seconds.end) {
-                    // 修改当前段的开始时间为前一段的结束时间
+                    // modify current segment start time to previous segment end time
                     result.push({
                         ...current,
                         start: new Date(previous.end).getTime(),
@@ -62,9 +62,9 @@
                         },
                     });
                 }
-                // 如果当前段的结束时间小于等于前一段的结束时间，则忽略当前段
+                // if current segment end time less than or equal to previous segment end time, ignore current segment
             } else {
-                // 没有重叠，直接添加当前段
+                // no overlap, add current segment
                 result.push(current);
             }
         }
@@ -84,7 +84,7 @@
             }))
             .sort((a: any, b: any) => a.seconds.start - b.seconds.start);
 
-        // 处理时间重叠
+        // handle time overlap
         const overlappingHandled = handleTimeOverlap(converted);
 
         const newValidSegments = [];

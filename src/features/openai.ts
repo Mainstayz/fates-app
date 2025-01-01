@@ -118,7 +118,6 @@ export class OpenAIClient {
             try {
                 await this.conversationLocks.get(conversationId);
             } catch (error) {
-                // 如果等待过程中出错，我们需要���续尝试获取锁
                 continue;
             }
         }
@@ -328,9 +327,7 @@ export class OpenAIClient {
             };
             const conversation = await this.getOrCreateConversation(conversationId);
 
-            // 移除现有的系统消息
             conversation.messages = conversation.messages.filter((msg) => msg.role !== "system");
-            // 添加新的系统消息到开头
             conversation.messages.unshift(systemMessage);
             conversation.systemPrompt = prompt;
             conversation.updateTime = Date.now();
