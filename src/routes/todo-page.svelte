@@ -198,8 +198,10 @@
                 <Button
                     onclick={() => {
                         handleCreate();
-                    }}>创建待办</Button
+                    }}
                 >
+                    {$t("app.todo.createTodo")}
+                </Button>
             </div>
         </div>
         <div class="rounded-md border">

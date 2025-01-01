@@ -49,7 +49,8 @@
         "completed": "Completed"
       },
       "todoInProgress": "Added",
-      "todoInProgressDescription": "Added, you can check it in the timeline"
+      "todoInProgressDescription": "Added, you can check it in the timeline",
+      "createTodo": "Create Todo"
     },
     "repeat": {
       "title": "Repeat Tasks",
