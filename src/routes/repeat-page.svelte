@@ -178,7 +178,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class="max-w-[224px] overflow-auto">
                                     <DataTableTagsCell
                                         rowId={row.id}
                                         allTags={repeatTaskAPI.allTags}
@@ -189,7 +189,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell class=" max-w-[250px] overflow-auto">
+                                <Table.Cell class="max-w-[250px] overflow-auto">
                                     <DataTableRepeatTimeCell
                                         rowId={row.id}
                                         value={row.repeat_time}
@@ -198,7 +198,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class="w-[96px]">
                                     <DataTablePriorityCell
                                         rowId={row.id}
                                         value={row.priority}
@@ -207,7 +207,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class="w-[208px]">
                                     <DataTableRepeatActionCell
                                         rowId={row.id}
                                         original={row}

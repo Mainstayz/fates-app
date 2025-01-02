@@ -1,7 +1,7 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
+    import { getCurrentWindow, Window} from "@tauri-apps/api/window";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { getMattersByRange, type Matter } from "../../store";
@@ -105,6 +105,16 @@
         await getTimeProgress();
     }
 
+    async function handleDoubleClick() {
+        console.log("rootElement double clicked");
+        let mainWindow = await Window.getByLabel("main");
+        if (mainWindow) {
+            await mainWindow.unminimize();
+            await mainWindow.show();
+            await mainWindow.setFocus();
+        }
+    }
+
     async function setupListeners() {
         const unlistenVisibility = await listen("toggle-time-progress", async (event) => {
             const win = await getCurrentWindow();
@@ -132,7 +142,7 @@
     }
 </script>
 
-<div bind:this={rootElement} class="w-full h-full">
+<div bind:this={rootElement} class="w-full h-full" on:dblclick={handleDoubleClick} role="application">
     <TimeProgressBar {timeSegments} />
 </div>
 

@@ -19,6 +19,7 @@
     let alertOpen = $state(false);
     let alertTitle = $state("");
     let alertContent = $state("");
+    let alertShowCancel = $state(false);
     let alertConfirm: () => Promise<void> = $state(async () => {});
     class TodoAPI {
         public data = $state<Todo[]>([]);
@@ -81,6 +82,7 @@
         async deleteTodo(id: string) {
             alertTitle = $t("app.other.confirmDelete");
             alertContent = $t("app.other.confirmDeleteDescription");
+            alertShowCancel = true;
             alertConfirm = async () => {
                 await store.deleteTodo(id);
                 await this.fetchData();
@@ -161,6 +163,7 @@
         alertTitle = $t("app.other.tip");
         alertContent = $t("app.todo.todoInProgressDescription");
         alertConfirm = async () => {};
+        alertShowCancel = false;
         alertOpen = true;
     };
 
@@ -226,7 +229,7 @@
                                         }}
                                     />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class="w-[96px]">
                                     <Badge
                                         variant={row.status === "completed"
                                             ? "default"
@@ -241,7 +244,7 @@
                                               : $t("app.todo.statusOptions.completed")}
                                     </Badge>
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell class="w-[208px]">
                                     <div class="flex gap-2">
                                         <Button variant="destructive" size="sm" onclick={() => handleDelete(row.id)}>
                                             <Trash2 />
@@ -298,5 +301,5 @@
     title={alertTitle}
     content={alertContent}
     onConfirm={alertConfirm}
-    showCancel={false}
+    showCancel={alertShowCancel}
 />
