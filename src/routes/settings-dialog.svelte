@@ -16,19 +16,8 @@
     import { locale, t } from "svelte-i18n";
     import { cubicInOut } from "svelte/easing";
     import { crossfade } from "svelte/transition";
-    import {
-        NOTIFICATION_RELOAD_TIMELINE_DATA,
-        SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_ENABLED,
-        SETTING_KEY_AI_MODEL_ID,
-        SETTING_KEY_AI_REMINDER_PROMPT,
-        SETTING_KEY_LANGUAGE,
-        SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
-        SETTING_KEY_WORK_END_TIME,
-        SETTING_KEY_WORK_START_TIME,
-    } from "../config";
-    import { getKV, setKV } from "../store";
+    import { appConfig } from "$src/app-config";
+    import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "$src/config";
 
     let { open = $bindable() } = $props();
 
@@ -61,32 +50,32 @@
         if (!settingsLoaded) return;
 
         if (checkInterval !== undefined) {
-            setKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL, checkInterval);
+            appConfig.notifications.checkIntervalMinutes = parseInt(checkInterval);
         }
         if (workStart !== undefined) {
-            setKV(SETTING_KEY_WORK_START_TIME, workStart);
+            appConfig.notifications.workStart = workStart;
         }
         if (workEnd !== undefined) {
-            setKV(SETTING_KEY_WORK_END_TIME, workEnd);
+            appConfig.notifications.workEnd = workEnd;
         }
         if (language !== undefined && language.length > 0) {
-            setKV(SETTING_KEY_LANGUAGE, language);
+            appConfig.language = language;
             locale.set(language);
         }
         if (aiEnabled !== undefined) {
-            setKV(SETTING_KEY_AI_ENABLED, aiEnabled.toString());
+            appConfig.aiEnabled = aiEnabled;
         }
         if (aiBaseUrl !== undefined) {
-            setKV(SETTING_KEY_AI_BASE_URL, aiBaseUrl);
+            appConfig.aiBaseUrl = aiBaseUrl;
         }
         if (aiModelId !== undefined) {
-            setKV(SETTING_KEY_AI_MODEL_ID, aiModelId);
+            appConfig.aiModelId = aiModelId;
         }
         if (aiApiKey !== undefined) {
-            setKV(SETTING_KEY_AI_API_KEY, aiApiKey);
+            appConfig.aiApiKey = aiApiKey;
         }
         if (aiReminderPrompt !== undefined) {
-            setKV(SETTING_KEY_AI_REMINDER_PROMPT, aiReminderPrompt);
+            appConfig.aiReminderPrompt = aiReminderPrompt;
         }
     });
 
@@ -116,32 +105,40 @@
     async function initSettings() {
         try {
             autoStart = await isEnabled();
-            workStart = await getKV(SETTING_KEY_WORK_START_TIME);
+            workStart = appConfig.notifications.workStart;
+            console.log("workStart", workStart);
             if (workStart == "") {
-                await setKV(SETTING_KEY_WORK_START_TIME, "09:00");
+                appConfig.notifications.workStart = "09:00";
                 workStart = "09:00";
             }
-            workEnd = await getKV(SETTING_KEY_WORK_END_TIME);
+            workEnd = appConfig.notifications.workEnd;
+            console.log("workEnd", workEnd);
             if (workEnd == "") {
-                await setKV(SETTING_KEY_WORK_END_TIME, "18:00");
+                appConfig.notifications.workEnd = "18:00";
                 workEnd = "18:00";
             }
-            checkInterval = await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL);
+            checkInterval = appConfig.notifications.checkIntervalMinutes.toString();
+            console.log("checkInterval", checkInterval);
             if (checkInterval == "") {
-                await setKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL, "120");
+                appConfig.notifications.checkIntervalMinutes = 120;
                 checkInterval = "120";
             }
-            language = await getKV(SETTING_KEY_LANGUAGE);
+            language = appConfig.language;
+            console.log("language", language);
             if (language == "") {
-                await setKV(SETTING_KEY_LANGUAGE, "zh");
+                appConfig.language = "zh";
                 language = "zh";
             }
-            const aiEnabledStr = await getKV(SETTING_KEY_AI_ENABLED);
-            aiEnabled = aiEnabledStr === "true";
-            aiBaseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
-            aiModelId = await getKV(SETTING_KEY_AI_MODEL_ID);
-            aiApiKey = await getKV(SETTING_KEY_AI_API_KEY);
-            aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
+            aiEnabled = appConfig.aiEnabled;
+            console.log("aiEnabled:", aiEnabled);
+            aiBaseUrl = appConfig.aiBaseUrl;
+            console.log("aiBaseUrl:", aiBaseUrl);
+            aiModelId = appConfig.aiModelId;
+            console.log("aiModelId:", aiModelId);
+            aiApiKey = appConfig.aiApiKey;
+            console.log("aiApiKey:", aiApiKey);
+            aiReminderPrompt = appConfig.aiReminderPrompt;
+            console.log("aiReminderPrompt:", aiReminderPrompt);
             if (aiReminderPrompt == "") {
                 aiReminderPrompt =
                     "你是一名人工智能女友，旨在提供陪伴和支持。不过，你不会安慰用户，相反，你会鼓励用户做人要进步。";

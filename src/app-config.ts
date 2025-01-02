@@ -53,6 +53,9 @@ interface AppConfig {
     notifications: {
         enabled: boolean;
         sound: boolean;
+        checkIntervalMinutes: number;
+        workStart: string;
+        workEnd: string;
     };
     sidebar: {
         collapsed: boolean;
@@ -61,22 +64,42 @@ interface AppConfig {
     storage: {
         [key: string]: any;
     };
+
+    // ai config
+    aiEnabled: boolean;
+    aiApiKey: string;
+    aiModelId: string;
+    aiBaseUrl: string;
+    aiSystemPrompt: string;
+    aiReminderPrompt: string;
+    aiWorkReportPrompt: string;
     [key: string]: any;
 }
 
 // 默认配置
 const DEFAULT_CONFIG: AppConfig = {
     theme: "light",
-    language: "zh-CN",
+    language: "zh",
     notifications: {
         enabled: true,
         sound: true,
+        checkIntervalMinutes: 120,
+        workStart: "09:00",
+        workEnd: "18:00",
     },
     sidebar: {
         collapsed: false,
         width: 250,
     },
     storage: {},
+
+    aiEnabled: false,
+    aiApiKey: "",
+    aiModelId: "",
+    aiBaseUrl: "",
+    aiSystemPrompt: "",
+    aiReminderPrompt: "",
+    aiWorkReportPrompt: "",
 };
 
 // 初始化配置注册表
@@ -108,6 +131,24 @@ const initConfigRegistry = () => {
     });
 
     registry.register({
+        key: "notifications.checkIntervalMinutes",
+        defaultValue: 120,
+        validator: (value) => typeof value === "number",
+    });
+
+    registry.register({
+        key: "notifications.workStart",
+        defaultValue: "09:00",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "notifications.workEnd",
+        defaultValue: "18:00",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
         key: "sidebar.collapsed",
         defaultValue: false,
         validator: (value) => typeof value === "boolean",
@@ -117,6 +158,48 @@ const initConfigRegistry = () => {
         key: "sidebar.width",
         defaultValue: 250,
         validator: (value) => typeof value === "number",
+    });
+
+    registry.register({
+        key: "aiEnabled",
+        defaultValue: false,
+        validator: (value) => typeof value === "boolean",
+    });
+
+    registry.register({
+        key: "aiApiKey",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "aiModelId",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "aiBaseUrl",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "aiSystemPrompt",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "aiReminderPrompt",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "aiWorkReportPrompt",
+        defaultValue: "",
+        validator: (value) => typeof value === "string",
     });
 };
 
@@ -240,8 +323,10 @@ function createAppConfig(): AppConfigStore {
             if (prop === "init")
                 return async () => {
                     try {
+                        console.log("Init app config ... ");
                         const storedConfig = await getKV("app_config");
                         if (storedConfig) {
+                            console.log("Get storedConfig success: ", storedConfig);
                             const parsedConfig = validateConfig(JSON.parse(storedConfig));
                             proxyConfig = createConfigProxy(parsedConfig, "", (path, oldValue, newValue) => {
                                 logConfigChange(path, oldValue, newValue);
@@ -251,6 +336,12 @@ function createAppConfig(): AppConfigStore {
                             });
                             set(parsedConfig);
                             Object.assign(configStore, parsedConfig);
+                        } else {
+                            // may be first time to run
+                            console.log("First time to run, set default config ... ");
+                            await saveConfig(DEFAULT_CONFIG);
+                            set(DEFAULT_CONFIG);
+                            Object.assign(configStore, DEFAULT_CONFIG);
                         }
                     } catch (error) {
                         console.error("Failed to load config:", error);

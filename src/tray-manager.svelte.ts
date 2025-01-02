@@ -6,17 +6,18 @@ import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { get } from "svelte/store";
 import { locale, _ } from "svelte-i18n";
-
+import { emit } from "@tauri-apps/api/event";
 let hasTray = false;
 
 class Tray {
     private TRAY_ID = "app-tray";
     private flashState = false;
     private flashFlag = false;
+    private showOrHideProgress = true;
     private flashInterval: NodeJS.Timeout | null = null;
     constructor() {
-        this.init();
     }
+
     destroy() {
         hasTray = false;
         TrayIcon.removeById(this.TRAY_ID);
@@ -113,11 +114,9 @@ class Tray {
                         }
                         break;
                     case "Enter":
-                        // 鼠标悬浮，显示主窗口
                         console.log(`mouse hovered tray at ${event.rect.position.x}, ${event.rect.position.y}`);
                         break;
                     case "Leave":
-                        // 鼠标悬浮，隐藏主窗口
                         console.log(`mouse left tray at ${event.rect.position.x}, ${event.rect.position.y}`);
                         break;
                     default:
@@ -131,22 +130,14 @@ class Tray {
 
     async createMenu() {
         const items = await Promise.all([
-            // MenuItem.new({
-            //     id: "flash",
-            //     text: "闪烁",
-            //     action: async (id: string) => {
-            //         console.log("onClick flash ... ");
-            //         await this.flash(true);
-            //     },
-            // }),
-            // MenuItem.new({
-            //     id: "flash_off",
-            //     text: "停止闪烁",
-            //     action: async (id: string) => {
-            //         console.log("onClick flash_off ... ");
-            //         await this.flash(false);
-            //     },
-            // }),
+            MenuItem.new({
+                id: "show_or_hide_progress",
+                text: get(_)("app.tray.showOrHideProgress"),
+                action: async (id: string) => {
+                    this.showOrHideProgress = !this.showOrHideProgress;
+                    await emit("toggle-time-progress", this.showOrHideProgress);
+                },
+            }),
             MenuItem.new({
                 id: "exit",
                 text: get(_)("app.tray.exit"),
@@ -168,10 +159,4 @@ class Tray {
 }
 
 const tray = new Tray();
-locale.subscribe((value) => {
-    tray.updateMenu();
-});
-
-
-
 export default tray;

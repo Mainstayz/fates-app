@@ -1,26 +1,14 @@
-import "../i18n/i18n";
-import type { Matter, RepeatTask, Todo } from "../store";
-import { getActiveRepeatTasks, getMattersByRange, createMatter, getKV, setKV, getAllTodos } from "../store";
-import { isHolidayDate } from "../i18n/holiday-cn";
+import { appConfig } from "$src/app-config";
+import { OpenAIClient } from "$src/features/openai";
+import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
+import dayjs from "dayjs";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
-import {
-    SETTING_KEY_AI_ENABLED,
-    SETTING_KEY_AI_BASE_URL,
-    SETTING_KEY_AI_API_KEY,
-    SETTING_KEY_AI_MODEL_ID,
-    SETTING_KEY_LANGUAGE,
-    SETTING_KEY_WORK_START_TIME,
-    SETTING_KEY_WORK_END_TIME,
-    SETTING_KEY_NOTIFICATION_CHECK_INTERVAL,
-    SETTING_KEY_NOTIFY_BEFORE_MINUTES,
-    SETTING_KEY_AI_REMINDER_PROMPT,
-} from "../config";
-import { OpenAIClient } from "$src/features/openai";
-import dayjs from "dayjs";
-import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
 import { v4 as uuidv4 } from "uuid";
-
+import { isHolidayDate } from "../i18n/holiday-cn";
+import "../i18n/i18n";
+import type { Matter, RepeatTask, Todo } from "../store";
+import { createMatter, getActiveRepeatTasks, getAllTodos, getMattersByRange } from "../store";
 enum NotificationType {
     TaskStart,
     TaskEnd,
@@ -166,17 +154,11 @@ export class NotificationManager {
     }
 
     private async checkNotifications() {
-        let language = await getKV(SETTING_KEY_LANGUAGE);
+        let language = appConfig.language;
 
-        const startTime = (await getKV(SETTING_KEY_WORK_START_TIME)) || "00:01";
-        const endTime = (await getKV(SETTING_KEY_WORK_END_TIME)) || "23:59";
-
-
+        const startTime = appConfig.notifications.workStart || "00:01";
+        const endTime = appConfig.notifications.workEnd || "23:59";
         console.log("Current language:", language);
-
-        if (language) {
-            locale.set(language);
-        }
 
         const now = new Date();
 
@@ -212,10 +194,10 @@ export class NotificationManager {
             return;
         }
 
-        let aiEnabled = await getKV(SETTING_KEY_AI_ENABLED);
+        let aiEnabled = appConfig.aiEnabled;
         console.log("AI enabled:", aiEnabled);
 
-        if (aiEnabled === "true") {
+        if (aiEnabled) {
             this.startAINotificationCheck(now, matters);
         } else {
             this.startNormalNotificationCheck(now, matters);
@@ -251,7 +233,7 @@ export class NotificationManager {
                 return;
             }
         }
-        let aiReminderPrompt = await getKV(SETTING_KEY_AI_REMINDER_PROMPT);
+        let aiReminderPrompt = appConfig.aiReminderPrompt;
         if (aiReminderPrompt == "") {
             aiReminderPrompt = "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
         }
@@ -331,9 +313,9 @@ export class NotificationManager {
         systemPrompt += "\n\n";
         systemPrompt += txtResult;
 
-        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
-        let apiKey = await getKV(SETTING_KEY_AI_API_KEY);
-        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
+        let baseUrl = appConfig.aiBaseUrl;
+        let apiKey = appConfig.aiApiKey;
+        let model = appConfig.aiModelId;
 
         let client = new OpenAIClient({
             apiKey,
@@ -364,8 +346,8 @@ export class NotificationManager {
         let shouldCheckUpcoming = await this.shouldCheckUpcoming();
         if (shouldCheckUpcoming) {
             console.log(`Checking upcoming tasks at ${now.toISOString()}`);
-            const notifyBefore = (await getKV(SETTING_KEY_NOTIFY_BEFORE_MINUTES)) || "15";
-            const upcomingNotifications = this.checkUpcomingTasks(now, matters, parseInt(notifyBefore));
+            const notifyBefore = appConfig.notifications.checkIntervalMinutes || 15;
+            const upcomingNotifications = this.checkUpcomingTasks(now, matters, notifyBefore);
             if (upcomingNotifications.length == 0) {
                 console.log("No upcoming tasks");
             } else {
@@ -409,7 +391,7 @@ export class NotificationManager {
             }
 
             const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
-            const created = await getKV(storeKey);
+            const created = appConfig.getValueForKey(storeKey);
             if (created === "1") {
                 continue;
             }
@@ -418,7 +400,7 @@ export class NotificationManager {
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createTodayTask(task, now, timeRange);
                 await createMatter(newMatter);
-                await setKV(storeKey, "1");
+                appConfig.setValueForKey(storeKey, "1");
                 createdMatters.push(newMatter);
             }
         }
@@ -495,29 +477,29 @@ export class NotificationManager {
 
     private async shouldCheckNoTasks(): Promise<boolean> {
         const key = "last_check_no_task_time";
-        const interval = parseInt((await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL)) || "120", 10);
+        const interval = appConfig.notifications.checkIntervalMinutes || 120;
         return this.checkKVStoreKeyUpdateTime(key, interval);
     }
 
     private async shouldCheckAINotification(): Promise<boolean> {
         const key = "last_check_ai_notification_time";
-        const interval = parseInt((await getKV(SETTING_KEY_NOTIFICATION_CHECK_INTERVAL)) || "120", 10);
+        const interval = appConfig.notifications.checkIntervalMinutes || 120;
         return this.checkKVStoreKeyUpdateTime(key, interval);
     }
 
     private async checkKVStoreKeyUpdateTime(key: string, durationMinutes: number): Promise<boolean> {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const updateTimeStr = (await getKV(key)) || todayStart.toISOString();
+        const updateTimeStr = appConfig.getValueForKey(key) || todayStart.toISOString();
 
         const updateTime = new Date(updateTimeStr);
         const minutes = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
 
         if (minutes > durationMinutes) {
-            await setKV(key, now.toISOString());
+            appConfig.setValueForKey(key, now.toISOString());
             return true;
         }
-        console.log(`${key} 更新时间未超过 ${durationMinutes} 分钟，跳过检查`);
+        console.log(`${key} update time not exceed ${durationMinutes} minutes, skip check`);
         return false;
     }
 

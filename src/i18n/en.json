@@ -200,6 +200,7 @@
       "descriptionPlaceholder": "Add detailed description..."
     },
     "tray": {
+      "showOrHideProgress": "Show/Hide Time Progress",
       "exit": "Exit"
     }
   }

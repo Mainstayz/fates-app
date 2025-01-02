@@ -2,21 +2,16 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Button } from "$lib/components/ui/button";
     import { Textarea } from "$lib/components/ui/textarea";
+    import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/features/openai";
+    import { getMattersByRange, type Matter } from "$src/store";
     import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+    import dayjs from "dayjs";
     import { ClipboardCopy, LoaderCircle, Sparkles } from "lucide-svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-
-    import {
-        SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_MODEL_ID,
-        SETTING_KEY_AI_WORK_REPORT_PROMPT,
-    } from "$src/config";
-    import { getKV, getMattersByRange, setKV, type Matter } from "$src/store";
-    import dayjs from "dayjs";
     import { v4 as uuidv4 } from "uuid";
+
     let outputContent = $state("");
     let customContent = $state("");
     let promptContent = $state("");
@@ -31,7 +26,7 @@
     let isInitialized = $state(false);
     $effect(() => {
         if (isInitialized && promptContent !== undefined) {
-            setKV(SETTING_KEY_AI_WORK_REPORT_PROMPT, promptContent);
+            appConfig.aiWorkReportPrompt = promptContent;
         }
     });
 
@@ -77,9 +72,9 @@
 
     async function handleGenerate() {
         aiLoading = true;
-        let apikey = await getKV(SETTING_KEY_AI_API_KEY);
-        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
-        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+        let apikey = appConfig.aiApiKey;
+        let model = appConfig.aiModelId;
+        let baseUrl = appConfig.aiBaseUrl;
         let client = new OpenAIClient({
             apiKey: apikey,
             baseURL: baseUrl,
@@ -132,7 +127,7 @@
     }
 
     onMount(async () => {
-        promptContent = (await getKV(SETTING_KEY_AI_WORK_REPORT_PROMPT)) ?? "";
+        promptContent = appConfig.aiWorkReportPrompt;
         isInitialized = true;
     });
 </script>

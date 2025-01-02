@@ -2,25 +2,19 @@
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Textarea } from "$lib/components/ui/textarea";
+    // import { Textarea } from "$lib/components/ui/textarea";
     import * as Tooltip from "$lib/components/ui/tooltip";
     import type { TimelineItem } from "$lib/types";
     import { Priority } from "$lib/types";
-    import {
-        SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_ENABLED,
-        SETTING_KEY_AI_MODEL_ID,
-    } from "$src/config";
+    import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/features/openai";
-    import { getKV } from "$src/store";
-    import { LoaderCircle, PanelTop, Sparkles, Text } from "lucide-svelte";
+    import { LoaderCircle, PanelTop, Sparkles } from "lucide-svelte";
     import { onDestroy, onMount } from "svelte";
+    import { t } from "svelte-i18n";
     import { v4 as uuidv4 } from "uuid";
     import DateRangePicker from "./date-range-picker.svelte";
     import PrioritySelector from "./priority-selector.svelte";
     import TagsAddButton from "./tags-add-button.svelte";
-    import { t } from "svelte-i18n";
 
     let {
         item,
@@ -101,9 +95,9 @@
 
     async function generateTitle() {
         aiLoading = true;
-        let apikey = await getKV(SETTING_KEY_AI_API_KEY);
-        let model = await getKV(SETTING_KEY_AI_MODEL_ID);
-        let baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
+        let apikey = appConfig.AI_API_KEY;
+        let model = appConfig.AI_MODEL_ID;
+        let baseUrl = appConfig.AI_BASE_URL;
 
         let client = new OpenAIClient({
             apiKey: apikey,
@@ -152,10 +146,7 @@
     }
 
     onMount(() => {
-        getKV(SETTING_KEY_AI_ENABLED).then((enabled) => {
-            console.log("aiEnabled:", enabled);
-            aiEnabled = enabled === "true";
-        });
+        aiEnabled = appConfig.aiEnabled;
         return () => {
             let diffTags = localTagsList.filter((tag) => !initialTagsList.includes(tag));
             const updatedItem = updateItem();

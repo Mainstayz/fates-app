@@ -4,18 +4,12 @@
     import { Input } from "$lib/components/ui/input";
     import { Textarea } from "$lib/components/ui/textarea";
     import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
+    import { appConfig } from "$src/app-config";
     import type { Matter, RepeatTask, Todo } from "$src/store";
-    import { getActiveRepeatTasks, getAllTodos, getKV, getMattersByRange, setKV } from "$src/store";
+    import { getActiveRepeatTasks, getAllTodos, getMattersByRange } from "$src/store";
+    import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
-
-    import {
-        SETTING_KEY_AI_API_KEY,
-        SETTING_KEY_AI_BASE_URL,
-        SETTING_KEY_AI_MODEL_ID,
-        SETTING_KEY_AI_SYSTEM_PROMPT,
-    } from "$src/config";
-    import dayjs from "dayjs";
 
     let baseUrl = $state("");
     let apiKey = $state("");
@@ -29,18 +23,17 @@
     let isLoading = $state(false);
     let error: string | null = $state(null);
 
-    // systemPrompt setKV
     $effect(() => {
         if (systemPrompt) {
-            setKV(SETTING_KEY_AI_SYSTEM_PROMPT, systemPrompt);
+            appConfig.aiSystemPrompt = systemPrompt;
         }
     });
 
     onMount(async () => {
-        baseUrl = await getKV(SETTING_KEY_AI_BASE_URL);
-        apiKey = await getKV(SETTING_KEY_AI_API_KEY);
-        model = await getKV(SETTING_KEY_AI_MODEL_ID);
-        systemPrompt = await getKV(SETTING_KEY_AI_SYSTEM_PROMPT);
+        baseUrl = appConfig.aiBaseUrl;
+        apiKey = appConfig.aiApiKey;
+        model = appConfig.aiModelId;
+        systemPrompt = appConfig.aiSystemPrompt;
         initializeChat();
     });
 

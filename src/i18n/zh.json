@@ -201,6 +201,7 @@
       "descriptionPlaceholder": "添加详细描述..."
     },
     "tray": {
+      "showOrHideProgress": "显示/隐藏时间进度",
       "exit": "退出"
     }
     }

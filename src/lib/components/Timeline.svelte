@@ -89,7 +89,7 @@
     });
 
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
-        console.log(">>>>> item", item);
+        // console.log(">>>>> item", item);
         const renderedContent = template({
             id: item.id,
             content: item.content,
@@ -373,7 +373,7 @@
         const itemId = ganttItem.dataset.itemId;
         if (!itemId) return;
 
-        console.log(">>>>> onKeyDown event", event, "item id:", itemId);
+        // console.log(">>>>> onKeyDown event", event, "item id:", itemId);
 
         const item = itemsDataSet.get(itemId);
         if (!item) return;

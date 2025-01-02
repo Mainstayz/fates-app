@@ -1,17 +1,19 @@
 <script lang="ts">
     import "../i18n/i18n";
-    import _ from "$src/tray-manager.svelte";
+    import { appConfig } from "$src/app-config";
+    import TrayManager from "$src/tray-manager.svelte";
     import App from "./app.svelte";
     import { onMount } from "svelte";
     import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
     import NotificationManager, { type Notification } from "$src/tauri/notification_manager";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 
-    import { locale } from "svelte-i18n";
-    import { getKV, setKV } from "../store";
+    import { locale, isLoading } from "svelte-i18n";
 
     let notificationManager: NotificationManager;
     let timeProgressBarManager: TimeProgressBarManager;
+
+    let i18nLoading = $derived(isLoading);
 
     async function sendSystemNotification(title: string, message: string) {
         let permissionGranted = await isPermissionGranted();
@@ -38,15 +40,23 @@
 
     onMount(() => {
         const initialize = async () => {
-            let language = await getKV("language");
-            if (language == "") {
-                language = "zh";
-                await setKV("language", language);
-            }
-            console.log("设置语言：", language);
-            locale.set(language);
-            notificationManager = await NotificationManager.initialize(onNotificationMessage);
+            // Initialize app config
+            await appConfig.init();
+            console.log("appConfig initialized");
+            // Set language
+            let language = appConfig.language;
+            console.log("Current language: ", language);
+            await locale.set(language);
 
+            // Initialize tray manager
+            await TrayManager.init();
+
+            // Initialize notification manager
+            console.log("Current language: ", language);
+
+            // Initialize notification manager
+            notificationManager = await NotificationManager.initialize(onNotificationMessage);
+            // Initialize time progress bar manager
             timeProgressBarManager = TimeProgressBarManager.getInstance();
             await timeProgressBarManager.initialize();
         };
@@ -62,9 +72,13 @@
     });
 </script>
 
-<main class="noSelect w-full h-full">
-    <App />
-</main>
+{#if !i18nLoading}
+    <div class="flex justify-center items-center h-full"></div>
+{:else}
+    <main class="noSelect w-full h-full">
+        <App />
+    </main>
+{/if}
 
 <style>
     .noSelect {
