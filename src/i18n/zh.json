@@ -6,6 +6,7 @@
         "tags": "标签",
         "repeat": "重复",
         "todo": "待办",
+        "week_report": "周报",
         "openai": "AI 聊天"
     },
     "app": {

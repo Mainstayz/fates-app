@@ -1,19 +1,22 @@
 <script lang="ts">
     import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
-    import TrayManager from "$src/tray-manager.svelte";
-    import App from "./app.svelte";
-    import { onMount } from "svelte";
     import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
     import NotificationManager, { type Notification } from "$src/tauri/notification_manager";
+    import TrayManager from "$src/tray-manager.svelte";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
+    import { onMount } from "svelte";
 
-    import { locale, isLoading } from "svelte-i18n";
+    import App from "./app.svelte";
+
+    import { locale } from "svelte-i18n";
 
     let notificationManager: NotificationManager;
     let timeProgressBarManager: TimeProgressBarManager;
 
-    let i18nLoading = $derived(isLoading);
+    let appConfigInitialized = $state(false);
+
+    $inspect("appConfigInitialized: ", appConfigInitialized);
 
     async function sendSystemNotification(title: string, message: string) {
         let permissionGranted = await isPermissionGranted();
@@ -45,14 +48,11 @@
             console.log("appConfig initialized");
             // Set language
             let language = appConfig.language;
-            console.log("Current language: ", language);
             await locale.set(language);
-
+            console.log("Current language: ", language);
+            appConfigInitialized = true;
             // Initialize tray manager
             await TrayManager.init();
-
-            // Initialize notification manager
-            console.log("Current language: ", language);
 
             // Initialize notification manager
             notificationManager = await NotificationManager.initialize(onNotificationMessage);
@@ -72,8 +72,10 @@
     });
 </script>
 
-{#if !i18nLoading}
-    <div class="flex justify-center items-center h-full"></div>
+{#if !appConfigInitialized}
+    <div class="flex justify-center items-center h-full">
+        <div>Loading...</div>
+    </div>
 {:else}
     <main class="noSelect w-full h-full">
         <App />
