@@ -1,11 +1,11 @@
-// https://github.com/EcoPasteHub/EcoPaste/blob/tauri-v2/src/components/Tray/index.tsx
-
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
 import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
+import { get } from "svelte/store";
+import { locale, _ } from "svelte-i18n";
 
 let hasTray = false;
 
@@ -149,7 +149,7 @@ class Tray {
             // }),
             MenuItem.new({
                 id: "exit",
-                text: "退出",
+                text: get(_)("app.tray.exit"),
                 action: async (id: string) => {
                     console.log("onClick exit(1) ... ");
                     await exit(1);
@@ -158,8 +158,20 @@ class Tray {
         ]);
         return Menu.new({ items });
     }
+    async updateMenu() {
+        let tray = await this.getTrayById();
+        if (!tray) {
+            return;
+        }
+        tray.setMenu(await this.createMenu());
+    }
 }
 
 const tray = new Tray();
+locale.subscribe((value) => {
+    tray.updateMenu();
+});
+
+
 
 export default tray;

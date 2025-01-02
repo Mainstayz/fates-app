@@ -198,6 +198,9 @@
       "dateLabel": "Date",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Add detailed description..."
+    },
+    "tray": {
+      "exit": "Exit"
     }
   }
 }

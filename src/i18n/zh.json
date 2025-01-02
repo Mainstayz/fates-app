@@ -199,6 +199,9 @@
       "dateLabel": "日期",
       "descriptionLabel": "描述",
       "descriptionPlaceholder": "添加详细描述..."
+    },
+    "tray": {
+      "exit": "退出"
     }
     }
 }
