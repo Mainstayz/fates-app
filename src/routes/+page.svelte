@@ -73,9 +73,7 @@
 </script>
 
 {#if !appConfigInitialized}
-    <div class="flex justify-center items-center h-full">
-        <div>Loading...</div>
-    </div>
+    <div class="flex justify-center items-center h-full"></div>
 {:else}
     <main class="noSelect w-full h-full">
         <App />
