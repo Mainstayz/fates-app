@@ -127,6 +127,21 @@
             "aiReminder": {
                 "title": "AI 提醒助理",
                 "description": "配置 AI 提醒助理相关参数"
+            },
+            "update": {
+                "checking": "检查更新中...",
+                "downloading": "下载更新中...",
+                "progress": "下载进度: {downloaded} / {total} MB",
+                "available": "发现新版本: {version}",
+                "currentVersion": "当前版本",
+                "latest": "当前版本为最新版本",
+                "status": "状态",
+                "check": "检查更新",
+                "title": "更新",
+                "installing": "安装更新中...",
+                "restarting": "重启中...",
+                "error": "检查更新失败",
+                "description": "检查并更新应用程序"
             }
         },
         "week_report": {

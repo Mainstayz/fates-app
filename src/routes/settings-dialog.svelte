@@ -18,6 +18,9 @@
     import { crossfade } from "svelte/transition";
     import { appConfig } from "$src/app-config";
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "$src/config";
+    import { check } from "@tauri-apps/plugin-updater";
+    import { relaunch } from "@tauri-apps/plugin-process";
+    import { getVersion } from "@tauri-apps/api/app";
 
     let { open = $bindable() } = $props();
 
@@ -33,6 +36,10 @@
     let aiApiKey = $state<string | undefined>(undefined);
     let aiReminderPrompt = $state<string | undefined>(undefined);
     let settingsLoaded = $state(false);
+    let currentVersion = $state<string | undefined>(undefined);
+    let updateAvailable = $state(false);
+    let updateInProgress = $state(false);
+    let updateStatus = $state<string | undefined>(undefined);
 
     const InternalMap = $derived({
         "120": $t("app.settings.checkInterval.120"),
@@ -44,6 +51,7 @@
         { id: "common", title: $t("app.settings.nav.common") },
         { id: "notification", title: $t("app.settings.nav.notification") },
         { id: "ai", title: $t("app.settings.ai.title") },
+        { id: "update", title: $t("app.settings.update.title") },
     ]);
 
     $effect(() => {
@@ -187,8 +195,59 @@
         easing: cubicInOut,
     });
 
+    async function checkForUpdates() {
+        updateInProgress = true;
+        updateStatus = $t("app.settings.update.checking");
+
+        try {
+            const update = await check();
+            if (update) {
+                updateAvailable = true;
+                updateStatus = $t("app.settings.update.available", {
+                    values: { version: update.version },
+                });
+
+                let downloaded = 0;
+                let contentLength = 0;
+
+                await update.downloadAndInstall((event) => {
+                    switch (event.event) {
+                        case "Started":
+                            contentLength = event.data.contentLength || 0;
+                            updateStatus = $t("app.settings.update.downloading");
+                            break;
+                        case "Progress":
+                            downloaded += event.data.chunkLength || 0;
+                            updateStatus = $t("app.settings.update.progress", {
+                                values: {
+                                    downloaded: (downloaded / 1024 / 1024).toFixed(1),
+                                    total: (contentLength / 1024 / 1024).toFixed(1),
+                                },
+                            });
+                            break;
+                        case "Finished":
+                            updateStatus = $t("app.settings.update.installing");
+                            break;
+                    }
+                });
+
+                updateStatus = $t("app.settings.update.restarting");
+                await relaunch();
+            } else {
+                updateAvailable = false;
+                updateStatus = $t("app.settings.update.latest");
+            }
+        } catch (error) {
+            console.error("检查更新失败：", error);
+            updateStatus = $t("app.settings.update.error");
+        } finally {
+            updateInProgress = false;
+        }
+    }
+
     onMount(async () => {
         await initSettings();
+        currentVersion = await getVersion();
         settingsLoaded = true;
     });
 </script>
@@ -347,6 +406,31 @@
                                             id="ai-api-key"
                                             placeholder={$t("app.settings.ai.apiKeyPlaceholder")}
                                         />
+                                    </div>
+                                </div>
+                            {:else if currentSection === "update"}
+                                <div class="space-y-4">
+                                    <div class="flex flex-col gap-2">
+                                        <Label class="text-lg font-medium">{$t("app.settings.update.title")}</Label>
+                                        <p class="text-muted-foreground text-sm">
+                                            {$t("app.settings.update.description")}
+                                        </p>
+                                    </div>
+                                    <Separator class="my-4" />
+                                    <div class="flex flex-col gap-4">
+                                        <div class="flex flex-col gap-2">
+                                            <Label>{$t("app.settings.update.currentVersion")}</Label>
+                                            <div class="text-muted-foreground">{currentVersion}</div>
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <Label>{$t("app.settings.update.status")}</Label>
+                                            <div class="text-muted-foreground">{updateStatus}</div>
+                                        </div>
+                                        <Button onclick={checkForUpdates} disabled={updateInProgress}>
+                                            {updateInProgress
+                                                ? $t("app.settings.update.checking")
+                                                : $t("app.settings.update.check")}
+                                        </Button>
                                     </div>
                                 </div>
                             {/if}

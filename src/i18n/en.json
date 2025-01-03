@@ -147,6 +147,21 @@
       "aiReminder": {
         "title": "AI Reminder Assistant",
         "description": "Configure AI reminder assistant related parameters"
+      },
+      "update": {
+        "checking": "Checking for updates...",
+        "downloading": "Downloading update...",
+        "progress": "Download progress: {downloaded} / {total} MB",
+        "available": "New version found: {version}",
+        "currentVersion": "Current Version",
+        "status": "Status",
+        "check": "Check Update",
+        "latest": "Current version is the latest version",
+        "title": "Update",
+        "installing": "Installing update...",
+        "restarting": "Restarting...",
+        "error": "Check update failed",
+        "description": "Check and update the application"
       }
     },
     "statistics": {
