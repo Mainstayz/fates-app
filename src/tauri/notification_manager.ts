@@ -9,7 +9,7 @@ import { isHolidayDate } from "../i18n/holiday-cn";
 import "../i18n/i18n";
 import type { Matter, RepeatTask, Todo } from "../store";
 import { createMatter, getActiveRepeatTasks, getAllTodos, getMattersByRange } from "../store";
-enum NotificationType {
+export enum NotificationType {
     TaskStart,
     TaskEnd,
     NoTask,

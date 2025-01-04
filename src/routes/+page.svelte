@@ -2,10 +2,11 @@
     import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
     import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
-    import NotificationManager, { type Notification } from "$src/tauri/notification_manager";
+    import NotificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
     import TrayManager from "$src/tray-manager.svelte";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
     import { onMount } from "svelte";
+    import { emit } from "@tauri-apps/api/event";
 
     import App from "./app.svelte";
 
@@ -36,6 +37,12 @@
 
     function onNotificationMessage(payload: Notification) {
         console.log("onNotificationMessage: payload = ", payload);
+
+        if (payload.notificationType === NotificationType.NewTask) {
+            // notify time progress bar to refresh
+            emit("refresh-time-progress", {});
+        }
+
         sendSystemNotification(payload.title, payload.message).catch((error) => {
             console.error("Failed to send system notification:", error);
         });
