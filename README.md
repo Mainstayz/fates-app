@@ -1,7 +1,7 @@
 # Fates App
 
-<div align="center"><img src="./public/app-icon.png" alt="Fates App Logo">
-
+<div align="center"><img src="./src-tauri/icons/128x128.png" alt="Fates App Logo">
+</p>
 <a href="https://opensource.org/licenses/MIT">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
 </a>
@@ -23,10 +23,8 @@
 - 🎯 **任务管理** - 直观的待办事项管理，支持优先级设置和状态追踪
 - 📅 **时间追踪** - 可视化的时间进度条和每日热力图
 - 🔔 **智能提醒** - 可自定义的工作时间和提醒间隔
-- 🎨 **主题切换** - 支持明暗两种主题模式
 - 🤖 **AI 助手** - 内置 AI 功能，帮助优化工作流程（可选）
 - 🌐 **多语言支持** - 支持中文和英文界面
-- 💾 **数据同步** - 安全的本地数据存储
 
 ## 🚀 快速开始
 
@@ -37,7 +35,7 @@
 
 ### 安装
 
-1. 从 [Releases](https://github.com/yourusername/fates-app/releases) 页面下载最新版本
+1. 从 [Releases](https://github.com/Mainstayz/fates-app/releases) 页面下载最新版本
 2. 运行安装程序
 3. 按照安装向导的指示完成安装
 
@@ -45,7 +43,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/fates-app.git
+git clone https://github.com/Mainstayz/fates-app.git
 
 # 进入项目目录
 cd fates-app
@@ -54,10 +52,7 @@ cd fates-app
 pnpm install
 
 # 启动开发服务器
-pnpm dev
-
-# 构建应用
-pnpm tauri:build
+pnpm tauri dev
 ```
 
 ## 📖 使用指南
@@ -67,7 +62,7 @@ pnpm tauri:build
 - **任务管理**: 创建、编辑和组织您的待办事项
 - **时间追踪**: 使用时间进度条监控工作时间
 - **数据统计**: 通过热力图查看您的工作模式
-- **快捷操作**: 支持全局快捷键和系统托盘操作
+- **快捷操作**: 支持系统托盘操作
 
 ### AI 功能（可选）
 
@@ -97,15 +92,3 @@ pnpm tauri:build
 - [Svelte](https://svelte.dev/)
 - [Tailwind CSS](https://tailwindcss.com/)
 
-## 📞 联系我们
-
-- 提交 Issue: [GitHub Issues](https://github.com/yourusername/fates-app/issues)
-- 邮件联系: your.email@example.com
-
---------------------------------------------------------------------------------
-
-<div align="center"><strong>Fates App</strong> © 2024
-
-用 ❤️ 打造
-
-</div>
