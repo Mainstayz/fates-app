@@ -74,7 +74,7 @@ class Tray {
         if (this.isWindows()) {
             return resolveResource("./resources/icon.ico");
         } else if (this.isMacos()) {
-            return resolveResource("./resources/icon.icns");
+            return resolveResource("./resources/icon-mac.ico");
         } else {
             return resolveResource("./resources/icon.png");
         }
