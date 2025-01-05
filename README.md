@@ -2,8 +2,8 @@
 
 <div align="center"><img src="./src-tauri/icons/128x128.png" alt="Fates App Logo">
 </p>
-<a href="https://opensource.org/licenses/MIT">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+<a href="https://opensource.org/licenses/Apache-2.0">
+  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0">
 </a>
 <a href="https://tauri.app/">
   <img src="https://img.shields.io/badge/Made%20with-Tauri-blue" alt="Made with Tauri">
@@ -28,16 +28,12 @@
 
 ## 应用截图
 
-### 任务管理
-
-<details>
+<details open>
 <summary>任务管理</summary>
 
 ![task-management](./snapshots/task-management.png)
 
 </details>
-
-### 日程追踪
 
 <details>
 <summary>日程追踪</summary>
@@ -46,15 +42,19 @@
 
 </details>
 
-### 待办事项
+<details>
+<summary>待办事项</summary>
 
 ![todo-list](./snapshots/todo-list.png)
 
-### 重复任务
+</details>
+
+<details>
+<summary>重复任务</summary>
 
 ![repeat-task](./snapshots/repeat-task.png)
 
-### 数据统计
+</details>
 
 <details>
 <summary>数据统计</summary>
@@ -62,8 +62,6 @@
 ![data-statistics](./snapshots/data-statistics.png)
 
 </details>
-
-### 周报助手
 
 <details>
 <summary>周报助手</summary>
