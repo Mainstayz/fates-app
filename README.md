@@ -84,7 +84,7 @@ pnpm tauri dev
 
 ## 📄 许可证
 
-本项目基于 MIT 许可证开源 - 查看 <LICENSE> 文件了解更多详情
+本项目基于 Apache 2.0 许可证开源 - 查看 <LICENSE> 文件了解更多详情
 
 ## 🙏 致谢
 
