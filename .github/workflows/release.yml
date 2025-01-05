@@ -1,4 +1,5 @@
 name: Release
+
 on:
   push:
     tags:
@@ -8,71 +9,58 @@ on:
 jobs:
   release:
     permissions:
-      contents: write
+      contents: write  # 允许写入内容到仓库
     strategy:
-      fail-fast: false
+      fail-fast: false  # 一个平台失败不影响其他平台
       matrix:
         include:
-          # - platform: "macos-latest" # for Arm based macs (M1 and above).
-          #   args: "--target aarch64-apple-darwin"
-          # - platform: "macos-latest" # for Intel based macs.
-          #   args: "--target x86_64-apple-darwin"
-          # - platform: "ubuntu-22.04" # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: "macos-latest" # 为 Arm 架构的 Mac (M1 及以上) 构建
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest" # 为 Intel 架构的 Mac 构建
+            args: "--target x86_64-apple-darwin"
+          # - platform: "ubuntu-22.04" # 为 Linux 构建 (Tauri v1 可使用 ubuntu-20.04)
           #   args: ""
-          - platform: "windows-latest"
+          - platform: "windows-latest"  # 为 Windows 构建
             args: ""
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}  # 使用 matrix 中定义的平台
     steps:
-      - name: Checkout repository
+      - name: Checkout repository  # 检出代码
         uses: actions/checkout@v4
 
-      - name: Rust setup
+      - name: Rust setup  # 设置 Rust 环境
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install pnpm
+      - name: Install pnpm  # 全局安装 pnpm
         run: npm install -g pnpm
 
-      - name: Sync node version and setup cache
+      - name: Sync node version and setup cache  # 同步 Node 版本并设置缓存
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: "pnpm" # Set this to npm, yarn or pnpm.
+          node-version: "lts/*"  # 使用最新的 LTS 版本
+          cache: "pnpm"  # 设置 pnpm 缓存 (可选 npm 或 yarn)
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+      - name: install dependencies (ubuntu only)  # 仅 Ubuntu 需要安装系统依赖
+        if: matrix.platform == 'ubuntu-22.04'  # 必须与上面定义的平台值匹配
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install frontend dependencies
-        # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-        run: pnpm install --no-frozen-lockfile # Change this to npm, yarn or pnpm.
+      - name: Install frontend dependencies  # 安装前端依赖
+        # 如果没有配置 beforeBuildCommand，也可以在这里构建前端
+        run: pnpm install --no-frozen-lockfile  # 使用 pnpm 安装依赖 (可选 npm 或 yarn)
 
-      - name: Build the app
+      - name: Build the app  # 构建应用程序
         id: build
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0  # 使用 Tauri 官方构建 action
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 访问令牌
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}  # 签名私钥
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}  # 私钥密码
         with:
-          tagName: ${{ github.ref_name }} # This only works if your workflow triggers on new tags.
-          releaseName: "Fates v__VERSION__" # tauri-action replaces \_\_VERSION\_\_ with the app version.
-          releaseBody: "See the assets to download and install this version."
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
-
-      # - name: Upload assets
-        # env:
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # artifactPaths: ${{ steps.build.outputs.artifactPaths }}
-        # run: pnpm updater
-
-      # - name: Deploy
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./publish
-      #     keep_files: true
+          tagName: ${{ github.ref_name }}  # 使用触发工作流的 tag 名称
+          releaseName: "Fates v__VERSION__"  # tauri-action 会自动替换 __VERSION__ 为应用版本
+          releaseBody: "See the assets to download and install this version."  # 发布说明
+          releaseDraft: true  # 创建为草稿版本
+          prerelease: false  # 不是预发布版本
+          args: ${{ matrix.args }}  # 使用 matrix 中定义的构建参数
