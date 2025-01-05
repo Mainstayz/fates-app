@@ -30,11 +30,21 @@
 
 ### 任务管理
 
+<details>
+<summary>任务管理</summary>
+
 ![task-management](./snapshots/task-management.png)
 
-可视化的时间进度条
+</details>
+
+### 日程追踪
+
+<details>
+<summary>日程追踪</summary>
 
 ![time-tracking](./snapshots/time-tracking.png)
+
+</details>
 
 ### 待办事项
 
@@ -46,11 +56,21 @@
 
 ### 数据统计
 
+<details>
+<summary>数据统计</summary>
+
 ![data-statistics](./snapshots/data-statistics.png)
+
+</details>
 
 ### 周报助手
 
+<details>
+<summary>周报助手</summary>
+
 ![week-report](./snapshots/week-report.png)
+
+</details>
 
 ## 🚀 快速开始
 
