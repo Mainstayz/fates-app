@@ -41,7 +41,7 @@ class Tray {
         }
         this.flashState = state;
         if (this.isWindows()) {
-            const iconPath = await resolveResource("./resources/icon.png");
+            const iconPath = await this.getIconPath();
             if (state) {
                 this.flashFlag = true;
                 this.flashInterval = setInterval(() => {
@@ -70,6 +70,16 @@ class Tray {
         return platform().toLowerCase() === "windows";
     }
 
+    getIconPath() {
+        if (this.isWindows()) {
+            return resolveResource("./resources/icon.ico");
+        } else if (this.isMacos()) {
+            return resolveResource("./resources/icon.icns");
+        } else {
+            return resolveResource("./resources/icon.png");
+        }
+    }
+
     async init() {
         if (!hasTray) {
             await this.createTrayIcon();
@@ -87,12 +97,13 @@ class Tray {
             return tray;
         }
         console.log("createTrayIcon ... ");
-        const iconPath = await resolveResource("./resources/icon.png");
+        const iconPath = await this.getIconPath();
         console.log("iconPath:", iconPath);
         const options: TrayIconOptions = {
             id: this.TRAY_ID,
             icon: iconPath,
             menu: await this.createMenu(),
+            iconAsTemplate: this.isMacos(),
             menuOnLeftClick: this.isMacos(),
             action: async (event: TrayIconEvent) => {
                 switch (event.type) {
