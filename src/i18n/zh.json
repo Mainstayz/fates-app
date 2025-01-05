@@ -152,8 +152,9 @@
             "custom_content_button": "自定义内容",
             "modify_prompt_button": "修改提示词",
             "custom_content_title": "自定义内容",
-            "modify_prompt_title": "修改提示词"
-
+            "modify_prompt_title": "修改提示词",
+            "custom_content_placeholder": "请输入自定义内容",
+            "modify_prompt_placeholder": "请输入修改后的提示词"
         },
         "other": {
             "confirmDelete": "定删除吗？",
@@ -180,7 +181,9 @@
                 "topTen": "前 10 条 {tag}"
             },
             "noChartData": "无法生成图表数据",
-            "durationHours": "时长（小时）"
+            "durationHours": "时长（小时）",
+            "unclassifiedTag": "未分类",
+            "otherTag": "其他"
         },
         "messages": {
             "newRepeatTasks": "新重复任务",

@@ -18,20 +18,41 @@
 
 </div>
 
-## ✨ 特性
+## 特性
 
-- 🎯 **任务管理** - 直观的待办事项管理，支持优先级设置和状态追踪
-- 📅 **时间追踪** - 可视化的时间进度条和每日热力图
-- 🔔 **智能提醒** - 可自定义的工作时间和提醒间隔
-- 🤖 **AI 助手** - 内置 AI 功能，帮助优化工作流程（可选）
-- 🌐 **多语言支持** - 支持中文和英文界面
+-   任务管理：直观的待办事项管理，支持优先级设置和状态追踪，以及每日热力图
+-   日程追踪：可视化的每日时间进度条
+-   支持事项：支持添加待办事项、重复任务
+-   数据统计：根据选择的时间范围，对事项记录进行统计分析
+-   周报助手：根据最近一周的事项记录，生成周报
+
+## 应用截图
+
+### 任务管理
+
+![task-management](./snapshots/task-management.png)
+
+可视化的时间进度条
+
+![time-tracking](./snapshots/time-tracking.png)
+
+### 待办事项
+
+![todo-list](./snapshots/todo-list.png)
+
+### 重复任务
+
+![repeat-task](./snapshots/repeat-task.png)
+
+### 数据统计
+
+![data-statistics](./snapshots/data-statistics.png)
+
+### 周报助手
+
+![week-report](./snapshots/week-report.png)
 
 ## 🚀 快速开始
-
-### 系统要求
-
-- Windows 10 或更高版本
-- macOS 10.15 或更高版本
 
 ### 安装
 
@@ -55,23 +76,6 @@ pnpm install
 pnpm tauri dev
 ```
 
-## 📖 使用指南
-
-### 基本功能
-
-- **任务管理**: 创建、编辑和组织您的待办事项
-- **时间追踪**: 使用时间进度条监控工作时间
-- **数据统计**: 通过热力图查看您的工作模式
-- **快捷操作**: 支持系统托盘操作
-
-### AI 功能（可选）
-
-如需使用 AI 功能，请在设置中：
-
-1. 启用 AI 功能
-2. 配置 API 密钥
-3. 设置基础 URL（如需自定义）
-
 ## 🤝 贡献指南
 
 我们欢迎所有形式的贡献，无论是新功能、bug 修复还是文档改进。请遵循以下步骤：
@@ -88,7 +92,6 @@ pnpm tauri dev
 
 ## 🙏 致谢
 
-- [Tauri](https://tauri.app/)
-- [Svelte](https://svelte.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-
+-   [Tauri](https://tauri.app/)
+-   [Svelte](https://svelte.dev/)
+-   [Tailwind CSS](https://tailwindcss.com/)

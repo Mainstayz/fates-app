@@ -12,7 +12,7 @@
     let {
         priority,
         variant,
-        class: className,
+        class: className = "",
     }: {
         priority: Priority;
         variant: "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | undefined;

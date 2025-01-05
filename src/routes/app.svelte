@@ -63,12 +63,12 @@
             label: "week_report",
             translationKey: "routes.week_report",
         },
-        {
-            icon: MessageSquare,
-            variant: "default",
-            label: "openai",
-            translationKey: "routes.openai",
-        },
+        // {
+        //     icon: MessageSquare,
+        //     variant: "default",
+        //     label: "openai",
+        //     translationKey: "routes.openai",
+        // },
         {
             icon: Icons.Settings,
             variant: "default",

@@ -187,11 +187,15 @@
             <AlertDialog.Title>{$_("app.week_report.custom_content_title")}</AlertDialog.Title>
         </AlertDialog.Header>
         <div class="grid gap-4 py-4">
-            <Textarea bind:value={customContent} class="bg-background min-h-[200px]" />
+            <Textarea
+                bind:value={customContent}
+                class="bg-background min-h-[200px]"
+                placeholder={$_("app.week_report.custom_content_placeholder")}
+            />
         </div>
         <AlertDialog.Footer>
-            <AlertDialog.Cancel>取消</AlertDialog.Cancel>
-            <AlertDialog.Action onclick={handleCustomContentSubmit}>确定</AlertDialog.Action>
+            <AlertDialog.Cancel>{$_("app.other.cancel")}</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={handleCustomContentSubmit}>{$_("app.other.confirm")}</AlertDialog.Action>
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>
@@ -203,11 +207,15 @@
             <AlertDialog.Title>{$_("app.week_report.modify_prompt_title")}</AlertDialog.Title>
         </AlertDialog.Header>
         <div class="grid gap-4 py-4">
-            <Textarea bind:value={promptContent} class="bg-background min-h-[200px]" />
+            <Textarea
+                bind:value={promptContent}
+                class="bg-background min-h-[200px]"
+                placeholder={$_("app.week_report.modify_prompt_placeholder")}
+            />
         </div>
         <AlertDialog.Footer>
-            <AlertDialog.Cancel>取消</AlertDialog.Cancel>
-            <AlertDialog.Action onclick={handlePromptSubmit}>确定</AlertDialog.Action>
+            <AlertDialog.Cancel>{$_("app.other.cancel")}</AlertDialog.Cancel>
+            <AlertDialog.Action onclick={handlePromptSubmit}>{$_("app.other.confirm")}</AlertDialog.Action>
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>

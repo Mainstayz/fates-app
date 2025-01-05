@@ -95,9 +95,9 @@
 
     async function generateTitle() {
         aiLoading = true;
-        let apikey = appConfig.AI_API_KEY;
-        let model = appConfig.AI_MODEL_ID;
-        let baseUrl = appConfig.AI_BASE_URL;
+        let apikey = appConfig.aiApiKey;
+        let model = appConfig.aiModelId;
+        let baseUrl = appConfig.aiBaseUrl;
 
         let client = new OpenAIClient({
             apiKey: apikey,
@@ -205,6 +205,7 @@
                         class="w-[160px]"
                         on:change={({ detail }) => {
                             console.log("priority changed:", detail.priority);
+                            priority = detail.priority;
                         }}
                     />
                 </div>

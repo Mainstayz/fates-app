@@ -99,7 +99,9 @@
       "custom_content_button": "Custom Content",
       "modify_prompt_button": "Modify Prompt",
       "custom_content_title": "Custom Content",
-      "modify_prompt_title": "Modify Prompt"
+      "modify_prompt_title": "Modify Prompt",
+      "custom_content_placeholder": "Please enter custom content",
+      "modify_prompt_placeholder": "Please enter modified prompt"
     },
     "other": {
       "confirmDelete": "Are you sure to delete?",
@@ -178,8 +180,10 @@
       "tagDetailChart": {
         "topTen": "Top 10 {tag}"
       },
-            "noChartData": "No Chart Data",
-            "durationHours": "Duration (hours)"
+      "noChartData": "No Chart Data",
+      "durationHours": "Duration (hours)",
+      "unclassifiedTag": "Unclassified",
+      "otherTag": "Other"
     },
     "messages": {
       "newRepeatTasks": "New Repeat Tasks",

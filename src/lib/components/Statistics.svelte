@@ -4,13 +4,6 @@
     import BarChart from "./charts/bar-chart.svelte";
     import TagDetailChart from "./charts/tag-detail-chart.svelte";
     import type { TimelineItem } from "$lib/types";
-    import {
-        calculateTagStats,
-        filterItemsByRange,
-        type TimeRange,
-        UNCLASSIFIED_TAG,
-        OTHER_TAG,
-    } from "$lib/utils/statistics";
     import { t } from "svelte-i18n";
 
     // define component properties and state
@@ -27,6 +20,11 @@
         { value: "month", label: $t("app.statistics.timeRanges.month") },
         { value: "week", label: $t("app.statistics.timeRanges.week") },
     ]);
+
+    let UNCLASSIFIED_TAG = $derived($t("app.statistics.unclassifiedTag"));
+    let OTHER_TAG = $derived($t("app.statistics.otherTag"));
+
+    const MAX_TAGS = 10;
 
     // handle tag selection
     function handleTagSelect(tag: string) {
@@ -166,6 +164,57 @@
 
         console.log("Final result for regular tag:", result);
         return result;
+    }
+
+    type TimeRange = "all" | "year" | "month" | "week";
+
+    function filterItemsByRange(items: TimelineItem[], range: TimeRange): TimelineItem[] {
+        const now = new Date();
+        const startDate = new Date();
+        switch (range) {
+            case "week":
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case "month":
+                startDate.setMonth(now.getMonth() - 1);
+                break;
+            case "year":
+                startDate.setFullYear(now.getFullYear(), 0, 1);
+                break;
+            default:
+                return items;
+        }
+        return items.filter((item) => {
+            const itemDate = new Date(item.start);
+            return itemDate >= startDate && itemDate <= now;
+        });
+    }
+
+    function calculateTagStats(items: TimelineItem[], selectedRange: TimeRange) {
+        const tagDurations: { [key: string]: number } = {};
+        const filteredItems = filterItemsByRange(items, selectedRange);
+
+        filteredItems.forEach((item) => {
+            if (!item.start || !item.end) return;
+
+            const duration = new Date(item.end).getTime() - new Date(item.start).getTime();
+            const tags = !item.tags || item.tags.length === 0 ? [""] : item.tags;
+
+            tags.forEach((tag) => {
+                const tagName = tag.trim() || UNCLASSIFIED_TAG;
+                tagDurations[tagName] = (tagDurations[tagName] || 0) + duration;
+            });
+        });
+
+        const sortedEntries = Object.entries(tagDurations).sort(([, a], [, b]) => b - a);
+        if (sortedEntries.length > MAX_TAGS) {
+            const top9Entries = sortedEntries.slice(0, 9);
+            const othersDuration = sortedEntries.slice(9).reduce((sum, [, duration]) => sum + duration, 0);
+
+            return Object.fromEntries([...top9Entries, [OTHER_TAG, othersDuration]]);
+        }
+
+        return tagDurations;
     }
 
     $effect(() => {
