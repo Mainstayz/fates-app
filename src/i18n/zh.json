@@ -13,7 +13,7 @@
         "timeline": {
             "newTaskTitle": "新任务",
             "title": "任务管理",
-            "description": "用文字描绘每一个瞬间！",
+            "description": "做对的事，而不是把事情做对。",
             "addTask": "添加任务",
             "addTaskPlaceholder": "请输入任务名称",
             "timeRanges": {
