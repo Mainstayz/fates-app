@@ -53,11 +53,14 @@
       "todoInProgress": "Added",
       "todoInProgressDescription": "Added, you can check it in the timeline",
       "createTodo": "Create Todo",
+      "noTodo": "No todo items",
+      "totalTodo": "Total",
       "searchPlaceholder": "Search todo title..."
     },
     "repeat": {
       "title": "Repeat Tasks",
       "description": "Repeat tasks are tasks that need to be performed regularly, such as daily drinking water and exercise.",
+      "totalRepeat": "Total",
       "createTask": "Create Task",
       "searchPlaceholder": "Search task title...",
       "columns": {

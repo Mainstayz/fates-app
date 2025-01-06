@@ -191,6 +191,7 @@
                     placeholder={$t("app.todo.searchPlaceholder")}
                     class="bg-background h-8 w-[150px] lg:w-[250px]"
                     type="search"
+                    disabled={table.rows.length === 0}
                     bind:value={search.value}
                     oninput={() => {
                         search.set();
@@ -267,32 +268,40 @@
                 </Table.Body>
             </Table.Root>
         </div>
-        <div class="flex justify-end items-center space-x-2">
-            <Label class="text-sm text-muted-foreground">
-                {$t("app.other.page0")}
-                {table.currentPage}
-                {$t("app.other.page1")}
-                {table.pageCount}
-                {$t("app.other.page2")}
-            </Label>
-            <Button
-                class="w-8 h-8"
-                disabled={table.currentPage === 1}
-                variant="outline"
-                size="icon"
-                onclick={() => table.setPage("previous")}
-            >
-                <ChevronLeft />
-            </Button>
-            <Button
-                class="w-8 h-8"
-                disabled={table.currentPage === table.pageCount}
-                variant="outline"
-                size="icon"
-                onclick={() => table.setPage("next")}
-            >
-                <ChevronRight />
-            </Button>
+        <div class="flex flex-row justify-between">
+            <div class="flex flex-col">
+                <!-- total todo count -->
+                <Label class="text-sm text-muted-foreground">
+                    {$t("app.todo.totalTodo")}: {table.rows.length}
+                </Label>
+            </div>
+            <div class="flex justify-end items-center space-x-2">
+                <Label class="text-sm text-muted-foreground">
+                    {$t("app.other.page0")}
+                    {table.currentPage}
+                    {$t("app.other.page1")}
+                    {Math.max(table.pageCount, 1)}
+                    {$t("app.other.page2")}
+                </Label>
+                <Button
+                    class="w-8 h-8"
+                    disabled={table.currentPage === 1}
+                    variant="outline"
+                    size="icon"
+                    onclick={() => table.setPage("previous")}
+                >
+                    <ChevronLeft />
+                </Button>
+                <Button
+                    class="w-8 h-8"
+                    disabled={table.currentPage === table.pageCount}
+                    variant="outline"
+                    size="icon"
+                    onclick={() => table.setPage("next")}
+                >
+                    <ChevronRight />
+                </Button>
+            </div>
         </div>
     </div>
 </div>

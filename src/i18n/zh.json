@@ -53,11 +53,14 @@
             "todoInProgress": "添加",
             "todoInProgressDescription": "已添加，可前往时间线中查看",
             "createTodo": "创建待办",
+            "noTodo": "没有待办事项",
+            "totalTodo": "总数",
             "searchPlaceholder": "搜索待办标题..."
         },
         "repeat": {
             "title": "重复任务",
             "description": "重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。",
+            "totalRepeat": "总数",
             "createTask": "创建任务",
             "searchPlaceholder": "搜索任务标题...",
             "columns": {
