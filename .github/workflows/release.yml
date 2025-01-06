@@ -16,8 +16,8 @@ jobs:
         include:
           - platform: "macos-latest" # 为 Arm 架构的 Mac (M1 及以上) 构建
             args: "--target aarch64-apple-darwin"
-          - platform: "macos-latest" # 为 Intel 架构的 Mac 构建
-            args: "--target x86_64-apple-darwin"
+          # - platform: "macos-latest" # 为 Intel 架构的 Mac 构建
+          #   args: "--target x86_64-apple-darwin"
           # - platform: "ubuntu-22.04" # 为 Linux 构建 (Tauri v1 可使用 ubuntu-20.04)
           #   args: ""
           - platform: "windows-latest"  # 为 Windows 构建
