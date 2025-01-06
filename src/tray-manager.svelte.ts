@@ -104,16 +104,12 @@ class Tray {
             icon: iconPath,
             menu: await this.createMenu(),
             iconAsTemplate: this.isMacos(),
-            menuOnLeftClick: this.isMacos(),
+            menuOnLeftClick: false,
             action: async (event: TrayIconEvent) => {
                 switch (event.type) {
                     case "Click":
                         console.log(`mouse ${event.button} button pressed, state: ${event.buttonState}`);
                         if (event.button === "Left") {
-                            // 左键点击，显示主窗口
-                            if (this.isMacos()) {
-                                return;
-                            }
                             const window = getCurrentWindow();
                             if (window) {
                                 await window.unminimize();
@@ -122,6 +118,9 @@ class Tray {
                             } else {
                                 console.log("main window not found");
                             }
+                        }
+                        if (event.button === "Right") {
+                            console.log("right button pressed");
                         }
                         break;
                     case "Enter":
