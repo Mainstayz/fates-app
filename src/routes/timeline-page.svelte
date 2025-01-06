@@ -560,7 +560,9 @@
             </div>
 
             <div class="flex flex-col pt-4 gap-2">
-                <Label class="text-lg text-muted-foreground">{$t("app.timeline.taskCompletionStatusLastYear")}</Label>
+                <Label class="text-lg text-muted-foreground">
+                    {$t("app.timeline.taskCompletionStatusLastYear", { values: { year: new Date().getFullYear() } })}
+                </Label>
                 <DailyHeatMap bind:this={heatmapComponent} data={heatmapData} />
             </div>
         </div>

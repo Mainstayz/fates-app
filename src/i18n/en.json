@@ -24,7 +24,7 @@
         "7d": "Last 7 days",
         "default": "Select Time Range"
       },
-      "taskCompletionStatusLastYear": "Task records for the past year",
+      "taskCompletionStatusLastYear": "Task records for the {year} year",
       "month": "MMM",
       "weekdays": {
         "mon": "Mon",
@@ -33,7 +33,7 @@
         "sun": "Sun"
       },
       "noValue": "No",
-      "taskCompletionAt": "tasks completion at"
+      "taskCompletionAt": "tasks completion on"
     },
     "todo": {
       "title": "Todo",
@@ -214,7 +214,7 @@
     },
     "taskDetail": {
       "taskTitlePlaceholder": "Task title",
-      "aiGenerateTitle": "AI generate title",
+      "aiGenerateTitle": "AI optimize title",
       "priorityLabel": "Priority",
       "tagsLabel": "Tags",
       "dateLabel": "Date",

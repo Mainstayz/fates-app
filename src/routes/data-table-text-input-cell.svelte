@@ -3,6 +3,7 @@
 
     export let rowId: string;
     export let value: string;
+    export let disabled: boolean = false;
     export let onUpdateValue: (rowId: string, newValue: string) => void;
 
     const handleSubmit = () => {
@@ -16,6 +17,7 @@
     bind:value
     placeholder=""
     autofocus={false}
+    {disabled}
     tabindex={-1}
     onkeydown={(e) => {
         if (e.key === "Enter") {

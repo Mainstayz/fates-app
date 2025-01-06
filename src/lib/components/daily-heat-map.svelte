@@ -5,8 +5,12 @@
     import * as echarts from "echarts";
     import type { EChartsOption } from "echarts";
     import { t, locale } from "svelte-i18n";
+    import localizedFormat from "dayjs/plugin/localizedFormat";
+    import "dayjs/locale/zh";
+    import "dayjs/locale/en";
 
     dayjs.extend(localeData);
+    dayjs.extend(localizedFormat);
 
     // 定义数据源的类型
     interface DataPoint {
@@ -31,19 +35,16 @@
     }
 
     function fillMissingDates(data: DataPoint[]): DataPoint[] {
+        console.log("data: ", data);
+        const dateFormat = "YYYY-MM-DD";
         const startDate = dayjs().startOf("year");
         const endDate = dayjs();
         const filledData: DataPoint[] = [];
-        const dataMap = new Map(
-            data.map((item) => [
-                typeof item.date === "string" ? item.date : dayjs(item.date).format("YYYY-MM-DD"),
-                item.value,
-            ])
-        );
+        const dataMap = new Map(data.map((item) => [dayjs(item.date).format(dateFormat), item.value]));
 
         let currentDate = startDate;
         while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
-            const dateStr = currentDate.format("YYYY-MM-DD");
+            const dateStr = currentDate.format(dateFormat);
             filledData.push({
                 date: dateStr,
                 value: dataMap.has(dateStr) ? dataMap.get(dateStr)! : 0,
@@ -56,21 +57,23 @@
 
     function formatData(data: DataPoint[]) {
         const filledData = fillMissingDates(data);
+        console.log("filledData: ", filledData);
         return filledData.map((item) => {
-            const dateStr = typeof item.date === "string" ? item.date : dayjs(item.date).format("YYYY-MM-DD");
-            return [dateStr, item.value];
+            return [item.date, item.value];
         });
     }
 
     function updateChart(locale: string = "en") {
         if (!myChart) return;
 
-        console.log("chart locale: ", locale);
+        console.log("locale: ", locale);
         const option: EChartsOption = {
             tooltip: {
                 formatter: function (params: any) {
                     const value = params.value[1] || $t("app.timeline.noValue");
-                    return `${value} ${$t("app.timeline.taskCompletionAt")} ${params.value[0]}`;
+                    const dateStr = params.value[0];
+                    const date = dayjs(dateStr).locale(locale).format("MMM DD");
+                    return `${value} ${$t("app.timeline.taskCompletionAt")} ${date}`;
                 },
             },
             visualMap: {
@@ -144,5 +147,5 @@
 </script>
 
 <div class="bg-background">
-    <div class="w-full h-[220px]" bind:this={chartDom}></div>
+    <div class="w-full h-[200px]" bind:this={chartDom}></div>
 </div>

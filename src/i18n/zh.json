@@ -24,7 +24,7 @@
                 "7d": "最近 7 天",
                 "default": "选择时间范围"
             },
-            "taskCompletionStatusLastYear": "最近一年任务记录",
+            "taskCompletionStatusLastYear": "{year} 年任务记录",
             "month": "M 月",
             "weekdays": {
                 "mon": "一",
@@ -214,7 +214,7 @@
     },
     "taskDetail": {
       "taskTitlePlaceholder": "任务标题",
-      "aiGenerateTitle": "AI 生成标题",
+      "aiGenerateTitle": "AI 优化标题",
       "priorityLabel": "优先级",
       "tagsLabel": "标签",
       "dateLabel": "日期",

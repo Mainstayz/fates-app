@@ -224,6 +224,7 @@
                                     <DataTableTextInputCell
                                         rowId={row.id}
                                         value={row.title}
+                                        disabled={todoAPI.isTodoInProgress(row.id) || row.status === "completed"}
                                         onUpdateValue={(rowId, newValue) => {
                                             onUpdateValue(rowId, "title", newValue);
                                         }}

@@ -94,6 +94,9 @@
     }
 
     async function generateTitle() {
+        if (!aiEnabled) {
+            return;
+        }
         aiLoading = true;
         let apikey = appConfig.aiApiKey;
         let model = appConfig.aiModelId;
@@ -173,25 +176,23 @@
             autofocus={false}
             tabindex={-1}
         />
-        {#if aiEnabled}
-            <Tooltip.Provider>
-                <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
-                    <Tooltip.Trigger>
-                        <Button variant="ghost" size="sm" onclick={generateTitle}>
-                            {#if aiLoading}
-                                <LoaderCircle class="animate-spin" />
-                            {:else}
-                                <Sparkles />
-                            {/if}
-                            <Label class="text-muted-foreground text-default">AI</Label>
-                        </Button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>
-                        <p>{$t("app.taskDetail.aiGenerateTitle")}</p>
-                    </Tooltip.Content>
-                </Tooltip.Root>
-            </Tooltip.Provider>
-        {/if}
+        <Tooltip.Provider>
+            <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
+                <Tooltip.Trigger>
+                    <Button variant="ghost" size="sm" disabled={!aiEnabled} onclick={generateTitle}>
+                        {#if aiLoading}
+                            <LoaderCircle class="animate-spin" />
+                        {:else}
+                            <Sparkles />
+                        {/if}
+                        <Label class="text-muted-foreground text-default">AI</Label>
+                    </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                    <p>{$t("app.taskDetail.aiGenerateTitle")}</p>
+                </Tooltip.Content>
+            </Tooltip.Root>
+        </Tooltip.Provider>
     </div>
     <div class="flex flex-row gap-2">
         <div class="w-[24px]"></div>
