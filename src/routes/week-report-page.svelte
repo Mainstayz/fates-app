@@ -20,6 +20,8 @@
 
     let aiLoading = $state(false);
     let copyLoading = $state(false);
+    let aiEnableAlert = $state(false);
+
 
     let textareaElement = $state<HTMLTextAreaElement | null>(null);
 
@@ -71,6 +73,10 @@
     }
 
     async function handleGenerate() {
+        if (appConfig.aiEnabled == false) {
+            aiEnableAlert = true;
+            return;
+        }
         aiLoading = true;
         let apikey = appConfig.aiApiKey;
         let model = appConfig.aiModelId;
@@ -219,3 +225,17 @@
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>
+
+<AlertDialog.Root bind:open={aiEnableAlert}>
+    <AlertDialog.Overlay class="bg-[#000000]/20" />
+    <AlertDialog.Content class="w-[640px] max-w-[640px]">
+        <AlertDialog.Header>
+            <AlertDialog.Title>{$_("app.week_report.ai_enable_title")}</AlertDialog.Title>
+        </AlertDialog.Header>
+        <AlertDialog.Description>{$_("app.week_report.ai_enable_description")}</AlertDialog.Description>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel>{$_("app.other.confirm")}</AlertDialog.Cancel>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+</AlertDialog.Root>
+

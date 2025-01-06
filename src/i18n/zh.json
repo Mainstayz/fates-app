@@ -154,7 +154,9 @@
             "custom_content_title": "自定义内容",
             "modify_prompt_title": "修改提示词",
             "custom_content_placeholder": "请输入自定义内容",
-            "modify_prompt_placeholder": "请输入修改后的提示词"
+            "modify_prompt_placeholder": "请输入修改后的提示词",
+            "ai_enable_title": "提示",
+            "ai_enable_description": "需要启用 AI 功能，请先前往设置中启用 AI 功能"
         },
         "other": {
             "confirmDelete": "定删除吗？",

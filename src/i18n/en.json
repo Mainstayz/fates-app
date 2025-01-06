@@ -101,7 +101,9 @@
       "custom_content_title": "Custom Content",
       "modify_prompt_title": "Modify Prompt",
       "custom_content_placeholder": "Please enter custom content",
-      "modify_prompt_placeholder": "Please enter modified prompt"
+      "modify_prompt_placeholder": "Please enter modified prompt",
+      "ai_enable_title": "Tip",
+      "ai_enable_description": "Need to enable AI function, please enable AI function in settings first"
     },
     "other": {
       "confirmDelete": "Are you sure to delete?",

@@ -361,13 +361,13 @@
                                 </div>
                             {:else if currentSection === "ai"}
                                 <div class="space-y-4">
-                                    <div class="flex flex-col gap-2">
+                                    <!-- <div class="flex flex-col gap-2">
                                         <Label class="text-lg font-medium">{$t("app.settings.ai.configTitle")}</Label>
                                         <p class="text-muted-foreground text-sm">
                                             {$t("app.settings.ai.configDescription")}
                                         </p>
-                                    </div>
-                                    <Separator class="my-4" />
+                                    </div> -->
+                                    <!-- <Separator class="my-4" /> -->
                                     <div class="flex items-center justify-between space-x-2">
                                         <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
                                             <span>{$t("app.settings.ai.enabled")}</span>
@@ -410,13 +410,13 @@
                                 </div>
                             {:else if currentSection === "update"}
                                 <div class="space-y-4">
-                                    <div class="flex flex-col gap-2">
+                                    <!-- <div class="flex flex-col gap-2">
                                         <Label class="text-lg font-medium">{$t("app.settings.update.title")}</Label>
                                         <p class="text-muted-foreground text-sm">
                                             {$t("app.settings.update.description")}
                                         </p>
-                                    </div>
-                                    <Separator class="my-4" />
+                                    </div> -->
+                                    <!-- <Separator class="my-4" /> -->
                                     <div class="flex flex-col gap-4">
                                         <div class="flex flex-col gap-2">
                                             <Label>{$t("app.settings.update.currentVersion")}</Label>

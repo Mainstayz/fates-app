@@ -22,6 +22,8 @@ async fn show_main_window(app: tauri::AppHandle) {
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
+    } else {
+        log::error!("Main window not found");
     }
 }
 
@@ -109,6 +111,14 @@ fn handle_run_event(_app_handle: &tauri::AppHandle, event: tauri::RunEvent) {
             if let Err(e) = http_server::stop_http_server() {
                 log::error!("Failed to stop HTTP server: {}", e);
             }
+        }
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Reopen { has_visible_windows,.. } => {
+            log::warn!("Reopen");
+            let window = _app_handle.get_webview_window("main").unwrap();
+            window.unminimize().unwrap();
+            window.show().unwrap();
+            window.set_focus().unwrap();
         }
         _ => {}
     }
