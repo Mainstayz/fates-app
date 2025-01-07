@@ -169,7 +169,8 @@
         "installing": "Installing update...",
         "restarting": "Restarting...",
         "error": "Check update failed",
-        "description": "Check and update the application"
+        "description": "Check and update the application",
+        "installAndRestart": "Install and Restart"
       }
     },
     "statistics": {

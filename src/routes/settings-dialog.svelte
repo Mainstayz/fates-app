@@ -10,9 +10,24 @@
     import NotificationSettings from "./settings/notification.svelte";
     import AiSettings from "./settings/ai.svelte";
     import UpdateSettings from "./settings/update.svelte";
-
+    import { updater } from "$src/tauri/updater.svelte";
+    import { appConfig } from "$src/app-config";
     let { open = $bindable() } = $props();
     let currentSection = $state("common");
+    let updateAvailable = $state(false);
+
+    onMount(() => {
+        updater.checkForUpdates().then((result) => {
+            if (result.hasUpdate) {
+                console.log(`Update available!!! NEW VERSION: ${result.version}`);
+                updateAvailable = true;
+                appConfig.updateAvailable = true;
+            } else {
+                console.log("No update available");
+                updateAvailable = false;
+            }
+        });
+    });
 
     const navItems = $derived([
         { id: "common", title: $t("app.settings.nav.common") },
@@ -49,7 +64,12 @@
                                         out:receive={{ key: "active-settings-tab" }}
                                     ></div>
                                 {/if}
-                                <span class="relative">{item.title}</span>
+                                <div class="relative inline-block">
+                                    <span class="relative">{item.title}</span>
+                                    {#if item.id === "update" && updateAvailable}
+                                        <div class="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full"></div>
+                                    {/if}
+                                </div>
                             </Button>
                         {/each}
                     </div>

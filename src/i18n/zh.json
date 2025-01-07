@@ -145,7 +145,8 @@
                 "installing": "安装更新中...",
                 "restarting": "重启中...",
                 "error": "检查更新失败",
-                "description": "检查并更新应用程序"
+                "description": "检查并更新应用程序",
+                "installAndRestart": "安装并重启"
             }
         },
         "week_report": {

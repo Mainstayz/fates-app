@@ -73,6 +73,9 @@ interface AppConfig {
     aiSystemPrompt: string;
     aiReminderPrompt: string;
     aiWorkReportPrompt: string;
+
+    // update config
+    updateAvailable: boolean;
     [key: string]: any;
 }
 
@@ -100,6 +103,7 @@ const DEFAULT_CONFIG: AppConfig = {
     aiSystemPrompt: "",
     aiReminderPrompt: "",
     aiWorkReportPrompt: "",
+    updateAvailable: false,
 };
 
 // 初始化配置注册表
@@ -200,6 +204,12 @@ const initConfigRegistry = () => {
         key: "aiWorkReportPrompt",
         defaultValue: "",
         validator: (value) => typeof value === "string",
+    });
+
+    registry.register({
+        key: "updateAvailable",
+        defaultValue: false,
+        validator: (value) => typeof value === "boolean",
     });
 };
 

@@ -3,22 +3,23 @@
     import * as Tooltip from "$lib/components/ui/tooltip/index";
     import { t } from "svelte-i18n";
     import type { Route } from "../config";
+    import { appConfig } from "$src/app-config";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;
     export let onSettingsClick: () => void;
 
-    // 添加选中的路由状态，默认为第一个路由
+    // reset updateAvailable
+    appConfig.updateAvailable = false;
+
     let selectedRoute: Route | null = routes[0];
 
-    // 初始化时触发第一个路由的回调
     onRouteSelect(routes[0].label);
 
-    // 将设置路由和其他路由分开
     $: mainRoutes = routes.filter((route) => route.label !== "settings");
     $: settingsRoute = routes.find((route) => route.label === "settings");
+    $: updateAvailable = $appConfig.updateAvailable;
 
-    // 处理主导航按钮点击事件
     function handleRouteClick(route: Route) {
         if (selectedRoute?.label !== route.label) {
             selectedRoute = route;
@@ -26,7 +27,6 @@
         }
     }
 
-    // 处理设置按钮点击事件
     function handleSettingsClick() {
         if (settingsRoute) {
             onSettingsClick();
@@ -62,7 +62,12 @@
                 <Tooltip.Root delayDuration={0}>
                     <Tooltip.Trigger>
                         <Button size="icon" variant="secondary" onclick={handleSettingsClick}>
-                            <settingsRoute.icon />
+                            <div class="relative">
+                                <settingsRoute.icon />
+                                {#if updateAvailable}
+                                    <div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                                {/if}
+                            </div>
                         </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Content side="right" class="flex items-center gap-4">
