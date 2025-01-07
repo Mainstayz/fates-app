@@ -173,7 +173,7 @@
         "restarting": "Restarting...",
         "error": "Check update failed",
         "description": "Check and update the application",
-        "installAndRestart": "Install and Restart"
+        "installAndRestart": "Download and install updates"
       },
       "notification": {
         "permission": {

@@ -5,6 +5,7 @@
     import { getVersion } from "@tauri-apps/api/app";
     import { onMount } from "svelte";
     import { updater, type UpdateProgress } from "$src/tauri/updater.svelte";
+    import { Loader2 } from "lucide-svelte";
 
     let currentVersion = $state<string>("");
     let updateAvailable = $state(false);
@@ -65,6 +66,7 @@
     }
 
     async function checkForUpdates() {
+        updateInProgress = false;
         try {
             console.log("check for updates ...");
             const { hasUpdate, version } = await updater.checkForUpdates();
@@ -78,7 +80,6 @@
         } catch (error) {
             console.error("检查更新失败：", error);
             updateStatus = $t("app.settings.update.error");
-            updateInProgress = false;
         }
     }
 
@@ -87,11 +88,10 @@
             updateInProgress = true;
             downloadAndInstall().then(() => {
                 updateInProgress = false;
+                updateAvailable = false;
             });
         } else {
-            checkForUpdates().then(() => {
-                updateInProgress = false;
-            });
+            checkForUpdates().then(() => {});
         }
     }
 </script>
@@ -107,7 +107,11 @@
             <div class={updateAvailable ? "text-red-500" : "text-muted-foreground"}>{updateStatus}</div>
         </div>
         <Button onclick={update} disabled={updateInProgress}>
-            {updateAvailable ? $t("app.settings.update.installAndRestart") : $t("app.settings.update.check")}
+            {#if updateInProgress}
+                <Loader2 class="w-4 h-4 animate-spin" />
+            {:else}
+                {updateAvailable ? $t("app.settings.update.installAndRestart") : $t("app.settings.update.check")}
+            {/if}
         </Button>
     </div>
 </div>
