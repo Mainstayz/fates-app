@@ -156,6 +156,7 @@
         "description": "Configure AI reminder assistant related parameters"
       },
       "update": {
+        "unknown": "Unknown",
         "checking": "Checking for updates...",
         "downloading": "Downloading update...",
         "progress": "Download progress: {downloaded} / {total} MB",

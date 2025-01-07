@@ -132,6 +132,7 @@
                 "description": "配置 AI 提醒助理相关参数"
             },
             "update": {
+                "unknown": "未知",
                 "checking": "检查更新中...",
                 "downloading": "下载更新中...",
                 "progress": "下载进度: {downloaded} / {total} MB",
