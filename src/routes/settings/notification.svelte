@@ -30,7 +30,7 @@
 
     async function notificationTest() {
         notificationTestLoading = true;
-        let result = await notificationManager.checkNotifications(true);
+        let result = await notificationManager.checkNotifications(false);
         if (!result) {
             await notificationManager.sendTestNotification();
         }

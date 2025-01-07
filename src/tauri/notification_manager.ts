@@ -178,10 +178,14 @@ export class NotificationManager {
     }
 
     public async sendTestNotification() {
-        await this.onReceiveNotification(get(_)("app.messages.testNotification"), get(_)("app.messages.testNotificationDescription"), NotificationType.NewTask);
+        await this.onReceiveNotification(
+            get(_)("app.messages.testNotification"),
+            get(_)("app.messages.testNotificationDescription"),
+            NotificationType.NewTask
+        );
     }
 
-    public async checkNotifications(ignoreRestriction: boolean = false): Promise<boolean> {
+    public async checkNotifications(forceCheck: boolean = true): Promise<boolean> {
         let language = appConfig.language;
 
         const startTime = appConfig.notifications.workStart || "00:01";
@@ -191,7 +195,7 @@ export class NotificationManager {
         const now = new Date();
 
         // local time
-        if (!ignoreRestriction) {
+        if (forceCheck) {
             console.log(`Checking if in work hours: ${now.toLocaleString()}`);
             if (!TimeUtils.isInWorkHours(now, startTime, endTime)) {
                 console.log(`SKIPPED!!! Not in work hours, start time: ${startTime}, end time: ${endTime}`);
@@ -224,18 +228,14 @@ export class NotificationManager {
 
         let aiEnabled = appConfig.aiEnabled;
         if (aiEnabled) {
-            return this.startAINotificationCheck(now, matters, ignoreRestriction);
+            return this.startAINotificationCheck(now, matters, forceCheck);
         } else {
-            return this.startNormalNotificationCheck(now, matters, ignoreRestriction);
+            return this.startNormalNotificationCheck(now, matters, forceCheck);
         }
     }
 
-    private async startAINotificationCheck(
-        now: Date,
-        matters: Matter[],
-        ignoreRestriction: boolean = false
-    ): Promise<boolean> {
-        if (!ignoreRestriction) {
+    private async startAINotificationCheck(now: Date, matters: Matter[], forceCheck: boolean = true): Promise<boolean> {
+        if (forceCheck) {
             let isInTaskTimeRange = false;
             for (const matter of matters) {
                 const startTime = dayjs(matter.start_time).toDate();
@@ -375,13 +375,15 @@ export class NotificationManager {
     private async startNormalNotificationCheck(
         now: Date,
         matters: Matter[],
-        ignoreRestriction: boolean = false
+        forceCheck: boolean = true
     ): Promise<boolean> {
         // Check upcoming tasks
-        let shouldCheckUpcoming = await this.shouldCheckUpcoming();
-
-        if (shouldCheckUpcoming && !ignoreRestriction) {
-            console.log(`Checking upcoming tasks at ${now.toISOString()}`);
+        let shouldCheckUpcoming = false;
+        if (forceCheck) {
+            shouldCheckUpcoming = await this.shouldCheckUpcoming();
+        }
+        if (shouldCheckUpcoming) {
+            console.log(`Checking upcoming tasks at ${now.toLocaleDateString()}`);
             const notifyBefore = appConfig.notifications.checkIntervalMinutes || 15;
             const upcomingNotifications = this.checkUpcomingTasks(now, matters, notifyBefore);
             if (upcomingNotifications.length == 0) {
@@ -394,20 +396,22 @@ export class NotificationManager {
             }
         }
 
-        // Check no tasks
-        let shouldCheckNoTasks = await this.shouldCheckNoTasks();
-        if (!shouldCheckNoTasks && !ignoreRestriction) {
-            console.log("No need to check no tasks");
-            return false;
+        let shouldCheckNoTasks = false;
+
+        if (forceCheck) {
+            shouldCheckNoTasks = await this.shouldCheckNoTasks();
         }
 
-        console.log(`Checking no tasks at ${now.toISOString()}`);
-        if (this.shouldNotifyNoTasks(now, matters) && !ignoreRestriction) {
-            let title = get(_)("app.messages.noPlannedTasks");
-            let message = get(_)("app.messages.noPlannedTasksDescription");
-            this.onReceiveNotification(title, message, NotificationType.NoTask);
-            return true;
+        if (shouldCheckNoTasks) {
+            console.log(`Checking no tasks at ${now.toLocaleString()}`);
+            if (this.shouldNotifyNoTasks(now, matters)) {
+                let title = get(_)("app.messages.noPlannedTasks");
+                let message = get(_)("app.messages.noPlannedTasksDescription");
+                this.onReceiveNotification(title, message, NotificationType.NoTask);
+                return true;
+            }
         }
+        console.log("No notification found");
         return false;
     }
 
