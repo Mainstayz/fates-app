@@ -87,6 +87,35 @@ class Updater {
         }
     }
 
+    async silentUpdate(): Promise<void> {
+        if (this.updateResult) {
+            console.log(
+                `found update ${this.updateResult.version} from ${this.updateResult.date} with notes ${this.updateResult.body}`
+              );
+              let downloaded = 0;
+              let contentLength = 0;
+              // alternatively we could also call update.download() and update.install() separately
+              await this.updateResult.downloadAndInstall((event: DownloadEvent) => {
+                switch (event.event) {
+                  case 'Started':
+                    contentLength = event.data.contentLength || 0;
+                    console.log(`started downloading ${event.data.contentLength} bytes`);
+                    break;
+                  case 'Progress':
+                    downloaded += event.data.chunkLength;
+                    console.log(`downloaded ${downloaded} from ${contentLength}`);
+                    break;
+                  case 'Finished':
+                    console.log('download finished');
+                    break;
+                }
+              });
+
+              console.log('update installed');
+              await relaunch();
+        }
+    }
+
     async restart(): Promise<void> {
         this.notifyProgress({ status: "restarting" });
         // 等待 1000ms 后重启
