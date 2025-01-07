@@ -9,6 +9,10 @@ import { isHolidayDate } from "../i18n/holiday-cn";
 import "../i18n/i18n";
 import type { Matter, RepeatTask, Todo } from "../store";
 import { createMatter, getActiveRepeatTasks, getAllTodos, getMattersByRange } from "../store";
+import type StatisticalAnalysis from "$src/lib/components/statistical-analysis.svelte";
+
+type NotificationCallback = (notification: Notification) => void;
+
 export enum NotificationType {
     TaskStart,
     TaskEnd,
@@ -129,15 +133,35 @@ class RepeatTaskHandler {
 
 // Notification Manager
 export class NotificationManager {
+    private static instance: NotificationManager | null = null;
     private checkInterval: NodeJS.Timeout | null = null;
-    private notificationCallback: (notification: Notification) => void;
+    private notificationCallbacks: Set<NotificationCallback> = new Set();
 
-    constructor(notificationCallback: (notification: Notification) => void) {
-        this.notificationCallback = notificationCallback;
+    private constructor() {
+        // private constructor for singleton
     }
 
-    static async initialize(callback: (notification: Notification) => void): Promise<NotificationManager> {
-        const manager = new NotificationManager(callback);
+    public static getInstance(): NotificationManager {
+        if (!NotificationManager.instance) {
+            NotificationManager.instance = new NotificationManager();
+        }
+        return NotificationManager.instance;
+    }
+
+    /**
+     * Adds a notification callback and returns a function to remove it
+     * @param callback The callback function to be added
+     * @returns A function that when called will remove the callback
+     */
+    public addNotificationCallback(callback: NotificationCallback): () => void {
+        this.notificationCallbacks.add(callback);
+        return () => {
+            this.notificationCallbacks.delete(callback);
+        };
+    }
+
+    public static initialize(): NotificationManager {
+        const manager = NotificationManager.getInstance();
         manager.startNotificationLoop();
         return manager;
     }
@@ -153,7 +177,11 @@ export class NotificationManager {
         }, 1 * 60 * 1000); // 1 min
     }
 
-    private async checkNotifications() {
+    public async sendTestNotification() {
+        await this.onReceiveNotification(get(_)("app.messages.testNotification"), get(_)("app.messages.testNotificationDescription"), NotificationType.NewTask);
+    }
+
+    public async checkNotifications(ignoreRestriction: boolean = false): Promise<boolean> {
         let language = appConfig.language;
 
         const startTime = appConfig.notifications.workStart || "00:01";
@@ -163,12 +191,12 @@ export class NotificationManager {
         const now = new Date();
 
         // local time
-        console.log(`Checking if in work hours: ${now.toLocaleString()}`);
-        if (!TimeUtils.isInWorkHours(now, startTime, endTime)) {
-            console.log(
-                `SKIPPED!!! Not in work hours, start time: ${startTime}, end time: ${endTime}`
-            );
-            return;
+        if (!ignoreRestriction) {
+            console.log(`Checking if in work hours: ${now.toLocaleString()}`);
+            if (!TimeUtils.isInWorkHours(now, startTime, endTime)) {
+                console.log(`SKIPPED!!! Not in work hours, start time: ${startTime}, end time: ${endTime}`);
+                return false;
+            }
         }
 
         // Get today's matters
@@ -191,20 +219,22 @@ export class NotificationManager {
                 values: { count: createdMatters.length },
             });
             this.onReceiveNotification(title, message, NotificationType.NewTask);
-            return;
+            return true;
         }
 
         let aiEnabled = appConfig.aiEnabled;
-        console.log("AI enabled:", aiEnabled);
-
         if (aiEnabled) {
-            this.startAINotificationCheck(now, matters);
+            return this.startAINotificationCheck(now, matters, ignoreRestriction);
         } else {
-            this.startNormalNotificationCheck(now, matters);
+            return this.startNormalNotificationCheck(now, matters, ignoreRestriction);
         }
     }
 
-    private async startAINotificationCheck(now: Date, matters: Matter[], ignoreRestriction: boolean = false) {
+    private async startAINotificationCheck(
+        now: Date,
+        matters: Matter[],
+        ignoreRestriction: boolean = false
+    ): Promise<boolean> {
         if (!ignoreRestriction) {
             let isInTaskTimeRange = false;
             for (const matter of matters) {
@@ -224,13 +254,13 @@ export class NotificationManager {
             }
             if (isInTaskTimeRange) {
                 console.log("current time in task time range, skip ai notification");
-                return;
+                return false;
             }
 
             let shouldCheck = await this.shouldCheckAINotification();
             if (!shouldCheck) {
                 console.log("skip ai notification");
-                return;
+                return false;
             }
         }
         let aiReminderPrompt = appConfig.aiReminderPrompt;
@@ -324,7 +354,6 @@ export class NotificationManager {
         });
 
         // console.log(systemPrompt);
-
         let sessionId = uuidv4();
         await client.setSystemPrompt(sessionId, systemPrompt);
 
@@ -338,13 +367,20 @@ export class NotificationManager {
             this.onReceiveNotification(title, description, NotificationType.AINotification);
         } catch (error) {
             console.error("Failed to parse JSON:", error);
+        } finally {
+            return true;
         }
     }
 
-    private async startNormalNotificationCheck(now: Date, matters: Matter[]) {
+    private async startNormalNotificationCheck(
+        now: Date,
+        matters: Matter[],
+        ignoreRestriction: boolean = false
+    ): Promise<boolean> {
         // Check upcoming tasks
         let shouldCheckUpcoming = await this.shouldCheckUpcoming();
-        if (shouldCheckUpcoming) {
+
+        if (shouldCheckUpcoming && !ignoreRestriction) {
             console.log(`Checking upcoming tasks at ${now.toISOString()}`);
             const notifyBefore = appConfig.notifications.checkIntervalMinutes || 15;
             const upcomingNotifications = this.checkUpcomingTasks(now, matters, notifyBefore);
@@ -353,24 +389,26 @@ export class NotificationManager {
             } else {
                 console.log(`Found ${upcomingNotifications.length} upcoming tasks`);
                 let notification = upcomingNotifications[0];
-                this.notificationCallback(notification);
-                return;
+                this.onReceiveNotification(notification.title, notification.message, notification.notificationType);
+                return true;
             }
         }
 
         // Check no tasks
         let shouldCheckNoTasks = await this.shouldCheckNoTasks();
-        if (!shouldCheckNoTasks) {
+        if (!shouldCheckNoTasks && !ignoreRestriction) {
             console.log("No need to check no tasks");
-            return;
+            return false;
         }
 
         console.log(`Checking no tasks at ${now.toISOString()}`);
-        if (this.shouldNotifyNoTasks(now, matters)) {
+        if (this.shouldNotifyNoTasks(now, matters) && !ignoreRestriction) {
             let title = get(_)("app.messages.noPlannedTasks");
             let message = get(_)("app.messages.noPlannedTasksDescription");
             this.onReceiveNotification(title, message, NotificationType.NoTask);
+            return true;
         }
+        return false;
     }
 
     private async checkRepeatTasks(now: Date, existingMatters: Matter[]): Promise<Matter[]> {
@@ -458,16 +496,17 @@ export class NotificationManager {
     }
 
     private async onReceiveNotification(title: string, message: string, notificationType: NotificationType) {
-        let notificationRecord: Notification = {
+        const notificationRecord: Notification = {
             id: crypto.randomUUID(),
             title: title,
             message: message,
             timestamp: new Date().toISOString(),
             notificationType: notificationType,
         };
-        if (this.notificationCallback) {
-            this.notificationCallback(notificationRecord);
-        }
+
+        this.notificationCallbacks.forEach((callback) => {
+            callback(notificationRecord);
+        });
     }
 
     private async shouldCheckUpcoming(): Promise<boolean> {
@@ -511,4 +550,6 @@ export class NotificationManager {
     }
 }
 
-export default NotificationManager;
+export const notificationManager = NotificationManager.initialize();
+
+export default notificationManager;

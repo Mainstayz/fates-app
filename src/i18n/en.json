@@ -151,7 +151,8 @@
         "enableDescription": "Enable or disable AI feature module",
         "apiKeyPlaceholder": "Enter your API Key",
         "test": "Test",
-        "testResult": "Response"
+        "testResult": "Response",
+        "testing": "Notification test"
       },
       "aiReminder": {
         "title": "AI Reminder Assistant",
@@ -173,6 +174,15 @@
         "error": "Check update failed",
         "description": "Check and update the application",
         "installAndRestart": "Install and Restart"
+      },
+      "notification": {
+        "permission": {
+          "title": "Notification Permission",
+          "granted": "Notifications enabled",
+          "denied": "Notifications disabled",
+          "default": "Permission not requested",
+          "request": "Request Permission"
+        }
       }
     },
     "statistics": {
@@ -202,7 +212,9 @@
       "taskEndingSoon": "Task Ending Soon",
       "taskEndingSoonDescription": "Task \"{title}\" will end in {minutes} minutes",
       "taskStartingSoon": "Task Starting Soon",
-      "taskStartingSoonDescription": "Task \"{title}\" will start in {minutes} minutes"
+      "taskStartingSoonDescription": "Task \"{title}\" will start in {minutes} minutes",
+      "testNotification": "Test notification title",
+      "testNotificationDescription": "Test notification details"
     },
     "status": {
       "active": "In Progress",

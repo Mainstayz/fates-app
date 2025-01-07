@@ -3,7 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { listen, emit, type UnlistenFn } from "@tauri-apps/api/event";
     import { onMount, onDestroy } from "svelte";
-    import NotificationManager, { type Notification } from "../../tauri/notification_manager";
+    // import NotificationManager, { type Notification } from "../../tauri/notification_manager";
 
     type MessageBoxProps = {
         title: string;
@@ -15,14 +15,14 @@
     let unlistens: UnlistenFn[] = [];
     let rootElement: HTMLElement;
     let pageHeight = 0;
-    let notificationManager: NotificationManager;
+    // let notificationManager: NotificationManager;
 
     const resizeObserver = new ResizeObserver(updateHeight);
 
     function onNotificationMessage(payload: Notification) {
         console.log("onNotificationMessage: payload = ", payload);
-        title = payload.title;
-        description = payload.message;
+        // title = payload.title;
+        // description = payload.message;
         // invoke("flash_tray_icon", { flash: true }).catch(handleError("Failed to flash tray icon"));
     }
 
@@ -74,7 +74,7 @@
     onMount(async () => {
         try {
             console.log("MessageBox page mounted");
-            notificationManager = await NotificationManager.initialize(onNotificationMessage);
+            // notificationManager = await NotificationManager.initialize(onNotificationMessage);
             await Promise.all([loadMessageBoxData(), setupEventListeners()]);
             document.addEventListener("click", handleGlobalClick);
 
@@ -93,9 +93,6 @@
 
     onDestroy(() => {
         console.log("MessageBox page destroyed");
-        if (notificationManager) {
-            notificationManager.stop();
-        }
         unlistens.forEach((unlisten) => unlisten());
         document.removeEventListener("click", handleGlobalClick);
         resizeObserver.disconnect();

@@ -2,7 +2,7 @@
     import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
     import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
-    import NotificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
+    import notificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
     import TrayManager from "$src/tray-manager.svelte";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
     import { onMount } from "svelte";
@@ -12,7 +12,6 @@
 
     import { locale } from "svelte-i18n";
 
-    let notificationManager: NotificationManager;
     let timeProgressBarManager: TimeProgressBarManager;
 
     let appConfigInitialized = $state(false);
@@ -60,9 +59,6 @@
             appConfigInitialized = true;
             // Initialize tray manager
             await TrayManager.init();
-
-            // Initialize notification manager
-            notificationManager = await NotificationManager.initialize(onNotificationMessage);
             // Initialize time progress bar manager
             timeProgressBarManager = TimeProgressBarManager.getInstance();
             await timeProgressBarManager.initialize();
@@ -71,10 +67,12 @@
         // 立即执行初始化
         initialize();
 
+        const unlisten = notificationManager.addNotificationCallback(onNotificationMessage);
         // 返回清理函数
         return () => {
             notificationManager.stop();
             timeProgressBarManager.destroy();
+            unlisten();
         };
     });
 </script>

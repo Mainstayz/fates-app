@@ -127,7 +127,8 @@
         "enableDescription": "启用或禁用 AI 功能模块",
         "apiKeyPlaceholder": "输入你的 API Key",
         "test": "测试",
-        "testResult": "响应"
+        "testResult": "响应",
+        "testing": "通知测试"
       },
       "aiReminder": {
         "title": "AI 提醒助理",
@@ -149,6 +150,15 @@
         "error": "检查更新失败",
         "description": "检查并更新应用程序",
         "installAndRestart": "安装并重启"
+      },
+      "notification": {
+        "permission": {
+          "title": "通知权限",
+          "granted": "已启用通知",
+          "denied": "已禁用通知",
+          "default": "未请求权限",
+          "request": "请求权限"
+        }
       }
     },
     "week_report": {
@@ -202,7 +212,9 @@
       "taskEndingSoon": "任务即将结束",
       "taskEndingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后结束",
       "taskStartingSoon": "任务即将开始",
-      "taskStartingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后开始"
+      "taskStartingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后开始",
+      "testNotification": "测试通知标题",
+      "testNotificationDescription": "测试通知详情"
     },
     "status": {
       "active": "进行中",
