@@ -2,36 +2,74 @@
     import { Label } from "$lib/components/ui/label";
     import { Input } from "$lib/components/ui/input";
     import { Switch } from "$lib/components/ui/switch";
+    import { Separator } from "$lib/components/ui/separator";
+    import { Button } from "$lib/components/ui/button";
     import { t } from "svelte-i18n";
+    import { LoaderCircle } from "lucide-svelte";
     import { appConfig } from "$src/app-config";
+    import { OpenAIClient } from "$src/openai";
 
-    let aiEnabled = $state<boolean | undefined>(undefined);
-    let aiBaseUrl = $state<string | undefined>(undefined);
-    let aiModelId = $state<string | undefined>(undefined);
-    let aiApiKey = $state<string | undefined>(undefined);
-
-    aiEnabled = appConfig.aiEnabled;
-    aiBaseUrl = appConfig.aiBaseUrl;
-    aiModelId = appConfig.aiModelId;
-    aiApiKey = appConfig.aiApiKey;
+    let aiEnabled = $state<boolean>(appConfig.aiEnabled);
+    let aiBaseUrl = $state<string>(appConfig.aiBaseUrl);
+    let aiModelId = $state<string>(appConfig.aiModelId);
+    let aiApiKey = $state<string>(appConfig.aiApiKey);
+    let switchEnabled = $state<boolean>(false);
+    let aiTestResult = $state<string>("");
+    let aiTestLoading = $state<boolean>(false);
 
     $effect(() => {
-        if (aiEnabled !== undefined) {
-            appConfig.aiEnabled = aiEnabled;
+        if (aiBaseUrl.length > 0 && aiModelId.length > 0 && aiApiKey.length > 0) {
+            switchEnabled = true;
+        } else {
+            switchEnabled = false;
+            aiEnabled = false;
         }
-        if (aiBaseUrl !== undefined) {
-            appConfig.aiBaseUrl = aiBaseUrl;
-        }
-        if (aiModelId !== undefined) {
-            appConfig.aiModelId = aiModelId;
-        }
-        if (aiApiKey !== undefined) {
-            appConfig.aiApiKey = aiApiKey;
-        }
+
+        appConfig.aiEnabled = aiEnabled;
+        appConfig.aiBaseUrl = aiBaseUrl;
+        appConfig.aiModelId = aiModelId;
+        appConfig.aiApiKey = aiApiKey;
     });
+
+    async function test() {
+        aiTestLoading = true;
+        let client = new OpenAIClient({
+            apiKey: aiApiKey,
+            baseURL: aiBaseUrl || undefined,
+            defaultModel: aiModelId,
+        });
+
+        let sessionId = "test";
+        await client.setSystemPrompt(sessionId, "You are a helpful assistant.");
+
+        let message = `hello, how are you?`;
+
+        try {
+            aiTestResult = "";
+            await client.sendMessage(sessionId, message, {
+                stream: true,
+                streamCallbacks: {
+                    onMessage: (message) => {
+                        aiTestResult += message;
+                    },
+                },
+            });
+        } catch (error) {
+            aiTestResult = "Error: " + error;
+        } finally {
+            aiTestLoading = false;
+        }
+    }
 </script>
 
-<div class="space-y-4">
+<div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+        <Label class="text-lg font-medium">{$t("app.settings.ai.configTitle")}</Label>
+        <p class="text-muted-foreground text-sm">
+            {$t("app.settings.ai.configDescription")}
+        </p>
+    </div>
+    <Separator />
     <div class="flex items-center justify-between space-x-2">
         <Label for="ai-enabled" class="flex flex-col flex-1 space-y-1">
             <span>{$t("app.settings.ai.enabled")}</span>
@@ -39,7 +77,7 @@
                 {$t("app.settings.ai.enableDescription")}
             </span>
         </Label>
-        <Switch id="ai-enabled" bind:checked={aiEnabled} />
+        <Switch id="ai-enabled" bind:checked={aiEnabled} disabled={!switchEnabled} />
     </div>
     <div class="flex flex-col gap-2">
         <Label for="ai-base-url">{$t("app.settings.ai.baseUrl")}</Label>
@@ -64,5 +102,17 @@
             id="ai-api-key"
             placeholder={$t("app.settings.ai.apiKeyPlaceholder")}
         />
+    </div>
+    <div class="flex flex-row gap-2">
+        <Button size="sm" onclick={test}>
+            {#if aiTestLoading}
+                <LoaderCircle class="w-4 h-4 animate-spin" />
+            {:else}
+                {$t("app.settings.ai.test")}
+            {/if}
+        </Button>
+        <p class="flex-1 text-muted-foreground text-xs font-normal leading-snug">
+            {aiTestResult}
+        </p>
     </div>
 </div>

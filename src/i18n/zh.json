@@ -1,213 +1,215 @@
 {
-    "routes": {
-        "settings": "设置",
-        "timeline": "时间线",
-        "statistics": "统计",
-        "tags": "标签",
-        "repeat": "重复",
-        "todo": "待办",
-        "week_report": "周报",
-        "openai": "AI 聊天"
+  "routes": {
+    "settings": "设置",
+    "timeline": "时间线",
+    "statistics": "统计",
+    "tags": "标签",
+    "repeat": "重复",
+    "todo": "待办",
+    "week_report": "周报",
+    "openai": "AI 聊天"
+  },
+  "app": {
+    "timeline": {
+      "newTaskTitle": "新任务",
+      "title": "任务管理",
+      "description": "做对的事，而不是把事情做对。",
+      "addTask": "添加任务",
+      "addTaskPlaceholder": "请输入任务名称",
+      "timeRanges": {
+        "6h": "最近 6 小时",
+        "12h": "最近 12 小时",
+        "1d": "最近 1 天",
+        "3d": "最近 3 天",
+        "7d": "最近 7 天",
+        "default": "选择时间范围"
+      },
+      "taskCompletionStatusLastYear": "{year} 年任务记录",
+      "month": "M 月",
+      "weekdays": {
+        "mon": "一",
+        "wed": "三",
+        "fri": "五",
+        "sun": "日"
+      },
+      "noValue": "无",
+      "taskCompletionAt": "个任务完成于"
     },
-    "app": {
-        "timeline": {
-            "newTaskTitle": "新任务",
-            "title": "任务管理",
-            "description": "做对的事，而不是把事情做对。",
-            "addTask": "添加任务",
-            "addTaskPlaceholder": "请输入任务名称",
-            "timeRanges": {
-                "6h": "最近 6 小时",
-                "12h": "最近 12 小时",
-                "1d": "最近 1 天",
-                "3d": "最近 3 天",
-                "7d": "最近 7 天",
-                "default": "选择时间范围"
-            },
-            "taskCompletionStatusLastYear": "{year} 年任务记录",
-            "month": "M 月",
-            "weekdays": {
-                "mon": "一",
-                "wed": "三",
-                "fri": "五",
-                "sun": "日"
-            },
-            "noValue": "无",
-            "taskCompletionAt": "个任务完成于"
-        },
-        "todo": {
-            "title": "待办",
-            "description": "在这里管理你的待办事项",
-            "addTodo": "添加待办",
-            "addTodoPlaceholder": "请输入待办名称",
-            "todoList": "待办列表",
-            "defaultTodoTitle": "新增任务",
-            "name": "名称",
-            "status": "状态",
-            "action": "操作",
-            "statusOptions": {
-                "todo": "待办",
-                "in_progress": "进行中",
-                "completed": "已完成"
-            },
-            "todoInProgress": "添加",
-            "todoInProgressDescription": "已添加，可前往时间线中查看",
-            "createTodo": "创建待办",
-            "noTodo": "没有待办事项",
-            "totalTodo": "总数",
-            "searchPlaceholder": "搜索待办标题..."
-        },
-        "repeat": {
-            "title": "重复任务",
-            "description": "重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。",
-            "totalRepeat": "总数",
-            "createTask": "创建任务",
-            "searchPlaceholder": "搜索任务标题...",
-            "columns": {
-                "title": "标题",
-                "tags": "标签",
-                "repeatTime": "重复时间",
-                "priority": "优先级",
-                "actions": "操作"
-            },
-            "newTaskPrefix": "新任务",
-            "addedTip": "提示",
-            "addedDescription": "已添加，可前往时间线查看",
-            "priority": {
-                "low": "低",
-                "medium": "中",
-                "high": "高",
-                "select": "选择"
-            },
-            "repeatTime": {
-                "title": "任务重复添加时间段",
-                "to": "至",
-                "excludeHolidays": "忽略法定节假日",
-                "weekdays": {
-                    "mon": "一",
-                    "tue": "二",
-                    "wed": "三",
-                    "thu": "四",
-                    "fri": "五",
-                    "sat": "六",
-                    "sun": "日"
-                }
-            }
-        },
-        "settings": {
-            "title": "设置",
-            "nav": {
-                "common": "通用",
-                "notification": "通知"
-            },
-            "autoStart": {
-                "title": "开机启动",
-                "description": "设置开机启动"
-            },
-            "language": "语言",
-            "workTime": {
-                "title": "工作时间",
-                "to": "到",
-                "description": "在指定时间范围内，会推送通知"
-            },
-            "checkInterval": {
-                "title": "检查间隔",
-                "120": "2 小时",
-                "240": "4 小时",
-                "360": "6 小时"
-            },
-            "ai": {
-                "title": "AI 设置",
-                "enabled": "启用 AI",
-                "baseUrl": "API 地址",
-                "modelId": "模型 ID",
-                "apiKey": "API Key",
-                "configTitle": "AI 配置",
-                "configDescription": "配置 AI 模块相关参数",
-                "enableDescription": "启用或禁用 AI 功能模块",
-                "apiKeyPlaceholder": "输入你的 API Key"
-            },
-            "aiReminder": {
-                "title": "AI 提醒助理",
-                "description": "配置 AI 提醒助理相关参数"
-            },
-            "update": {
-                "unknown": "未知",
-                "checking": "检查更新中...",
-                "downloading": "下载更新中...",
-                "progress": "下载进度: {downloaded} / {total} MB",
-                "available": "发现新版本: {version}",
-                "currentVersion": "当前版本",
-                "latest": "当前版本为最新版本",
-                "status": "状态",
-                "check": "检查更新",
-                "title": "更新",
-                "installing": "安装更新中...",
-                "restarting": "重启中...",
-                "error": "检查更新失败",
-                "description": "检查并更新应用程序",
-                "installAndRestart": "安装并重启"
-            }
-        },
-        "week_report": {
-            "title": "「周报」",
-            "description": "一写周报就头大？我来帮你！",
-            "generate_button": "一键生成",
-            "copy_button": "复制到剪贴板",
-            "custom_content_button": "自定义内容",
-            "modify_prompt_button": "修改提示词",
-            "custom_content_title": "自定义内容",
-            "modify_prompt_title": "修改提示词",
-            "custom_content_placeholder": "请输入自定义内容",
-            "modify_prompt_placeholder": "请输入修改后的提示词",
-            "ai_enable_title": "提示",
-            "ai_enable_description": "需要启用 AI 功能，请先前往设置中启用 AI 功能"
-        },
-        "other": {
-            "confirmDelete": "定删除吗？",
-            "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
-            "cancel": "取消",
-            "confirm": "确定",
-            "page0": "第",
-            "page1": "页，共",
-            "page2": "页",
-            "tip": "提示"
-        },
-        "statistics": {
-            "timeRanges": {
-                "all": "所有时间",
-                "year": "今年来",
-                "month": "最近一个月",
-                "week": "最近一周"
-            },
-            "noData": "暂无数据",
-            "noDataDescription": "请添加一些时间记录来查看统计图表",
-            "noDetailData": "暂无详细数据",
-            "selectTimeRange": "选择时间范围",
-            "tagDetailChart": {
-                "topTen": "前 10 条 {tag}"
-            },
-            "noChartData": "无法生成图表数据",
-            "durationHours": "时长（小时）",
-            "unclassifiedTag": "未分类",
-            "otherTag": "其他"
-        },
-        "messages": {
-            "newRepeatTasks": "新重复任务",
-            "newRepeatTasksDescription": "创建了 {count} 个新重复任务",
-            "noPlannedTasks": "没有计划任务",
-            "noPlannedTasksDescription": "考虑计划一些任务",
-            "taskEndingSoon": "任务即将结束",
-            "taskEndingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后结束",
-            "taskStartingSoon": "任务即将开始",
-            "taskStartingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后开始"
-        },
-        "status": {
-            "active": "进行中",
-            "stopped": "已暂停",
-            "archived": "已完成",
-            "select": "选择状态"
-        },
+    "todo": {
+      "title": "待办",
+      "description": "在这里管理你的待办事项",
+      "addTodo": "添加待办",
+      "addTodoPlaceholder": "请输入待办名称",
+      "todoList": "待办列表",
+      "defaultTodoTitle": "新增任务",
+      "name": "名称",
+      "status": "状态",
+      "action": "操作",
+      "statusOptions": {
+        "todo": "待办",
+        "in_progress": "进行中",
+        "completed": "已完成"
+      },
+      "todoInProgress": "添加",
+      "todoInProgressDescription": "已添加，可前往时间线中查看",
+      "createTodo": "创建待办",
+      "noTodo": "没有待办事项",
+      "totalTodo": "总数",
+      "searchPlaceholder": "搜索待办标题..."
+    },
+    "repeat": {
+      "title": "重复任务",
+      "description": "重复任务是一些需要定期执行的任务，例如每天的喝水、运动等。",
+      "totalRepeat": "总数",
+      "createTask": "创建任务",
+      "searchPlaceholder": "搜索任务标题...",
+      "columns": {
+        "title": "标题",
+        "tags": "标签",
+        "repeatTime": "重复时间",
+        "priority": "优先级",
+        "actions": "操作"
+      },
+      "newTaskPrefix": "新任务",
+      "addedTip": "提示",
+      "addedDescription": "已添加，可前往时间线查看",
+      "priority": {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "select": "选择"
+      },
+      "repeatTime": {
+        "title": "任务重复添加时间段",
+        "to": "至",
+        "excludeHolidays": "忽略法定节假日",
+        "weekdays": {
+          "mon": "一",
+          "tue": "二",
+          "wed": "三",
+          "thu": "四",
+          "fri": "五",
+          "sat": "六",
+          "sun": "日"
+        }
+      }
+    },
+    "settings": {
+      "title": "设置",
+      "nav": {
+        "common": "通用",
+        "notification": "通知"
+      },
+      "autoStart": {
+        "title": "开机启动",
+        "description": "设置开机启动"
+      },
+      "language": "语言",
+      "workTime": {
+        "title": "工作时间",
+        "to": "到",
+        "description": "在指定时间范围内，会推送通知"
+      },
+      "checkInterval": {
+        "120": "2 小时",
+        "240": "4 小时",
+        "360": "6 小时",
+        "title": "检查间隔"
+      },
+      "ai": {
+        "title": "AI 设置",
+        "enabled": "启用 AI",
+        "baseUrl": "API 地址",
+        "modelId": "模型 ID",
+        "apiKey": "API Key",
+        "configTitle": "AI 配置",
+        "configDescription": "使用 OpenAI API 和其他 OpenAI 兼容 API，如 Llama3、WizardCoder、Mistral、DeepSeek-Coder 等。",
+        "enableDescription": "启用或禁用 AI 功能模块",
+        "apiKeyPlaceholder": "输入你的 API Key",
+        "test": "测试",
+        "testResult": "响应"
+      },
+      "aiReminder": {
+        "title": "AI 提醒助理",
+        "description": "配置 AI 提醒助理相关参数"
+      },
+      "update": {
+        "unknown": "未知",
+        "checking": "检查更新中...",
+        "downloading": "下载更新中...",
+        "progress": "下载进度: {downloaded} / {total} MB",
+        "available": "发现新版本: {version}",
+        "currentVersion": "当前版本",
+        "latest": "当前版本为最新版本",
+        "status": "状态",
+        "check": "检查更新",
+        "title": "更新",
+        "installing": "安装更新中...",
+        "restarting": "重启中...",
+        "error": "检查更新失败",
+        "description": "检查并更新应用程序",
+        "installAndRestart": "安装并重启"
+      }
+    },
+    "week_report": {
+      "title": "「周报」",
+      "description": "一写周报就头大？我来帮你！",
+      "generate_button": "一键生成",
+      "copy_button": "复制到剪贴板",
+      "custom_content_button": "自定义内容",
+      "modify_prompt_button": "修改提示词",
+      "custom_content_title": "自定义内容",
+      "modify_prompt_title": "修改提示词",
+      "custom_content_placeholder": "请输入自定义内容",
+      "modify_prompt_placeholder": "请输入修改后的提示词",
+      "ai_enable_title": "提示",
+      "ai_enable_description": "需要启用 AI 功能，请先前往设置中启用 AI 功能"
+    },
+    "other": {
+      "confirmDelete": "定删除吗？",
+      "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
+      "cancel": "取消",
+      "confirm": "确定",
+      "page0": "第",
+      "page1": "页，共",
+      "page2": "页",
+      "tip": "提示"
+    },
+    "statistics": {
+      "timeRanges": {
+        "all": "所有时间",
+        "year": "今年来",
+        "month": "最近一个月",
+        "week": "最近一周"
+      },
+      "noData": "暂无数据",
+      "noDataDescription": "请添加一些时间记录来查看统计图表",
+      "noDetailData": "暂无详细数据",
+      "selectTimeRange": "选择时间范围",
+      "tagDetailChart": {
+        "topTen": "前 10 条 {tag}"
+      },
+      "noChartData": "无法生成图表数据",
+      "durationHours": "时长（小时）",
+      "unclassifiedTag": "未分类",
+      "otherTag": "其他"
+    },
+    "messages": {
+      "newRepeatTasks": "新重复任务",
+      "newRepeatTasksDescription": "创建了 {count} 个新重复任务",
+      "noPlannedTasks": "没有计划任务",
+      "noPlannedTasksDescription": "考虑计划一些任务",
+      "taskEndingSoon": "任务即将结束",
+      "taskEndingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后结束",
+      "taskStartingSoon": "任务即将开始",
+      "taskStartingSoonDescription": "任务 \"{title}\" 将在 {minutes} 分钟后开始"
+    },
+    "status": {
+      "active": "进行中",
+      "stopped": "已暂停",
+      "archived": "已完成",
+      "select": "选择状态"
+    },
     "tags": {
       "noTags": "没有找到标签",
       "newTag": "新建标签",
@@ -230,5 +232,5 @@
       "showOrHideProgress": "显示/隐藏时间进度",
       "exit": "退出"
     }
-    }
+  }
 }

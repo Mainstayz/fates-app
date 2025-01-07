@@ -74,7 +74,7 @@
                         {/each}
                     </div>
 
-                    <div class="flex flex-col p-4 rounded-lg gap-4">
+                    <div class="flex flex-col pr-2 rounded-lg gap-4">
                         {#if currentSection === "common"}
                             <CommonSettings />
                         {:else if currentSection === "notification"}

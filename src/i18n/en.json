@@ -147,9 +147,11 @@
         "modelId": "Model ID",
         "apiKey": "API Key",
         "configTitle": "AI Config",
-        "configDescription": "Configure AI module related parameters",
+        "configDescription": "Use OpenAI API and other OpenAI compatible APIs such as Llama3, WizardCoder, Mistral, DeepSeek-Coder, etc.",
         "enableDescription": "Enable or disable AI feature module",
-        "apiKeyPlaceholder": "Enter your API Key"
+        "apiKeyPlaceholder": "Enter your API Key",
+        "test": "Test",
+        "testResult": "Response"
       },
       "aiReminder": {
         "title": "AI Reminder Assistant",
