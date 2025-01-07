@@ -1,12 +1,12 @@
+import { emit } from "@tauri-apps/api/event";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
 import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
+import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
-import { locale, _ } from "svelte-i18n";
-import { emit } from "@tauri-apps/api/event";
 let hasTray = false;
 
 class Tray {
@@ -122,12 +122,6 @@ class Tray {
                         if (event.button === "Right") {
                             console.log("right button pressed");
                         }
-                        break;
-                    case "Enter":
-                        console.log(`mouse hovered tray at ${event.rect.position.x}, ${event.rect.position.y}`);
-                        break;
-                    case "Leave":
-                        console.log(`mouse left tray at ${event.rect.position.x}, ${event.rect.position.y}`);
                         break;
                     default:
                         break;

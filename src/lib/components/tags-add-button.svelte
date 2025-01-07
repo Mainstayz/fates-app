@@ -20,7 +20,7 @@
     const MAX_TAGS_COUNT = 5;
     const maxSelectedTags: number = 2;
 
-    let { selectedTags = $bindable() }: { selectedTags: string[] } = $props();
+    let { selectedTags, callback }: { selectedTags: string[]; callback: (tags: string[]) => void } = $props();
 
     let openStatus = $state(false);
     let showCreateNewTag = $state(false);
@@ -37,7 +37,12 @@
         }
     }
 
-    let allTags = $derived([...selectedTags, ...tagManager.tagNames.filter((tag) => !selectedTags.includes(tag))]);
+    let localSelectedTags = $state([...selectedTags]);
+
+    let allTags = $derived([
+        ...localSelectedTags,
+        ...tagManager.tagNames.filter((tag) => !localSelectedTags.includes(tag)),
+    ]);
     let filteredTags = $state<string[]>([]);
 
     $effect(() => {
@@ -46,29 +51,30 @@
         } else {
             filteredTags = allTags;
         }
+        callback(localSelectedTags);
     });
 
     $inspect("allTagsChange:", allTags);
 
     function selectTag(tag: string) {
-        if (selectedTags.includes(tag)) {
+        if (localSelectedTags.includes(tag)) {
             return;
         }
         console.log("selectTag:", tag);
-        selectedTags.push(tag);
-        tagManager.updateTagsLastUsedAt(selectedTags);
+        localSelectedTags.push(tag);
+        tagManager.updateTagsLastUsedAt(localSelectedTags);
     }
 
     function unSelectTag(tag: string) {
-        const index = selectedTags.indexOf(tag);
+        const index = localSelectedTags.indexOf(tag);
         if (index !== -1) {
             console.log("unSelectTag:", tag);
-            selectedTags.splice(index, 1);
+            localSelectedTags.splice(index, 1);
         }
     }
 
     function toggleTag(tag: string) {
-        if (selectedTags.includes(tag)) {
+        if (localSelectedTags.includes(tag)) {
             unSelectTag(tag);
         } else {
             selectTag(tag);
@@ -94,9 +100,9 @@
                 return tagManager.fetchAllTags();
             })
             .then(() => {
-                if (selectedTags.length < maxSelectedTags) {
+                if (localSelectedTags.length < maxSelectedTags) {
                     console.log("add new tag:", tag);
-                    selectedTags.push(tag);
+                    localSelectedTags.push(tag);
                 }
             });
     }
@@ -110,16 +116,16 @@
 
     function clearTags() {
         console.log("clearTags");
-        selectedTags = [];
+        localSelectedTags = [];
     }
 </script>
 
 <Popover bind:open={openStatus}>
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
-            {#if selectedTags.length > 0}
+            {#if localSelectedTags.length > 0}
                 <div class="hidden space-x-1 lg:flex">
-                    {#each selectedTags.slice(0, MAX_TAGS_COUNT) as tag}
+                    {#each localSelectedTags.slice(0, MAX_TAGS_COUNT) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
                         </Badge>
@@ -206,7 +212,7 @@
                             {/if}
                         </div>
                     {/if}
-                    {#if selectedTags.length > 0}
+                    {#if localSelectedTags.length > 0}
                         <CommandItem onSelect={clearTags}>{$t("app.tags.clearTags")}</CommandItem>
                     {/if}
                 </CommandGroup>

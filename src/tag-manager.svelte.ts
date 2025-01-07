@@ -51,7 +51,7 @@ class TagManager {
             return;
         }
         const tagsStr = filteredTags.join(",");
-        await updateTagLastUsedAt(tagsStr);
+        await updateTagLastUsedAt(tagsStr, { debug: true });
     }
 
     private  processTags(tags: string[]) {

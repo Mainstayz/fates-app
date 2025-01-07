@@ -85,8 +85,12 @@
         return `${hours}:${minutes}`;
     }
 
-    function handleTagsChange(selectedTags: string[]) {
-        localSelectedTags = selectedTags;
+    function handleTagsChange(newTags: string[]) {
+        // 判断 newTags 是否与 localSelectedTags 相同，如果相同则不更新
+        if (newTags.length === localSelectedTags.length && newTags.every((tag) => localSelectedTags.includes(tag))) {
+            return;
+        }
+        localSelectedTags = newTags;
     }
 
     async function generateTitle() {
@@ -206,7 +210,7 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">{$t("app.taskDetail.tagsLabel")}</div>
                 <div>
-                    <TagsAddButton bind:selectedTags={localSelectedTags} />
+                    <TagsAddButton selectedTags={localSelectedTags} callback={handleTagsChange} />
                 </div>
             </div>
         </div>

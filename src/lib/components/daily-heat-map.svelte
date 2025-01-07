@@ -35,7 +35,7 @@
     }
 
     function fillMissingDates(data: DataPoint[]): DataPoint[] {
-        console.log("data: ", data);
+        $inspect("data: ", data);
         const dateFormat = "YYYY-MM-DD";
         const startDate = dayjs().startOf("year");
         const endDate = dayjs();
