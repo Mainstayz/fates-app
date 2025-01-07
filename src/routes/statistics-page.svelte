@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Statistics from "$src/lib/components/statistics.svelte";
+    import Statistics from "$lib/components/statistical-analysis.svelte";
     import { Label } from "$lib/components/ui/label";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";

@@ -7,7 +7,7 @@
     // 导入组件
     import DailyHeatMap from "$lib/components/daily-heat-map.svelte";
     import TaskDetailForm from "$lib/components/task-detail-form.svelte";
-    import Timeline from "$src/lib/components/timeline.svelte";
+    import Timeline from "$src/lib/components/time-line.svelte";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog/index";
