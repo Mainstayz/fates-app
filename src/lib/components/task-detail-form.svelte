@@ -23,7 +23,7 @@
     }: {
         item: TimelineItem;
         tagsList: string[];
-        callback: (item: TimelineItem, newTags: string[], selectedTags: string[]) => void;
+        callback: (item: TimelineItem, newTags: string[], selectedTags: string[], deleteTags: string[]) => void;
     } = $props();
 
     let localItem = $state({ ...item }); // create local copy
@@ -36,9 +36,10 @@
     let priority = $state<Priority>(item.priority || Priority.Medium);
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
+    let deleteTags = $state<string[]>([]);
 
-    let localTagsList: string[] = [...(initialTagsList || [])];
-    let localSelectedTags: string[] = [...(item.tags || [])];
+    let localTagsList = $state([...(initialTagsList || [])]);
+    let localSelectedTags = $state([...(item.tags || [])]);
 
     function updateItem() {
         let className = "";
@@ -88,9 +89,11 @@
         return `${hours}:${minutes}`;
     }
 
-    function handleTagsChange(tagsList: string[], selectedTags: string[]) {
+    function handleTagsChange(tagsList: string[], selectedTags: string[], deleteTag: string[]) {
         localTagsList = tagsList;
         localSelectedTags = selectedTags;
+        // collect delete tags
+        deleteTags.push(...deleteTag);
     }
 
     async function generateTitle() {
@@ -156,7 +159,10 @@
             console.log("Before callback - updatedItem:", updatedItem);
             console.log("Before callback - localTagsList:", localTagsList, "diff:", diffTags);
             console.log("Before callback - selectedTags:", localSelectedTags);
-            callback(updatedItem, diffTags, localSelectedTags);
+
+            let uniqueDeleteTags = [...new Set(deleteTags)];
+            console.log("Before callback - deleteTags:", uniqueDeleteTags);
+            callback(updatedItem, diffTags, localSelectedTags, uniqueDeleteTags);
         };
     });
 

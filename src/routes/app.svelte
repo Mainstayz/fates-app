@@ -7,14 +7,12 @@
     import RepeatPage from "./repeat-page.svelte";
     import SettingsDialog from "./settings-dialog.svelte";
     import StatisticsPage from "./statistics-page.svelte";
-    import TagsManagerPage from "./tags-manager-page.svelte";
     import TimelinePage from "./timeline-page.svelte";
     import TodoPage from "./todo-page.svelte";
     import WeekReportPage from "./week-report-page.svelte";
 
     let timelineComponent: TimelinePage | null = null;
     let statisticsComponent: StatisticsPage | null = null;
-    let tagsComponent: TagsManagerPage | null = null;
     let repeatComponent: RepeatPage | null = null;
     let todoComponent: TodoPage | null = null;
     let openaiComponent: OpenAIChatPage | null = null;
@@ -97,9 +95,6 @@
             {/if}
             {#if selectedRoute === "statistics"}
                 <StatisticsPage bind:this={statisticsComponent} />
-            {/if}
-            {#if selectedRoute === "tags"}
-                <TagsManagerPage bind:this={tagsComponent} />
             {/if}
             {#if selectedRoute === "repeat"}
                 <RepeatPage bind:this={repeatComponent} />

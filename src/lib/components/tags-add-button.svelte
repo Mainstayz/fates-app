@@ -2,11 +2,10 @@
     import { Badge } from "$lib/components/ui/badge";
     import { Popover, PopoverTrigger, PopoverContent } from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
-    import { Check, Plus, PlusCircle } from "lucide-svelte";
+    import { Check, Plus, PlusCircle, X, Trash2 } from "lucide-svelte";
     import { Separator } from "$lib/components/ui/separator";
     import { Input } from "$lib/components/ui/input";
     import { cn } from "$lib/utils";
-    import { X } from "lucide-svelte";
     import { t } from "svelte-i18n";
     import {
         Command,
@@ -23,7 +22,7 @@
 
     export let selectedTags: string[] = [];
     export let tagsList: string[] = [];
-    export let onTagsChange: (tagsList: string[], selectedTags: string[]) => void;
+    export let onTagsChange: (tagsList: string[], selectedTags: string[], deleteTag: string[]) => void;
 
     tagsList = [...new Set([...selectedTags, ...tagsList])];
 
@@ -31,9 +30,20 @@
     let showCreateNewTag = false;
     let newTag = "";
     let selectedTagsCount = 0;
+    let searchKeyword = "";
+    let deleteTag: string[] = [];
 
     $: showCreateNewTag = tagsList.length === 0;
     $: selectedTagsCount = selectedTags.length;
+    $: {
+        if (searchKeyword == "") {
+            tagsList = [...new Set([...selectedTags, ...tagsList])];
+        }
+    }
+
+    function customFilter(value: string, search: string, keywords?: string[]): number {
+        return value.includes(search) ? 1 : 0;
+    }
 
     function addTag(tag: string) {
         if (selectedTags.includes(tag)) {
@@ -80,14 +90,22 @@
         handleTagChange();
     }
 
+    function handleDeleteTag(tag: string) {
+        deleteTag = [...deleteTag, tag];
+        tagsList = tagsList.filter((t) => t !== tag);
+        selectedTags = selectedTags.filter((t) => t !== tag);
+        handleTagChange();
+    }
+
     function clearTags() {
         selectedTags = [];
         handleTagChange();
     }
 
     function handleTagChange() {
-        console.log(`tagsList: ${tagsList} selectedTags: ${selectedTags}`);
-        onTagsChange(tagsList, selectedTags);
+        console.log(`tagsList: ${tagsList} selectedTags: ${selectedTags} deleteTag: ${deleteTag}`);
+        onTagsChange(tagsList, selectedTags, deleteTag);
+        deleteTag = [];
     }
 </script>
 
@@ -109,34 +127,47 @@
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0" align="start" side="bottom">
         <div class="p-3">
-            <Command>
+            <Command filter={customFilter}>
                 {#if tagsList.length > 0}
                     {#if tagsList.length > MAX_TAGS_COUNT}
-                        <CommandInput placeholder={$t("app.tags.searchTags")} class="bg-background" />
+                        <CommandInput
+                            placeholder={$t("app.tags.searchTags")}
+                            class="bg-background"
+                            bind:value={searchKeyword}
+                        />
                     {/if}
                     <CommandList>
                         <CommandEmpty>{$t("app.tags.noTags")}</CommandEmpty>
                         <CommandGroup>
-                            {#each tagsList.slice(0, MAX_TAGS_COUNT) as tag}
-                                <CommandItem
-                                    value={tag}
-                                    onSelect={() => toggleTag(tag)}
-                                    disabled={selectedTagsCount >= maxSelectedTags && !selectedTags.includes(tag)}
-                                >
-                                    <div
-                                        class={cn(
-                                            "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                                            selectedTags.includes(tag)
-                                                ? "bg-primary text-primary-foreground"
-                                                : "opacity-50 [&_svg]:invisible"
-                                        )}
+                            {#each tagsList
+                                .filter((tag) => tag.toLowerCase().includes(searchKeyword.toLowerCase()))
+                                .slice(0, MAX_TAGS_COUNT) as tag}
+                                <div class="flex flex-row justify-between items-center">
+                                    <CommandItem
+                                        value={tag}
+                                        onSelect={() => toggleTag(tag)}
+                                        disabled={selectedTagsCount >= maxSelectedTags && !selectedTags.includes(tag)}
                                     >
-                                        <Check class={cn("h-4 w-4")} />
-                                    </div>
-                                    <span>{tag}</span>
-                                </CommandItem>
+                                        <div
+                                            class={cn(
+                                                "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                                                selectedTags.includes(tag)
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "opacity-50 [&_svg]:invisible"
+                                            )}
+                                        >
+                                            <Check class={cn("h-4 w-4")} />
+                                        </div>
+                                        <span>{tag}</span>
+                                    </CommandItem>
+                                    <Button class="p-2" variant="ghost" onclick={() => handleDeleteTag(tag)}>
+                                        <Trash2 class="w-4 h-4" />
+                                    </Button>
+                                </div>
                             {/each}
-                            {#if tagsList.length > MAX_TAGS_COUNT}
+                        </CommandGroup>
+                        {#if tagsList.length > MAX_TAGS_COUNT}
+                            <CommandGroup>
                                 <CommandItem disabled>
                                     <span
                                         >{$t("app.tags.moreTagsHidden", {
@@ -144,9 +175,8 @@
                                         })}</span
                                     >
                                 </CommandItem>
-                            {/if}
-                        </CommandGroup>
-                        <CommandSeparator />
+                            </CommandGroup>
+                        {/if}
                     </CommandList>
                 {/if}
                 <CommandGroup>

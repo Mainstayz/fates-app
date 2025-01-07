@@ -184,9 +184,15 @@
                                         rowId={row.id}
                                         allTags={repeatTaskAPI.allTags}
                                         selectedTags={row.tags ? row.tags.split(",") : []}
-                                        onTagsChange={(rowId, allTags, selectedTags) => {
-                                            repeatTaskAPI.createTagsIfNotExist(allTags.join(","));
-                                            onUpdateValue(rowId, "tags", selectedTags.join(","));
+                                        onTagsChange={(rowId, allTags, selectedTags, deleteTag) => {
+                                            repeatTaskAPI
+                                                .deleteTags(deleteTag.join(","))
+                                                .then(() => {
+                                                    return repeatTaskAPI.createTagsIfNotExist(allTags.join(","), true);
+                                                })
+                                                .then(() => {
+                                                    onUpdateValue(rowId, "tags", selectedTags.join(","));
+                                                });
                                         }}
                                     />
                                 </Table.Cell>

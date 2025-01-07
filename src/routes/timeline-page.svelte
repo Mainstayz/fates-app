@@ -27,6 +27,7 @@
         getMatterById,
         updateMatter,
         updateTagLastUsedAt,
+        deleteTag,
         type Matter,
     } from "../store";
 
@@ -174,6 +175,16 @@
     }
 
     class TagManager {
+        async deleteTags(tags: string[]) {
+            try {
+                if (!tags.length) return;
+                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
+                await deleteTag(tagsStr);
+            } catch (e) {
+                error(`删除标签失败: ${e}`);
+            }
+        }
+
         async createTags(tags: string[]) {
             try {
                 if (!tags.length) return;
@@ -192,7 +203,7 @@
                 const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
                 await updateTagLastUsedAt(tagsStr);
             } catch (e) {
-                error(`更新标签使用时间戳���败: ${e}`);
+                error(`更新标签使用时间戳失败: ${e}`);
             }
         }
 
@@ -575,12 +586,19 @@
                 <TaskDetailForm
                     item={editingItem!}
                     tagsList={tags.map((tag) => tag.name)}
-                    callback={(item: TimelineItem, newTags: string[], selectedTags: string[]) => {
+                    callback={(item: TimelineItem, newTags: string[], selectedTags: string[], deleteTags: string[]) => {
                         console.log("edit finish, save timeline item ...", item);
-                        Promise.all([tagManager.createTags(newTags), saveTimelineItem(item)])
+                        tagManager
+                            .deleteTags(deleteTags) // delete tags
                             .then(() => {
+                                // create tags and save timeline item
+                                return Promise.all([tagManager.createTags(newTags), saveTimelineItem(item)]);
+                            })
+                            .then(() => {
+                                // update timeline component
                                 timelineComponent.updateItem(item);
                                 editingItem = null;
+                                // update tags
                                 return tagManager.updateTags(selectedTags);
                             })
                             .then(() => {

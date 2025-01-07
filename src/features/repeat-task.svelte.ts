@@ -7,6 +7,7 @@ import {
     createTag,
     getAllTags,
     createMatter,
+    deleteTag,
 } from "../store";
 
 import type { RepeatTask, Matter } from "../store";
@@ -19,7 +20,6 @@ class RepeatTaskAPI {
     public async fetchAllTags() {
         let tags = await getAllTags();
         let newTags = tags.map((tag: { name: string }) => tag.name).filter((tag: string) => tag !== "");
-        console.log("allTags: ", newTags);
         this.allTags.length = 0;
         this.allTags.push(...newTags);
     }
@@ -53,9 +53,19 @@ class RepeatTaskAPI {
             this.data.splice(index, 1);
         }
     }
-    public async createTagsIfNotExist(tags: string) {
+    public async createTagsIfNotExist(tags: string, update: boolean = false) {
         await createTag(tags);
-        await this.fetchAllTags();
+        if (update) {
+            await this.fetchAllTags();
+        }
+    }
+    public async deleteTags(tags: string, update: boolean = false) {
+        await deleteTag(tags, {
+            debug: true,
+        });
+        if (update) {
+            await this.fetchAllTags();
+        }
     }
 
     public async createMatter(repeatTask: RepeatTask) {
