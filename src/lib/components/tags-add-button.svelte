@@ -1,115 +1,113 @@
 <script lang="ts">
     import { Badge } from "$lib/components/ui/badge";
-    import { Popover, PopoverTrigger, PopoverContent } from "$lib/components/ui/popover";
     import { Button } from "$lib/components/ui/button";
-    import { Check, Plus, PlusCircle, X, Trash2 } from "lucide-svelte";
-    import { Separator } from "$lib/components/ui/separator";
-    import { Input } from "$lib/components/ui/input";
-    import { cn } from "$lib/utils";
-    import { t } from "svelte-i18n";
     import {
         Command,
-        CommandInput,
-        CommandList,
         CommandEmpty,
         CommandGroup,
+        CommandInput,
         CommandItem,
-        CommandSeparator,
+        CommandList,
     } from "$lib/components/ui/command";
+    import { Input } from "$lib/components/ui/input";
+    import { Popover, PopoverContent, PopoverTrigger } from "$lib/components/ui/popover";
+    import { Separator } from "$lib/components/ui/separator";
+    import { cn } from "$lib/utils";
+    import { Check, PlusCircle, Trash2, X } from "lucide-svelte";
+    import { t } from "svelte-i18n";
+    import { tagManager } from "$src/tag-manager.svelte";
 
     const MAX_TAGS_COUNT = 5;
     const maxSelectedTags: number = 2;
 
-    export let selectedTags: string[] = [];
-    export let tagsList: string[] = [];
-    export let onTagsChange: (tagsList: string[], selectedTags: string[], deleteTag: string[]) => void;
+    let { selectedTags = $bindable() }: { selectedTags: string[] } = $props();
 
-    tagsList = [...new Set([...selectedTags, ...tagsList])];
+    let openStatus = $state(false);
+    let showCreateNewTag = $state(false);
 
-    let open = false;
-    let showCreateNewTag = false;
-    let newTag = "";
-    let selectedTagsCount = 0;
-    let searchKeyword = "";
-    let deleteTag: string[] = [];
+    let newTagName = $state("");
+    let searchKeyword = $state("");
 
-    $: showCreateNewTag = tagsList.length === 0;
-    $: selectedTagsCount = selectedTags.length;
-    $: {
-        if (searchKeyword == "") {
-            tagsList = [...new Set([...selectedTags, ...tagsList])];
+    if (selectedTags.length > 0) {
+        let newTags = selectedTags.filter((tag) => !tagManager.tagNames.includes(tag));
+        if (newTags.length > 0) {
+            tagManager.createTags(newTags).then(() => {
+                tagManager.fetchAllTags();
+            });
         }
     }
 
-    function customFilter(value: string, search: string, keywords?: string[]): number {
-        return value.includes(search) ? 1 : 0;
-    }
+    let allTags = $derived([...selectedTags, ...tagManager.tagNames.filter((tag) => !selectedTags.includes(tag))]);
+    let filteredTags = $state<string[]>([]);
 
-    function addTag(tag: string) {
+    $effect(() => {
+        if (searchKeyword.length > 0) {
+            filteredTags = allTags.filter((tag) => tag.includes(searchKeyword));
+        } else {
+            filteredTags = allTags;
+        }
+    });
+
+    $inspect("allTagsChange:", allTags);
+
+    function selectTag(tag: string) {
         if (selectedTags.includes(tag)) {
             return;
         }
-        selectedTags = [...selectedTags, tag];
-        handleTagChange();
+        selectedTags.push(tag);
+        tagManager.updateTagsLastUsedAt(selectedTags);
     }
 
-    function removeTag(tag: string) {
+    function unSelectTag(tag: string) {
         const index = selectedTags.indexOf(tag);
         if (index !== -1) {
-            selectedTags = [...selectedTags];
             selectedTags.splice(index, 1);
-            handleTagChange();
         }
     }
 
     function toggleTag(tag: string) {
         if (selectedTags.includes(tag)) {
-            removeTag(tag);
+            unSelectTag(tag);
         } else {
-            addTag(tag);
+            selectTag(tag);
         }
     }
 
     function handleNewTagKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter" && newTag.trim()) {
-            handleCreateNewTag(newTag.trim());
-            newTag = "";
+        if (e.key === "Enter" && newTagName.trim()) {
+            handleCreateNewTag(newTagName.trim());
+            newTagName = "";
             showCreateNewTag = false;
         }
     }
 
     function handleCreateNewTag(tag: string) {
-        if (selectedTagsCount < maxSelectedTags) {
-            selectedTags = [...selectedTags, tag];
-            const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
-            tagsList = [...new Set([...selectedTags, ...excludeSelectedTags])];
-        } else {
-            const excludeSelectedTags = tagsList.filter((t) => !selectedTags.includes(t));
-            tagsList = [...new Set([...selectedTags, tag, ...excludeSelectedTags])];
+        if (allTags.includes(tag)) {
+            console.log(`tag ${tag} already exists`);
+            return;
         }
-        handleTagChange();
+        // always new tag
+        if (selectedTags.length < maxSelectedTags) {
+            selectedTags.push(tag);
+        }
+        tagManager.createTags([tag]).then(() => {
+            tagManager.fetchAllTags();
+        });
     }
 
     function handleDeleteTag(tag: string) {
-        deleteTag = [...deleteTag, tag];
-        tagsList = tagsList.filter((t) => t !== tag);
-        selectedTags = selectedTags.filter((t) => t !== tag);
-        handleTagChange();
+        unSelectTag(tag);
+        tagManager.deleteTags([tag]).then(() => {
+            tagManager.fetchAllTags();
+        });
     }
 
     function clearTags() {
         selectedTags = [];
-        handleTagChange();
-    }
-
-    function handleTagChange() {
-        console.log(`tagsList: ${tagsList} selectedTags: ${selectedTags} deleteTag: ${deleteTag}`);
-        onTagsChange(tagsList, selectedTags, deleteTag);
-        deleteTag = [];
     }
 </script>
 
-<Popover bind:open>
+<Popover bind:open={openStatus}>
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
             {#if selectedTags.length > 0}
@@ -127,26 +125,26 @@
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0" align="start" side="bottom">
         <div class="p-3">
-            <Command filter={customFilter}>
-                {#if tagsList.length > 0}
-                    {#if tagsList.length > MAX_TAGS_COUNT}
-                        <CommandInput
+            <Command>
+                {#if filteredTags.length > 0}
+                    {#if filteredTags.length > MAX_TAGS_COUNT}
+                        <Input
                             placeholder={$t("app.tags.searchTags")}
-                            class="bg-background"
+                            class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0"
                             bind:value={searchKeyword}
                         />
                     {/if}
                     <CommandList>
-                        <CommandEmpty>{$t("app.tags.noTags")}</CommandEmpty>
+                        {#if filteredTags.length === 0}
+                            <div class="py-1 text-center text-sm">{$t("app.tags.noTags")}</div>
+                        {/if}
                         <CommandGroup>
-                            {#each tagsList
-                                .filter((tag) => tag.toLowerCase().includes(searchKeyword.toLowerCase()))
-                                .slice(0, MAX_TAGS_COUNT) as tag}
+                            {#each filteredTags.slice(0, MAX_TAGS_COUNT) as tag}
                                 <div class="flex flex-row justify-between items-center">
                                     <CommandItem
                                         value={tag}
                                         onSelect={() => toggleTag(tag)}
-                                        disabled={selectedTagsCount >= maxSelectedTags && !selectedTags.includes(tag)}
+                                        disabled={selectedTags.length >= maxSelectedTags && !selectedTags.includes(tag)}
                                     >
                                         <div
                                             class={cn(
@@ -166,12 +164,12 @@
                                 </div>
                             {/each}
                         </CommandGroup>
-                        {#if tagsList.length > MAX_TAGS_COUNT}
+                        {#if filteredTags.length > MAX_TAGS_COUNT}
                             <CommandGroup>
                                 <CommandItem disabled>
                                     <span
                                         >{$t("app.tags.moreTagsHidden", {
-                                            values: { count: tagsList.length - MAX_TAGS_COUNT },
+                                            values: { count: filteredTags.length - MAX_TAGS_COUNT },
                                         })}</span
                                     >
                                 </CommandItem>
@@ -190,11 +188,11 @@
                                 autofocus
                                 type="text"
                                 placeholder={$t("app.tags.newTagPlaceholder")}
-                                bind:value={newTag}
+                                bind:value={newTagName}
                                 onkeydown={handleNewTagKeydown}
                                 class="bg-background border-0 shadow-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 h-[32px]"
                             />
-                            {#if tagsList.length > 0}
+                            {#if newTagName.length > 0}
                                 <Button variant="ghost" size="icon" onclick={() => (showCreateNewTag = false)}>
                                     <X class="h-4 w-4" />
                                 </Button>

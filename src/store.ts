@@ -117,6 +117,11 @@ export interface NotificationRecord {
     reserved_5?: string;
 }
 
+export interface Tag {
+    name: string;
+    last_used_at: string;
+}
+
 const processResponse = async (url: string, response: { code: number; msg: string; data: any }) => {
     if (response.code === 200) {
         return response.data;

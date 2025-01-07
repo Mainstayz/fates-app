@@ -9,7 +9,7 @@
     import { getActiveRepeatTasks, getAllTodos, getMattersByRange } from "$src/store";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
-    import { OpenAIClient, type ChatMessage, type ChatRole } from "../features/openai";
+    import { OpenAIClient, type ChatMessage, type ChatRole } from "../openai";
 
     let baseUrl = $state("");
     let apiKey = $state("");

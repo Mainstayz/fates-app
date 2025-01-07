@@ -19,7 +19,7 @@
     import { emit } from "@tauri-apps/api/event";
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { onMount } from "svelte";
-    import { repeatTaskAPI } from "../features/repeat-task.svelte";
+    import { repeatTaskAPI } from "$src/repeat-task.svelte";
 
     let localAllTags = $state<string[]>([]);
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
@@ -32,7 +32,6 @@
     let alertConfirm: () => Promise<void> = $state(async () => {});
     $effect(() => {
         repeatTaskAPI.data;
-        repeatTaskAPI.allTags;
         table.setRows(repeatTaskAPI.data);
     });
 
@@ -87,7 +86,6 @@
 
     onMount(() => {
         new Promise(async (resolve, reject) => {
-            await repeatTaskAPI.fetchAllTags();
             await repeatTaskAPI.fetchData();
             resolve(true);
         })
@@ -182,17 +180,9 @@
                                 <Table.Cell class="max-w-[224px] overflow-auto">
                                     <DataTableTagsCell
                                         rowId={row.id}
-                                        allTags={repeatTaskAPI.allTags}
                                         selectedTags={row.tags ? row.tags.split(",") : []}
-                                        onTagsChange={(rowId, allTags, selectedTags, deleteTag) => {
-                                            repeatTaskAPI
-                                                .deleteTags(deleteTag.join(","))
-                                                .then(() => {
-                                                    return repeatTaskAPI.createTagsIfNotExist(allTags.join(","), true);
-                                                })
-                                                .then(() => {
-                                                    onUpdateValue(rowId, "tags", selectedTags.join(","));
-                                                });
+                                        onTagsChange={(rowId, selectedTags) => {
+                                            onUpdateValue(rowId, "tags", selectedTags.join(","));
                                         }}
                                     />
                                 </Table.Cell>

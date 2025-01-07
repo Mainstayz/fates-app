@@ -7,7 +7,7 @@
     import type { TimelineItem } from "$lib/types";
     import { Priority } from "$lib/types";
     import { appConfig } from "$src/app-config";
-    import { OpenAIClient } from "$src/features/openai";
+    import { OpenAIClient } from "$src/openai";
     import { LoaderCircle, PanelTop, Sparkles } from "lucide-svelte";
     import { onDestroy, onMount } from "svelte";
     import { t } from "svelte-i18n";
@@ -18,12 +18,10 @@
 
     let {
         item,
-        tagsList: initialTagsList,
         callback,
     }: {
         item: TimelineItem;
-        tagsList: string[];
-        callback: (item: TimelineItem, newTags: string[], selectedTags: string[], deleteTags: string[]) => void;
+        callback: (item: TimelineItem) => void;
     } = $props();
 
     let localItem = $state({ ...item }); // create local copy
@@ -36,9 +34,7 @@
     let priority = $state<Priority>(item.priority || Priority.Medium);
     let startDate = $state(formatDateForInput(item.start));
     let endDate = $state(item.end ? formatDateForInput(item.end) : formatDateForInput(new Date()));
-    let deleteTags = $state<string[]>([]);
 
-    let localTagsList = $state([...(initialTagsList || [])]);
     let localSelectedTags = $state([...(item.tags || [])]);
 
     function updateItem() {
@@ -89,11 +85,8 @@
         return `${hours}:${minutes}`;
     }
 
-    function handleTagsChange(tagsList: string[], selectedTags: string[], deleteTag: string[]) {
-        localTagsList = tagsList;
+    function handleTagsChange(selectedTags: string[]) {
         localSelectedTags = selectedTags;
-        // collect delete tags
-        deleteTags.push(...deleteTag);
     }
 
     async function generateTitle() {
@@ -154,15 +147,8 @@
     onMount(() => {
         aiEnabled = appConfig.aiEnabled;
         return () => {
-            let diffTags = localTagsList.filter((tag) => !initialTagsList.includes(tag));
             const updatedItem = updateItem();
-            console.log("Before callback - updatedItem:", updatedItem);
-            console.log("Before callback - localTagsList:", localTagsList, "diff:", diffTags);
-            console.log("Before callback - selectedTags:", localSelectedTags);
-
-            let uniqueDeleteTags = [...new Set(deleteTags)];
-            console.log("Before callback - deleteTags:", uniqueDeleteTags);
-            callback(updatedItem, diffTags, localSelectedTags, uniqueDeleteTags);
+            callback(updatedItem);
         };
     });
 
@@ -220,11 +206,7 @@
             <div class="flex-1">
                 <div class="text-xs text-gray-500 mb-1">{$t("app.taskDetail.tagsLabel")}</div>
                 <div>
-                    <TagsAddButton
-                        tagsList={localTagsList}
-                        selectedTags={localSelectedTags}
-                        onTagsChange={handleTagsChange}
-                    />
+                    <TagsAddButton bind:selectedTags={localSelectedTags} />
                 </div>
             </div>
         </div>

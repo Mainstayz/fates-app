@@ -4,6 +4,7 @@
     import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
+    import _ from "$src/tag-manager.svelte";
     // 导入组件
     import DailyHeatMap from "$lib/components/daily-heat-map.svelte";
     import TaskDetailForm from "$lib/components/task-detail-form.svelte";
@@ -174,51 +175,6 @@
         }
     }
 
-    class TagManager {
-        async deleteTags(tags: string[]) {
-            try {
-                if (!tags.length) return;
-                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
-                await deleteTag(tagsStr);
-            } catch (e) {
-                error(`删除标签失败: ${e}`);
-            }
-        }
-
-        async createTags(tags: string[]) {
-            try {
-                if (!tags.length) return;
-
-                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
-                await createTag(tagsStr);
-            } catch (e) {
-                error(`创建标签失败: ${e}`);
-            }
-        }
-
-        async updateTags(tags: string[]) {
-            try {
-                if (!tags.length) return;
-
-                const tagsStr = tags.length === 1 ? tags[0] : tags.join(",");
-                await updateTagLastUsedAt(tagsStr);
-            } catch (e) {
-                error(`更新标签使用时间戳失败: ${e}`);
-            }
-        }
-
-        async loadTags() {
-            try {
-                tags.splice(0, tags.length);
-                const allTags: Tag[] = await getAllTags();
-                tags.push(...allTags);
-                tags.sort((a, b) => new Date(b.last_used_at).getTime() - new Date(a.last_used_at).getTime());
-            } catch (e) {
-                error(`加载标签失败: ${e}`);
-            }
-        }
-    }
-
     interface HeatMapData {
         date: string;
         value: number;
@@ -347,7 +303,6 @@
         {
             event: NOTIFICATION_RELOAD_TIMELINE_DATA,
             handler: () => {
-                tagManager?.loadTags();
                 timelineDataManager?.loadTimelineData();
             },
         },
@@ -426,7 +381,6 @@
     });
 
     let timelineDataManager: TimelineDataManager;
-    let tagManager: TagManager;
     let timeRangeManager: TimeRangeManager;
     let eventHandler: TimelineEventHandler;
 
@@ -439,15 +393,12 @@
         }
 
         timelineDataManager = new TimelineDataManager(timelineComponent);
-        tagManager = new TagManager();
         timeRangeManager = new TimeRangeManager(timelineComponent);
         eventHandler = new TimelineEventHandler(timelineComponent);
 
         setupEventListeners();
 
         timelineDataManager.loadTimelineData();
-        tagManager.loadTags();
-
         timeRangeManager.handleTimeRangeChange(selectedRange as keyof typeof timeRangeManager.TIME_RANGES);
 
         return () => {
@@ -585,28 +536,10 @@
             <Dialog.Content trapFocus={false} interactOutsideBehavior="ignore">
                 <TaskDetailForm
                     item={editingItem!}
-                    tagsList={tags.map((tag) => tag.name)}
-                    callback={(item: TimelineItem, newTags: string[], selectedTags: string[], deleteTags: string[]) => {
+                    callback={(item: TimelineItem) => {
                         console.log("edit finish, save timeline item ...", item);
-                        tagManager
-                            .deleteTags(deleteTags) // delete tags
-                            .then(() => {
-                                // create tags and save timeline item
-                                return Promise.all([tagManager.createTags(newTags), saveTimelineItem(item)]);
-                            })
-                            .then(() => {
-                                // update timeline component
-                                timelineComponent.updateItem(item);
-                                editingItem = null;
-                                // update tags
-                                return tagManager.updateTags(selectedTags);
-                            })
-                            .then(() => {
-                                tagManager.loadTags();
-                            })
-                            .catch((error) => {
-                                console.error("Failed to save changes:", error);
-                            });
+                        timelineComponent.updateItem(item);
+                        editingItem = null;
                     }}
                 />
             </Dialog.Content>

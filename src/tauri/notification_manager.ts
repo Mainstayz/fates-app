@@ -1,5 +1,5 @@
 import { appConfig } from "$src/app-config";
-import { OpenAIClient } from "$src/features/openai";
+import { OpenAIClient } from "$src/openai";
 import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
 import dayjs from "dayjs";
 import { _, locale } from "svelte-i18n";

@@ -3,7 +3,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Textarea } from "$lib/components/ui/textarea";
     import { appConfig } from "$src/app-config";
-    import { OpenAIClient } from "$src/features/openai";
+    import { OpenAIClient } from "$src/openai";
     import { getMattersByRange, type Matter } from "$src/store";
     import { writeText } from "@tauri-apps/plugin-clipboard-manager";
     import dayjs from "dayjs";
@@ -21,9 +21,6 @@
     let aiLoading = $state(false);
     let copyLoading = $state(false);
     let aiEnableAlert = $state(false);
-
-
-    let textareaElement = $state<HTMLTextAreaElement | null>(null);
 
     let isInitialized = $state(false);
     $effect(() => {
@@ -238,4 +235,3 @@
         </AlertDialog.Footer>
     </AlertDialog.Content>
 </AlertDialog.Root>
-

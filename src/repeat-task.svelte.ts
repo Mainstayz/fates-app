@@ -4,25 +4,15 @@ import {
     createRepeatTask,
     updateRepeatTask,
     deleteRepeatTask,
-    createTag,
-    getAllTags,
     createMatter,
-    deleteTag,
-} from "../store";
+} from "./store";
 
-import type { RepeatTask, Matter } from "../store";
+import type { RepeatTask, Matter } from "./store";
 import { v4 as uuidv4 } from "uuid";
 
 class RepeatTaskAPI {
-    public data = $state<RepeatTask[]>([]);
-    public allTags = $state<string[]>([]);
 
-    public async fetchAllTags() {
-        let tags = await getAllTags();
-        let newTags = tags.map((tag: { name: string }) => tag.name).filter((tag: string) => tag !== "");
-        this.allTags.length = 0;
-        this.allTags.push(...newTags);
-    }
+    public data = $state<RepeatTask[]>([]);
 
     public async fetchData() {
         this.data = await getAllRepeatTasks();
@@ -53,21 +43,6 @@ class RepeatTaskAPI {
             this.data.splice(index, 1);
         }
     }
-    public async createTagsIfNotExist(tags: string, update: boolean = false) {
-        await createTag(tags);
-        if (update) {
-            await this.fetchAllTags();
-        }
-    }
-    public async deleteTags(tags: string, update: boolean = false) {
-        await deleteTag(tags, {
-            debug: true,
-        });
-        if (update) {
-            await this.fetchAllTags();
-        }
-    }
-
     public async createMatter(repeatTask: RepeatTask) {
         let components = repeatTask.repeat_time.split("|");
         if (components.length !== 3) {
