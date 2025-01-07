@@ -54,6 +54,7 @@
         if (selectedTags.includes(tag)) {
             return;
         }
+        console.log("selectTag:", tag);
         selectedTags.push(tag);
         tagManager.updateTagsLastUsedAt(selectedTags);
     }
@@ -61,6 +62,7 @@
     function unSelectTag(tag: string) {
         const index = selectedTags.indexOf(tag);
         if (index !== -1) {
+            console.log("unSelectTag:", tag);
             selectedTags.splice(index, 1);
         }
     }
@@ -86,13 +88,17 @@
             console.log(`tag ${tag} already exists`);
             return;
         }
-        // always new tag
-        if (selectedTags.length < maxSelectedTags) {
-            selectedTags.push(tag);
-        }
-        tagManager.createTags([tag]).then(() => {
-            tagManager.fetchAllTags();
-        });
+        tagManager
+            .createTags([tag])
+            .then(() => {
+                return tagManager.fetchAllTags();
+            })
+            .then(() => {
+                if (selectedTags.length < maxSelectedTags) {
+                    console.log("add new tag:", tag);
+                    selectedTags.push(tag);
+                }
+            });
     }
 
     function handleDeleteTag(tag: string) {
@@ -103,6 +109,7 @@
     }
 
     function clearTags() {
+        console.log("clearTags");
         selectedTags = [];
     }
 </script>

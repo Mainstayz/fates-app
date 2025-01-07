@@ -21,7 +21,6 @@
     import { onMount } from "svelte";
     import { repeatTaskAPI } from "$src/repeat-task.svelte";
 
-    let localAllTags = $state<string[]>([]);
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
     const search = table.createSearch();
 
@@ -97,6 +96,7 @@
             });
     });
     async function onUpdateValue(rowId: string, columnId: string, value: string | number) {
+        console.log("update repeat task:", rowId, columnId, value);
         let task = repeatTaskAPI.getRepeatTaskById(rowId);
         if (!task) {
             console.error("task not found", rowId);

@@ -10,7 +10,8 @@
     let localTags = $state([...selectedTags]);
     // 改为使用事件处理函数，只在用户操作时触发
     $effect(() => {
-        onTagsChange(rowId, localTags);
+        // console.log("localTags changed:", localTags);
+        // onTagsChange(rowId, localTags);
     });
 </script>
 
