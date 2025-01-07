@@ -1,51 +1,64 @@
 {
-    "$schema": "https://schema.tauri.app/config/2",
-    "productName": "fates-app",
-    "version": "0.4.0",
-    "identifier": "com.fates-app.app",
-    "build": {
-        "beforeDevCommand": "pnpm dev",
-        "devUrl": "http://localhost:1420",
-        "beforeBuildCommand": "pnpm build",
-        "frontendDist": "../build"
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "fates-app",
+  "version": "0.5.0",
+  "identifier": "com.fates-app.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "windows": [
+      {
+        "width": 1200,
+        "height": 800,
+        "resizable": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true
     },
-
-    "app": {
-        "windows": [
-            {
-                "width": 1200,
-                "height": 800,
-                "resizable": false
-            }
-        ],
-        "security": {
-            "csp": null,
-            "dangerousDisableAssetCspModification": true
-        },
-        "macOSPrivateApi": true
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "resources/icon-mac.ico",
+      "resources/icon.png",
+      "resources/icon.ico"
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "fs": {
+      "scope": {
+        "allow": [
+          "$APPDATA/**"
+        ]
+      }
     },
-    "bundle": {
-        "active": true,
-        "targets": "all",
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-        "resources": ["resources/icon-mac.ico", "resources/icon.png", "resources/icon.ico"],
-        "createUpdaterArtifacts": true
+    "updater": {
+      "windows": {
+        "installMode": "passive"
+      },
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGNjg5MDhGQUNBMDlBRjkKUldUNW1xQ3NqNUJvSHc2ZmEzY0ZSeFBlRTNmeGtCbWNTZEpUNDUrOUFRWmFCMDdUd2hybmRxcW4K",
+      "endpoints": [
+        "https://github.com/Mainstayz/fates-app/releases/latest/download/latest.json"
+      ]
     },
-    "plugins": {
-        "fs": {
-            "scope": {
-                "allow": ["$APPDATA/**"]
-            }
-        },
-        "updater": {
-            "windows": {
-                "installMode": "passive"
-            },
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGNjg5MDhGQUNBMDlBRjkKUldUNW1xQ3NqNUJvSHc2ZmEzY0ZSeFBlRTNmeGtCbWNTZEpUNDUrOUFRWmFCMDdUd2hybmRxcW4K",
-            "endpoints": ["https://github.com/Mainstayz/fates-app/releases/latest/download/latest.json"]
-        },
-        "os": {
-            "enable": true
-        }
+    "os": {
+      "enable": true
     }
+  }
 }
