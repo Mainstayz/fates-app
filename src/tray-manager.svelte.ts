@@ -7,19 +7,29 @@ import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
-let hasTray = false;
 
 class Tray {
-    private TRAY_ID = "app-tray";
+    private static instance: Tray | null = null;
+    private readonly TRAY_ID = "app-tray";
     private flashState = false;
     private flashFlag = false;
     private showOrHideProgress = true;
     private flashInterval: NodeJS.Timeout | null = null;
-    constructor() {
+    private hasTray = false;
+
+    private constructor() {
+        // 私有构造函数，防止外部直接创建实例
+    }
+
+    public static getInstance(): Tray {
+        if (!Tray.instance) {
+            Tray.instance = new Tray();
+        }
+        return Tray.instance;
     }
 
     destroy() {
-        hasTray = false;
+        this.hasTray = false;
         TrayIcon.removeById(this.TRAY_ID);
     }
 
@@ -81,10 +91,10 @@ class Tray {
     }
 
     async init() {
-        if (!hasTray) {
+        if (!this.hasTray) {
             await this.createTrayIcon();
         }
-        hasTray = true;
+        this.hasTray = true;
     }
 
     async getTrayById() {
@@ -162,5 +172,4 @@ class Tray {
     }
 }
 
-const tray = new Tray();
-export default tray;
+export default Tray.getInstance();
