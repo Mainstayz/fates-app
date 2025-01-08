@@ -1,17 +1,17 @@
 <script lang="ts">
-    import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
-    import { platform, REFRESH_TIME_PROGRESS } from "$src/platform";
+    import platform, { initializePlatform, REFRESH_TIME_PROGRESS } from "$src/platform";
+    import "../i18n/i18n";
+    // 通知管理器
     import notificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
+    // 系统通知
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-    import { onMount } from "svelte";
 
+    import { onMount } from "svelte";
+    import { locale } from "svelte-i18n";
     import App from "./app.svelte";
 
-    import { locale } from "svelte-i18n";
-
     let appConfigInitialized = $state(false);
-
     $inspect("appConfigInitialized: ", appConfigInitialized);
 
     async function sendSystemNotification(title: string, message: string) {
@@ -53,7 +53,10 @@
             await locale.set(language);
             console.log("Current language: ", language);
             appConfigInitialized = true;
-            await platform.dailyProgressBar.initialize();
+            // Initialize tray manager
+            await initializePlatform();
+            console.log("platform initialized", platform.instance);
+            platform.instance.dailyProgressBar.initialize();
         };
 
         // 立即执行初始化
@@ -63,8 +66,8 @@
         // 返回清理函数
         return () => {
             notificationManager.stop();
-            platform.dailyProgressBar.destroy();
             unlisten();
+            platform.instance.dailyProgressBar.destroy();
         };
     });
 </script>

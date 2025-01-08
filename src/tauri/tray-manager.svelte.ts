@@ -17,9 +17,7 @@ class Tray {
     private flashInterval: NodeJS.Timeout | null = null;
     private hasTray = false;
 
-    private constructor() {
-        // 私有构造函数，防止外部直接创建实例
-    }
+    private constructor() {}
 
     public static getInstance(): Tray {
         if (!Tray.instance) {
