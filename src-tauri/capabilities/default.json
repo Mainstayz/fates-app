@@ -21,6 +21,8 @@
     "core:window:default",
     "core:window:allow-minimize",
     "core:window:allow-unminimize",
+    "core:window:deny-toggle-maximize",
+    "core:window:deny-internal-toggle-maximize",
     "core:window:allow-show",
     "core:window:allow-hide",
     "core:window:allow-set-position",
