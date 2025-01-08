@@ -101,8 +101,8 @@ export async function initializePlatform(): Promise<PlatformAPI> {
 export default {
     get instance() {
         if (!platformInstance) {
-            throw new Error('Platform not initialized. Call initializePlatform() first.');
+            throw new Error("Platform not initialized. Call initializePlatform() first.");
         }
         return platformInstance;
-    }
+    },
 };

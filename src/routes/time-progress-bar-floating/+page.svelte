@@ -1,5 +1,6 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
+    import platform, { type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
     import { getCurrentWindow, Window } from "@tauri-apps/api/window";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
@@ -116,7 +117,7 @@
     }
 
     async function setupListeners() {
-        const unlistenVisibility = await platform.event.listen("toggle-time-progress", async (event) => {
+        const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
             const win = await getCurrentWindow();
             const shouldShow = event.payload as boolean;
             if (shouldShow) {
@@ -128,14 +129,17 @@
         });
         unlistens.push(unlistenVisibility);
 
-        const unlistenAlwaysOnTop = await platform.event.listen("set-time-progress-always-on-top", async (event) => {
-            const win = await getCurrentWindow();
-            const shouldBeOnTop = event.payload as boolean;
-            await win.setAlwaysOnTop(shouldBeOnTop);
-        });
+        const unlistenAlwaysOnTop = await platform.instance.event.listen(
+            "set-time-progress-always-on-top",
+            async (event) => {
+                const win = await getCurrentWindow();
+                const shouldBeOnTop = event.payload as boolean;
+                await win.setAlwaysOnTop(shouldBeOnTop);
+            }
+        );
         unlistens.push(unlistenAlwaysOnTop);
 
-        const unlistenRefresh = await platform.event.listen(REFRESH_TIME_PROGRESS, async () => {
+        const unlistenRefresh = await platform.instance.event.listen(REFRESH_TIME_PROGRESS, async () => {
             await refreshTimeProgress();
         });
         unlistens.push(unlistenRefresh);

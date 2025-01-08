@@ -35,7 +35,7 @@
 
         if (payload.notificationType === NotificationType.NewTask) {
             // notify time progress bar to refresh
-            platform.event.emit(REFRESH_TIME_PROGRESS, {});
+            platform.instance.event.emit(REFRESH_TIME_PROGRESS, {});
         }
 
         sendSystemNotification(payload.title, payload.message).catch((error) => {
