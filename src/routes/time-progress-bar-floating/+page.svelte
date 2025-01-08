@@ -5,7 +5,6 @@
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { getMattersByRange, type Matter } from "../../store";
-    import { platform, REFRESH_TIME_PROGRESS, type UnlistenFn } from "$src/platform";
 
     let resizeObserver: ResizeObserver | null = null;
     let rootElement: HTMLElement;
