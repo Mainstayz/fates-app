@@ -49,7 +49,7 @@ export interface PlatformAPI {
     };
 }
 
-// 判断当前运行环境
+// @ts-ignore
 export const isTauri = typeof window !== "undefined" && window.__TAURI_INTERNALS__ !== undefined;
 export const isWeb = !isTauri;
 
