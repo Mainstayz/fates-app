@@ -1,14 +1,12 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
     import platform, { type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
-    import { getCurrentWindow, Window } from "@tauri-apps/api/window";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { getMattersByRange, type Matter } from "../../store";
 
     let resizeObserver: ResizeObserver | null = null;
     let rootElement: HTMLElement;
-    const window = getCurrentWindow();
 
     let timeSegments: Array<{
         start: number;
@@ -34,7 +32,7 @@
         }
 
         const newHeight = rootElement.clientHeight;
-        await window.emit("time-progress-bar-height", newHeight);
+        // await window.emit("time-progress-bar-height", newHeight);
         console.log("update time-progress-bar-height:", newHeight);
     }
 
@@ -107,36 +105,26 @@
 
     async function handleDoubleClick() {
         console.log("rootElement double clicked");
-        let mainWindow = await Window.getByLabel("main");
-        if (mainWindow) {
-            await mainWindow.unminimize();
-            await mainWindow.show();
-            await mainWindow.setFocus();
-        }
+        // let mainWindow = await Window.getByLabel("main");
+        // if (mainWindow) {
+        //     await mainWindow.unminimize();
+        //     await mainWindow.show();
+        //     await mainWindow.setFocus();
+        // }
     }
 
     async function setupListeners() {
         const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
-            const win = await getCurrentWindow();
+            // const win = await getCurrentWindow();
             const shouldShow = event.payload as boolean;
             if (shouldShow) {
-                await win.show();
+                // await win.show();
                 await refreshTimeProgress();
             } else {
-                await win.hide();
+                // await win.hide();
             }
         });
         unlistens.push(unlistenVisibility);
-
-        const unlistenAlwaysOnTop = await platform.instance.event.listen(
-            "set-time-progress-always-on-top",
-            async (event) => {
-                const win = await getCurrentWindow();
-                const shouldBeOnTop = event.payload as boolean;
-                await win.setAlwaysOnTop(shouldBeOnTop);
-            }
-        );
-        unlistens.push(unlistenAlwaysOnTop);
 
         const unlistenRefresh = await platform.instance.event.listen(REFRESH_TIME_PROGRESS, async () => {
             await refreshTimeProgress();
