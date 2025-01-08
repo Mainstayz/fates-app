@@ -1,6 +1,6 @@
 <script lang="ts">
     // 导入必要的依赖
-    import { emit, listen } from "@tauri-apps/api/event";
+    import { platform, REFRESH_TIME_PROGRESS } from "$src/platform";
     import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
@@ -107,7 +107,7 @@
                 console.log("update matter: ", newMatter);
                 await updateMatter(item.id, newMatter);
                 await updateHeatMapData();
-                await emit("refresh-time-progress");
+                await platform.event.emit(REFRESH_TIME_PROGRESS, {});
             }
         } catch (e) {
             error(`保存时间线数据失败: ${e}`);
@@ -119,7 +119,7 @@
             console.log("delete matter: ", id);
             await deleteMatter(id);
             await updateHeatMapData();
-            await emit("refresh-time-progress");
+            await platform.event.emit(REFRESH_TIME_PROGRESS, {});
         } catch (e) {
             error(`删除时间线数据失败: ${e}`);
         }
@@ -169,7 +169,7 @@
             }
             console.log("create matter: ", newMatter);
             await updateHeatMapData();
-            await emit("refresh-time-progress");
+            await platform.event.emit(REFRESH_TIME_PROGRESS, {});
         } catch (e) {
             error(`创建时间线数据失败: ${e}`);
         }
@@ -210,7 +210,7 @@
                 }
 
                 await this.updateHeatMapData();
-                await emit("refresh-time-progress");
+                await platform.event.emit(REFRESH_TIME_PROGRESS, {});
             } catch (e) {
                 error(`加载时间线数据失败: ${e}`);
             }
@@ -313,7 +313,7 @@
     async function setupEventListeners() {
         for (const { event, handler } of EVENT_LISTENERS) {
             console.log("add event listener: ", event);
-            const unlisten = await listen(event, handler);
+            const unlisten = await platform.event.listen(event, handler);
             unlisteners.push(unlisten);
         }
     }

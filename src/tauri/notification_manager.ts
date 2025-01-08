@@ -1,15 +1,14 @@
 import { appConfig } from "$src/app-config";
-import { OpenAIClient } from "$src/openai";
 import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
+import { OpenAIClient } from "$src/openai";
 import dayjs from "dayjs";
-import { _, locale } from "svelte-i18n";
+import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import { v4 as uuidv4 } from "uuid";
 import { isHolidayDate } from "../i18n/holiday-cn";
 import "../i18n/i18n";
 import type { Matter, RepeatTask, Todo } from "../store";
 import { createMatter, getActiveRepeatTasks, getAllTodos, getMattersByRange } from "../store";
-import type StatisticalAnalysis from "$src/lib/components/statistical-analysis.svelte";
 
 type NotificationCallback = (notification: Notification) => void;
 

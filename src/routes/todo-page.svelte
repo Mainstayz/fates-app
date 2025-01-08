@@ -7,7 +7,7 @@
     import { v4 as uuidv4 } from "uuid";
 
     import AlertDialog from "$lib/components/alert-dialog.svelte";
-    import { emit } from "@tauri-apps/api/event";
+    import { platform, REFRESH_TIME_PROGRESS } from "$src/platform";
     import { TableHandler } from "@vincjo/datatables";
     import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -159,7 +159,7 @@
 
         await store.createMatter(matter);
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
-        await emit("refresh-time-progress", {});
+        await platform.event.emit(REFRESH_TIME_PROGRESS, {});
         alertTitle = $t("app.other.tip");
         alertContent = $t("app.todo.todoInProgressDescription");
         alertConfirm = async () => {};

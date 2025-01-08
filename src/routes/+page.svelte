@@ -1,18 +1,14 @@
 <script lang="ts">
     import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
-    import { TimeProgressBarManager } from "$lib/time-progress-bar-manager";
+    import { platform, REFRESH_TIME_PROGRESS } from "$src/platform";
     import notificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
-    import TrayManager from "$src/tray-manager.svelte";
     import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
     import { onMount } from "svelte";
-    import { emit } from "@tauri-apps/api/event";
 
     import App from "./app.svelte";
 
     import { locale } from "svelte-i18n";
-
-    let timeProgressBarManager: TimeProgressBarManager;
 
     let appConfigInitialized = $state(false);
 
@@ -39,7 +35,7 @@
 
         if (payload.notificationType === NotificationType.NewTask) {
             // notify time progress bar to refresh
-            emit("refresh-time-progress", {});
+            platform.event.emit(REFRESH_TIME_PROGRESS, {});
         }
 
         sendSystemNotification(payload.title, payload.message).catch((error) => {
@@ -57,11 +53,7 @@
             await locale.set(language);
             console.log("Current language: ", language);
             appConfigInitialized = true;
-            // Initialize tray manager
-            await TrayManager.init();
-            // Initialize time progress bar manager
-            timeProgressBarManager = TimeProgressBarManager.getInstance();
-            await timeProgressBarManager.initialize();
+            await platform.dailyProgressBar.initialize();
         };
 
         // 立即执行初始化
@@ -71,7 +63,7 @@
         // 返回清理函数
         return () => {
             notificationManager.stop();
-            timeProgressBarManager.destroy();
+            platform.dailyProgressBar.destroy();
             unlisten();
         };
     });

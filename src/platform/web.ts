@@ -1,6 +1,15 @@
 import type { PlatformAPI } from './index';
 import type { Matter, NotificationRecord } from "$src/types";
 
+class WebDailyProgressBar {
+    async initialize(): Promise<void> {
+        return;
+    }
+    async destroy(): Promise<void> {
+        return;
+    }
+}
+
 class WebStorage {
     private prefix = 'fates_';
 
@@ -111,6 +120,12 @@ class WebWindow {
 }
 
 const webPlatform: PlatformAPI = {
+    event: {
+        // do nothing
+        emit: () => Promise.resolve(),
+        listen: () => Promise.resolve(() => {}),
+    },
+    dailyProgressBar: new WebDailyProgressBar(),
     storage: new WebStorage(),
     notification: new WebNotification(),
     window: new WebWindow(),

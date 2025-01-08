@@ -1,10 +1,26 @@
-import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-import { WebviewWindow, getAllWebviewWindows, getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
+import { emit, listen } from "@tauri-apps/api/event";
+import { WebviewWindow, getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
-import { updater} from '$src/tauri/updater.svelte';
-import type { PlatformAPI } from './index';
-import type { Matter, NotificationRecord } from '../types';
+import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
+import type { Matter, NotificationRecord } from '../types';
+import type { PlatformAPI } from './index';
+import _ from "$src/tauri/tray-manager.svelte";
+
+class TauriDailyProgressBar {
+    private timeProgressBarManager: TimeProgressBarManager;
+    constructor() {
+        this.timeProgressBarManager = TimeProgressBarManager.getInstance();
+    }
+    async initialize(): Promise<void> {
+        await this.timeProgressBarManager.initialize();
+    }
+
+    async destroy(): Promise<void> {
+        await this.timeProgressBarManager.destroy();
+    }
+}
 
 class TauriStorage {
     async getMatter(id: string): Promise<Matter | null> {
@@ -130,6 +146,11 @@ class TauriUpdater {
 }
 
 const tauriPlatform: PlatformAPI = {
+    event: {
+        emit: emit,
+        listen: listen,
+    },
+    dailyProgressBar: new TauriDailyProgressBar(),
     storage: new TauriStorage(),
     notification: new TauriNotification(),
     window: new TauriWindow(),

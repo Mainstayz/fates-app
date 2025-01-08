@@ -16,7 +16,7 @@
     import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
 
     import { Priority } from "$lib/types";
-    import { emit } from "@tauri-apps/api/event";
+    import { platform, REFRESH_TIME_PROGRESS } from "$src/platform";
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { onMount } from "svelte";
     import { repeatTaskAPI } from "$src/repeat-task.svelte";
@@ -75,7 +75,7 @@
             return;
         }
         await repeatTaskAPI.createMatter(repeatTask);
-        await emit("refresh-time-progress", {});
+        await platform.event.emit(REFRESH_TIME_PROGRESS, {});
         alertTitle = $t("app.repeat.addedTip");
         alertContent = $t("app.repeat.addedDescription");
         alertShowCancel = false;

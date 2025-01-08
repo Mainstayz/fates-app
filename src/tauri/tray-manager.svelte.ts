@@ -24,6 +24,9 @@ class Tray {
     public static getInstance(): Tray {
         if (!Tray.instance) {
             Tray.instance = new Tray();
+            Tray.instance.init().then(() => {
+                console.log("Tray init success");
+            });
         }
         return Tray.instance;
     }

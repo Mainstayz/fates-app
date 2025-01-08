@@ -1,6 +1,32 @@
 import type { Matter, NotificationRecord } from "$src/types";
+export const REFRESH_TIME_PROGRESS = "refresh-time-progress";
+
+export type UnlistenFn = () => void;
+
+interface Event<T> {
+    /** Event name */
+    event: string;
+    /** Event identifier used to unlisten */
+    id: number;
+    /** Event payload */
+    payload: T;
+}
 
 export interface PlatformAPI {
+    // 事件相关
+    event: {
+        emit(event: string, payload?: unknown): Promise<void>;
+        listen<T>(
+            event: string,
+            handler: (event: Event<T>) => void,
+            options?: any
+        ): Promise<UnlistenFn>;
+    };
+    dailyProgressBar: {
+        initialize(): Promise<void>;
+        destroy(): Promise<void>;
+    };
+
     // 存储相关
     storage: {
         getMatter(id: string): Promise<Matter | null>;
@@ -44,7 +70,7 @@ export interface PlatformAPI {
 
     // 更新
     updater?: {
-        checkForUpdates(): Promise<{hasUpdate: boolean; version?: string}>;
+        checkForUpdates(): Promise<{ hasUpdate: boolean; version?: string }>;
         downloadAndInstall(): Promise<void>;
     };
 }
@@ -56,6 +82,7 @@ export const isWeb = !isTauri;
 // 获取当前平台的实现
 export async function getPlatform(): Promise<PlatformAPI> {
     if (isTauri) {
+        console.log("Platform is Tauri !!!");
         const { default: tauriPlatform } = await import("./tauri");
         return tauriPlatform;
     } else {
