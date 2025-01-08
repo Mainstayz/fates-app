@@ -4,11 +4,8 @@ export const REFRESH_TIME_PROGRESS = "refresh-time-progress";
 export type UnlistenFn = () => void;
 
 interface Event<T> {
-    /** Event name */
     event: string;
-    /** Event identifier used to unlisten */
     id: number;
-    /** Event payload */
     payload: T;
 }
 
@@ -86,10 +83,26 @@ export async function getPlatform(): Promise<PlatformAPI> {
         const { default: tauriPlatform } = await import("./tauri");
         return tauriPlatform;
     } else {
+        console.log("Platform is Web !!!");
         const { default: webPlatform } = await import("./web");
         return webPlatform;
     }
 }
 
-// 导出平台实例
-export const platform = await getPlatform();
+let platformInstance: PlatformAPI | null = null;
+
+export async function initializePlatform(): Promise<PlatformAPI> {
+    if (!platformInstance) {
+        platformInstance = await getPlatform();
+    }
+    return platformInstance;
+}
+
+export default {
+    get instance() {
+        if (!platformInstance) {
+            throw new Error('Platform not initialized. Call initializePlatform() first.');
+        }
+        return platformInstance;
+    }
+};
