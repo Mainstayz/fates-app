@@ -4,8 +4,8 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/openai";
-    import { getMattersByRange, type Matter } from "$src/store";
     import platform from "$src/platform";
+    import type { Matter } from "$src/types";
     import dayjs from "dayjs";
     import { ClipboardCopy, LoaderCircle, Sparkles } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -99,7 +99,7 @@
         } else {
             const start = dayjs().startOf("day").subtract(1, "week").toISOString();
             const end = dayjs().endOf("day").toISOString();
-            let list = await getMattersByRange(start, end);
+            let list = await platform.instance.storage.getMattersByRange(start, end);
             content += "最近一周的任务:\n";
             if (list.length > 0) {
                 content += "```csv\n";

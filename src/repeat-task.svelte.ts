@@ -1,13 +1,7 @@
 import { Priority } from "$lib/types";
-import {
-    getAllRepeatTasks,
-    createRepeatTask,
-    updateRepeatTask,
-    deleteRepeatTask,
-    createMatter,
-} from "./store";
+import platform from "$src/platform";
 
-import type { RepeatTask, Matter } from "./store";
+import type { RepeatTask, Matter } from "$src/types";
 import { v4 as uuidv4 } from "uuid";
 
 class RepeatTaskAPI {
@@ -15,11 +9,11 @@ class RepeatTaskAPI {
     public data = $state<RepeatTask[]>([]);
 
     public async fetchData() {
-        this.data = await getAllRepeatTasks();
+        this.data = await platform.instance.storage.listRepeatTasks();
     }
 
     public async createRepeatTask(task: RepeatTask) {
-        const newTask = await createRepeatTask(task);
+        const newTask = await platform.instance.storage.createRepeatTask(task);
         this.data.unshift(newTask);
     }
 
@@ -29,7 +23,7 @@ class RepeatTaskAPI {
 
     public async updateRepeatTask(task: RepeatTask) {
         let taskId = task.id;
-        const newTask = await updateRepeatTask(taskId, task);
+        const newTask = await platform.instance.storage.updateRepeatTask(taskId, task);
         let index = this.data.findIndex((task) => task.id === taskId);
         if (index !== -1) {
             this.data[index] = newTask;
@@ -37,7 +31,7 @@ class RepeatTaskAPI {
     }
 
     public async deleteRepeatTask(taskId: string) {
-        await deleteRepeatTask(taskId);
+        await platform.instance.storage.deleteRepeatTask(taskId);
         let index = this.data.findIndex((task) => task.id === taskId);
         if (index !== -1) {
             this.data.splice(index, 1);
@@ -93,7 +87,7 @@ class RepeatTaskAPI {
         };
 
         try {
-            await createMatter(matter);
+            await platform.instance.storage.createMatter(matter);
             console.log("Matter created successfully");
         } catch (error) {
             console.error("Failed to create matter:", error);

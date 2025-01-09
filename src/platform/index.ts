@@ -69,7 +69,7 @@ export interface PlatformAPI {
         deleteTodo(id: string): Promise<void>;
 
         // RepeatTask 模块
-        createRepeatTask(task: RepeatTask): Promise<void>;
+        createRepeatTask(task: RepeatTask): Promise<RepeatTask>;
         getRepeatTask(id: string): Promise<RepeatTask | null>;
         listRepeatTasks(): Promise<RepeatTask[]>;
         getActiveRepeatTasks(): Promise<RepeatTask[]>;

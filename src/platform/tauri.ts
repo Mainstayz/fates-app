@@ -149,8 +149,8 @@ class TauriStorage {
     }
 
     // RepeatTask 模块
-    async createRepeatTask(task: RepeatTask): Promise<void> {
-        await createRepeatTask(task);
+    async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
+        return await createRepeatTask(task);
     }
 
     async getRepeatTask(id: string): Promise<RepeatTask | null> {

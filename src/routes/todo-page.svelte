@@ -12,8 +12,7 @@
     import { ChevronLeft, ChevronRight, Trash2 } from "lucide-svelte";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
-    import type { Matter, Todo } from "../store";
-    import * as store from "../store";
+    import type { Matter, Todo } from "$src/types";
     import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
 
     let alertOpen = $state(false);
@@ -27,16 +26,16 @@
 
         async syncTodoStatus() {
             console.log("syncTodoStatus ... ");
-            const matters = await store.queryMattersByField("type", "2", true);
+            const matters = await platform.instance.storage.queryMattersByField("type", "2", true);
             this.matters = matters;
             const now = new Date();
 
-            const todos = await store.getAllTodos();
+            const todos = await platform.instance.storage.listTodos();
             const getTodoById = (id: string) => todos.find((item) => item.id === id);
 
             for (const todo of todos) {
                 if (!this.matters.some((matter) => matter.reserved_2 === todo.id)) {
-                    await store.updateTodo(todo.id, { ...todo, status: "todo" });
+                    await platform.instance.storage.updateTodo(todo.id, { ...todo, status: "todo" });
                 }
             }
 
@@ -64,18 +63,18 @@
                 }
 
                 if (newStatus !== todo.status) {
-                    await store.updateTodo(todoId, { ...todo, status: newStatus });
+                    await platform.instance.storage.updateTodo(todoId, { ...todo, status: newStatus });
                 }
             }
         }
 
         async fetchData() {
             await this.syncTodoStatus();
-            this.data = await store.getAllTodos();
+            this.data = await platform.instance.storage.listTodos();
         }
 
         async createTodo(todo: Todo) {
-            await store.createTodo(todo);
+            await platform.instance.storage.createTodo(todo);
             await this.fetchData();
         }
 
@@ -84,14 +83,14 @@
             alertContent = $t("app.other.confirmDeleteDescription");
             alertShowCancel = true;
             alertConfirm = async () => {
-                await store.deleteTodo(id);
+                await platform.instance.storage.deleteTodo(id);
                 await this.fetchData();
             };
             alertOpen = true;
         }
 
         async updateTodo(todo: Todo) {
-            await store.updateTodo(todo.id, todo);
+            await platform.instance.storage.updateTodo(todo.id, todo);
             await this.fetchData();
         }
 
@@ -157,7 +156,7 @@
             reserved_2: row.id,
         };
 
-        await store.createMatter(matter);
+        await platform.instance.storage.createMatter(matter);
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
         await platform.instance.event.emit(REFRESH_TIME_PROGRESS, {});
         alertTitle = $t("app.other.tip");

@@ -3,11 +3,11 @@
     import { Label } from "$lib/components/ui/label";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
-    import { getAllMatters } from "../store";
+    import platform from "$src/platform";
 
     let timelineItems: any[] = $state([]);
     onMount(async () => {
-        const matters = await getAllMatters();
+        const matters = await platform.instance.storage.listMatters();
         timelineItems = matters.map((matter) => ({
             id: matter.id,
             content: matter.title,

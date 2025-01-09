@@ -1,5 +1,6 @@
-import { createTag, getAllTags, deleteTag, updateTagLastUsedAt } from "./store";
-import type { Tag } from "./store";
+
+import platform from "$src/platform";
+import type { Tag } from "$src/types";
 
 class TagManager {
     public tagNames = $state<string[]>([]);
@@ -7,7 +8,7 @@ class TagManager {
     constructor() {}
 
     public async fetchAllTags() {
-        const tags = await getAllTags();
+        const tags = await platform.instance.storage.getAllTags();
         const sortedTags = tags.sort((a: Tag, b: Tag) => {
             const dateA = new Date(a.last_used_at).getTime();
             const dateB = new Date(b.last_used_at).getTime();
@@ -29,7 +30,7 @@ class TagManager {
             return;
         }
         const tagsStr = filteredTags.join(",");
-        await createTag(tagsStr, { debug: true });
+        await platform.instance.storage.createTag(tagsStr);
     }
 
     public async deleteTags(tags: string[]) {
@@ -38,7 +39,7 @@ class TagManager {
             return;
         }
         const tagsStr = filteredTags.join(",");
-        await deleteTag(tagsStr, { debug: true });
+        await platform.instance.storage.deleteTag(tagsStr);
     }
 
     public async updateTagsLastUsedAt(tags: string[]) {
@@ -47,7 +48,7 @@ class TagManager {
             return;
         }
         const tagsStr = filteredTags.join(",");
-        await updateTagLastUsedAt(tagsStr, { debug: true });
+        await platform.instance.storage.updateTagLastUsedAt(tagsStr);
     }
 
     private  processTags(tags: string[]) {

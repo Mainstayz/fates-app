@@ -3,7 +3,7 @@
     import platform, { initializePlatform, type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
-    import { getMattersByRange, type Matter } from "../../store";
+    import type { Matter } from "$src/types";
 
     let resizeObserver: ResizeObserver | null = null;
     let rootElement: HTMLElement;
@@ -50,7 +50,7 @@
     async function getTimeProgress() {
         const start = dayjs().startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();
-        const matters = await getMattersByRange(start, end);
+        const matters = await platform.instance.storage.getMattersByRange(start, end);
 
         timeSegments = matters.map((matter: Matter) => {
             let color = "#808080";

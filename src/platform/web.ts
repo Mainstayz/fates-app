@@ -161,8 +161,9 @@ class WebStorage {
     }
 
     // RepeatTask 模块
-    async createRepeatTask(task: RepeatTask): Promise<void> {
+    async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
         localStorage.setItem(this.getKey(`repeat_task_${task.id}`), JSON.stringify(task));
+        return task;
     }
 
     async getRepeatTask(id: string): Promise<RepeatTask | null> {
