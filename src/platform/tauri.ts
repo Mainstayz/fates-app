@@ -76,13 +76,14 @@ class TauriStorage {
         return getAllMatters();
     }
 
-    async saveMatter(matter: Matter): Promise<void> {
-        if (matter.id) {
-            await updateMatter(matter.id, matter);
-        } else {
-            await createMatter(matter);
-        }
+    async createMatter(matter: Matter): Promise<void> {
+        return createMatter(matter);
     }
+
+    async updateMatter(matter: Matter): Promise<void> {
+        await updateMatter(matter.id, matter);
+    }
+
 
     async deleteMatter(id: string): Promise<void> {
         await deleteMatterApi(id);

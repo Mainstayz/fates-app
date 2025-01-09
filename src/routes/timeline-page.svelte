@@ -1,6 +1,7 @@
 <script lang="ts">
     // 导入必要的依赖
     import platform, { REFRESH_TIME_PROGRESS } from "$src/platform";
+    import type { Matter } from "$src/types";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
     import _ from "$src/tag-manager.svelte";
@@ -18,18 +19,6 @@
     import Input from "$lib/components/ui/input/input.svelte";
     import type { TimelineData, TimelineGroup, TimelineItem } from "$lib/types";
     import { Plus } from "lucide-svelte";
-    import {
-        createMatter,
-        createTag,
-        deleteMatter,
-        getAllMatters,
-        getAllTags,
-        getMatterById,
-        updateMatter,
-        updateTagLastUsedAt,
-        deleteTag,
-        type Matter,
-    } from "../store";
 
     import dayjs from "dayjs";
 
@@ -67,7 +56,7 @@
 
     async function updateHeatMapData() {
         try {
-            const matters = await getAllMatters();
+            const matters = await platform.instance.storage.listMatters();
             const dailyCounts = matters.reduce((acc, matter) => {
                 const dateKey = dayjs(matter.start_time).format("YYYY-MM-DD");
                 acc.set(dateKey, (acc.get(dateKey) || 0) + 1);
@@ -89,22 +78,22 @@
 
     async function saveTimelineItem(item: TimelineItem) {
         try {
-            let matter = await getMatterById(item.id);
+            let matter = await platform.instance.storage.getMatter(item.id);
             if (matter) {
-                let newMatter = {
+                let newMatter: Matter = {
                     ...matter,
                     title: item.content,
                     description: item.description,
                     tags: item.tags?.join(","),
-                    priority: item.priority,
+                    priority: item.priority || 0,
                     start_time: item.start.toISOString(),
-                    end_time: item.end?.toISOString(),
-                    type_: item.matter_type,
+                    end_time: item.end?.toISOString() || "",
+                    type_: item.matter_type || 0,
                     updated_at: new Date().toISOString(),
                     reserved_1: item.className,
                 };
                 console.log("update matter: ", newMatter);
-                await updateMatter(item.id, newMatter);
+                await platform.instance.storage.updateMatter(newMatter);
                 await updateHeatMapData();
                 await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
             }
@@ -116,7 +105,7 @@
     async function deleteTimelineItem(id: string) {
         try {
             console.log("delete matter: ", id);
-            await deleteMatter(id);
+            await platform.instance.storage.deleteMatter(id);
             await updateHeatMapData();
             await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
         } catch (e) {
@@ -160,7 +149,7 @@
         };
 
         try {
-            await createMatter(newMatter);
+            await platform.instance.storage.createMatter(newMatter);
             if (inputItem) {
                 timelineComponent.updateItem(item);
             } else {
@@ -188,7 +177,7 @@
         async loadTimelineData() {
             try {
                 this.clearTimelineData();
-                const matters = await getAllMatters();
+                const matters = await platform.instance.storage.listMatters();
 
                 for (const matter of matters) {
                     const newTags = matter.tags?.trim() ? matter.tags.split(",") : [];
@@ -217,7 +206,7 @@
 
         async updateHeatMapData() {
             try {
-                const matters = await getAllMatters();
+                const matters = await platform.instance.storage.listMatters();
                 const dailyCounts = matters.reduce((acc, matter) => {
                     const dateKey = dayjs(matter.start_time).format("YYYY-MM-DD");
                     acc.set(dateKey, (acc.get(dateKey) || 0) + 1);

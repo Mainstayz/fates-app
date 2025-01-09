@@ -5,8 +5,8 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import { generateDescription, parseRepeatTimeString } from "$lib/utils/repeatTime";
     import { appConfig } from "$src/app-config";
-    import type { Matter, RepeatTask, Todo } from "$src/store";
-    import { getActiveRepeatTasks, getAllTodos, getMattersByRange } from "$src/store";
+    import platform from "$src/platform";
+    import type { Matter, RepeatTask, Todo } from "$src/types";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { OpenAIClient, type ChatMessage, type ChatRole } from "../openai";
@@ -99,7 +99,7 @@
         let txtResult = "";
         const start = dayjs().subtract(7, "day").startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();
-        let list = await getMattersByRange(start, end);
+        let list = await platform.instance.storage.getMattersByRange(start, end);
         if (list.length > 0) {
             txtResult += "以下是最近 7 天的任务:\n";
             txtResult += "```csv\n";
@@ -109,7 +109,7 @@
             });
             txtResult += "```\n";
         }
-        let todoList = await getAllTodos();
+        let todoList = await platform.instance.storage.listTodos();
         todoList = todoList.filter((item: Todo) => item.status === "todo");
         if (todoList.length > 0) {
             txtResult += "以下是所有待办事项:\n";
@@ -121,7 +121,7 @@
             txtResult += "```\n";
         }
 
-        let repeatTask = await getActiveRepeatTasks();
+        let repeatTask = await platform.instance.storage.getActiveRepeatTasks();
         if (repeatTask.length > 0) {
             txtResult += "以下是所有重复任务:\n";
             txtResult += "```csv\n";

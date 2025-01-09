@@ -44,7 +44,8 @@ export interface PlatformAPI {
         // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;
-        saveMatter(matter: Matter): Promise<void>;
+        createMatter(matter: Matter): Promise<void>;
+        updateMatter(matter: Matter): Promise<void>;
         deleteMatter(id: string): Promise<void>;
         queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]>;
         getMattersByRange(start: string, end: string): Promise<Matter[]>;

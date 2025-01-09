@@ -1,10 +1,7 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { Trash2, Plus } from "lucide-svelte";
-    import { createMatter } from "../store";
-    import type { Matter } from "../store";
     import type { TaskStatus } from "$lib/types";
-    import { v4 as uuidv4 } from "uuid";
+    import { Plus, Trash2 } from "lucide-svelte";
     import { t } from "svelte-i18n";
 
     import StatusSelector from "$lib/components/status-selector.svelte";

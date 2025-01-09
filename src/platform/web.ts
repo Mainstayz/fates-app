@@ -54,7 +54,11 @@ class WebStorage {
         return matters;
     }
 
-    async saveMatter(matter: Matter): Promise<void> {
+    async createMatter(matter: Matter): Promise<void> {
+        localStorage.setItem(this.getKey(`matter_${matter.id}`), JSON.stringify(matter));
+    }
+
+    async updateMatter(matter: Matter): Promise<void> {
         localStorage.setItem(this.getKey(`matter_${matter.id}`), JSON.stringify(matter));
     }
 
