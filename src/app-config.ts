@@ -1,10 +1,16 @@
 import { writable, get } from "svelte/store";
-import { getKV, setKV } from "./store";
+import { getKV } from "./store";
 
 // 导出类型定义供其他模块使用
 export type { AppConfig };
 export type ThemeType = "light" | "dark";
 export type LanguageType = string;
+
+export interface KVStore {
+    setKV: (key: string, value: string) => Promise<void>;
+    getKV: (key: string) => Promise<string | null>;
+    deleteKV: (key: string) => Promise<void>;
+}
 
 // 配置项元数据
 interface ConfigItemMeta<T> {
@@ -48,6 +54,7 @@ class ConfigRegistry {
 
 // 定义配置接口
 interface AppConfig {
+    kvStore: KVStore;
     theme: ThemeType;
     language: LanguageType;
     notifications: {
@@ -81,6 +88,11 @@ interface AppConfig {
 
 // 默认配置
 const DEFAULT_CONFIG: AppConfig = {
+    kvStore: {
+        setKV: () => Promise.resolve(),
+        getKV: () => Promise.resolve(null),
+        deleteKV: () => Promise.resolve(),
+    },
     theme: "light",
     language: "zh",
     notifications: {
@@ -109,6 +121,16 @@ const DEFAULT_CONFIG: AppConfig = {
 // 初始化配置注册表
 const initConfigRegistry = () => {
     const registry = ConfigRegistry.getInstance();
+
+    registry.register({
+        key: "kvStore",
+        defaultValue: {
+            setKV: () => Promise.resolve(),
+            getKV: () => Promise.resolve(null),
+            deleteKV: () => Promise.resolve(),
+        },
+        validator: (value) => value && typeof value === "object" && typeof value.setKV === "function" && typeof value.getKV === "function" && typeof value.deleteKV === "function",
+    });
 
     registry.register({
         key: "theme",
@@ -211,6 +233,7 @@ const initConfigRegistry = () => {
         defaultValue: false,
         validator: (value) => typeof value === "boolean",
     });
+
 };
 
 // 初始化注册表
@@ -279,7 +302,7 @@ const saveConfig = async (config: AppConfig, retries = 3): Promise<void> => {
     }
 
     try {
-        savePromise = setKV("app_config", JSON.stringify(config))
+        savePromise = config.kvStore.setKV("app_config", JSON.stringify(config))
             .catch((error) => {
                 console.error("Failed to save config:", error);
                 throw error;
@@ -301,7 +324,7 @@ const saveConfig = async (config: AppConfig, retries = 3): Promise<void> => {
 interface AppConfigStore extends AppConfig {
     subscribe: ReturnType<typeof writable<AppConfig>>["subscribe"];
     reset: () => Promise<void>;
-    init: () => Promise<void>;
+    init: (kvStore: KVStore) => Promise<void>;
     setValueForKey: (key: string, value: any) => Promise<void>;
     getValueForKey: (key: string) => any;
 }
@@ -331,10 +354,15 @@ function createAppConfig(): AppConfigStore {
                     Object.assign(configStore, DEFAULT_CONFIG);
                 };
             if (prop === "init")
-                return async () => {
+                // set kvStore
+
+                return async (kvStore: KVStore) => {
+
+                    appConfig.kvStore = kvStore;
+
                     try {
                         console.log("Init app config ... ");
-                        const storedConfig = await getKV("app_config");
+                        const storedConfig = await kvStore.getKV("app_config");
                         if (storedConfig) {
                             console.log("Get storedConfig success: ", storedConfig);
                             const parsedConfig = validateConfig(JSON.parse(storedConfig));
@@ -349,7 +377,7 @@ function createAppConfig(): AppConfigStore {
                         } else {
                             // may be first time to run
                             console.log("First time to run, set default config ... ");
-                            await saveConfig(DEFAULT_CONFIG);
+                            await kvStore.setKV("app_config", JSON.stringify(DEFAULT_CONFIG));
                             set(DEFAULT_CONFIG);
                             Object.assign(configStore, DEFAULT_CONFIG);
                         }
@@ -373,7 +401,7 @@ function createAppConfig(): AppConfigStore {
                         }
 
                         // 存储值
-                        await setKV(`storage:${key}`, valueToStore);
+                        await configStore.kvStore.setKV(`storage:${key}`, valueToStore);
                         // 更新内存中的值
                         proxyConfig.storage[key] = value;
                         logConfigChange(`storage.${key}`, proxyConfig.storage[key], value);
@@ -386,7 +414,7 @@ function createAppConfig(): AppConfigStore {
                 return async (key: string) => {
                     try {
                         // 直接从 KV 存储中获取值
-                        const storedValue = await getKV(`storage:${key}`);
+                        const storedValue = await configStore.kvStore.getKV(`storage:${key}`);
                         if (storedValue === null || storedValue === undefined) {
                             return proxyConfig.storage[key]; // 如果 KV 中没有，返回内存中的值
                         }
