@@ -9,9 +9,6 @@
     export let onRouteSelect: (route: string) => void;
     export let onSettingsClick: () => void;
 
-    // reset updateAvailable
-    appConfig.updateAvailable = false;
-
     let selectedRoute: Route | null = routes[0];
 
     onRouteSelect(routes[0].label);

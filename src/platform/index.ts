@@ -10,14 +10,13 @@ interface Event<T> {
 }
 
 export interface PlatformAPI {
+
+    init(): Promise<void>;
+    destroy(): Promise<void>;
+
     event: {
         emit(event: string, payload?: unknown): Promise<void>;
         listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn>;
-    };
-
-    dailyProgressBar: {
-        initialize(): Promise<void>;
-        destroy(): Promise<void>;
     };
 
     clipboard: {
@@ -95,11 +94,6 @@ export interface PlatformAPI {
         hide(): Promise<void>;
     };
 
-    tray?: {
-        create(options: any): Promise<void>;
-        destroy(): Promise<void>;
-        setMenu(menu: any): Promise<void>;
-    };
 
     updater?: {
         checkForUpdates(): Promise<{ hasUpdate: boolean; version?: string }>;

@@ -36,10 +36,10 @@
 
     export async function initSettings() {
         console.log("init common settings");
-        language = appConfig.language;
+        language = appConfig.getConfig().language;
         if (language == "") {
             language = "zh";
-            appConfig.language = language;
+            appConfig.setLanguage(language);
         }
         try {
             autoStart = (await platform.instance.autostart?.isEnabled()) ?? false;
@@ -52,7 +52,7 @@
 
     function setLanguage(value: string) {
         language = value;
-        appConfig.language = value;
+        appConfig.setLanguage(value);
         locale.set(value);
     }
 

@@ -15,7 +15,8 @@
     import { cn } from "$lib/utils";
     import { Check, PlusCircle, Trash2, X } from "lucide-svelte";
     import { t } from "svelte-i18n";
-    import { tagManager } from "$src/tag-manager.svelte";
+
+    import tagManager from "$src/tag-manager.svelte";
 
     const MAX_TAGS_COUNT = 5;
     const maxSelectedTags: number = 2;

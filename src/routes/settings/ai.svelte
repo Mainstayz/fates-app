@@ -9,10 +9,10 @@
     import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/openai";
 
-    let aiEnabled = $state<boolean>(appConfig.aiEnabled);
-    let aiBaseUrl = $state<string>(appConfig.aiBaseUrl);
-    let aiModelId = $state<string>(appConfig.aiModelId);
-    let aiApiKey = $state<string>(appConfig.aiApiKey);
+    let aiEnabled = $state<boolean>(appConfig.getAIConfig().enabled);
+    let aiBaseUrl = $state<string>(appConfig.getAIConfig().baseUrl);
+    let aiModelId = $state<string>(appConfig.getAIConfig().modelId);
+    let aiApiKey = $state<string>(appConfig.getAIConfig().apiKey);
     let switchEnabled = $state<boolean>(false);
     let aiTestResult = $state<string>("");
     let aiTestLoading = $state<boolean>(false);
@@ -25,10 +25,12 @@
             aiEnabled = false;
         }
 
-        appConfig.aiEnabled = aiEnabled;
-        appConfig.aiBaseUrl = aiBaseUrl;
-        appConfig.aiModelId = aiModelId;
-        appConfig.aiApiKey = aiApiKey;
+        appConfig.setAIConfig({
+            enabled: aiEnabled,
+            baseUrl: aiBaseUrl,
+            modelId: aiModelId,
+            apiKey: aiApiKey,
+        });
     });
 
     async function test() {

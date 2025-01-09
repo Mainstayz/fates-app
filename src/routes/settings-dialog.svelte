@@ -21,7 +21,7 @@
             if (result.hasUpdate) {
                 console.log(`Update available!!! NEW VERSION: ${result.version}`);
                 updateAvailable = true;
-                appConfig.updateAvailable = true;
+                appConfig.setUpdateAvailable(true);
             } else {
                 console.log("No update available");
                 updateAvailable = false;

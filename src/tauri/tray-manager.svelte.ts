@@ -22,14 +22,18 @@ class Tray {
     public static getInstance(): Tray {
         if (!Tray.instance) {
             Tray.instance = new Tray();
-            Tray.instance.init().then(() => {
-                console.log("Tray init success");
-            });
         }
         return Tray.instance;
     }
 
-    destroy() {
+    public async init() {
+        if (!this.hasTray) {
+            await this.createTrayIcon();
+        }
+        this.hasTray = true;
+    }
+
+    public destroy() {
         this.hasTray = false;
         TrayIcon.removeById(this.TRAY_ID);
     }
@@ -89,13 +93,6 @@ class Tray {
         } else {
             return resolveResource("./resources/icon.png");
         }
-    }
-
-    async init() {
-        if (!this.hasTray) {
-            await this.createTrayIcon();
-        }
-        this.hasTray = true;
     }
 
     async getTrayById() {
@@ -173,4 +170,6 @@ class Tray {
     }
 }
 
-export default Tray.getInstance();
+export const trayManager = Tray.getInstance();
+
+export default trayManager;

@@ -19,7 +19,7 @@
     );
     let initialized = $state(false);
     let notificationPermission = $state<string>("default");
-    let aiEnabled = $state(appConfig.aiEnabled);
+    let aiEnabled = $state(appConfig.getAIConfig().enabled);
     let notificationTestLoading = $state(false);
 
     const InternalMap = $derived({
@@ -38,28 +38,36 @@
     }
 
     onMount(async () => {
-        let startTime = appConfig.notifications.workStart;
+        let notifications = appConfig.getNotifications();
+
+        let startTime = notifications.workStart;
         if (startTime == "") {
-            appConfig.notifications.workStart = "09:00";
+            appConfig.setNotifications({
+                workStart: "09:00",
+            });
             startTime = "09:00";
         }
         workStart = startTime;
 
-        let endTime = appConfig.notifications.workEnd;
+        let endTime = notifications.workEnd;
         if (endTime == "") {
-            appConfig.notifications.workEnd = "18:00";
+            appConfig.setNotifications({
+                workEnd: "18:00",
+            });
             endTime = "18:00";
         }
         workEnd = endTime;
 
-        let interval = appConfig.notifications.checkIntervalMinutes.toString();
+        let interval = notifications.checkIntervalMinutes.toString();
         if (interval == "") {
-            appConfig.notifications.checkIntervalMinutes = 120;
+            appConfig.setNotifications({
+                checkIntervalMinutes: 120,
+            });
             interval = "120";
         }
         checkInterval = interval;
 
-        aiReminderPrompt = appConfig.aiReminderPrompt;
+        aiReminderPrompt = appConfig.getAIConfig().reminderPrompt;
         initialized = true;
 
         // 检查通知权限
@@ -85,19 +93,14 @@
         if (!initialized) {
             return;
         }
-
-        if (checkInterval) {
-            appConfig.notifications.checkIntervalMinutes = parseInt(checkInterval);
-        }
-        if (workStart) {
-            appConfig.notifications.workStart = workStart;
-        }
-        if (workEnd) {
-            appConfig.notifications.workEnd = workEnd;
-        }
-        if (aiReminderPrompt) {
-            appConfig.aiReminderPrompt = aiReminderPrompt;
-        }
+        appConfig.setNotifications({
+            checkIntervalMinutes: parseInt(checkInterval),
+            workStart: workStart,
+            workEnd: workEnd,
+        });
+        appConfig.setAIConfig({
+            reminderPrompt: aiReminderPrompt,
+        });
     });
 </script>
 

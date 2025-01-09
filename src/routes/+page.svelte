@@ -1,8 +1,10 @@
 <script lang="ts">
+    import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
     import platform, { initializePlatform, REFRESH_TIME_PROGRESS } from "$src/platform";
-    import "../i18n/i18n";
+
     import notificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
+    import tagManager from "$src/tag-manager.svelte";
 
     import { onMount } from "svelte";
     import { locale } from "svelte-i18n";
@@ -39,33 +41,35 @@
 
     onMount(() => {
         const initialize = async () => {
+            // Initialize platform
+            await initializePlatform();
+
             // Initialize app config
-            await appConfig.init();
+            await appConfig.init(platform.instance.storage);
             console.log("appConfig initialized");
 
             // Set language
-            let language = appConfig.language;
+            let language = appConfig.getConfig().language;
             await locale.set(language);
             console.log("Current language: ", language);
 
-            // Initialize tray manager
-            await initializePlatform();
-
+            await platform.instance.init();
             appConfigInitialized = true;
-
             console.log("platform initialized", platform.instance);
-            platform.instance.dailyProgressBar.initialize();
         };
 
         // 立即执行初始化
         initialize();
+
+        // 获取所有标签
+        tagManager.fetchAllTags();
 
         const unlisten = notificationManager.addNotificationCallback(onNotificationMessage);
         // 返回清理函数
         return () => {
             notificationManager.stop();
             unlisten();
-            platform.instance.dailyProgressBar.destroy();
+            platform.instance.destroy();
         };
     });
 </script>

@@ -4,11 +4,7 @@ import type { Tag } from "./store";
 class TagManager {
     public tagNames = $state<string[]>([]);
     public tagObjects = $state<Tag[]>([]);
-    constructor() {
-        this.fetchAllTags().then(() => {
-            console.log("Fetch all tags success ..");
-        });
-    }
+    constructor() {}
 
     public async fetchAllTags() {
         const tags = await getAllTags();
@@ -65,6 +61,6 @@ class TagManager {
         ];
     }
 }
-export const tagManager = new TagManager();
 
+const tagManager = new TagManager();
 export default tagManager;

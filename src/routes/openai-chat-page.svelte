@@ -25,15 +25,17 @@
 
     $effect(() => {
         if (systemPrompt) {
-            appConfig.aiSystemPrompt = systemPrompt;
+            appConfig.setAIConfig({
+                systemPrompt,
+            });
         }
     });
 
     onMount(async () => {
-        baseUrl = appConfig.aiBaseUrl;
-        apiKey = appConfig.aiApiKey;
-        model = appConfig.aiModelId;
-        systemPrompt = appConfig.aiSystemPrompt;
+        baseUrl = appConfig.getAIConfig().baseUrl;
+        apiKey = appConfig.getAIConfig().apiKey;
+        model = appConfig.getAIConfig().modelId;
+        systemPrompt = appConfig.getAIConfig().systemPrompt;
         initializeChat();
     });
 

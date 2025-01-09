@@ -182,10 +182,10 @@ export class NotificationManager {
     }
 
     public async processNotificationCycle(forceCheck: boolean = true): Promise<boolean> {
-        let userLanguage = appConfig.language;
-
-        const workStartTime = appConfig.notifications.workStart || "00:01";
-        const workEndTime = appConfig.notifications.workEnd || "23:59";
+        let userLanguage = appConfig.getConfig().language;
+        let notifications = appConfig.getNotifications();
+        const workStartTime = notifications.workStart || "00:01";
+        const workEndTime = notifications.workEnd || "23:59";
         console.log("Current language:", userLanguage);
 
         const currentDateTime = new Date();
@@ -233,7 +233,7 @@ export class NotificationManager {
             return true;
         }
 
-        let isAiEnabled = appConfig.aiEnabled;
+        let isAiEnabled = appConfig.getAIConfig().enabled;
         if (isAiEnabled) {
             return this.processAINotifications(currentDateTime, todayMatters, forceCheck);
         } else {
@@ -242,6 +242,7 @@ export class NotificationManager {
     }
 
     private async processAINotifications(now: Date, matters: Matter[], forceCheck: boolean = true): Promise<boolean> {
+        let aiConfig = appConfig.getAIConfig();
         if (forceCheck) {
             let isInTaskTimeRange = false;
             for (const matter of matters) {
@@ -270,7 +271,7 @@ export class NotificationManager {
                 return false;
             }
         }
-        let aiReminderPrompt = appConfig.aiReminderPrompt;
+        let aiReminderPrompt = aiConfig.reminderPrompt;
         if (aiReminderPrompt == "") {
             aiReminderPrompt = "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
         }
@@ -350,9 +351,9 @@ export class NotificationManager {
         systemPrompt += "\n\n";
         systemPrompt += txtResult;
 
-        let baseUrl = appConfig.aiBaseUrl;
-        let apiKey = appConfig.aiApiKey;
-        let model = appConfig.aiModelId;
+        let baseUrl = aiConfig.baseUrl;
+        let apiKey = aiConfig.apiKey;
+        let model = aiConfig.modelId;
 
         let client = new OpenAIClient({
             apiKey,
@@ -385,13 +386,14 @@ export class NotificationManager {
         forceCheck: boolean = true
     ): Promise<boolean> {
         // Check upcoming tasks
+        let notifications = appConfig.getNotifications();
         let shouldCheckUpcoming = false;
         if (forceCheck) {
             shouldCheckUpcoming = await this.isUpcomingCheckDue();
         }
         if (shouldCheckUpcoming) {
             console.log(`Checking upcoming tasks at ${now.toLocaleDateString()}`);
-            const notifyBefore = appConfig.notifications.checkIntervalMinutes || 15;
+            const notifyBefore = notifications.checkIntervalMinutes || 15;
             const upcomingNotifications = this.getUpcomingTaskNotifications(now, matters, notifyBefore);
             if (upcomingNotifications.length == 0) {
                 console.log("No upcoming tasks");
@@ -440,7 +442,7 @@ export class NotificationManager {
             }
 
             const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
-            const created = appConfig.getValueForKey(storeKey);
+            const created = await appConfig.getStoredValue(storeKey);
             if (created === "1") {
                 continue;
             }
@@ -449,7 +451,7 @@ export class NotificationManager {
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createDailyTaskInstance(task, now, timeRange);
                 await createMatter(newMatter);
-                appConfig.setValueForKey(storeKey, "1");
+                await appConfig.storeValue(storeKey, "1");
                 createdMatters.push(newMatter);
             }
         }
@@ -534,26 +536,28 @@ export class NotificationManager {
 
     private async isNoTasksCheckDue(): Promise<boolean> {
         const key = "last_check_no_task_time";
-        const interval = appConfig.notifications.checkIntervalMinutes || 120;
+        let notifications = appConfig.getNotifications();
+        const interval = notifications.checkIntervalMinutes || 120;
         return this.hasIntervalElapsedSinceLastCheck(key, interval);
     }
 
     private async isAINotificationCheckDue(): Promise<boolean> {
         const key = "last_check_ai_notification_time";
-        const interval = appConfig.notifications.checkIntervalMinutes || 120;
+        let notifications = appConfig.getNotifications();
+        const interval = notifications.checkIntervalMinutes || 120;
         return this.hasIntervalElapsedSinceLastCheck(key, interval);
     }
 
     private async hasIntervalElapsedSinceLastCheck(key: string, durationMinutes: number): Promise<boolean> {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const updateTimeStr = appConfig.getValueForKey(key) || todayStart.toISOString();
+        const updateTimeStr = await appConfig.getStoredValue(key) || todayStart.toISOString();
 
         const updateTime = new Date(updateTimeStr);
         const minutes = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
 
         if (minutes > durationMinutes) {
-            appConfig.setValueForKey(key, now.toISOString());
+            await appConfig.storeValue(key, now.toISOString());
             return true;
         }
         console.log(`${key} update time not exceed ${durationMinutes} minutes, skip check`);

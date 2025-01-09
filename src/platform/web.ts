@@ -16,15 +16,6 @@ class WebClipboard {
     }
 }
 
-class WebDailyProgressBar {
-    async initialize(): Promise<void> {
-        return;
-    }
-    async destroy(): Promise<void> {
-        return;
-    }
-}
-
 class WebAutostart {
     async enable(): Promise<void> {
         return;
@@ -73,9 +64,9 @@ class WebStorage {
 
     async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
         const matters = await this.listMatters();
-        return matters.filter(matter => {
+        return matters.filter((matter) => {
             const fieldValue = matter[field as keyof Matter];
-            if (typeof fieldValue === 'string') {
+            if (typeof fieldValue === "string") {
                 return exactMatch ? fieldValue === value : fieldValue.includes(value);
             }
             return false;
@@ -84,7 +75,7 @@ class WebStorage {
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
         const matters = await this.listMatters();
-        return matters.filter(matter => {
+        return matters.filter((matter) => {
             return matter.start_time >= start && matter.end_time <= end;
         });
     }
@@ -107,29 +98,29 @@ class WebStorage {
         const tags = await this.getAllTags();
         const newTag = {
             name,
-            last_used_at: new Date().toISOString()
+            last_used_at: new Date().toISOString(),
         };
         tags.push(newTag);
-        localStorage.setItem(this.getKey('tags'), JSON.stringify(tags));
+        localStorage.setItem(this.getKey("tags"), JSON.stringify(tags));
     }
 
     async getAllTags(): Promise<Tag[]> {
-        const data = localStorage.getItem(this.getKey('tags'));
+        const data = localStorage.getItem(this.getKey("tags"));
         return data ? JSON.parse(data) : [];
     }
 
     async deleteTag(name: string): Promise<void> {
         const tags = await this.getAllTags();
-        const filteredTags = tags.filter(tag => tag.name !== name);
-        localStorage.setItem(this.getKey('tags'), JSON.stringify(filteredTags));
+        const filteredTags = tags.filter((tag) => tag.name !== name);
+        localStorage.setItem(this.getKey("tags"), JSON.stringify(filteredTags));
     }
 
     async updateTagLastUsedAt(name: string): Promise<void> {
         const tags = await this.getAllTags();
-        const tagIndex = tags.findIndex(tag => tag.name === name);
+        const tagIndex = tags.findIndex((tag) => tag.name === name);
         if (tagIndex !== -1) {
             tags[tagIndex].last_used_at = new Date().toISOString();
-            localStorage.setItem(this.getKey('tags'), JSON.stringify(tags));
+            localStorage.setItem(this.getKey("tags"), JSON.stringify(tags));
         }
     }
 
@@ -191,7 +182,7 @@ class WebStorage {
 
     async getActiveRepeatTasks(): Promise<RepeatTask[]> {
         const tasks = await this.listRepeatTasks();
-        return tasks.filter(task => task.status === 1);
+        return tasks.filter((task) => task.status === 1);
     }
 
     async updateRepeatTask(id: string, task: RepeatTask): Promise<void> {
@@ -235,7 +226,7 @@ class WebStorage {
 
     async getUnreadNotifications(): Promise<NotificationRecord[]> {
         const notifications = await this.getNotifications();
-        return notifications.filter(notification => !notification.read_at);
+        return notifications.filter((notification) => !notification.read_at);
     }
 
     async markNotificationAsRead(id: string): Promise<void> {
@@ -332,12 +323,13 @@ class WebWindow {
 const webPlatform: PlatformAPI = {
     event: new WebEvent(),
     clipboard: new WebClipboard(),
-    dailyProgressBar: new WebDailyProgressBar(),
     storage: new WebStorage(),
     notification: new WebNotification(),
     window: new WebWindow(),
     autostart: new WebAutostart(),
     getVersion: () => Promise.resolve("1.0.0"),
+    init: async () => {},
+    destroy: async () => {},
 };
 
 export default webPlatform;

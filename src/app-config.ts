@@ -1,4 +1,4 @@
-import { writable, get as getStore } from "svelte/store";
+import { writable } from "svelte/store";
 
 // 基础类型定义
 export type ThemeType = "light" | "dark";
@@ -55,11 +55,16 @@ type ConfigPath =
     | `sidebar.${keyof SidebarConfig}`
     | `ai.${keyof AIConfig}`;
 
+function deepCopy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+}
+
 // 配置管理器类
 class AppConfigManager {
+    private config: AppConfig;
+
     private static instance: AppConfigManager;
     private kvStore: KVStore;
-    private config: AppConfig;
     private store;
     private validators: Map<ConfigPath, (value: any) => boolean>;
     private static readonly DEFAULT_CONFIG: AppConfig = {
@@ -96,32 +101,7 @@ class AppConfigManager {
             deleteKV: () => Promise.resolve(),
         };
         // 初始化默认配置
-        this.config = {
-            theme: "light",
-            language: "zh",
-            notifications: {
-                enabled: true,
-                sound: true,
-                checkIntervalMinutes: 120,
-                workStart: "09:00",
-                workEnd: "18:00",
-            },
-            sidebar: {
-                collapsed: false,
-                width: 250,
-            },
-            storage: {},
-            ai: {
-                enabled: false,
-                apiKey: "",
-                modelId: "",
-                baseUrl: "",
-                systemPrompt: "",
-                reminderPrompt: "",
-                workReportPrompt: "",
-            },
-            updateAvailable: false,
-        };
+        this.config = deepCopy(AppConfigManager.DEFAULT_CONFIG);
 
         // 创建响应式存储
         this.store = writable(this.config);
@@ -169,7 +149,6 @@ class AppConfigManager {
         this.validators.set("sidebar.collapsed", (value) => typeof value === "boolean");
         this.validators.set("sidebar.width", (value) => typeof value === "number");
 
-        // AI配置验证
         this.validators.set("ai.enabled", (value) => typeof value === "boolean");
         this.validators.set("ai.apiKey", (value) => typeof value === "string");
         this.validators.set("ai.modelId", (value) => typeof value === "string");
@@ -213,6 +192,10 @@ class AppConfigManager {
         return { ...this.config.sidebar };
     }
 
+    public getAIConfig(): AIConfig {
+        return { ...this.config.ai };
+    }
+
     // 设置配置值的类型安全方法
     public async setTheme(value: ThemeType): Promise<void> {
         await this.setConfigValue("theme", value);
@@ -241,6 +224,16 @@ class AppConfigManager {
         ]);
     }
 
+    public async setNotifications(config: Partial<NotificationConfig>): Promise<void> {
+        const updates: Promise<void>[] = [];
+        if (config.enabled !== undefined) updates.push(this.setConfigValue("notifications.enabled", config.enabled));
+        if (config.sound !== undefined) updates.push(this.setConfigValue("notifications.sound", config.sound));
+        if (config.checkIntervalMinutes !== undefined) updates.push(this.setConfigValue("notifications.checkIntervalMinutes", config.checkIntervalMinutes));
+        if (config.workStart !== undefined) updates.push(this.setConfigValue("notifications.workStart", config.workStart));
+        if (config.workEnd !== undefined) updates.push(this.setConfigValue("notifications.workEnd", config.workEnd));
+        await Promise.all(updates);
+    }
+
     public async setSidebarState(collapsed: boolean, width?: number): Promise<void> {
         await this.setConfigValue("sidebar.collapsed", collapsed);
         if (width !== undefined) {
@@ -263,21 +256,25 @@ class AppConfigManager {
         await Promise.all(updates);
     }
 
-    // 内部设置配置值的方法
+    public async setUpdateAvailable(value: boolean): Promise<void> {
+        await this.setConfigValue("updateAvailable", value);
+    }
+
     private async setConfigValue(key: ConfigPath, value: any): Promise<void> {
         if (!this.validate(key, value)) {
             throw new Error(`Invalid value for config key: ${key}`);
         }
 
         const oldValue = this.getNestedValue(this.config, key);
+
         this.setNestedValue(this.config, key, value);
         this.store.set(this.config);
+
         this.logChange(key, oldValue, value);
 
         await this.saveToStorage();
     }
 
-    // 获取嵌套属性值
     private getNestedValue(obj: any, path: ConfigPath): any {
         const parts = path.split(".") as string[];
         return parts.reduce((current, key) => {
@@ -286,7 +283,6 @@ class AppConfigManager {
         }, obj);
     }
 
-    // 设置嵌套属性值
     private setNestedValue(obj: any, path: ConfigPath, value: any): void {
         const parts = path.split(".");
         const lastKey = parts.pop()!;
@@ -297,7 +293,7 @@ class AppConfigManager {
         target[lastKey] = value;
     }
 
-    // 初始化配置
+
     public async init(kvStore: KVStore): Promise<void> {
         this.kvStore = kvStore;
         try {
@@ -309,9 +305,6 @@ class AppConfigManager {
                 }
                 this.config = storedConfig;
                 this.store.set(this.config);
-            } else {
-                this.config = { ...AppConfigManager.DEFAULT_CONFIG };
-                this.store.set(this.config);
             }
         } catch (error) {
             console.error("Failed to initialize config:", error);
@@ -320,33 +313,42 @@ class AppConfigManager {
         }
     }
 
-    // 重置配置
+    public async storeValue(key: string, value: any): Promise<void> {
+        await this.kvStore.setKV(key, value);
+    }
+
+    public async getStoredValue(key: string): Promise<any> {
+        return await this.kvStore.getKV(key);
+    }
+
+
     public async reset(): Promise<void> {
         this.config = { ...AppConfigManager.DEFAULT_CONFIG };
         this.store.set(this.config);
         await this.saveToStorage();
     }
 
-    // 获取订阅
+
     public subscribe(run: (value: AppConfig) => void) {
         return this.store.subscribe(run);
     }
 
-    // 保存配置到存储
     private async saveToStorage(maxRetries = 3): Promise<void> {
+        let lastError: Error | null = null;
         for (let i = 0; i < maxRetries; i++) {
             try {
                 const configString = JSON.stringify(this.config);
+                console.log("Saving config to storage:", configString);
                 await this.kvStore.setKV("app-config", configString);
                 return;
             } catch (error) {
-                console.error(`Failed to save config, retrying... (${i + 1}/${maxRetries})`, error);
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                lastError = error as Error;
+                console.error(`Failed to save config, retry ${i + 1}/${maxRetries}`, error);
+                await new Promise((resolve) => setTimeout(resolve, Math.pow(2, i) * 1000));
             }
         }
-        throw new Error("Failed to save config after multiple retries.");
+        throw lastError || new Error("Failed to save config after multiple retries");
     }
 }
 
-// 导出配置管理器实例
 export const appConfig = AppConfigManager.getInstance();

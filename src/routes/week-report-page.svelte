@@ -25,7 +25,9 @@
     let isInitialized = $state(false);
     $effect(() => {
         if (isInitialized && promptContent !== undefined) {
-            appConfig.aiWorkReportPrompt = promptContent;
+            appConfig.setAIConfig({
+                workReportPrompt: promptContent,
+            });
         }
     });
 
@@ -70,14 +72,14 @@
     }
 
     async function handleGenerate() {
-        if (appConfig.aiEnabled == false) {
+        if (appConfig.getAIConfig().enabled == false) {
             aiEnableAlert = true;
             return;
         }
         aiLoading = true;
-        let apikey = appConfig.aiApiKey;
-        let model = appConfig.aiModelId;
-        let baseUrl = appConfig.aiBaseUrl;
+        let apikey = appConfig.getAIConfig().apiKey;
+        let model = appConfig.getAIConfig().modelId;
+        let baseUrl = appConfig.getAIConfig().baseUrl;
         let client = new OpenAIClient({
             apiKey: apikey,
             baseURL: baseUrl,
@@ -130,7 +132,7 @@
     }
 
     onMount(async () => {
-        promptContent = appConfig.aiWorkReportPrompt;
+        promptContent = appConfig.getAIConfig().workReportPrompt;
         isInitialized = true;
     });
 </script>

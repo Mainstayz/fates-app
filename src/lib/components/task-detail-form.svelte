@@ -98,9 +98,9 @@
             return;
         }
         aiLoading = true;
-        let apikey = appConfig.aiApiKey;
-        let model = appConfig.aiModelId;
-        let baseUrl = appConfig.aiBaseUrl;
+        let apikey = appConfig.getAIConfig().apiKey;
+        let model = appConfig.getAIConfig().modelId;
+        let baseUrl = appConfig.getAIConfig().baseUrl;
 
         let client = new OpenAIClient({
             apiKey: apikey,
@@ -149,7 +149,7 @@
     }
 
     onMount(() => {
-        aiEnabled = appConfig.aiEnabled;
+        aiEnabled = appConfig.getAIConfig().enabled;
         return () => {
             const updatedItem = updateItem();
             callback(updatedItem);

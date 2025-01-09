@@ -1,4 +1,3 @@
-import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
 import { getVersion } from "@tauri-apps/api/app";
 import { emit, listen, type Event } from "@tauri-apps/api/event";
 import { WebviewWindow, getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -6,8 +5,9 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
-import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "../types";
+import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "$src/types";
 import type { PlatformAPI, UnlistenFn } from "./index";
+
 import {
     createMatter,
     getMatterById,
@@ -46,7 +46,9 @@ import {
 } from "$src/tauri/tauri-store";
 
 // Do not remove this import, it is used to initialize the tray manager
-import _ from "$src/tauri/tray-manager.svelte";
+import {trayManager} from "$src/tauri/tray-manager.svelte";
+//
+import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
 
 class TauriEvent {
     async emit(event: string, data: any): Promise<void> {
@@ -55,20 +57,6 @@ class TauriEvent {
     }
     async listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn> {
         return listen(event, handler, options);
-    }
-}
-
-class TauriDailyProgressBar {
-    private timeProgressBarManager: TimeProgressBarManager;
-    constructor() {
-        this.timeProgressBarManager = TimeProgressBarManager.getInstance();
-    }
-    async initialize(): Promise<void> {
-        await this.timeProgressBarManager.initialize();
-    }
-
-    async destroy(): Promise<void> {
-        await this.timeProgressBarManager.destroy();
     }
 }
 
@@ -276,19 +264,6 @@ class TauriWindow {
     }
 }
 
-class TauriTray {
-    async create(options: any): Promise<void> {
-        return;
-    }
-
-    async destroy(): Promise<void> {
-        return;
-    }
-
-    async setMenu(menu: any): Promise<void> {
-        return;
-    }
-}
 
 class TauriAutostart {
     async enable(): Promise<void> {
@@ -326,14 +301,21 @@ class TauriUpdater {
 const tauriPlatform: PlatformAPI = {
     event: new TauriEvent(),
     getVersion: getVersion,
-    dailyProgressBar: new TauriDailyProgressBar(),
     clipboard: new TauriClipboard(),
     storage: new TauriStorage(),
     notification: new TauriNotification(),
     window: new TauriWindow(),
-    tray: new TauriTray(),
     autostart: new TauriAutostart(),
     updater: new TauriUpdater(),
+    init: async () => {
+        await TimeProgressBarManager.getInstance().initialize();
+        await trayManager.init();
+
+    },
+    destroy: async () => {
+        TimeProgressBarManager.getInstance().destroy();
+        // trayManager.destroy();
+    },
 };
 
 export default tauriPlatform;

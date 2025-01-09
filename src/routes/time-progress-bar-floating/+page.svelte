@@ -116,7 +116,6 @@
     async function setupListeners() {
         console.log("setupListeners");
         await initializePlatform();
-
         const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
             // const win = await getCurrentWindow();
             const shouldShow = event.payload as boolean;
