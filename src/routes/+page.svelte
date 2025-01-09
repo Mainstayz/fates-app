@@ -3,7 +3,7 @@
     import { appConfig } from "$src/app-config";
     import platform, { initializePlatform, REFRESH_TIME_PROGRESS } from "$src/platform";
 
-    import notificationManager, { type Notification, NotificationType } from "$src/tauri/notification_manager";
+    import notificationManager, { type Notification, NotificationType } from "$src/notification_manager";
     import tagManager from "$src/tag-manager.svelte";
 
     import { onMount } from "svelte";
@@ -59,7 +59,12 @@
             console.log("[Main] platform initialized successfully");
 
             // 获取所有标签
+            console.log("[Main] Fetching all tags ..");
             await tagManager.fetchAllTags();
+
+            // 启动通知循环
+            console.log("[Main] Starting notification loop ..");
+            await notificationManager.startNotificationLoop();
         };
 
         // 立即执行初始化
@@ -68,8 +73,8 @@
         const unlisten = notificationManager.addNotificationCallback(onNotificationMessage);
         // 返回清理函数
         return () => {
-            notificationManager.stop();
             unlisten();
+            notificationManager.stopNotificationLoop();
             platform.instance.destroy();
         };
     });

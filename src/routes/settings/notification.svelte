@@ -8,7 +8,7 @@
     import { appConfig } from "$src/app-config";
     import { onMount } from "svelte";
     import platform from "$src/platform";
-    import { notificationManager } from "$src/tauri/notification_manager";
+    import { notificationManager } from "$src/notification_manager";
     import { Loader2 } from "lucide-svelte";
 
     let checkInterval = $state<string>("120");

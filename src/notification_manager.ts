@@ -3,7 +3,7 @@ import { appConfig } from "$src/app-config";
 import { isHolidayDate } from "$src/i18n/holiday-cn";
 import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
 import { OpenAIClient } from "$src/openai";
-import { getMattersByRange, getActiveRepeatTasks, getAllTodos, createMatter } from "./tauri-store";
+import platform from "$src/platform";
 import type { Matter, RepeatTask, Todo } from "$src/types";
 import dayjs from "dayjs";
 import { _ } from "svelte-i18n";
@@ -156,13 +156,7 @@ export class NotificationManager {
         };
     }
 
-    public static initialize(): NotificationManager {
-        const manager = NotificationManager.getInstance();
-        manager.startNotificationLoop();
-        return manager;
-    }
-
-    private async startNotificationLoop() {
+    public async startNotificationLoop() {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
@@ -171,6 +165,13 @@ export class NotificationManager {
             console.log(`[NotificationManager] Checking notifications at ${new Date().toLocaleString()}`);
             await this.processNotificationCycle();
         }, 1 * 60 * 1000); // 1 min
+    }
+
+    public async stopNotificationLoop() {
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval);
+            this.checkInterval = null;
+        }
     }
 
     public async sendTestNotification() {
@@ -213,7 +214,7 @@ export class NotificationManager {
             59,
             59
         );
-        const todayMatters = await getMattersByRange(todayStartTime.toISOString(), todayEndTime.toISOString());
+        const todayMatters = await platform.instance.storage.getMattersByRange(todayStartTime.toISOString(), todayEndTime.toISOString());
 
         // Check repeat tasks
         console.log(`[NotificationManager] Checking repeat tasks at ${currentDateTime.toLocaleString()}`);
@@ -305,7 +306,7 @@ export class NotificationManager {
         let txtResult = "";
         const start = dayjs().startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();
-        let list = await getMattersByRange(start, end);
+        let list = await platform.instance.storage.getMattersByRange(start, end);
         txtResult += "今天的任务:\n";
         if (list.length > 0) {
             txtResult += "```csv\n";
@@ -322,7 +323,7 @@ export class NotificationManager {
 
         txtResult += "\n";
 
-        let todoList = await getAllTodos();
+        let todoList = await platform.instance.storage.listTodos();
         todoList = todoList.filter((item: Todo) => item.status === "todo");
         if (todoList.length > 0) {
             txtResult += "以下是所有待办事项:\n";
@@ -335,7 +336,7 @@ export class NotificationManager {
             txtResult += "\n";
         }
 
-        let repeatTask = await getActiveRepeatTasks();
+        let repeatTask = await platform.instance.storage.getActiveRepeatTasks();
         if (repeatTask.length > 0) {
             txtResult += "以下是所有重复任务:\n";
             txtResult += "```csv\n";
@@ -425,7 +426,7 @@ export class NotificationManager {
     }
 
     private async createDueRepeatTasks(now: Date, existingMatters: Matter[]): Promise<Matter[]> {
-        const repeatTasks = await getActiveRepeatTasks();
+        const repeatTasks = await platform.instance.storage.getActiveRepeatTasks();
         if (repeatTasks.length === 0) {
             console.log(`[NotificationManager] No active repeat tasks, skip`);
             return [];
@@ -450,7 +451,7 @@ export class NotificationManager {
             const timeRange = RepeatTaskHandler.getTaskTimeRange(task);
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createDailyTaskInstance(task, now, timeRange);
-                await createMatter(newMatter);
+                await platform.instance.storage.createMatter(newMatter);
                 await appConfig.storeValue(storeKey, "1");
                 createdMatters.push(newMatter);
             }
@@ -563,15 +564,8 @@ export class NotificationManager {
         console.log(`[NotificationManager] ${key} update time not exceed ${durationMinutes} minutes, skip check`);
         return false;
     }
-
-    public stop() {
-        if (this.checkInterval) {
-            clearInterval(this.checkInterval);
-            this.checkInterval = null;
-        }
-    }
 }
 
-export const notificationManager = NotificationManager.initialize();
+export const notificationManager = NotificationManager.getInstance();
 
 export default notificationManager;

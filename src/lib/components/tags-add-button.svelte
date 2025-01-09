@@ -1,14 +1,7 @@
 <script lang="ts">
     import { Badge } from "$lib/components/ui/badge";
     import { Button } from "$lib/components/ui/button";
-    import {
-        Command,
-        CommandEmpty,
-        CommandGroup,
-        CommandInput,
-        CommandItem,
-        CommandList,
-    } from "$lib/components/ui/command";
+    import { Command, CommandGroup, CommandItem, CommandList } from "$lib/components/ui/command";
     import { Input } from "$lib/components/ui/input";
     import { Popover, PopoverContent, PopoverTrigger } from "$lib/components/ui/popover";
     import { Separator } from "$lib/components/ui/separator";
@@ -55,7 +48,8 @@
         callback(localSelectedTags);
     });
 
-    $inspect("allTagsChange:", allTags);
+    $inspect("[TagsAddButton] Local selected tags:", localSelectedTags);
+    $inspect("[TagsAddButton] All tags:", allTags);
 
     function selectTag(tag: string) {
         if (localSelectedTags.includes(tag)) {
@@ -92,7 +86,7 @@
 
     function handleCreateNewTag(tag: string) {
         if (allTags.includes(tag)) {
-            console.log(`tag ${tag} already exists`);
+            console.log(`[TagsAddButton] Tag ${tag} already exists`);
             return;
         }
         tagManager
@@ -102,7 +96,7 @@
             })
             .then(() => {
                 if (localSelectedTags.length < maxSelectedTags) {
-                    console.log("add new tag:", tag);
+                    console.log(`[TagsAddButton] Add new tag: ${tag}`);
                     localSelectedTags.push(tag);
                 }
             });
@@ -116,7 +110,6 @@
     }
 
     function clearTags() {
-        console.log("clearTags");
         localSelectedTags = [];
     }
 </script>
@@ -125,7 +118,7 @@
     <PopoverTrigger>
         <Button variant="outline" size="sm" class="h-8 border-dashed">
             {#if localSelectedTags.length > 0}
-                <div class="hidden space-x-1 lg:flex">
+                <div class="flex flex-row gap-1 items-center">
                     {#each localSelectedTags.slice(0, MAX_TAGS_COUNT) as tag}
                         <Badge variant="secondary" class="rounded-sm px-1 font-normal">
                             {tag}
