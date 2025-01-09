@@ -6,8 +6,44 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
-import type { Matter, NotificationRecord } from "../types";
+import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "../types";
 import type { PlatformAPI, UnlistenFn } from "./index";
+import {
+    createMatter,
+    getMatterById,
+    getAllMatters,
+    queryMattersByField,
+    updateMatter,
+    deleteMatter as deleteMatterApi,
+    getMattersByRange,
+    setKV,
+    getKV,
+    deleteKV,
+    createTag,
+    getAllTags,
+    deleteTag,
+    updateTagLastUsedAt,
+    createTodo,
+    getTodoById,
+    getAllTodos,
+    updateTodo,
+    deleteTodo as deleteTodoApi,
+    createRepeatTask,
+    getRepeatTaskById,
+    getAllRepeatTasks,
+    getActiveRepeatTasks,
+    updateRepeatTask,
+    deleteRepeatTask as deleteRepeatTaskApi,
+    updateRepeatTaskStatus,
+    createNotification,
+    getNotificationById,
+    getUnreadNotifications,
+    updateNotification,
+    deleteNotification as deleteNotificationApi,
+    markNotificationAsRead,
+    markNotificationAsReadByType,
+    markAllNotificationsAsRead,
+} from "$src/tauri/tauri-store";
 
 // Do not remove this import, it is used to initialize the tray manager
 import _ from "$src/tauri/tray-manager.svelte";
@@ -43,32 +79,146 @@ class TauriClipboard {
 }
 
 class TauriStorage {
+    // Matter 模块
     async getMatter(id: string): Promise<Matter | null> {
-        return null;
+        return getMatterById(id);
     }
 
     async listMatters(): Promise<Matter[]> {
-        return [];
+        return getAllMatters();
     }
 
     async saveMatter(matter: Matter): Promise<void> {
-        return;
+        if (matter.id) {
+            await updateMatter(matter.id, matter);
+        } else {
+            await createMatter(matter);
+        }
     }
 
     async deleteMatter(id: string): Promise<void> {
-        return;
+        await deleteMatterApi(id);
     }
 
+    async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
+        return queryMattersByField(field, value, exactMatch);
+    }
+
+    async getMattersByRange(start: string, end: string): Promise<Matter[]> {
+        return getMattersByRange(start, end);
+    }
+
+    // KV 模块
+    async setKV(key: string, value: string): Promise<void> {
+        await setKV(key, value);
+    }
+
+    async getKV(key: string): Promise<string | null> {
+        return getKV(key);
+    }
+
+    async deleteKV(key: string): Promise<void> {
+        await deleteKV(key);
+    }
+
+    // Tag 模块
+    async createTag(names: string): Promise<void> {
+        await createTag(names);
+    }
+
+    async getAllTags(): Promise<Tag[]> {
+        return getAllTags();
+    }
+
+    async deleteTag(names: string): Promise<void> {
+        await deleteTag(names);
+    }
+
+    async updateTagLastUsedAt(names: string): Promise<void> {
+        await updateTagLastUsedAt(names);
+    }
+
+    // Todo 模块
+    async createTodo(todo: Todo): Promise<void> {
+        await createTodo(todo);
+    }
+
+    async getTodo(id: string): Promise<Todo | null> {
+        return getTodoById(id);
+    }
+
+    async listTodos(): Promise<Todo[]> {
+        return getAllTodos();
+    }
+
+    async updateTodo(id: string, todo: Todo): Promise<void> {
+        await updateTodo(id, todo);
+    }
+
+    async deleteTodo(id: string): Promise<void> {
+        await deleteTodoApi(id);
+    }
+
+    // RepeatTask 模块
+    async createRepeatTask(task: RepeatTask): Promise<void> {
+        await createRepeatTask(task);
+    }
+
+    async getRepeatTask(id: string): Promise<RepeatTask | null> {
+        return getRepeatTaskById(id);
+    }
+
+    async listRepeatTasks(): Promise<RepeatTask[]> {
+        return getAllRepeatTasks();
+    }
+
+    async getActiveRepeatTasks(): Promise<RepeatTask[]> {
+        return getActiveRepeatTasks();
+    }
+
+    async updateRepeatTask(id: string, task: RepeatTask): Promise<void> {
+        await updateRepeatTask(id, task);
+    }
+
+    async deleteRepeatTask(id: string): Promise<void> {
+        await deleteRepeatTaskApi(id);
+    }
+
+    async updateRepeatTaskStatus(id: string, status: number): Promise<void> {
+        await updateRepeatTaskStatus(id, status);
+    }
+
+    // Notification 模块
     async getNotifications(): Promise<NotificationRecord[]> {
-        return [];
+        return getUnreadNotifications();
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
-        return;
+        if (notification.id) {
+            await updateNotification(notification.id, notification);
+        } else {
+            await createNotification(notification);
+        }
     }
 
     async deleteNotification(id: string): Promise<void> {
-        return;
+        await deleteNotificationApi(id);
+    }
+
+    async getUnreadNotifications(): Promise<NotificationRecord[]> {
+        return getUnreadNotifications();
+    }
+
+    async markNotificationAsRead(id: string): Promise<void> {
+        await markNotificationAsRead(id);
+    }
+
+    async markNotificationAsReadByType(type_: number): Promise<void> {
+        await markNotificationAsReadByType(type_);
+    }
+
+    async markAllNotificationsAsRead(): Promise<void> {
+        await markAllNotificationsAsRead();
     }
 }
 

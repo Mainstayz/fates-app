@@ -1,4 +1,4 @@
-import type { Matter, NotificationRecord } from "$src/types";
+import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "$src/types";
 export const REFRESH_TIME_PROGRESS = "refresh-time-progress";
 
 export type UnlistenFn = () => void;
@@ -42,14 +42,49 @@ export interface PlatformAPI {
 
 
     storage: {
+        // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;
         saveMatter(matter: Matter): Promise<void>;
         deleteMatter(id: string): Promise<void>;
+        queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]>;
+        getMattersByRange(start: string, end: string): Promise<Matter[]>;
 
+        // KV 模块
+        setKV(key: string, value: string): Promise<void>;
+        getKV(key: string): Promise<string | null>;
+        deleteKV(key: string): Promise<void>;
+
+        // Tag 模块
+        createTag(names: string): Promise<void>;
+        getAllTags(): Promise<Tag[]>;
+        deleteTag(names: string): Promise<void>;
+        updateTagLastUsedAt(names: string): Promise<void>;
+
+        // Todo 模块
+        createTodo(todo: Todo): Promise<void>;
+        getTodo(id: string): Promise<Todo | null>;
+        listTodos(): Promise<Todo[]>;
+        updateTodo(id: string, todo: Todo): Promise<void>;
+        deleteTodo(id: string): Promise<void>;
+
+        // RepeatTask 模块
+        createRepeatTask(task: RepeatTask): Promise<void>;
+        getRepeatTask(id: string): Promise<RepeatTask | null>;
+        listRepeatTasks(): Promise<RepeatTask[]>;
+        getActiveRepeatTasks(): Promise<RepeatTask[]>;
+        updateRepeatTask(id: string, task: RepeatTask): Promise<void>;
+        deleteRepeatTask(id: string): Promise<void>;
+        updateRepeatTaskStatus(id: string, status: number): Promise<void>;
+
+        // Notification 模块
         getNotifications(): Promise<NotificationRecord[]>;
         saveNotification(notification: NotificationRecord): Promise<void>;
         deleteNotification(id: string): Promise<void>;
+        getUnreadNotifications(): Promise<NotificationRecord[]>;
+        markNotificationAsRead(id: string): Promise<void>;
+        markNotificationAsReadByType(type_: number): Promise<void>;
+        markAllNotificationsAsRead(): Promise<void>;
     };
 
     window: {
