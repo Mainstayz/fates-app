@@ -7,7 +7,7 @@
     import { t } from "svelte-i18n";
     import { appConfig } from "$src/app-config";
     import { onMount } from "svelte";
-    import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
+    import platform from "$src/platform";
     import { notificationManager } from "$src/tauri/notification_manager";
     import { Loader2 } from "lucide-svelte";
 
@@ -64,7 +64,9 @@
 
         // 检查通知权限
         try {
-            notificationPermission = (await isPermissionGranted()) ? "granted" : "denied";
+            notificationPermission = (await platform.instance.notification.isPermissionGranted())
+                ? "granted"
+                : "denied";
         } catch (e) {
             console.error("Failed to check notification permission:", e);
         }
@@ -72,7 +74,7 @@
 
     async function handleRequestPermission() {
         try {
-            const permissionResult = await requestPermission();
+            const permissionResult = await platform.instance.notification.requestPermission();
             notificationPermission = permissionResult ? "granted" : "denied";
         } catch (e) {
             console.error("Failed to request notification permission:", e);

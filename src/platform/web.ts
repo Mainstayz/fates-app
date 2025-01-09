@@ -1,12 +1,39 @@
 import type { PlatformAPI } from "./index";
 import type { Matter, NotificationRecord } from "$src/types";
 
+class WebEvent {
+    async emit(event: string, data: any): Promise<void> {
+        return;
+    }
+    async listen(event: string): Promise<() => void> {
+        return () => {};
+    }
+}
+
+class WebClipboard {
+    async writeText(text: string): Promise<void> {
+        return;
+    }
+}
+
 class WebDailyProgressBar {
     async initialize(): Promise<void> {
         return;
     }
     async destroy(): Promise<void> {
         return;
+    }
+}
+
+class WebAutostart {
+    async enable(): Promise<void> {
+        return;
+    }
+    async disable(): Promise<void> {
+        return;
+    }
+    async isEnabled(): Promise<boolean> {
+        return false;
     }
 }
 
@@ -84,13 +111,13 @@ class WebNotification {
         }
     }
 
-    async requestPermission(): Promise<boolean> {
+    async requestPermission(): Promise<"default" | "denied" | "granted"> {
         if (!("Notification" in window)) {
-            return false;
+            return "default";
         }
 
         const permission = await Notification.requestPermission();
-        return permission === "granted";
+        return permission;
     }
 
     async isPermissionGranted(): Promise<boolean> {
@@ -125,16 +152,14 @@ class WebWindow {
 }
 
 const webPlatform: PlatformAPI = {
-    event: {
-        // do nothing
-        emit: () => Promise.resolve(),
-        listen: () => Promise.resolve(() => {}),
-    },
+    event: new WebEvent(),
+    clipboard: new WebClipboard(),
     dailyProgressBar: new WebDailyProgressBar(),
     storage: new WebStorage(),
     notification: new WebNotification(),
     window: new WebWindow(),
-    // 系统托盘、自动启动和更新功能在 Web 版本中不提供
+    autostart: new WebAutostart(),
+    getVersion: () => Promise.resolve("1.0.0"),
 };
 
 export default webPlatform;

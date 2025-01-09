@@ -42,13 +42,17 @@
             // Initialize app config
             await appConfig.init();
             console.log("appConfig initialized");
+
             // Set language
             let language = appConfig.language;
             await locale.set(language);
             console.log("Current language: ", language);
-            appConfigInitialized = true;
+
             // Initialize tray manager
             await initializePlatform();
+
+            appConfigInitialized = true;
+
             console.log("platform initialized", platform.instance);
             platform.instance.dailyProgressBar.initialize();
         };

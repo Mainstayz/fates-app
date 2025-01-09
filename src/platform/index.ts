@@ -10,21 +10,37 @@ interface Event<T> {
 }
 
 export interface PlatformAPI {
-    // 事件相关
     event: {
         emit(event: string, payload?: unknown): Promise<void>;
-        listen<T>(
-            event: string,
-            handler: (event: Event<T>) => void,
-            options?: any
-        ): Promise<UnlistenFn>;
+        listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn>;
     };
+
     dailyProgressBar: {
         initialize(): Promise<void>;
         destroy(): Promise<void>;
     };
 
-    // 存储相关
+    clipboard: {
+        writeText(text: string): Promise<void>;
+    };
+
+    notification: {
+        show(title: string, body: string, options?: any): Promise<void>;
+        requestPermission(): Promise<"default" | "denied" | "granted">;
+        isPermissionGranted(): Promise<boolean>;
+        sendNotification(title: string, body: string): Promise<void>;
+    };
+
+    getVersion(): Promise<string>;
+
+    autostart?: {
+        enable(): Promise<void>;
+        disable(): Promise<void>;
+        isEnabled(): Promise<boolean>;
+    };
+
+
+
     storage: {
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;
@@ -36,15 +52,6 @@ export interface PlatformAPI {
         deleteNotification(id: string): Promise<void>;
     };
 
-    // 通知相关
-    notification: {
-        show(title: string, body: string, options?: any): Promise<void>;
-        requestPermission(): Promise<"default" | "denied" | "granted">;
-        isPermissionGranted(): Promise<boolean>;
-        sendNotification(title: string, body: string): Promise<void>;
-    };
-
-    // 窗口相关
     window: {
         minimize(): Promise<void>;
         maximize(): Promise<void>;
@@ -53,21 +60,12 @@ export interface PlatformAPI {
         hide(): Promise<void>;
     };
 
-    // 系统托盘
     tray?: {
         create(options: any): Promise<void>;
         destroy(): Promise<void>;
         setMenu(menu: any): Promise<void>;
     };
 
-    // 自动启动
-    autostart?: {
-        enable(): Promise<void>;
-        disable(): Promise<void>;
-        isEnabled(): Promise<boolean>;
-    };
-
-    // 更新
     updater?: {
         checkForUpdates(): Promise<{ hasUpdate: boolean; version?: string }>;
         downloadAndInstall(): Promise<void>;

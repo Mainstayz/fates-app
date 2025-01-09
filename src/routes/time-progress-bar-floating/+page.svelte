@@ -1,6 +1,6 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
-    import platform, { type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
+    import platform, { initializePlatform, type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import { getMattersByRange, type Matter } from "../../store";
@@ -114,6 +114,9 @@
     }
 
     async function setupListeners() {
+        console.log("setupListeners");
+        await initializePlatform();
+
         const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
             // const win = await getCurrentWindow();
             const shouldShow = event.payload as boolean;
@@ -127,6 +130,7 @@
         unlistens.push(unlistenVisibility);
 
         const unlistenRefresh = await platform.instance.event.listen(REFRESH_TIME_PROGRESS, async () => {
+            console.log("REFRESH_TIME_PROGRESS event received");
             await refreshTimeProgress();
         });
         unlistens.push(unlistenRefresh);

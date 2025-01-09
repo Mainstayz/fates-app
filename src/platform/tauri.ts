@@ -1,12 +1,24 @@
 import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen, type Event } from "@tauri-apps/api/event";
 import { WebviewWindow, getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
+import { getVersion } from "@tauri-apps/api/app";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { check } from "@tauri-apps/plugin-updater";
 import type { Matter, NotificationRecord } from "../types";
-import type { PlatformAPI } from "./index";
+import type { PlatformAPI, UnlistenFn } from "./index";
 import _ from "$src/tauri/tray-manager.svelte";
+
+class TauriEvent {
+    async emit(event: string, data: any): Promise<void> {
+        console.log("TauriEvent emit: event = ", event, "data = ", data);
+        return emit(event, data);
+    }
+    async listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn> {
+        return listen(event, handler, options);
+    }
+}
 
 class TauriDailyProgressBar {
     private timeProgressBarManager: TimeProgressBarManager;
@@ -19,6 +31,12 @@ class TauriDailyProgressBar {
 
     async destroy(): Promise<void> {
         await this.timeProgressBarManager.destroy();
+    }
+}
+
+class TauriClipboard {
+    async writeText(text: string): Promise<void> {
+        return writeText(text);
     }
 }
 
@@ -64,17 +82,17 @@ class TauriNotification {
         }
     }
 
-    async requestPermission(): Promise<boolean> {
+    async requestPermission(): Promise<"default" | "denied" | "granted"> {
         const permission = await requestPermission();
-        return permission === "granted";
+        return permission;
     }
 
     async isPermissionGranted(): Promise<boolean> {
-        return await isPermissionGranted();
+        return isPermissionGranted();
     }
 
     async sendNotification(title: string, body: string): Promise<void> {
-        await sendNotification({ title, body });
+        return sendNotification({ title, body });
     }
 }
 
@@ -154,11 +172,10 @@ class TauriUpdater {
 }
 
 const tauriPlatform: PlatformAPI = {
-    event: {
-        emit: emit,
-        listen: listen,
-    },
+    event: new TauriEvent(),
+    getVersion: getVersion,
     dailyProgressBar: new TauriDailyProgressBar(),
+    clipboard: new TauriClipboard(),
     storage: new TauriStorage(),
     notification: new TauriNotification(),
     window: new TauriWindow(),

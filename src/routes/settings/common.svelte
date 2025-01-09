@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { Switch } from "$lib/components/ui/switch";
-    import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
-    import { t, locale } from "svelte-i18n";
     import { appConfig } from "$src/app-config";
+    import platform from "$src/platform";
     import { onMount } from "svelte";
+    import { locale, t } from "svelte-i18n";
 
     let language = $state<string | undefined>(undefined);
     let autoStart = $state(false);
@@ -26,9 +25,9 @@
         console.log("setting auto start to:", enabled);
         try {
             if (enabled) {
-                await enable();
+                await platform.instance.autostart?.enable();
             } else {
-                await disable();
+                await platform.instance.autostart?.disable();
             }
         } catch (error) {
             console.error("setting auto start to:", enabled, "failed:", error);
@@ -43,7 +42,7 @@
             appConfig.language = language;
         }
         try {
-            autoStart = await isEnabled();
+            autoStart = (await platform.instance.autostart?.isEnabled()) ?? false;
         } catch (error) {
             autoStart = false;
             console.warn("Failed to get settings:", error);

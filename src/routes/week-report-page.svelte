@@ -5,7 +5,7 @@
     import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/openai";
     import { getMattersByRange, type Matter } from "$src/store";
-    import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+    import platform from "$src/platform";
     import dayjs from "dayjs";
     import { ClipboardCopy, LoaderCircle, Sparkles } from "lucide-svelte";
     import { onMount } from "svelte";
@@ -55,7 +55,7 @@
             return;
         }
         copyLoading = true;
-        await writeText(outputContent);
+        await platform.instance.clipboard.writeText(outputContent);
         setTimeout(() => {
             copyLoading = false;
         }, 250);
