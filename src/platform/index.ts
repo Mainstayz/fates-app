@@ -39,7 +39,9 @@ export interface PlatformAPI {
     // 通知相关
     notification: {
         show(title: string, body: string, options?: any): Promise<void>;
-        requestPermission(): Promise<boolean>;
+        requestPermission(): Promise<"default" | "denied" | "granted">;
+        isPermissionGranted(): Promise<boolean>;
+        sendNotification(title: string, body: string): Promise<void>;
     };
 
     // 窗口相关

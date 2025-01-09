@@ -1,7 +1,6 @@
 <script lang="ts">
     // 导入必要的依赖
     import platform, { REFRESH_TIME_PROGRESS } from "$src/platform";
-    import { error } from "@tauri-apps/plugin-log";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
     import _ from "$src/tag-manager.svelte";
@@ -84,7 +83,7 @@
                 heatmapComponent.redraw(heatmapData);
             }
         } catch (e) {
-            error(`更新热力图数据失败: ${e}`);
+            console.error(`Update heatmap data failed: ${e}`);
         }
     }
 
@@ -110,7 +109,7 @@
                 await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
             }
         } catch (e) {
-            error(`保存时间线数据失败: ${e}`);
+            console.error(`Save timeline item failed: ${e}`);
         }
     }
 
@@ -121,7 +120,7 @@
             await updateHeatMapData();
             await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
         } catch (e) {
-            error(`删除时间线数据失败: ${e}`);
+            console.error(`Delete timeline item failed: ${e}`);
         }
     }
 
@@ -171,7 +170,7 @@
             await updateHeatMapData();
             await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
         } catch (e) {
-            error(`创建时间线数据失败: ${e}`);
+            console.error(`Create timeline item failed: ${e}`);
         }
     }
 
@@ -212,7 +211,7 @@
                 await this.updateHeatMapData();
                 await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
             } catch (e) {
-                error(`加载时间线数据失败: ${e}`);
+                console.error(`Load timeline data failed: ${e}`);
             }
         }
 
@@ -234,7 +233,7 @@
                     heatmapComponent.redraw(heatmapData);
                 }
             } catch (e) {
-                error(`更新热力图数据失败: ${e}`);
+                console.error(`Update heatmap data failed: ${e}`);
             }
         }
 
@@ -261,7 +260,7 @@
                 await saveTimelineItem(item);
                 callback(item);
             } catch (e) {
-                error(`保存时间线数据失败: ${e}`);
+                console.error(`Save timeline item failed: ${e}`);
                 callback(null);
             }
         }
@@ -388,7 +387,7 @@
         console.log("timeline page onMount ...");
 
         if (!timelineComponent) {
-            error("Timeline component not initialized");
+            console.error("Timeline component not initialized");
             return;
         }
 

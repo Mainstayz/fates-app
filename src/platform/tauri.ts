@@ -4,8 +4,8 @@ import { WebviewWindow, getCurrentWebviewWindow } from "@tauri-apps/api/webviewW
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
-import type { Matter, NotificationRecord } from '../types';
-import type { PlatformAPI } from './index';
+import type { Matter, NotificationRecord } from "../types";
+import type { PlatformAPI } from "./index";
 import _ from "$src/tauri/tray-manager.svelte";
 
 class TauriDailyProgressBar {
@@ -58,7 +58,7 @@ class TauriNotification {
             await sendNotification({ title, body, ...options });
         } else {
             const permission = await requestPermission();
-            if (permission === 'granted') {
+            if (permission === "granted") {
                 await sendNotification({ title, body, ...options });
             }
         }
@@ -66,7 +66,15 @@ class TauriNotification {
 
     async requestPermission(): Promise<boolean> {
         const permission = await requestPermission();
-        return permission === 'granted';
+        return permission === "granted";
+    }
+
+    async isPermissionGranted(): Promise<boolean> {
+        return await isPermissionGranted();
+    }
+
+    async sendNotification(title: string, body: string): Promise<void> {
+        await sendNotification({ title, body });
     }
 }
 
@@ -135,7 +143,7 @@ class TauriUpdater {
                 version: update?.version,
             };
         } catch (error) {
-            console.error('Failed to check for updates:', error);
+            console.error("Failed to check for updates:", error);
             return { hasUpdate: false };
         }
     }
