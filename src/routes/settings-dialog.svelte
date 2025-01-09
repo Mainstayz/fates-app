@@ -9,31 +9,35 @@
     import CommonSettings from "./settings/common.svelte";
     import NotificationSettings from "./settings/notification.svelte";
     import AiSettings from "./settings/ai.svelte";
-    import UpdateSettings from "./settings/update.svelte";
-    import platform from "$src/platform";
+    import platform, { isTauri } from "$src/platform";
     import { appConfig } from "$src/app-config";
+
     let { open = $bindable() } = $props();
     let currentSection = $state("common");
     let updateAvailable = $state(false);
+    let UpdateSettings = $state<any>(null);
 
-    onMount(() => {
-        platform.instance.updater?.checkForUpdates().then((result) => {
-            if (result.hasUpdate) {
-                console.log(`Update available!!! NEW VERSION: ${result.version}`);
-                updateAvailable = true;
-                appConfig.setUpdateAvailable(true);
-            } else {
-                console.log("No update available");
-                updateAvailable = false;
-            }
-        });
+    onMount(async () => {
+        if (isTauri) {
+            UpdateSettings = (await import("./settings/update.svelte")).default;
+            platform.instance.updater?.checkForUpdates().then((result) => {
+                if (result.hasUpdate) {
+                    console.log(`Update available!!! NEW VERSION: ${result.version}`);
+                    updateAvailable = true;
+                    appConfig.setUpdateAvailable(true);
+                } else {
+                    console.log("No update available");
+                    updateAvailable = false;
+                }
+            });
+        }
     });
 
     const navItems = $derived([
         { id: "common", title: $t("app.settings.nav.common") },
         { id: "notification", title: $t("app.settings.nav.notification") },
         { id: "ai", title: $t("app.settings.ai.title") },
-        { id: "update", title: $t("app.settings.update.title") },
+        ...(isTauri ? [{ id: "update", title: $t("app.settings.update.title") }] : []),
     ]);
 
     const [send, receive] = crossfade({
@@ -81,7 +85,7 @@
                             <NotificationSettings />
                         {:else if currentSection === "ai"}
                             <AiSettings />
-                        {:else if currentSection === "update"}
+                        {:else if currentSection === "update" && isTauri && UpdateSettings}
                             <UpdateSettings />
                         {/if}
                     </div>

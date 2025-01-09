@@ -3,7 +3,7 @@
     import * as Select from "$lib/components/ui/select";
     import { Switch } from "$lib/components/ui/switch";
     import { appConfig } from "$src/app-config";
-    import platform from "$src/platform";
+    import platform, { isTauri } from "$src/platform";
     import { onMount } from "svelte";
     import { locale, t } from "svelte-i18n";
 
@@ -62,15 +62,17 @@
 </script>
 
 <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between space-x-2">
-        <Label for="necessary" class="flex flex-col flex-1 space-y-1">
-            <span>{$t("app.settings.autoStart.title")}</span>
-            <span class="text-muted-foreground text-xs font-normal leading-snug">
-                {$t("app.settings.autoStart.description")}
-            </span>
-        </Label>
-        <Switch id="necessary" checked={autoStart} onCheckedChange={toggleAutoStart} />
-    </div>
+    {#if isTauri}
+        <div class="flex items-center justify-between space-x-2">
+            <Label for="necessary" class="flex flex-col flex-1 space-y-1">
+                <span>{$t("app.settings.autoStart.title")}</span>
+                <span class="text-muted-foreground text-xs font-normal leading-snug">
+                    {$t("app.settings.autoStart.description")}
+                </span>
+            </Label>
+            <Switch id="necessary" checked={autoStart} onCheckedChange={toggleAutoStart} />
+        </div>
+    {/if}
 
     <div class="flex flex-col gap-2">
         <Label for="language">
