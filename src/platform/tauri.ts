@@ -165,8 +165,8 @@ class TauriStorage {
         return getActiveRepeatTasks();
     }
 
-    async updateRepeatTask(id: string, task: RepeatTask): Promise<void> {
-        await updateRepeatTask(id, task);
+    async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
+        return await updateRepeatTask(id, task);
     }
 
     async deleteRepeatTask(id: string): Promise<void> {

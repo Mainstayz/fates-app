@@ -73,7 +73,7 @@ export interface PlatformAPI {
         getRepeatTask(id: string): Promise<RepeatTask | null>;
         listRepeatTasks(): Promise<RepeatTask[]>;
         getActiveRepeatTasks(): Promise<RepeatTask[]>;
-        updateRepeatTask(id: string, task: RepeatTask): Promise<void>;
+        updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask>;
         deleteRepeatTask(id: string): Promise<void>;
         updateRepeatTaskStatus(id: string, status: number): Promise<void>;
 

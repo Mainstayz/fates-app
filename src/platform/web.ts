@@ -190,8 +190,9 @@ class WebStorage {
         return tasks.filter((task) => task.status === 1);
     }
 
-    async updateRepeatTask(id: string, task: RepeatTask): Promise<void> {
+    async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
         localStorage.setItem(this.getKey(`repeat_task_${id}`), JSON.stringify(task));
+        return task;
     }
 
     async deleteRepeatTask(id: string): Promise<void> {

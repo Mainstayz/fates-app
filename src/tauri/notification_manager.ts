@@ -3,6 +3,7 @@ import { appConfig } from "$src/app-config";
 import { isHolidayDate } from "$src/i18n/holiday-cn";
 import { generateDescription, parseRepeatTimeString } from "$src/lib/utils/repeatTime";
 import { OpenAIClient } from "$src/openai";
+import { getMattersByRange, getActiveRepeatTasks, getAllTodos, createMatter } from "./tauri-store";
 import type { Matter, RepeatTask, Todo } from "$src/types";
 import dayjs from "dayjs";
 import { _ } from "svelte-i18n";
