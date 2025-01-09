@@ -1,451 +1,352 @@
-import { writable, get } from "svelte/store";
-import { getKV } from "./store";
+import { writable, get as getStore } from "svelte/store";
 
-// 导出类型定义供其他模块使用
-export type { AppConfig };
+// 基础类型定义
 export type ThemeType = "light" | "dark";
 export type LanguageType = string;
 
+// KV存储接口
 export interface KVStore {
     setKV: (key: string, value: string) => Promise<void>;
     getKV: (key: string) => Promise<string | null>;
     deleteKV: (key: string) => Promise<void>;
 }
 
-// 配置项元数据
-interface ConfigItemMeta<T> {
-    key: string;
-    defaultValue: T;
-    validator?: (value: T) => boolean;
+// 通知配置
+export interface NotificationConfig {
+    enabled: boolean;
+    sound: boolean;
+    checkIntervalMinutes: number;
+    workStart: string;
+    workEnd: string;
 }
 
-// 配置项注册表
-class ConfigRegistry {
-    private static instance: ConfigRegistry;
-    private items: Map<string, ConfigItemMeta<any>> = new Map();
-
-    private constructor() {}
-
-    public static getInstance(): ConfigRegistry {
-        if (!ConfigRegistry.instance) {
-            ConfigRegistry.instance = new ConfigRegistry();
-        }
-        return ConfigRegistry.instance;
-    }
-
-    public register<T>(meta: ConfigItemMeta<T>): void {
-        this.items.set(meta.key, meta);
-    }
-
-    public getDefaultConfig(): AppConfig {
-        const config = {} as AppConfig;
-        this.items.forEach((meta, key) => {
-            config[key] = meta.defaultValue;
-        });
-        return config;
-    }
-
-    public validate(key: string, value: any): boolean {
-        const meta = this.items.get(key);
-        if (!meta) return false;
-        return meta.validator ? meta.validator(value) : true;
-    }
+// 侧边栏配置
+export interface SidebarConfig {
+    collapsed: boolean;
+    width: number;
 }
 
-// 定义配置接口
-interface AppConfig {
-    kvStore: KVStore;
+// AI配置
+export interface AIConfig {
+    enabled: boolean;
+    apiKey: string;
+    modelId: string;
+    baseUrl: string;
+    systemPrompt: string;
+    reminderPrompt: string;
+    workReportPrompt: string;
+}
+
+// 应用配置接口
+export interface AppConfig {
     theme: ThemeType;
     language: LanguageType;
-    notifications: {
-        enabled: boolean;
-        sound: boolean;
-        checkIntervalMinutes: number;
-        workStart: string;
-        workEnd: string;
-    };
-    sidebar: {
-        collapsed: boolean;
-        width: number;
-    };
-    storage: {
-        [key: string]: any;
-    };
-
-    // ai config
-    aiEnabled: boolean;
-    aiApiKey: string;
-    aiModelId: string;
-    aiBaseUrl: string;
-    aiSystemPrompt: string;
-    aiReminderPrompt: string;
-    aiWorkReportPrompt: string;
-
-    // update config
+    notifications: NotificationConfig;
+    sidebar: SidebarConfig;
+    storage: Record<string, any>;
     updateAvailable: boolean;
-    [key: string]: any;
+    ai: AIConfig;
 }
 
-// 默认配置
-const DEFAULT_CONFIG: AppConfig = {
-    kvStore: {
-        setKV: () => Promise.resolve(),
-        getKV: () => Promise.resolve(null),
-        deleteKV: () => Promise.resolve(),
-    },
-    theme: "light",
-    language: "zh",
-    notifications: {
-        enabled: true,
-        sound: true,
-        checkIntervalMinutes: 120,
-        workStart: "09:00",
-        workEnd: "18:00",
-    },
-    sidebar: {
-        collapsed: false,
-        width: 250,
-    },
-    storage: {},
+// 配置路径类型
+type ConfigPath =
+    | keyof AppConfig
+    | `notifications.${keyof NotificationConfig}`
+    | `sidebar.${keyof SidebarConfig}`
+    | `ai.${keyof AIConfig}`;
 
-    aiEnabled: false,
-    aiApiKey: "",
-    aiModelId: "",
-    aiBaseUrl: "",
-    aiSystemPrompt: "",
-    aiReminderPrompt: "",
-    aiWorkReportPrompt: "",
-    updateAvailable: false,
-};
+// 配置管理器类
+class AppConfigManager {
+    private static instance: AppConfigManager;
+    private kvStore: KVStore;
+    private config: AppConfig;
+    private store;
+    private validators: Map<ConfigPath, (value: any) => boolean>;
+    private static readonly DEFAULT_CONFIG: AppConfig = {
+        theme: "light",
+        language: "zh",
+        notifications: {
+            enabled: true,
+            sound: true,
+            checkIntervalMinutes: 120,
+            workStart: "09:00",
+            workEnd: "18:00",
+        },
+        sidebar: {
+            collapsed: false,
+            width: 250,
+        },
+        storage: {},
+        ai: {
+            enabled: false,
+            apiKey: "",
+            modelId: "",
+            baseUrl: "",
+            systemPrompt: "",
+            reminderPrompt: "",
+            workReportPrompt: "",
+        },
+        updateAvailable: false,
+    };
 
-// 初始化配置注册表
-const initConfigRegistry = () => {
-    const registry = ConfigRegistry.getInstance();
-
-    registry.register({
-        key: "kvStore",
-        defaultValue: {
+    private constructor() {
+        this.kvStore = {
             setKV: () => Promise.resolve(),
             getKV: () => Promise.resolve(null),
             deleteKV: () => Promise.resolve(),
-        },
-        validator: (value) => value && typeof value === "object" && typeof value.setKV === "function" && typeof value.getKV === "function" && typeof value.deleteKV === "function",
-    });
+        };
+        // 初始化默认配置
+        this.config = {
+            theme: "light",
+            language: "zh",
+            notifications: {
+                enabled: true,
+                sound: true,
+                checkIntervalMinutes: 120,
+                workStart: "09:00",
+                workEnd: "18:00",
+            },
+            sidebar: {
+                collapsed: false,
+                width: 250,
+            },
+            storage: {},
+            ai: {
+                enabled: false,
+                apiKey: "",
+                modelId: "",
+                baseUrl: "",
+                systemPrompt: "",
+                reminderPrompt: "",
+                workReportPrompt: "",
+            },
+            updateAvailable: false,
+        };
 
-    registry.register({
-        key: "theme",
-        defaultValue: "light",
-        validator: (value) => ["light", "dark"].includes(value),
-    });
+        // 创建响应式存储
+        this.store = writable(this.config);
 
-    registry.register({
-        key: "language",
-        defaultValue: "zh-CN",
-        validator: (value) => typeof value === "string" && value.length > 0,
-    });
+        // 初始化验证器
+        this.validators = new Map();
+        this.initValidators();
+    }
 
-    registry.register({
-        key: "notifications.enabled",
-        defaultValue: true,
-        validator: (value) => typeof value === "boolean",
-    });
-
-    registry.register({
-        key: "notifications.sound",
-        defaultValue: true,
-        validator: (value) => typeof value === "boolean",
-    });
-
-    registry.register({
-        key: "notifications.checkIntervalMinutes",
-        defaultValue: 120,
-        validator: (value) => typeof value === "number",
-    });
-
-    registry.register({
-        key: "notifications.workStart",
-        defaultValue: "09:00",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "notifications.workEnd",
-        defaultValue: "18:00",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "sidebar.collapsed",
-        defaultValue: false,
-        validator: (value) => typeof value === "boolean",
-    });
-
-    registry.register({
-        key: "sidebar.width",
-        defaultValue: 250,
-        validator: (value) => typeof value === "number",
-    });
-
-    registry.register({
-        key: "aiEnabled",
-        defaultValue: false,
-        validator: (value) => typeof value === "boolean",
-    });
-
-    registry.register({
-        key: "aiApiKey",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "aiModelId",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "aiBaseUrl",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "aiSystemPrompt",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "aiReminderPrompt",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "aiWorkReportPrompt",
-        defaultValue: "",
-        validator: (value) => typeof value === "string",
-    });
-
-    registry.register({
-        key: "updateAvailable",
-        defaultValue: false,
-        validator: (value) => typeof value === "boolean",
-    });
-
-};
-
-// 初始化注册表
-initConfigRegistry();
-
-
-const logConfigChange = (path: string, oldValue: any, newValue: any) => {
-    console.log(`[AppConfig] 配置变更 - ${path}:`, {
-        from: oldValue,
-        to: newValue,
-        timestamp: new Date().toISOString(),
-    });
-};
-
-// 创建代理处理器
-const createConfigProxy = <T extends object>(
-    target: T,
-    path: string = "",
-    onChange: (path: string, oldValue: any, newValue: any) => void
-): T => {
-    return new Proxy(target, {
-        get(target, prop: string) {
-            const value = Reflect.get(target, prop);
-            const newPath = path ? `${path}.${prop}` : prop;
-            return value && typeof value === "object" ? createConfigProxy(value, newPath, onChange) : value;
-        },
-        set(target, prop: string, value: any) {
-            const newPath = path ? `${path}.${prop}` : prop;
-            const oldValue = Reflect.get(target, prop);
-            if (oldValue !== value) {
-                Reflect.set(target, prop, value);
-                onChange(newPath, oldValue, value);
+    private deepMerge(target: any, source: any): any {
+        if (!source) return target;
+        const result = { ...target };
+        Object.keys(source).forEach((key) => {
+            if (source[key] instanceof Object && !Array.isArray(source[key])) {
+                result[key] = this.deepMerge(result[key], source[key]);
+            } else {
+                result[key] = source[key];
             }
-            return true;
-        },
-    });
-};
+        });
+        return result;
+    }
 
-// 配置验证函数
-const validateConfig = (config: Partial<AppConfig>): AppConfig => {
-    const registry = ConfigRegistry.getInstance();
-    const validated: AppConfig = {
-        ...DEFAULT_CONFIG,
-        ...config,
-    };
+    // 单例模式获取实例
+    public static getInstance(): AppConfigManager {
+        if (!AppConfigManager.instance) {
+            AppConfigManager.instance = new AppConfigManager();
+        }
+        return AppConfigManager.instance;
+    }
 
-    // 验证所有注册的配置项
-    for (const [key, value] of Object.entries(validated)) {
-        if (!registry.validate(key, value)) {
-            validated[key] = DEFAULT_CONFIG[key];
+    // 初始化验证器
+    private initValidators(): void {
+        // 基础配置验证
+        this.validators.set("theme", (value) => ["light", "dark"].includes(value));
+        this.validators.set("language", (value) => typeof value === "string" && value.length > 0);
+
+        // 通知配置验证
+        this.validators.set("notifications.enabled", (value) => typeof value === "boolean");
+        this.validators.set("notifications.sound", (value) => typeof value === "boolean");
+        this.validators.set("notifications.checkIntervalMinutes", (value) => typeof value === "number");
+        this.validators.set("notifications.workStart", (value) => typeof value === "string");
+        this.validators.set("notifications.workEnd", (value) => typeof value === "string");
+
+        // 侧边栏配置验证
+        this.validators.set("sidebar.collapsed", (value) => typeof value === "boolean");
+        this.validators.set("sidebar.width", (value) => typeof value === "number");
+
+        // AI配置验证
+        this.validators.set("ai.enabled", (value) => typeof value === "boolean");
+        this.validators.set("ai.apiKey", (value) => typeof value === "string");
+        this.validators.set("ai.modelId", (value) => typeof value === "string");
+        this.validators.set("ai.baseUrl", (value) => typeof value === "string");
+        this.validators.set("ai.systemPrompt", (value) => typeof value === "string");
+        this.validators.set("ai.reminderPrompt", (value) => typeof value === "string");
+        this.validators.set("ai.workReportPrompt", (value) => typeof value === "string");
+        this.validators.set("updateAvailable", (value) => typeof value === "boolean");
+    }
+
+    // 验证配置值
+    private validate(key: ConfigPath, value: any): boolean {
+        const validator = this.validators.get(key);
+        if (!validator) {
+            console.warn(`No validator found for config key: ${key}`);
+            return false;
+        }
+        return validator(value);
+    }
+
+    // 记录配置变更
+    private logChange(path: string, oldValue: any, newValue: any): void {
+        console.log(`[AppConfig] 配置变更 - ${path}:`, {
+            from: oldValue,
+            to: newValue,
+            timestamp: new Date().toISOString(),
+        });
+    }
+
+    // 获取配置值
+    public getConfig(): AppConfig {
+        return { ...this.config };
+    }
+
+    // 获取特定配置值
+    public getNotifications(): NotificationConfig {
+        return { ...this.config.notifications };
+    }
+
+    public getSidebar(): SidebarConfig {
+        return { ...this.config.sidebar };
+    }
+
+    // 设置配置值的类型安全方法
+    public async setTheme(value: ThemeType): Promise<void> {
+        await this.setConfigValue("theme", value);
+    }
+
+    public async setLanguage(value: LanguageType): Promise<void> {
+        await this.setConfigValue("language", value);
+    }
+
+    public async setNotificationEnabled(value: boolean): Promise<void> {
+        await this.setConfigValue("notifications.enabled", value);
+    }
+
+    public async setNotificationSound(value: boolean): Promise<void> {
+        await this.setConfigValue("notifications.sound", value);
+    }
+
+    public async setNotificationCheckInterval(value: number): Promise<void> {
+        await this.setConfigValue("notifications.checkIntervalMinutes", value);
+    }
+
+    public async setNotificationWorkTime(start: string, end: string): Promise<void> {
+        await Promise.all([
+            this.setConfigValue("notifications.workStart", start),
+            this.setConfigValue("notifications.workEnd", end),
+        ]);
+    }
+
+    public async setSidebarState(collapsed: boolean, width?: number): Promise<void> {
+        await this.setConfigValue("sidebar.collapsed", collapsed);
+        if (width !== undefined) {
+            await this.setConfigValue("sidebar.width", width);
         }
     }
 
-    // 特殊验证逻辑
-    validated.sidebar.width = Math.max(150, Math.min(500, validated.sidebar.width));
-
-    return validated;
-};
-
-// 处理持久化并发
-let savePromise: Promise<void> | null = null;
-
-const saveConfig = async (config: AppConfig, retries = 3): Promise<void> => {
-    if (savePromise) {
-        await savePromise;
+    public async setAIConfig(config: Partial<AIConfig>): Promise<void> {
+        const updates: Promise<void>[] = [];
+        if (config.enabled !== undefined) updates.push(this.setConfigValue("ai.enabled", config.enabled));
+        if (config.apiKey !== undefined) updates.push(this.setConfigValue("ai.apiKey", config.apiKey));
+        if (config.modelId !== undefined) updates.push(this.setConfigValue("ai.modelId", config.modelId));
+        if (config.baseUrl !== undefined) updates.push(this.setConfigValue("ai.baseUrl", config.baseUrl));
+        if (config.systemPrompt !== undefined)
+            updates.push(this.setConfigValue("ai.systemPrompt", config.systemPrompt));
+        if (config.reminderPrompt !== undefined)
+            updates.push(this.setConfigValue("ai.reminderPrompt", config.reminderPrompt));
+        if (config.workReportPrompt !== undefined)
+            updates.push(this.setConfigValue("ai.workReportPrompt", config.workReportPrompt));
+        await Promise.all(updates);
     }
 
-    try {
-        savePromise = config.kvStore.setKV("app_config", JSON.stringify(config))
-            .catch((error) => {
-                console.error("Failed to save config:", error);
-                throw error;
-            })
-            .finally(() => {
-                savePromise = null;
-            });
-        await savePromise;
-    } catch (error) {
-        if (retries > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            return saveConfig(config, retries - 1);
+    // 内部设置配置值的方法
+    private async setConfigValue(key: ConfigPath, value: any): Promise<void> {
+        if (!this.validate(key, value)) {
+            throw new Error(`Invalid value for config key: ${key}`);
         }
-        throw error;
+
+        const oldValue = this.getNestedValue(this.config, key);
+        this.setNestedValue(this.config, key, value);
+        this.store.set(this.config);
+        this.logChange(key, oldValue, value);
+
+        await this.saveToStorage();
     }
-};
 
-// 创建配置 store
-interface AppConfigStore extends AppConfig {
-    subscribe: ReturnType<typeof writable<AppConfig>>["subscribe"];
-    reset: () => Promise<void>;
-    init: (kvStore: KVStore) => Promise<void>;
-    setValueForKey: (key: string, value: any) => Promise<void>;
-    getValueForKey: (key: string) => any;
+    // 获取嵌套属性值
+    private getNestedValue(obj: any, path: ConfigPath): any {
+        const parts = path.split(".") as string[];
+        return parts.reduce((current, key) => {
+            if (current === undefined || current === null) return undefined;
+            return current[key];
+        }, obj);
+    }
+
+    // 设置嵌套属性值
+    private setNestedValue(obj: any, path: ConfigPath, value: any): void {
+        const parts = path.split(".");
+        const lastKey = parts.pop()!;
+        let target = parts.reduce((current, key) => {
+            if (current[key] === undefined) current[key] = {};
+            return current[key];
+        }, obj);
+        target[lastKey] = value;
+    }
+
+    // 初始化配置
+    public async init(kvStore: KVStore): Promise<void> {
+        this.kvStore = kvStore;
+        try {
+            const stored = await kvStore.getKV("app-config");
+            if (stored) {
+                const storedConfig = JSON.parse(stored);
+                if (typeof storedConfig !== "object" || storedConfig === null) {
+                    throw new Error("Invalid config data format.");
+                }
+                this.config = storedConfig;
+                this.store.set(this.config);
+            } else {
+                this.config = { ...AppConfigManager.DEFAULT_CONFIG };
+                this.store.set(this.config);
+            }
+        } catch (error) {
+            console.error("Failed to initialize config:", error);
+            this.config = { ...AppConfigManager.DEFAULT_CONFIG };
+            this.store.set(this.config);
+        }
+    }
+
+    // 重置配置
+    public async reset(): Promise<void> {
+        this.config = { ...AppConfigManager.DEFAULT_CONFIG };
+        this.store.set(this.config);
+        await this.saveToStorage();
+    }
+
+    // 获取订阅
+    public subscribe(run: (value: AppConfig) => void) {
+        return this.store.subscribe(run);
+    }
+
+    // 保存配置到存储
+    private async saveToStorage(maxRetries = 3): Promise<void> {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const configString = JSON.stringify(this.config);
+                await this.kvStore.setKV("app-config", configString);
+                return;
+            } catch (error) {
+                console.error(`Failed to save config, retrying... (${i + 1}/${maxRetries})`, error);
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        }
+        throw new Error("Failed to save config after multiple retries.");
+    }
 }
 
-function createAppConfig(): AppConfigStore {
-    const { subscribe, set, update } = writable<AppConfig>(DEFAULT_CONFIG);
-    let proxyConfig = createConfigProxy(DEFAULT_CONFIG, "", (path, oldValue, newValue) => {
-        logConfigChange(path, oldValue, newValue);
-        const newConfig = validateConfig({ ...proxyConfig });
-        saveConfig(newConfig);
-        set(newConfig);
-    });
-
-    const configStore = new Proxy({} as AppConfigStore, {
-        get(_, prop: string) {
-            if (prop === "subscribe") return subscribe;
-            if (prop === "reset")
-                return async () => {
-                    proxyConfig = createConfigProxy(DEFAULT_CONFIG, "", (path, oldValue, newValue) => {
-                        logConfigChange(path, oldValue, newValue);
-                        const newConfig = { ...proxyConfig };
-                        saveConfig(newConfig);
-                        set(newConfig);
-                    });
-                    await saveConfig(DEFAULT_CONFIG);
-                    set(DEFAULT_CONFIG);
-                    Object.assign(configStore, DEFAULT_CONFIG);
-                };
-            if (prop === "init")
-                // set kvStore
-
-                return async (kvStore: KVStore) => {
-
-                    appConfig.kvStore = kvStore;
-
-                    try {
-                        console.log("Init app config ... ");
-                        const storedConfig = await kvStore.getKV("app_config");
-                        if (storedConfig) {
-                            console.log("Get storedConfig success: ", storedConfig);
-                            const parsedConfig = validateConfig(JSON.parse(storedConfig));
-                            proxyConfig = createConfigProxy(parsedConfig, "", (path, oldValue, newValue) => {
-                                logConfigChange(path, oldValue, newValue);
-                                const newConfig = { ...proxyConfig };
-                                saveConfig(newConfig);
-                                set(newConfig);
-                            });
-                            set(parsedConfig);
-                            Object.assign(configStore, parsedConfig);
-                        } else {
-                            // may be first time to run
-                            console.log("First time to run, set default config ... ");
-                            await kvStore.setKV("app_config", JSON.stringify(DEFAULT_CONFIG));
-                            set(DEFAULT_CONFIG);
-                            Object.assign(configStore, DEFAULT_CONFIG);
-                        }
-                    } catch (error) {
-                        console.error("Failed to load config:", error);
-                        set(DEFAULT_CONFIG);
-                    }
-                };
-            if (prop === "setValueForKey")
-                return async (key: string, value: any) => {
-                    try {
-                        let valueToStore: string;
-
-                        // 根据值的类型决定是否需要 JSON 序列化
-                        if (typeof value === "string") {
-                            valueToStore = value;
-                        } else if (value === null || value === undefined) {
-                            valueToStore = String(value);
-                        } else {
-                            valueToStore = JSON.stringify(value);
-                        }
-
-                        // 存储值
-                        await configStore.kvStore.setKV(`storage:${key}`, valueToStore);
-                        // 更新内存中的值
-                        proxyConfig.storage[key] = value;
-                        logConfigChange(`storage.${key}`, proxyConfig.storage[key], value);
-                    } catch (error) {
-                        console.error(`Failed to set value for key ${key}:`, error);
-                        throw error;
-                    }
-                };
-            if (prop === "getValueForKey")
-                return async (key: string) => {
-                    try {
-                        // 直接从 KV 存储中获取值
-                        const storedValue = await configStore.kvStore.getKV(`storage:${key}`);
-                        if (storedValue === null || storedValue === undefined) {
-                            return proxyConfig.storage[key]; // 如果 KV 中没有，返回内存中的值
-                        }
-
-                        let value;
-                        try {
-                            // 尝试解析 JSON
-                            value = JSON.parse(storedValue);
-                        } catch {
-                            // 如果解析失败，说明可能是普通字符串，直接使用原值
-                            value = storedValue;
-                        }
-
-                        // 同步内存中的值
-                        proxyConfig.storage[key] = value;
-                        return value;
-                    } catch (error) {
-                        console.error(`Failed to get value for key ${key}:`, error);
-                        return proxyConfig.storage[key]; // 发生错误时返回内存中的值
-                    }
-                };
-            return proxyConfig[prop];
-        },
-        set(_, prop: string, value: any) {
-            proxyConfig[prop] = value;
-            return true;
-        },
-    });
-
-    return configStore;
-}
-
-// 导出配置实例
-export const appConfig = createAppConfig();
+// 导出配置管理器实例
+export const appConfig = AppConfigManager.getInstance();
