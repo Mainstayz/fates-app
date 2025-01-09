@@ -1,13 +1,15 @@
 import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
+import { getVersion } from "@tauri-apps/api/app";
 import { emit, listen, type Event } from "@tauri-apps/api/event";
 import { WebviewWindow, getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
-import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-import { getVersion } from "@tauri-apps/api/app";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
 import type { Matter, NotificationRecord } from "../types";
 import type { PlatformAPI, UnlistenFn } from "./index";
+
+// Do not remove this import, it is used to initialize the tray manager
 import _ from "$src/tauri/tray-manager.svelte";
 
 class TauriEvent {
