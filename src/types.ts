@@ -3,11 +3,37 @@ export interface Matter {
     title: string;
     description?: string;
     tags?: string;
-    start_time: Date;
-    end_time: Date;
+    start_time: string;
+    end_time: string;
     priority: number;
-    created_at: Date;
-    updated_at: Date;
+    type_: number; // 0: normal task, 1: repeat task, 2: todo item
+    created_at: string;
+    updated_at: string;
+    reserved_1?: string; // for className
+    reserved_2?: string;
+    reserved_3?: string;
+    reserved_4?: string;
+    reserved_5?: string;
+}
+
+export interface RepeatTask {
+    id: string;
+    title: string;
+    tags?: string;
+    repeat_time: string;
+    status: number;
+    created_at: string;
+    updated_at: string;
+    priority: number;
+    description?: string;
+}
+
+export interface Todo {
+    id: string;
+    title: string;
+    status: string; // "todo", "in_progress", "completed"
+    created_at: string;
+    updated_at: string;
 }
 
 export interface NotificationRecord {
@@ -17,10 +43,18 @@ export interface NotificationRecord {
     type_: number;
     status: number;
     related_task_id?: string;
-    created_at: Date;
-    read_at?: Date;
-    expire_at?: Date;
+    created_at: string;
+    read_at?: string;
+    expire_at?: string;
     action_url?: string;
     reserved_1?: string;
     reserved_2?: string;
+    reserved_3?: string;
+    reserved_4?: string;
+    reserved_5?: string;
+}
+
+export interface Tag {
+    name: string;
+    last_used_at: string;
 }
