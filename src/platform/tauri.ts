@@ -52,7 +52,7 @@ import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
 
 class TauriEvent {
     async emit(event: string, data: any): Promise<void> {
-        console.log("TauriEvent emit: event = ", event, "data = ", data);
+        console.log("[TauriEvent] emit: event = ", event, "data = ", data);
         return emit(event, data);
     }
     async listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn> {

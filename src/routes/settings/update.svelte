@@ -53,7 +53,7 @@
         initSettings();
         checkForUpdates().then(() => {
             // 检查更新
-            console.log("check for updates finished");
+            console.log("[Settings] Check for updates finished");
         });
         return () => {
             unsubscribe();
@@ -68,7 +68,7 @@
     async function checkForUpdates() {
         updateInProgress = false;
         try {
-            console.log("check for updates ...");
+            console.log("[Settings] Check for updates ...");
             const { hasUpdate, version } = await updater.checkForUpdates();
             updateAvailable = hasUpdate;
 
@@ -78,7 +78,7 @@
                 });
             }
         } catch (error) {
-            console.error("检查更新失败：", error);
+            console.error("[Settings] Check for updates failed:", error);
             updateStatus = $t("app.settings.update.error");
         }
     }

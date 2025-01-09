@@ -92,24 +92,24 @@
                     updated_at: new Date().toISOString(),
                     reserved_1: item.className,
                 };
-                console.log("update matter: ", newMatter);
+                console.log("[TimelinePage] Update matter:", newMatter);
                 await platform.instance.storage.updateMatter(newMatter);
                 await updateHeatMapData();
                 await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
             }
         } catch (e) {
-            console.error(`Save timeline item failed: ${e}`);
+            console.error(`[TimelinePage] Save matter failed: ${e}`);
         }
     }
 
     async function deleteTimelineItem(id: string) {
         try {
-            console.log("delete matter: ", id);
+            console.log(`[TimelinePage] Delete matter: ${id}`);
             await platform.instance.storage.deleteMatter(id);
             await updateHeatMapData();
             await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
         } catch (e) {
-            console.error(`Delete timeline item failed: ${e}`);
+            console.error(`[TimelinePage] Delete matter failed: ${e}`);
         }
     }
 
@@ -155,11 +155,11 @@
             } else {
                 timelineComponent.addItem(item);
             }
-            console.log("create matter: ", newMatter);
+            console.log("[TimelinePage] Create matter:", newMatter);
             await updateHeatMapData();
             await platform.instance.event.emit(REFRESH_TIME_PROGRESS);
         } catch (e) {
-            console.error(`Create timeline item failed: ${e}`);
+            console.error("[TimelinePage] Create matter failed:", e);
         }
     }
 
@@ -300,14 +300,14 @@
 
     async function setupEventListeners() {
         for (const { event, handler } of EVENT_LISTENERS) {
-            console.log("add event listener: ", event);
+            console.log(`[TimelinePage] Add event listener: ${event}`);
             const unlisten = await platform.instance.event.listen(event, handler);
             unlisteners.push(unlisten);
         }
     }
 
     function cleanupEventListeners() {
-        console.log("cleanup all event listeners ...");
+        console.log("[TimelinePage] Cleanup all event listeners ...");
         unlisteners.forEach((unlisten) => unlisten?.());
         unlisteners = [];
     }
@@ -334,7 +334,7 @@
     function handleTimeRangeChange(value: string) {
         if (!timelineComponent) return;
 
-        console.log("timeline range: ", value);
+        console.log(`[TimelinePage] Timeline range changed: ${value}`);
         selectedRange = value;
         const now = Date.now();
         let msOffset: number;
@@ -373,10 +373,10 @@
     let eventHandler: TimelineEventHandler;
 
     onMount(() => {
-        console.log("timeline page onMount ...");
+        console.log("[TimelinePage] onMount ...");
 
         if (!timelineComponent) {
-            console.error("Timeline component not initialized");
+            console.error("[TimelinePage] Timeline component not initialized");
             return;
         }
 
@@ -390,7 +390,7 @@
         timeRangeManager.handleTimeRangeChange(selectedRange as keyof typeof timeRangeManager.TIME_RANGES);
 
         return () => {
-            console.log("timeline page onUnmount ...");
+            console.log("[TimelinePage] onUnmount ...");
             cleanupEventListeners();
         };
     });
@@ -525,7 +525,7 @@
                 <TaskDetailForm
                     item={editingItem!}
                     callback={(item: TimelineItem) => {
-                        console.log("edit finish, save timeline item ...", item);
+                        console.log("[TimelinePage] Edit finish, will update matter:", item);
                         timelineComponent.updateItem(item);
                         editingItem = null;
                     }}

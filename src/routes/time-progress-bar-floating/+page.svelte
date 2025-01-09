@@ -16,24 +16,24 @@
 
     function setupResizeObserver() {
         if (!rootElement) {
-            console.log("rootElement is null");
+            console.warn("RootElement is null");
             return;
         }
 
         resizeObserver = new ResizeObserver((entries) => updateHeight(true));
         resizeObserver.observe(rootElement);
-        console.log("setupResizeObserver");
+        console.log("Setup resize observer");
     }
 
     async function updateHeight(force: boolean = false) {
         if (!rootElement) {
-            console.log("rootElement is null");
+            console.log("RootElement is null");
             return;
         }
 
         const newHeight = rootElement.clientHeight;
         // await window.emit("time-progress-bar-height", newHeight);
-        console.log("update time-progress-bar-height:", newHeight);
+        console.log("Update height:", newHeight);
     }
 
     let unlistens: UnlistenFn[] = [];
@@ -79,11 +79,11 @@
             };
         });
 
-        console.log("transform timeSegments:", timeSegments);
+        console.log("Transform timeSegments:", timeSegments);
     }
 
     onMount(() => {
-        console.log("onMount");
+        console.log("OnMount");
         setupUpdateInterval();
         setupListeners();
         setupResizeObserver();
@@ -104,7 +104,7 @@
     }
 
     async function handleDoubleClick() {
-        console.log("rootElement double clicked");
+        console.log("RootElement double clicked");
         // let mainWindow = await Window.getByLabel("main");
         // if (mainWindow) {
         //     await mainWindow.unminimize();
@@ -114,7 +114,7 @@
     }
 
     async function setupListeners() {
-        console.log("setupListeners");
+        console.log("Setup Listeners");
         await initializePlatform();
         const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
             // const win = await getCurrentWindow();

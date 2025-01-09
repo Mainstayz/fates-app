@@ -22,11 +22,11 @@
             UpdateSettings = (await import("./settings/update.svelte")).default;
             platform.instance.updater?.checkForUpdates().then((result) => {
                 if (result.hasUpdate) {
-                    console.log(`Update available!!! NEW VERSION: ${result.version}`);
+                    console.log(`[Settings] Update available!!! NEW VERSION: ${result.version}`);
                     updateAvailable = true;
                     appConfig.setUpdateAvailable(true);
                 } else {
-                    console.log("No update available");
+                    console.log("[Settings] No update available");
                     updateAvailable = false;
                 }
             });

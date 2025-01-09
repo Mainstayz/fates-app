@@ -109,11 +109,11 @@ export const isWeb = !isTauri;
 // 获取当前平台的实现
 export async function getPlatform(): Promise<PlatformAPI> {
     if (isTauri) {
-        console.log("Platform is Tauri !!!");
+        console.warn("Platform is Tauri !!!");
         const { default: tauriPlatform } = await import("./tauri");
         return tauriPlatform;
     } else {
-        console.log("Platform is Web !!!");
+        console.warn("Platform is Web !!!");
         const { default: webPlatform } = await import("./web");
         return webPlatform;
     }

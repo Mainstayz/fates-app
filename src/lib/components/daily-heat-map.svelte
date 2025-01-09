@@ -56,7 +56,7 @@
 
     function formatData(data: DataPoint[]) {
         const filledData = fillMissingDates(data);
-        console.log("filledData: ", filledData);
+        console.log(`[DailyHeatMap] FilledData count: ${filledData.length}`);
         return filledData.map((item) => {
             return [item.date, item.value];
         });
@@ -65,7 +65,7 @@
     function updateChart(locale: string = "en") {
         if (!myChart) return;
 
-        console.log("locale: ", locale);
+        console.log(`[DailyHeatMap] Locale: ${locale}`);
         const option: EChartsOption = {
             tooltip: {
                 formatter: function (params: any) {

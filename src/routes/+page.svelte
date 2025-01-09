@@ -16,18 +16,18 @@
     async function sendSystemNotification(title: string, message: string) {
         let permissionGranted = await platform.instance.notification.isPermissionGranted();
         if (!permissionGranted) {
-            console.log("No permission granted");
+            console.log("[Main] No permission granted");
             const permission = await platform.instance.notification.requestPermission();
             permissionGranted = permission === "granted";
         }
-        console.log("Permission granted = ", permissionGranted);
+        console.log("[Main] Permission granted = ", permissionGranted);
         if (permissionGranted) {
             platform.instance.notification.sendNotification(title, message);
         }
     }
 
     function onNotificationMessage(payload: Notification) {
-        console.log("onNotificationMessage: payload = ", payload);
+        console.log("[Main] onNotificationMessage: payload = ", payload);
 
         if (payload.notificationType === NotificationType.NewTask) {
             // notify time progress bar to refresh
@@ -42,20 +42,21 @@
     onMount(() => {
         const initialize = async () => {
             // Initialize platform
+            console.log("[Main] Initialize platform ..");
             await initializePlatform();
 
             // Initialize app config
             await appConfig.init(platform.instance.storage);
-            console.log("appConfig initialized");
+            console.log("[Main] AppConfig initialized");
 
             // Set language
             let language = appConfig.getConfig().language;
             await locale.set(language);
-            console.log("Current language: ", language);
+            console.log("[Main] Current language: ", language);
 
             await platform.instance.init();
             appConfigInitialized = true;
-            console.log("platform initialized", platform.instance);
+            console.log("[Main] platform initialized successfully");
 
             // 获取所有标签
             await tagManager.fetchAllTags();

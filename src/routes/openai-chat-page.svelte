@@ -134,12 +134,12 @@
             });
             txtResult += "```\n";
         }
-        console.log(txtResult);
+        console.log(`[AI] Response: ${txtResult}`);
     }
 
     async function sendMessage() {
         if (!userInput.trim() || !client) {
-            error = !client ? "请先初始化客户端" : null;
+            error = !client ? "Please initialize the client first" : null;
             return;
         }
 

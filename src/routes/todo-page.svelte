@@ -25,7 +25,7 @@
         private matters: Matter[] = [];
 
         async syncTodoStatus() {
-            console.log("syncTodoStatus ... ");
+            console.log("[TodoPage] Sync todo status ...");
             const matters = await platform.instance.storage.queryMattersByField("type", "2", true);
             this.matters = matters;
             const now = new Date();
@@ -170,10 +170,10 @@
         todoAPI
             .fetchData()
             .then(() => {
-                console.log("fetch data success");
+                console.log("[TodoPage] Fetch all todos successfully");
             })
             .catch((error) => {
-                console.error("fetch data error: ", error);
+                console.error("[TodoPage] Fetch all todos error: ", error);
             });
     });
 </script>

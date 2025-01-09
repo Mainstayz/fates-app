@@ -58,13 +58,13 @@ class RepeatTaskHandler {
     static isScheduledForToday(task: RepeatTask, currentDate: Date): boolean {
         const repeatTimeComponents = task.repeat_time.split("|");
         if (repeatTimeComponents.length !== 3) {
-            console.error(`Invalid repeat_time format: ${task.repeat_time}`);
+            console.error(`[NotificationManager] Invalid repeat_time format: ${task.repeat_time}`);
             return false;
         }
 
         const weekdayBitMask = parseInt(repeatTimeComponents[0], 10);
         if (isNaN(weekdayBitMask)) {
-            console.error(`Failed to parse weekday bitmask value: ${repeatTimeComponents[0]}`);
+            console.error(`[NotificationManager] Failed to parse weekday bitmask value: ${repeatTimeComponents[0]}`);
             return false;
         }
 
@@ -80,10 +80,10 @@ class RepeatTaskHandler {
         if (excludeHolidays) {
             const isHoliday = isHolidayDate(currentDate);
             if (isHoliday) {
-                console.log(`Current date ${currentDate} is a holiday`);
+                console.log(`[NotificationManager] Current date ${currentDate} is a holiday`);
                 return false;
             } else {
-                console.log(`Current date ${currentDate} is not a holiday`);
+                console.log(`[NotificationManager] Current date ${currentDate} is not a holiday`);
             }
         }
 
@@ -166,9 +166,9 @@ export class NotificationManager {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
-        console.log("Start notification loop ...");
+        console.log("[NotificationManager] Start notification loop ...");
         this.checkInterval = setInterval(async () => {
-            console.log(`Checking notifications at ${new Date().toLocaleString()}`);
+            console.log(`[NotificationManager] Checking notifications at ${new Date().toLocaleString()}`);
             await this.processNotificationCycle();
         }, 1 * 60 * 1000); // 1 min
     }
@@ -186,15 +186,15 @@ export class NotificationManager {
         let notifications = appConfig.getNotifications();
         const workStartTime = notifications.workStart || "00:01";
         const workEndTime = notifications.workEnd || "23:59";
-        console.log("Current language:", userLanguage);
+        console.log(`[NotificationManager] Current language: ${userLanguage}`);
 
         const currentDateTime = new Date();
 
         // local time
         if (forceCheck) {
-            console.log(`Checking if in work hours: ${currentDateTime.toLocaleString()}`);
+            console.log(`[NotificationManager] Checking if in work hours: ${currentDateTime.toLocaleString()}`);
             if (!TimeUtils.isWithinWorkingHours(currentDateTime, workStartTime, workEndTime)) {
-                console.log(`SKIPPED!!! Not in work hours, start time: ${workStartTime}, end time: ${workEndTime}`);
+                console.log(`[NotificationManager] SKIPPED!!! Not in work hours, start time: ${workStartTime}, end time: ${workEndTime}`);
                 return false;
             }
         }
@@ -216,11 +216,11 @@ export class NotificationManager {
         const todayMatters = await getMattersByRange(todayStartTime.toISOString(), todayEndTime.toISOString());
 
         // Check repeat tasks
-        console.log(`Checking repeat tasks at ${currentDateTime.toLocaleString()}`);
+        console.log(`[NotificationManager] Checking repeat tasks at ${currentDateTime.toLocaleString()}`);
         const newlyCreatedMatters = await this.createDueRepeatTasks(currentDateTime, todayMatters);
         if (newlyCreatedMatters.length > 0) {
             console.log(
-                `Creating notification for new repeat tasks at ${currentDateTime.toLocaleString()}, ${
+                `[NotificationManager] Creating notification for new repeat tasks at ${currentDateTime.toLocaleString()}, ${
                     newlyCreatedMatters.length
                 } new repeat tasks`
             );
@@ -248,26 +248,26 @@ export class NotificationManager {
             for (const matter of matters) {
                 const startTime = dayjs(matter.start_time).toDate();
                 const endTime = dayjs(matter.end_time).toDate();
-                console.log(`check task time range: ${matter.title}`);
+                console.log(`[NotificationManager] Check task time range: ${matter.title}`);
                 console.log(`- start time: ${startTime.toLocaleString()}`);
                 console.log(`- end time: ${endTime.toLocaleString()}`);
                 console.log(`- current time: ${now.toLocaleString()}`);
                 if (now >= startTime && now <= endTime) {
-                    console.log("- current time in task time range");
+                    console.log(`[NotificationManager] Current time in task time range`);
                     isInTaskTimeRange = true;
                     break;
                 } else {
-                    console.log("- current time not in task time range");
+                    console.log(`[NotificationManager] Current time not in task time range`);
                 }
             }
             if (isInTaskTimeRange) {
-                console.log("current time in task time range, skip ai notification");
+                console.log(`[NotificationManager] Current time in task time range, skip ai notification`);
                 return false;
             }
 
             let shouldCheck = await this.isAINotificationCheckDue();
             if (!shouldCheck) {
-                console.log("skip ai notification");
+                console.log(`[NotificationManager] Skip ai notification, not due`);
                 return false;
             }
         }
@@ -374,7 +374,7 @@ export class NotificationManager {
             let description = jsonResult.description;
             this.onReceiveNotification(title, description, NotificationType.AINotification);
         } catch (error) {
-            console.error("Failed to parse JSON:", error);
+            console.error(`[NotificationManager] Failed to parse JSON: ${error}`);
         } finally {
             return true;
         }
@@ -392,13 +392,13 @@ export class NotificationManager {
             shouldCheckUpcoming = await this.isUpcomingCheckDue();
         }
         if (shouldCheckUpcoming) {
-            console.log(`Checking upcoming tasks at ${now.toLocaleDateString()}`);
+            console.log(`[NotificationManager] Checking upcoming tasks at ${now.toLocaleDateString()}`);
             const notifyBefore = notifications.checkIntervalMinutes || 15;
             const upcomingNotifications = this.getUpcomingTaskNotifications(now, matters, notifyBefore);
             if (upcomingNotifications.length == 0) {
-                console.log("No upcoming tasks");
+                    console.log(`[NotificationManager] No upcoming tasks`);
             } else {
-                console.log(`Found ${upcomingNotifications.length} upcoming tasks`);
+                console.log(`[NotificationManager] Found ${upcomingNotifications.length} upcoming tasks`);
                 let notification = upcomingNotifications[0];
                 this.onReceiveNotification(notification.title, notification.message, notification.notificationType);
                 return true;
@@ -412,7 +412,7 @@ export class NotificationManager {
         }
 
         if (shouldCheckNoTasks) {
-            console.log(`Checking no tasks at ${now.toLocaleString()}`);
+            console.log(`[NotificationManager] Checking no tasks at ${now.toLocaleString()}`);
             if (this.hasNoScheduledTasksInTimeRange(now, matters)) {
                 let title = get(_)("app.messages.noPlannedTasks");
                 let message = get(_)("app.messages.noPlannedTasksDescription");
@@ -420,14 +420,14 @@ export class NotificationManager {
                 return true;
             }
         }
-        console.log("No notification found");
+        console.log(`[NotificationManager] No notification found`);
         return false;
     }
 
     private async createDueRepeatTasks(now: Date, existingMatters: Matter[]): Promise<Matter[]> {
         const repeatTasks = await getActiveRepeatTasks();
         if (repeatTasks.length === 0) {
-            console.log("No active repeat tasks, skip");
+            console.log(`[NotificationManager] No active repeat tasks, skip`);
             return [];
         }
         const createdMatters: Matter[] = [];
@@ -560,7 +560,7 @@ export class NotificationManager {
             await appConfig.storeValue(key, now.toISOString());
             return true;
         }
-        console.log(`${key} update time not exceed ${durationMinutes} minutes, skip check`);
+        console.log(`[NotificationManager] ${key} update time not exceed ${durationMinutes} minutes, skip check`);
         return false;
     }
 

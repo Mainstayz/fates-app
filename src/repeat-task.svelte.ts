@@ -88,9 +88,9 @@ class RepeatTaskAPI {
 
         try {
             await platform.instance.storage.createMatter(matter);
-            console.log("Matter created successfully");
+            console.log("[repeat-task] Matter created successfully");
         } catch (error) {
-            console.error("Failed to create matter:", error);
+            console.error("[repeat-task] Failed to create matter:", error);
         }
     }
 }

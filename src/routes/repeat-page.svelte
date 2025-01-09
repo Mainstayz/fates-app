@@ -89,17 +89,17 @@
             resolve(true);
         })
             .then(() => {
-                console.log("fetch data success");
+                console.log("[RepeatPage] Fetch all repeat tasks successfully");
             })
             .catch((error) => {
-                console.error("fetch data error: ", error);
+                console.error("[RepeatPage] Fetch all repeat tasks error: ", error);
             });
     });
     async function onUpdateValue(rowId: string, columnId: string, value: string | number) {
-        console.log("update repeat task:", rowId, columnId, value);
+        console.log(`[RepeatPage] Update repeat task: ${rowId}, ${columnId}, ${value}`);
         let task = repeatTaskAPI.getRepeatTaskById(rowId);
         if (!task) {
-            console.error("task not found", rowId);
+            console.error(`[RepeatPage] Task not found: ${rowId}`);
             return;
         }
         if (columnId === "title") {

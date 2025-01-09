@@ -22,7 +22,7 @@
     }
 
     async function toggleAutoStart(enabled: boolean) {
-        console.log("setting auto start to:", enabled);
+        console.log(`[Settings] Setting auto start to: ${enabled}`);
         try {
             if (enabled) {
                 await platform.instance.autostart?.enable();
@@ -30,12 +30,12 @@
                 await platform.instance.autostart?.disable();
             }
         } catch (error) {
-            console.error("setting auto start to:", enabled, "failed:", error);
+            console.error(`[Settings] Setting auto start to: ${enabled} failed:`, error);
         }
     }
 
     export async function initSettings() {
-        console.log("init common settings");
+        console.log("[Settings] Init common settings");
         language = appConfig.getConfig().language;
         if (language == "") {
             language = "zh";
@@ -45,7 +45,7 @@
             autoStart = (await platform.instance.autostart?.isEnabled()) ?? false;
         } catch (error) {
             autoStart = false;
-            console.warn("Failed to get settings:", error);
+            console.warn("[Settings] Failed to get settings:", error);
         }
         initialized = true;
     }
