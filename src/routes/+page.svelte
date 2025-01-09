@@ -56,13 +56,13 @@
             await platform.instance.init();
             appConfigInitialized = true;
             console.log("platform initialized", platform.instance);
+
+            // 获取所有标签
+            await tagManager.fetchAllTags();
         };
 
         // 立即执行初始化
         initialize();
-
-        // 获取所有标签
-        tagManager.fetchAllTags();
 
         const unlisten = notificationManager.addNotificationCallback(onNotificationMessage);
         // 返回清理函数

@@ -10,14 +10,14 @@
     import NotificationSettings from "./settings/notification.svelte";
     import AiSettings from "./settings/ai.svelte";
     import UpdateSettings from "./settings/update.svelte";
-    import { updater } from "$src/tauri/updater.svelte";
+    import platform from "$src/platform";
     import { appConfig } from "$src/app-config";
     let { open = $bindable() } = $props();
     let currentSection = $state("common");
     let updateAvailable = $state(false);
 
     onMount(() => {
-        updater.checkForUpdates().then((result) => {
+        platform.instance.updater?.checkForUpdates().then((result) => {
             if (result.hasUpdate) {
                 console.log(`Update available!!! NEW VERSION: ${result.version}`);
                 updateAvailable = true;
