@@ -1,21 +1,63 @@
 <script lang="ts">
-    import { Label } from "$lib/components/ui/label";
-    import { Input } from "$lib/components/ui/input";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Separator } from "$lib/components/ui/separator";
     import { Button } from "$lib/components/ui/button";
-    import { t } from "svelte-i18n";
-    import { LoaderCircle } from "lucide-svelte";
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
+    import { Separator } from "$lib/components/ui/separator";
+    import { Switch } from "$lib/components/ui/switch";
     import { appConfig } from "$src/app-config";
     import { OpenAIClient } from "$src/openai";
+    import { LoaderCircle } from "lucide-svelte";
+    import { t } from "svelte-i18n";
 
+    // 当前配置状态
     let aiEnabled = $state<boolean>(appConfig.getAIConfig().enabled);
     let aiBaseUrl = $state<string>(appConfig.getAIConfig().baseUrl);
     let aiModelId = $state<string>(appConfig.getAIConfig().modelId);
     let aiApiKey = $state<string>(appConfig.getAIConfig().apiKey);
+
+    // 上一次的配置状态
+    let prevConfig = $state<{
+        enabled: boolean;
+        baseUrl: string;
+        modelId: string;
+        apiKey: string;
+    }>({
+        enabled: aiEnabled,
+        baseUrl: aiBaseUrl,
+        modelId: aiModelId,
+        apiKey: aiApiKey,
+    });
+
     let switchEnabled = $state<boolean>(false);
     let aiTestResult = $state<string>("");
     let aiTestLoading = $state<boolean>(false);
+
+    function updateConfig() {
+        if (prevConfig.enabled !== aiEnabled) {
+            appConfig.setAIConfig({
+                enabled: aiEnabled,
+            });
+            prevConfig.enabled = aiEnabled;
+        }
+        if (prevConfig.baseUrl !== aiBaseUrl) {
+            appConfig.setAIConfig({
+                baseUrl: aiBaseUrl,
+            });
+            prevConfig.baseUrl = aiBaseUrl;
+        }
+        if (prevConfig.modelId !== aiModelId) {
+            appConfig.setAIConfig({
+                modelId: aiModelId,
+            });
+            prevConfig.modelId = aiModelId;
+        }
+        if (prevConfig.apiKey !== aiApiKey) {
+            appConfig.setAIConfig({
+                apiKey: aiApiKey,
+            });
+            prevConfig.apiKey = aiApiKey;
+        }
+    }
 
     $effect(() => {
         if (aiBaseUrl.length > 0 && aiModelId.length > 0 && aiApiKey.length > 0) {
@@ -25,12 +67,7 @@
             aiEnabled = false;
         }
 
-        appConfig.setAIConfig({
-            enabled: aiEnabled,
-            baseUrl: aiBaseUrl,
-            modelId: aiModelId,
-            apiKey: aiApiKey,
-        });
+        updateConfig();
     });
 
     async function test() {

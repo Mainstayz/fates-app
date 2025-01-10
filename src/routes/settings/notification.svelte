@@ -22,6 +22,14 @@
     let aiEnabled = $state(appConfig.getAIConfig().enabled);
     let notificationTestLoading = $state(false);
 
+    // 存储初始值用于比较
+    let initialValues = $state({
+        checkInterval: "",
+        workStart: "",
+        workEnd: "",
+        aiReminderPrompt: "",
+    });
+
     const InternalMap = $derived({
         "120": $t("app.settings.checkInterval.120"),
         "240": $t("app.settings.checkInterval.240"),
@@ -38,46 +46,24 @@
     }
 
     onMount(async () => {
+        initialized = false;
         let notifications = appConfig.getNotifications();
-
-        let startTime = notifications.workStart;
-        if (startTime == "") {
-            appConfig.setNotifications({
-                workStart: "09:00",
-            });
-            startTime = "09:00";
-        }
-        workStart = startTime;
-
-        let endTime = notifications.workEnd;
-        if (endTime == "") {
-            appConfig.setNotifications({
-                workEnd: "18:00",
-            });
-            endTime = "18:00";
-        }
-        workEnd = endTime;
-
-        let interval = notifications.checkIntervalMinutes.toString();
-        if (interval == "") {
-            appConfig.setNotifications({
-                checkIntervalMinutes: 120,
-            });
-            interval = "120";
-        }
-        checkInterval = interval;
-
+        workStart = notifications.workStart;
+        workEnd = notifications.workEnd;
+        checkInterval = notifications.checkIntervalMinutes.toString();
         aiReminderPrompt = appConfig.getAIConfig().reminderPrompt;
-        initialized = true;
+        notificationPermission = (await platform.instance.notification.isPermissionGranted()) ? "granted" : "denied";
 
-        // 检查通知权限
-        try {
-            notificationPermission = (await platform.instance.notification.isPermissionGranted())
-                ? "granted"
-                : "denied";
-        } catch (e) {
-            console.error("Failed to check notification permission:", e);
-        }
+        // 记录初始值
+        initialValues = {
+            checkInterval,
+            workStart,
+            workEnd,
+            aiReminderPrompt,
+        };
+
+        initialized = true;
+        console.log("[notification] onMount initialized finished");
     });
 
     async function handleRequestPermission() {
@@ -89,18 +75,43 @@
         }
     }
 
+    // 合并所有配置更新到一个effect中
     $effect(() => {
         if (!initialized) {
             return;
         }
-        appConfig.setNotifications({
-            checkIntervalMinutes: parseInt(checkInterval),
-            workStart: workStart,
-            workEnd: workEnd,
-        });
-        appConfig.setAIConfig({
-            reminderPrompt: aiReminderPrompt,
-        });
+
+        const currentCheckInterval = parseInt(checkInterval);
+        const initialCheckIntervalNum = parseInt(initialValues.checkInterval);
+
+        // 只在值真正改变时更新配置
+        if (currentCheckInterval !== initialCheckIntervalNum) {
+            appConfig.setNotifications({
+                checkIntervalMinutes: currentCheckInterval,
+            });
+            initialValues.checkInterval = checkInterval;
+        }
+
+        if (workStart !== initialValues.workStart) {
+            appConfig.setNotifications({
+                workStart: workStart,
+            });
+            initialValues.workStart = workStart;
+        }
+
+        if (workEnd !== initialValues.workEnd) {
+            appConfig.setNotifications({
+                workEnd: workEnd,
+            });
+            initialValues.workEnd = workEnd;
+        }
+
+        if (aiReminderPrompt !== initialValues.aiReminderPrompt) {
+            appConfig.setAIConfig({
+                reminderPrompt: aiReminderPrompt,
+            });
+            initialValues.aiReminderPrompt = aiReminderPrompt;
+        }
     });
 </script>
 
