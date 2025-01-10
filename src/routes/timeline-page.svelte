@@ -12,13 +12,17 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog/index";
+    import * as Tooltip from "$lib/components/ui/tooltip";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { v4 as uuidv4 } from "uuid";
 
+    import { appConfig } from "$src/app-config";
+    import { generateTitle as generateTitleAI } from "$src/ai-title-optimization";
+
     import Input from "$lib/components/ui/input/input.svelte";
     import type { TimelineData, TimelineGroup, TimelineItem } from "$lib/types";
-    import { Plus } from "lucide-svelte";
+    import { Plus, LoaderCircle, Sparkles } from "lucide-svelte";
 
     import dayjs from "dayjs";
 
@@ -315,6 +319,25 @@
         } as const;
     }
 
+    let aiLoading = $state(false);
+    let aiEnabled = $state(false);
+    let inputRef: HTMLInputElement | null = null;
+
+    async function handleGenerateTitle() {
+        if (!aiEnabled) {
+            return;
+        }
+        aiLoading = true;
+        try {
+            const newTitle = await generateTitleAI(newTaskTitle);
+            newTaskTitle = newTitle;
+        } catch (error) {
+            console.error("Error generating title:", error);
+        } finally {
+            aiLoading = false;
+        }
+    }
+
     function handleTimeRangeChange(value: string) {
         if (!timelineComponent) return;
 
@@ -376,8 +399,9 @@
             return;
         }
 
+        aiEnabled = appConfig.getAIConfig().enabled;
         timelineDataManager = new TimelineDataManager(timelineComponent);
-        timeRangeManager = new TimeRangeManager(timelineComponent);
+        timeRangeManager = new TimeRangeManager();
         eventHandler = new TimelineEventHandler(timelineComponent);
 
         setupEventListeners();
@@ -462,7 +486,7 @@
                 <div class="flex gap-2">
                     {#if switchAddTaskInput}
                         <Input
-                            type="text"
+                            bind:ref={inputRef}
                             placeholder={$t("app.timeline.addTaskPlaceholder")}
                             class="bg-background w-[320px]"
                             bind:value={newTaskTitle}
@@ -479,6 +503,24 @@
                                 }
                             }}
                         />
+                        <!-- <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={!aiEnabled}
+                            onclick={async () => {
+                                await handleGenerateTitle();
+                                if (inputRef) {
+                                    inputRef.focus();
+                                }
+                            }}
+                        >
+                            {#if aiLoading}
+                                <LoaderCircle class="animate-spin" />
+                            {:else}
+                                <Sparkles />
+                            {/if}
+                            <Label class="text-muted-foreground text-default">AI</Label>
+                        </Button> -->
                     {:else}
                         <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
                             <Plus />

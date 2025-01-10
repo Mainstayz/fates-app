@@ -7,7 +7,6 @@
     import type { TimelineItem } from "$lib/types";
     import { Priority } from "$lib/types";
     import { appConfig } from "$src/app-config";
-    import { OpenAIClient } from "$src/openai";
     import { LoaderCircle, PanelTop, Sparkles } from "lucide-svelte";
     import { onDestroy, onMount } from "svelte";
     import { t } from "svelte-i18n";
@@ -15,6 +14,7 @@
     import DateRangePicker from "./date-range-picker.svelte";
     import PrioritySelector from "./priority-selector.svelte";
     import TagsAddButton from "./tags-add-button.svelte";
+    import { generateTitle as generateTitleAI } from "$src/ai-title-optimization";
 
     let {
         item,
@@ -93,53 +93,13 @@
         localSelectedTags = newTags;
     }
 
-    async function generateTitle() {
+    async function handleGenerateTitle() {
         if (!aiEnabled) {
             return;
         }
         aiLoading = true;
-        let apikey = appConfig.getAIConfig().apiKey;
-        let model = appConfig.getAIConfig().modelId;
-        let baseUrl = appConfig.getAIConfig().baseUrl;
-
-        let client = new OpenAIClient({
-            apiKey: apikey,
-            baseURL: baseUrl,
-            defaultModel: model,
-        });
-        let systemPrompt = `
-您是一位任务标题优化专家，擅长将模糊的任务描述转化为更具体、精炼的方式命名，以便快速回忆起任务的具体内容。您需要：
-
-1. 分析任务标题
-2. 根据关键信息和行动点，构建精炼的任务标题。
-3. 检查任务标题是否简洁明了，能否让人迅速回忆起任务的具体内容。
-
-注意：任务标题应简洁、明确，能够准确反映任务的核心内容，同时易于理解和记忆。
-
-请按以下格式输出优化建议：
-
-{
-  "original_title": "原始标题",
-  "title": "优化后的标题",
-  "summary": "优化说明"
-}
-
-示例输出：
-
-{
-  "original_title": "阅读",
-  "title": "阅读《人类简史》第 1-2 章",
-  "summary": "明确了阅读材料、范围"
-}
-        `;
-        let conversationId = uuidv4();
-        client.setSystemPrompt(conversationId, systemPrompt);
         try {
-            const responseJson = await client.sendMessage(conversationId, content);
-            let responseObject = JSON.parse(responseJson);
-            let newTitle = responseObject.title;
-            let newSummary = responseObject.summary;
-            console.log(`new title: ${newTitle}, summary: ${newSummary}`);
+            const newTitle = await generateTitleAI(content);
             content = newTitle;
         } catch (error) {
             console.error("Error generating title:", error);
@@ -175,7 +135,7 @@
         <Tooltip.Provider>
             <Tooltip.Root delayDuration={100} ignoreNonKeyboardFocus>
                 <Tooltip.Trigger>
-                    <Button variant="ghost" size="sm" disabled={!aiEnabled} onclick={generateTitle}>
+                    <Button variant="ghost" size="sm" disabled={!aiEnabled} onclick={handleGenerateTitle}>
                         {#if aiLoading}
                             <LoaderCircle class="animate-spin" />
                         {:else}

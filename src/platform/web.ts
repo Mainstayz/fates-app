@@ -13,7 +13,7 @@ class WebEvent {
 
 class WebClipboard {
     async writeText(text: string): Promise<void> {
-        return;
+        navigator.clipboard.writeText(text);
     }
 }
 
