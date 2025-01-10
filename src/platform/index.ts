@@ -41,6 +41,8 @@ export interface PlatformAPI {
 
 
     storage: {
+
+        init(): Promise<void>;
         // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;

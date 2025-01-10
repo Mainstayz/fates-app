@@ -67,6 +67,10 @@ class TauriClipboard {
 }
 
 class TauriStorage {
+    public async init(): Promise<void> {
+        return;
+    }
+
     // Matter 模块
     async getMatter(id: string): Promise<Matter | null> {
         return getMatterById(id);

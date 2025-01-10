@@ -44,6 +44,7 @@
             // Initialize platform
             console.log("[Main] Initialize platform ..");
             await initializePlatform();
+            await platform.instance.init();
 
             // Initialize app config
             await appConfig.init(platform.instance.storage);
@@ -54,7 +55,6 @@
             await locale.set(language);
             console.log("[Main] Current language: ", language);
 
-            await platform.instance.init();
             appConfigInitialized = true;
             console.log("[Main] platform initialized successfully");
 

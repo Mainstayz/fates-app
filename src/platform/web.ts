@@ -1,5 +1,6 @@
 import type { PlatformAPI } from "./index";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
+import { IndexedDBManager } from "./indexed-db";
 
 class WebEvent {
     async emit(event: string, data: any): Promise<void> {
@@ -28,42 +29,85 @@ class WebAutostart {
     }
 }
 
-class WebStorage {
-    private prefix = "fates_";
-
-    private getKey(key: string): string {
-        return this.prefix + key;
+class WebStorage extends IndexedDBManager {
+    constructor() {
+        super();
     }
 
-    async getMatter(id: string): Promise<Matter | null> {
-        const data = localStorage.getItem(this.getKey(`matter_${id}`));
-        return data ? JSON.parse(data) : null;
+    public async init() {
+        await this.connect();
+        await this.migrateFromLocalStorage();
     }
 
-    async listMatters(): Promise<Matter[]> {
-        const matters: Matter[] = [];
+    private async migrateFromLocalStorage() {
+        // 迁移 Matters
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key?.startsWith(this.getKey("matter_"))) {
+            if (key?.startsWith('fates_matter_')) {
                 const data = localStorage.getItem(key);
                 if (data) {
-                    matters.push(JSON.parse(data));
+                    const matter = JSON.parse(data);
+                    await this.put('matters', matter);
+                    localStorage.removeItem(key);
                 }
             }
         }
-        return matters;
+
+        // 迁移 Tags
+        const tagsData = localStorage.getItem('fates_tags');
+        if (tagsData) {
+            const tags = JSON.parse(tagsData);
+            for (const tag of tags) {
+                await this.put('tags', tag);
+            }
+            localStorage.removeItem('fates_tags');
+        }
+
+        // 迁移其他数据...
+        await this.migrateStoreItems('todo_', 'todos');
+        await this.migrateStoreItems('repeat_task_', 'repeat_tasks');
+    }
+
+    private async migrateStoreItems(prefix: string, storeName: string) {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith(`fates_${prefix}`)) {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const item = JSON.parse(data);
+                    await this.put(storeName, item);
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+    }
+
+    // Matter 模块
+    async getMatter(id: string): Promise<Matter | null> {
+        return this.get<Matter>('matters', id);
+    }
+
+    async listMatters(): Promise<Matter[]> {
+        return this.getAll<Matter>('matters');
     }
 
     async createMatter(matter: Matter): Promise<void> {
-        localStorage.setItem(this.getKey(`matter_${matter.id}`), JSON.stringify(matter));
+        await this.put('matters', matter);
     }
 
     async updateMatter(matter: Matter): Promise<void> {
-        localStorage.setItem(this.getKey(`matter_${matter.id}`), JSON.stringify(matter));
+        await this.put('matters', matter);
     }
 
     async deleteMatter(id: string): Promise<void> {
-        localStorage.removeItem(this.getKey(`matter_${id}`));
+        await this.delete('matters', id);
+    }
+
+    async getMattersByRange(start: string, end: string): Promise<Matter[]> {
+        const matters = await this.listMatters();
+        return matters.filter((matter) => {
+            return matter.start_time >= start && matter.end_time <= end;
+        });
     }
 
     async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
@@ -77,112 +121,78 @@ class WebStorage {
         });
     }
 
-    async getMattersByRange(start: string, end: string): Promise<Matter[]> {
-        const matters = await this.listMatters();
-        return matters.filter((matter) => {
-            return matter.start_time >= start && matter.end_time <= end;
-        });
-    }
-
     // KV 模块
     async setKV(key: string, value: string): Promise<void> {
-        localStorage.setItem(this.getKey(`kv_${key}`), value);
+        await this.put('kv', { key, value });
     }
 
     async getKV(key: string): Promise<string | null> {
-        return localStorage.getItem(this.getKey(`kv_${key}`));
+        const result = await this.get<{ key: string; value: string }>('kv', key);
+        return result?.value || null;
     }
 
     async deleteKV(key: string): Promise<void> {
-        localStorage.removeItem(this.getKey(`kv_${key}`));
+        await this.delete('kv', key);
     }
 
     // Tag 模块
     async createTag(name: string): Promise<void> {
-        const tags = await this.getAllTags();
-        const newTag = {
+        const tag: Tag = {
             name,
             last_used_at: new Date().toISOString(),
         };
-        tags.push(newTag);
-        localStorage.setItem(this.getKey("tags"), JSON.stringify(tags));
+        await this.put('tags', tag);
     }
 
     async getAllTags(): Promise<Tag[]> {
-        const data = localStorage.getItem(this.getKey("tags"));
-        return data ? JSON.parse(data) : [];
+        return this.getAll<Tag>('tags');
     }
 
     async deleteTag(name: string): Promise<void> {
-        const tags = await this.getAllTags();
-        const filteredTags = tags.filter((tag) => tag.name !== name);
-        localStorage.setItem(this.getKey("tags"), JSON.stringify(filteredTags));
+        await this.delete('tags', name);
     }
 
     async updateTagLastUsedAt(name: string): Promise<void> {
-        const tags = await this.getAllTags();
-        const tagIndex = tags.findIndex((tag) => tag.name === name);
-        if (tagIndex !== -1) {
-            tags[tagIndex].last_used_at = new Date().toISOString();
-            localStorage.setItem(this.getKey("tags"), JSON.stringify(tags));
+        const tag = await this.get<Tag>('tags', name);
+        if (tag) {
+            tag.last_used_at = new Date().toISOString();
+            await this.put('tags', tag);
         }
     }
 
     // Todo 模块
     async createTodo(todo: Todo): Promise<void> {
-        localStorage.setItem(this.getKey(`todo_${todo.id}`), JSON.stringify(todo));
+        await this.put('todos', todo);
     }
 
     async getTodo(id: string): Promise<Todo | null> {
-        const data = localStorage.getItem(this.getKey(`todo_${id}`));
-        return data ? JSON.parse(data) : null;
+        return this.get<Todo>('todos', id);
     }
 
     async listTodos(): Promise<Todo[]> {
-        const todos: Todo[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(this.getKey("todo_"))) {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    todos.push(JSON.parse(data));
-                }
-            }
-        }
-        return todos;
+        return this.getAll<Todo>('todos');
     }
 
     async updateTodo(id: string, todo: Todo): Promise<void> {
-        localStorage.setItem(this.getKey(`todo_${id}`), JSON.stringify(todo));
+        await this.put('todos', todo);
     }
 
     async deleteTodo(id: string): Promise<void> {
-        localStorage.removeItem(this.getKey(`todo_${id}`));
+        await this.delete('todos', id);
     }
 
     // RepeatTask 模块
     async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
-        localStorage.setItem(this.getKey(`repeat_task_${task.id}`), JSON.stringify(task));
+        await this.put('repeat_tasks', task);
         return task;
     }
 
     async getRepeatTask(id: string): Promise<RepeatTask | null> {
-        const data = localStorage.getItem(this.getKey(`repeat_task_${id}`));
-        return data ? JSON.parse(data) : null;
+        return this.get<RepeatTask>('repeat_tasks', id);
     }
 
     async listRepeatTasks(): Promise<RepeatTask[]> {
-        const tasks: RepeatTask[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(this.getKey("repeat_task_"))) {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    tasks.push(JSON.parse(data));
-                }
-            }
-        }
-        return tasks;
+        return this.getAll<RepeatTask>('repeat_tasks');
     }
 
     async getActiveRepeatTasks(): Promise<RepeatTask[]> {
@@ -191,12 +201,12 @@ class WebStorage {
     }
 
     async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
-        localStorage.setItem(this.getKey(`repeat_task_${id}`), JSON.stringify(task));
+        await this.put('repeat_tasks', task);
         return task;
     }
 
     async deleteRepeatTask(id: string): Promise<void> {
-        localStorage.removeItem(this.getKey(`repeat_task_${id}`));
+        await this.delete('repeat_tasks', id);
     }
 
     async updateRepeatTaskStatus(id: string, status: number): Promise<void> {
@@ -209,25 +219,15 @@ class WebStorage {
 
     // Notification 模块
     async getNotifications(): Promise<NotificationRecord[]> {
-        const notifications: NotificationRecord[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(this.getKey("notification_"))) {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    notifications.push(JSON.parse(data));
-                }
-            }
-        }
-        return notifications;
+        return this.getAll<NotificationRecord>('notifications');
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
-        localStorage.setItem(this.getKey(`notification_${notification.id}`), JSON.stringify(notification));
+        await this.put('notifications', notification);
     }
 
     async deleteNotification(id: string): Promise<void> {
-        localStorage.removeItem(this.getKey(`notification_${id}`));
+        await this.delete('notifications', id);
     }
 
     async getUnreadNotifications(): Promise<NotificationRecord[]> {
@@ -264,8 +264,7 @@ class WebStorage {
     }
 
     private async getNotification(id: string): Promise<NotificationRecord | null> {
-        const data = localStorage.getItem(this.getKey(`notification_${id}`));
-        return data ? JSON.parse(data) : null;
+        return this.get<NotificationRecord>('notifications', id);
     }
 }
 
@@ -334,7 +333,11 @@ const webPlatform: PlatformAPI = {
     window: new WebWindow(),
     autostart: new WebAutostart(),
     getVersion: () => Promise.resolve("1.0.0"),
-    init: async () => {},
+    init: async () => {
+        let s = webPlatform.storage;
+        console.log("[Web] Initializing storage ..");
+        await s.init();
+    },
     destroy: async () => {},
 };
 
