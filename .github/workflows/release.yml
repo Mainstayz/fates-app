@@ -15,13 +15,13 @@ jobs:
             matrix:
                 include:
                     - platform: "macos-latest" # 为 Arm 架构的 Mac (M1 及以上) 构建
-                      args: "--target aarch64-apple-darwin"
+                      target: "aarch64-apple-darwin"
                     - platform: "macos-latest" # 为 Intel 架构的 Mac 构建
-                      args: "--target x86_64-apple-darwin"
+                      target: "x86_64-apple-darwin"
                     # - platform: "ubuntu-22.04" # 为 Linux 构建 (Tauri v1 可使用 ubuntu-20.04)
                     #   args: ""
                     - platform: "windows-latest" # 为 Windows 构建
-                      args: ""
+                      target: "x86_64-pc-windows-msvc"
 
         runs-on: ${{ matrix.platform }} # 使用 matrix 中定义的平台
         steps:
@@ -71,4 +71,4 @@ jobs:
                   releaseBody: "See the assets to download and install this version." # 发布说明
                   releaseDraft: true # 创建为草稿版本
                   prerelease: false # 不是预发布版本
-                  args: ${{ matrix.args }} # 使用 matrix 中定义的构建参数
+                  args: --target ${{ matrix.target }} # 使用 matrix 中定义的构建参数
