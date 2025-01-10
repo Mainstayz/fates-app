@@ -6,7 +6,6 @@
     import type { TimelineItem, TimelineItemInternal } from "$lib/types";
     import { t } from "svelte-i18n";
 
-    // 定义回调函数的类型
     type TimelineCallback<T> = (item: T | null) => void;
     type TimelineHandler = (item: TimelineItem, callback: TimelineCallback<TimelineItem>) => void;
 
@@ -197,7 +196,7 @@
                     year: "",
                 },
             },
-            rollingMode: { follow: true, offset: 0.5 },
+            rollingMode: { follow: false, offset: 0.5 },
             orientation: "top",
             tooltipOnItemUpdateTime: {
                 template: function (item: TimelineItemInternal) {
@@ -316,6 +315,7 @@
 
     // export methods - directly export instead of through object
     export function setWindow(start: Date, end: Date) {
+        console.log("[Timeline] set window range: ", start, end);
         timeline?.setWindow(start, end);
     }
 

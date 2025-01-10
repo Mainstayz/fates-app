@@ -5,7 +5,7 @@
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
     import _ from "$src/tag-manager.svelte";
-    // 导入组件
+
     import DailyHeatMap from "$lib/components/daily-heat-map.svelte";
     import TaskDetailForm from "$lib/components/task-detail-form.svelte";
     import Timeline from "$src/lib/components/time-line.svelte";
@@ -24,11 +24,6 @@
 
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";
 
-    interface Tag {
-        name: string;
-        last_used_at: string;
-    }
-
     let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);
     let items: TimelineItem[] = $state([]);
@@ -39,8 +34,6 @@
 
     let deleteItem: TimelineItem | null = $state(null);
     let alertDelete = $state(false);
-
-    let tags = $state<Tag[]>([]);
 
     let selectedRange = $state("1d");
 
@@ -320,15 +313,6 @@
             "3d": 1.5 * 24 * 60 * 60 * 1000,
             "7d": 3.5 * 24 * 60 * 60 * 1000,
         } as const;
-
-        constructor(private timelineComponent: Timeline) {}
-
-        handleTimeRangeChange(value: keyof typeof this.TIME_RANGES) {
-            const now = Date.now();
-            const msOffset = this.TIME_RANGES[value] ?? this.TIME_RANGES["1d"];
-
-            this.timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
-        }
     }
 
     function handleTimeRangeChange(value: string) {
@@ -336,30 +320,42 @@
 
         console.log(`[TimelinePage] Timeline range changed: ${value}`);
         selectedRange = value;
+        let toDayStart = new Date(new Date().setHours(0, 0, 0, 0));
+        let toDayEnd = new Date(new Date().setHours(23, 59, 59, 999));
         const now = Date.now();
+        let start: Date;
+        let end: Date;
         let msOffset: number;
 
         switch (value) {
             case "6h":
                 msOffset = 3 * 60 * 60 * 1000;
+                start = new Date(now - msOffset);
+                end = new Date(now + msOffset);
                 break;
             case "12h":
                 msOffset = 6 * 60 * 60 * 1000;
+                start = new Date(now - msOffset);
+                end = new Date(now + msOffset);
                 break;
             case "1d":
-                msOffset = 12 * 60 * 60 * 1000;
+                start = toDayStart;
+                end = toDayEnd;
                 break;
             case "3d":
-                msOffset = 1.5 * 24 * 60 * 60 * 1000;
+                start = new Date(toDayStart.getTime() - 2 * 24 * 60 * 60 * 1000);
+                end = toDayEnd;
                 break;
             case "7d":
-                msOffset = 3.5 * 24 * 60 * 60 * 1000;
+                start = new Date(toDayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+                end = toDayEnd;
                 break;
             default:
-                msOffset = 1.5 * 24 * 60 * 60 * 1000;
+                start = toDayStart;
+                end = toDayEnd;
         }
 
-        timelineComponent.setWindow(new Date(now - msOffset), new Date(now + msOffset));
+        timelineComponent.setWindow(start, end);
     }
 
     $effect(() => {
@@ -387,7 +383,6 @@
         setupEventListeners();
 
         timelineDataManager.loadTimelineData();
-        timeRangeManager.handleTimeRangeChange(selectedRange as keyof typeof timeRangeManager.TIME_RANGES);
 
         return () => {
             console.log("[TimelinePage] onUnmount ...");
@@ -499,8 +494,8 @@
                     zoomMin={1000 * 60 * 5}
                     zoomMax={1000 * 60 * 60 * 24 * 7}
                     {items}
-                    start={new Date(new Date().setHours(new Date().getHours() - 12))}
-                    end={new Date(new Date().setHours(new Date().getHours() + 12))}
+                    start={new Date(new Date().setHours(0, 0, 0, 0))}
+                    end={new Date(new Date().setHours(23, 59, 59, 999))}
                     onAdd={handleAdd}
                     onUpdate={handleUpdate}
                     onRemove={handleRemove}
