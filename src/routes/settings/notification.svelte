@@ -10,13 +10,12 @@
     import platform from "$src/platform";
     import { notificationManager } from "$src/notification_manager";
     import { Loader2 } from "lucide-svelte";
+    import { DEFAULT_AI_REMINDER_PROMPT } from "$src/config";
 
     let checkInterval = $state<string>("120");
     let workStart = $state<string>("09:00");
     let workEnd = $state<string>("18:00");
-    let aiReminderPrompt = $state<string>(
-        "你是一名人工智能女友，旨在提供陪伴和支持。不过，你不会安慰用户，相反，你会鼓励用户做人要进步。"
-    );
+    let aiReminderPrompt = $state<string>("");
     let initialized = $state(false);
     let notificationPermission = $state<string>("default");
     let aiEnabled = $state(appConfig.getAIConfig().enabled);
@@ -52,6 +51,10 @@
         workEnd = notifications.workEnd;
         checkInterval = notifications.checkIntervalMinutes.toString();
         aiReminderPrompt = appConfig.getAIConfig().reminderPrompt;
+        if (aiReminderPrompt == "") {
+            aiReminderPrompt = DEFAULT_AI_REMINDER_PROMPT;
+        }
+
         notificationPermission = (await platform.instance.notification.isPermissionGranted()) ? "granted" : "denied";
 
         // 记录初始值

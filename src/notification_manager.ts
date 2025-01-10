@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_AI_REMINDER_PROMPT } from "$src/config";
 
 type NotificationCallback = (notification: Notification) => void;
 
@@ -274,7 +275,7 @@ export class NotificationManager {
         }
         let aiReminderPrompt = aiConfig.reminderPrompt;
         if (aiReminderPrompt == "") {
-            aiReminderPrompt = "你是一个提醒助手，请根据用户的需要，提醒用户完成任务。";
+            aiReminderPrompt = DEFAULT_AI_REMINDER_PROMPT;
         }
         let systemPrompt = aiReminderPrompt;
         systemPrompt += "\n";
@@ -293,7 +294,7 @@ export class NotificationManager {
 
 提醒应简洁明了，直接相关。每次回复仅提供一个"提醒"。
 
-请确保输出内容严格遵守 JSON 格式，例子：
+以 JSON 的形式输出，不要输出任何其他内容。
 
 { "title":"<提醒标题>", "description": "<提醒内容>" }
 

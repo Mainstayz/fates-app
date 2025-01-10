@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { DEFAULT_AI_REMINDER_PROMPT } from "./config";
 
 // 基础类型定义
 export type ThemeType = "light" | "dark";
@@ -88,7 +89,7 @@ class AppConfigManager {
             modelId: "",
             baseUrl: "",
             systemPrompt: "",
-            reminderPrompt: "",
+            reminderPrompt: DEFAULT_AI_REMINDER_PROMPT,
             workReportPrompt: "",
         },
         updateAvailable: false,
