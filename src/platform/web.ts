@@ -296,11 +296,11 @@ class WebNotification {
     }
 
     async isPermissionGranted(): Promise<boolean> {
-        return false;
+        return Notification.permission === "granted";
     }
 
     async sendNotification(title: string, body: string): Promise<void> {
-        return;
+        new Notification(title, { body });
     }
 }
 
