@@ -61,12 +61,15 @@
     });
 
     async function downloadAndInstall() {
+        updateInProgress = true;
         await updater.downloadAndInstall();
         await updater.restart();
+        updateInProgress = false;
     }
 
     async function checkForUpdates() {
-        updateInProgress = false;
+        updateAvailable = false;
+        updateStatus = $t("app.settings.update.checking");
         try {
             console.log("[Settings] Check for updates ...");
             const { hasUpdate, version } = await updater.checkForUpdates();
