@@ -49,8 +49,8 @@ export interface PlatformAPI {
         getMattersByRange(start: string, end: string): Promise<Matter[]>;
 
         // KV 模块
-        setKV(key: string, value: string): Promise<void>;
-        getKV(key: string): Promise<string | null>;
+        setKV(key: string, value: string, sync: boolean): Promise<void>;
+        getKV(key: string, local: boolean): Promise<string | null>;
         deleteKV(key: string): Promise<void>;
 
         // Tag 模块

@@ -73,11 +73,18 @@ class TauriStorage {
         return this.db.getMattersByRange(start, end);
     }
 
-    async setKV(key: string, value: string): Promise<void> {
-        await this.db.setKV(key, value);
+    async setKV(key: string, value: string, sync: boolean): Promise<void> {
+        if (sync) {
+            await this.db.setKV(key, value);
+        } else {
+            localStorage.setItem(key, value);
+        }
     }
 
-    async getKV(key: string): Promise<string | null> {
+    async getKV(key: string, local: boolean): Promise<string | null> {
+        if (local) {
+            return localStorage.getItem(key);
+        }
         return this.db.getKV(key);
     }
 
