@@ -25,7 +25,15 @@ export class PouchDBManager {
     };
 
     private constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
-        this.db = new PouchDB(dbName, options);
+        // 设置修订版本限制
+        const defaultOptions = {
+            revs_limit: 5,  // 限制每个文档保留5个版本
+            auto_compaction: true,  // 自动压缩
+            ...options
+        };
+
+        this.db = new PouchDB(dbName, defaultOptions);
+        this.scheduleCompaction(24);
     }
 
     public static getInstance(dbName?: string, options?: PouchDB.Configuration.DatabaseConfiguration): PouchDBManager {
@@ -398,6 +406,69 @@ export class PouchDBManager {
         return this.db.sync(new PouchDB(remoteUrl), {
             live: true,
             retry: true,
+            batch_size: 100,  // 控制同步批次大小
+            batches_limit: 5  // 限制并发批次数
         });
+    }
+
+    async scheduleCompaction(intervalHours: number = 24): Promise<void> {
+        const compactDB = async () => {
+            try {
+                await this.db.compact();
+                // 可选：也压缩文档的修订历史
+                await this.db.viewCleanup();
+            } catch (err) {
+                console.error('Compaction failed:', err);
+            }
+        };
+
+        // 首次运行
+        await compactDB();
+
+        // 设置定期运行
+        setInterval(compactDB, intervalHours * 60 * 60 * 1000);
+    }
+
+    // 清理特定文档的历史版本
+    async cleanDocumentHistory(docId: string): Promise<void> {
+        try {
+            // 获取文档的所有版本信息
+            const result = await this.db.get(docId, { revs: true, revs_info: true });
+            const currentRev = result._rev;
+
+            // 获取所有版本
+            const revs = await this.db.get(docId, { open_revs: 'all' });
+
+            // 删除旧版本，保留当前版本
+            for (const rev of revs) {
+                if (rev.ok._rev !== currentRev) {
+                    await this.db.remove(docId, rev.ok._rev);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to clean document history:', err);
+        }
+    }
+
+    // 添加数据库维护方法
+    async maintenance(): Promise<void> {
+        await this.db.compact();
+        await this.db.viewCleanup();
+
+        // 可以添加其他维护操作
+        // 比如清理过期数据等
+    }
+
+    async getDatabaseSize(): Promise<number> {
+        const info = await this.db.info();
+        return info.doc_count;
+    }
+
+    async monitorDatabaseSize(threshold: number = 1000): Promise<void> {
+        const size = await this.getDatabaseSize();
+        if (size > threshold) {
+            console.warn(`Database size (${size} documents) exceeds threshold`);
+            await this.maintenance();
+        }
     }
 }
