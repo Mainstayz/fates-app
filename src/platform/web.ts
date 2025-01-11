@@ -1,3 +1,4 @@
+import PouchDB from 'pouchdb';
 import type { PlatformAPI } from "./index";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
 import { IndexedDBManager } from "./indexed-db";
@@ -337,6 +338,15 @@ const webPlatform: PlatformAPI = {
         let s = webPlatform.storage;
         console.log("[Web] Initializing storage ..");
         await s.init();
+
+        // test pouchdb
+        const db = new PouchDB('test123');
+        await db.put({
+            _id: '1',
+            name: 'test',
+        });
+        const doc = await db.get('1');
+        console.log(doc);
     },
     destroy: async () => {},
 };
