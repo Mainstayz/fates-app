@@ -5,231 +5,189 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
+import { appDataDir } from '@tauri-apps/api/path';
 import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "$src/types";
 import type { PlatformAPI, UnlistenFn } from "./index";
-
-import {
-    createMatter,
-    getMatterById,
-    getAllMatters,
-    queryMattersByField,
-    updateMatter,
-    deleteMatter as deleteMatterApi,
-    getMattersByRange,
-    setKV,
-    getKV,
-    deleteKV,
-    createTag,
-    getAllTags,
-    deleteTag,
-    updateTagLastUsedAt,
-    createTodo,
-    getTodoById,
-    getAllTodos,
-    updateTodo,
-    deleteTodo as deleteTodoApi,
-    createRepeatTask,
-    getRepeatTaskById,
-    getAllRepeatTasks,
-    getActiveRepeatTasks,
-    updateRepeatTask,
-    deleteRepeatTask as deleteRepeatTaskApi,
-    updateRepeatTaskStatus,
-    createNotification,
-    getNotificationById,
-    getUnreadNotifications,
-    updateNotification,
-    deleteNotification as deleteNotificationApi,
-    markNotificationAsRead,
-    markNotificationAsReadByType,
-    markAllNotificationsAsRead,
-} from "$src/tauri/tauri-store";
-
-// Do not remove this import, it is used to initialize the tray manager
-import {trayManager} from "$src/tauri/tray-manager.svelte";
-//
+import { PouchDBManager } from "./pouch-db";
 import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
+import { trayManager } from "$src/tauri/tray-manager.svelte";
 
 class TauriEvent {
     async emit(event: string, data: any): Promise<void> {
-        console.log("[TauriEvent] emit: event = ", event, "data = ", data);
-        return emit(event, data);
+        await emit(event, data);
     }
+
     async listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn> {
-        return listen(event, handler, options);
+        return listen(event, handler);
     }
 }
 
 class TauriClipboard {
     async writeText(text: string): Promise<void> {
-        return writeText(text);
+        await writeText(text);
     }
 }
 
 class TauriStorage {
+    private db!: PouchDBManager;
+
     public async init(): Promise<void> {
-        return;
+        const appDataDirPath = await appDataDir();
+        this.db = new PouchDBManager('fates_db', {
+            prefix: appDataDirPath
+        });
     }
 
-    // Matter 模块
     async getMatter(id: string): Promise<Matter | null> {
-        return getMatterById(id);
+        return this.db.getMatter(id);
     }
 
     async listMatters(): Promise<Matter[]> {
-        return getAllMatters();
+        return this.db.listMatters();
     }
 
     async createMatter(matter: Matter): Promise<void> {
-        return createMatter(matter);
+        await this.db.createMatter(matter);
     }
 
     async updateMatter(matter: Matter): Promise<void> {
-        await updateMatter(matter.id, matter);
+        await this.db.updateMatter(matter);
     }
 
-
     async deleteMatter(id: string): Promise<void> {
-        await deleteMatterApi(id);
+        await this.db.deleteMatter(id);
     }
 
     async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
-        return queryMattersByField(field, value, exactMatch);
+        const matters = await this.listMatters();
+        return matters.filter(matter => {
+            const fieldValue = (matter as any)[field];
+            if (exactMatch) {
+                return fieldValue === value;
+            }
+            return fieldValue?.toString().toLowerCase().includes(value.toLowerCase());
+        });
     }
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
-        return getMattersByRange(start, end);
+        return this.db.getMattersByRange(start, end);
     }
 
-    // KV 模块
     async setKV(key: string, value: string): Promise<void> {
-        await setKV(key, value);
+        await this.db.setKV(key, value);
     }
 
     async getKV(key: string): Promise<string | null> {
-        return getKV(key);
+        return this.db.getKV(key);
     }
 
     async deleteKV(key: string): Promise<void> {
-        await deleteKV(key);
+        await this.db.deleteKV(key);
     }
 
-    // Tag 模块
-    async createTag(names: string): Promise<void> {
-        await createTag(names);
+    async createTag(name: string): Promise<void> {
+        await this.db.createTag(name);
     }
 
     async getAllTags(): Promise<Tag[]> {
-        return getAllTags();
+        return this.db.getAllTags();
     }
 
-    async deleteTag(names: string): Promise<void> {
-        await deleteTag(names);
+    async deleteTag(name: string): Promise<void> {
+        await this.db.deleteTag(name);
     }
 
-    async updateTagLastUsedAt(names: string): Promise<void> {
-        await updateTagLastUsedAt(names);
+    async updateTagLastUsedAt(name: string): Promise<void> {
+        await this.db.updateTagLastUsedAt(name);
     }
 
-    // Todo 模块
     async createTodo(todo: Todo): Promise<void> {
-        await createTodo(todo);
+        await this.db.createTodo(todo);
     }
 
     async getTodo(id: string): Promise<Todo | null> {
-        return getTodoById(id);
+        return this.db.getTodo(id);
     }
 
     async listTodos(): Promise<Todo[]> {
-        return getAllTodos();
+        return this.db.listTodos();
     }
 
     async updateTodo(id: string, todo: Todo): Promise<void> {
-        await updateTodo(id, todo);
+        await this.db.updateTodo(id, todo);
     }
 
     async deleteTodo(id: string): Promise<void> {
-        await deleteTodoApi(id);
+        await this.db.deleteTodo(id);
     }
 
-    // RepeatTask 模块
     async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
-        return await createRepeatTask(task);
+        return this.db.createRepeatTask(task);
     }
 
     async getRepeatTask(id: string): Promise<RepeatTask | null> {
-        return getRepeatTaskById(id);
+        return this.db.getRepeatTask(id);
     }
 
     async listRepeatTasks(): Promise<RepeatTask[]> {
-        return getAllRepeatTasks();
+        return this.db.listRepeatTasks();
     }
 
     async getActiveRepeatTasks(): Promise<RepeatTask[]> {
-        return getActiveRepeatTasks();
+        return this.db.getActiveRepeatTasks();
     }
 
     async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
-        return await updateRepeatTask(id, task);
+        return this.db.updateRepeatTask(id, task);
     }
 
     async deleteRepeatTask(id: string): Promise<void> {
-        await deleteRepeatTaskApi(id);
+        await this.db.deleteRepeatTask(id);
     }
 
     async updateRepeatTaskStatus(id: string, status: number): Promise<void> {
-        await updateRepeatTaskStatus(id, status);
+        await this.db.updateRepeatTaskStatus(id, status);
     }
 
-    // Notification 模块
     async getNotifications(): Promise<NotificationRecord[]> {
-        return getUnreadNotifications();
+        return this.db.getNotifications();
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
-        if (notification.id) {
-            await updateNotification(notification.id, notification);
-        } else {
-            await createNotification(notification);
-        }
+        await this.db.saveNotification(notification);
     }
 
     async deleteNotification(id: string): Promise<void> {
-        await deleteNotificationApi(id);
+        await this.db.deleteNotification(id);
     }
 
     async getUnreadNotifications(): Promise<NotificationRecord[]> {
-        return getUnreadNotifications();
+        return this.db.getUnreadNotifications();
     }
 
     async markNotificationAsRead(id: string): Promise<void> {
-        await markNotificationAsRead(id);
+        await this.db.markNotificationAsRead(id);
     }
 
     async markNotificationAsReadByType(type_: number): Promise<void> {
-        await markNotificationAsReadByType(type_);
+        await this.db.markNotificationAsReadByType(type_);
     }
 
     async markAllNotificationsAsRead(): Promise<void> {
-        await markAllNotificationsAsRead();
+        await this.db.markAllNotificationsAsRead();
     }
 }
 
 class TauriNotification {
     async show(title: string, body: string, options?: any): Promise<void> {
-        if (await isPermissionGranted()) {
-            await sendNotification({ title, body, ...options });
-        } else {
-            const permission = await requestPermission();
-            if (permission === "granted") {
-                await sendNotification({ title, body, ...options });
-            }
+        if (await this.isPermissionGranted()) {
+            await sendNotification({ title, body });
         }
     }
 
     async requestPermission(): Promise<"default" | "denied" | "granted"> {
         const permission = await requestPermission();
-        return permission;
+        return permission as "default" | "denied" | "granted";
     }
 
     async isPermissionGranted(): Promise<boolean> {
@@ -237,7 +195,7 @@ class TauriNotification {
     }
 
     async sendNotification(title: string, body: string): Promise<void> {
-        return sendNotification({ title, body });
+        await sendNotification({ title, body });
     }
 }
 
@@ -245,7 +203,7 @@ class TauriWindow {
     private window: WebviewWindow;
 
     constructor() {
-        this.window = getCurrentWebviewWindow();
+        this.window = getCurrentWebviewWindow()!;
     }
 
     async minimize(): Promise<void> {
@@ -269,7 +227,6 @@ class TauriWindow {
     }
 }
 
-
 class TauriAutostart {
     async enable(): Promise<void> {
         await enable();
@@ -280,7 +237,7 @@ class TauriAutostart {
     }
 
     async isEnabled(): Promise<boolean> {
-        return await isEnabled();
+        return isEnabled();
     }
 }
 
@@ -288,39 +245,40 @@ class TauriUpdater {
     async checkForUpdates(): Promise<{ hasUpdate: boolean; version?: string }> {
         try {
             const update = await check();
+            if (!update) {
+                return { hasUpdate: false };
+            }
             return {
-                hasUpdate: !!update,
-                version: update?.version,
+                hasUpdate: true,
+                version: update.version
             };
         } catch (error) {
-            console.error("Failed to check for updates:", error);
-            return { hasUpdate: false };
+            return {
+                hasUpdate: false
+            };
         }
     }
 
     async downloadAndInstall(): Promise<void> {
+        // This is handled by the Tauri updater automatically
         return;
     }
 }
 
-const tauriPlatform: PlatformAPI = {
+export const platform: PlatformAPI = {
     event: new TauriEvent(),
-    getVersion: getVersion,
     clipboard: new TauriClipboard(),
     storage: new TauriStorage(),
     notification: new TauriNotification(),
     window: new TauriWindow(),
     autostart: new TauriAutostart(),
     updater: new TauriUpdater(),
+    getVersion,
     init: async () => {
         await TimeProgressBarManager.getInstance().initialize();
         await trayManager.init();
-
     },
     destroy: async () => {
         TimeProgressBarManager.getInstance().destroy();
-        // trayManager.destroy();
-    },
+    }
 };
-
-export default tauriPlatform;
