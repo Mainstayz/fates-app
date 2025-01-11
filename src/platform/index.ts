@@ -10,7 +10,6 @@ interface Event<T> {
 }
 
 export interface PlatformAPI {
-
     init(): Promise<void>;
     destroy(): Promise<void>;
 
@@ -38,10 +37,7 @@ export interface PlatformAPI {
         isEnabled(): Promise<boolean>;
     };
 
-
-
     storage: {
-
         init(): Promise<void>;
         // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
@@ -97,7 +93,6 @@ export interface PlatformAPI {
         hide(): Promise<void>;
     };
 
-
     updater?: {
         checkForUpdates(): Promise<{ hasUpdate: boolean; version?: string }>;
         downloadAndInstall(): Promise<void>;
@@ -112,12 +107,12 @@ export const isWeb = !isTauri;
 export async function getPlatform(): Promise<PlatformAPI> {
     if (isTauri) {
         console.warn("Platform is Tauri !!!");
-        const { default: tauriPlatform } = await import("./tauri");
-        return tauriPlatform;
+        const { platform } = await import("./tauri");
+        return platform;
     } else {
         console.warn("Platform is Web !!!");
-        const { default: webPlatform } = await import("./web");
-        return webPlatform;
+        const { platform } = await import("./web");
+        return platform;
     }
 }
 

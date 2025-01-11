@@ -1,26 +1,38 @@
-import PouchDB from 'pouchdb';
+import PouchDB from "pouchdb";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
+
+interface PouchDBDocument {
+    _id: string;
+    _rev: string;
+}
+
+type MatterDoc = Matter & PouchDBDocument;
+type TodoDoc = Todo & PouchDBDocument;
+type TagDoc = Tag & PouchDBDocument;
+type RepeatTaskDoc = RepeatTask & PouchDBDocument;
+type NotificationRecordDoc = NotificationRecord & PouchDBDocument;
 
 export class PouchDBManager {
     private db: PouchDB.Database;
     private static readonly STORES = {
-        MATTERS: 'matters',
-        TODOS: 'todos',
-        TAGS: 'tags',
-        REPEAT_TASKS: 'repeat_tasks',
-        NOTIFICATIONS: 'notifications',
-        KV: 'kv'
+        MATTERS: "matters",
+        TODOS: "todos",
+        TAGS: "tags",
+        REPEAT_TASKS: "repeat_tasks",
+        NOTIFICATIONS: "notifications",
+        KV: "kv",
     };
 
-    constructor(dbName: string = 'fates_db', options: PouchDB.Configuration.DatabaseConfiguration = {}) {
+    constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
         this.db = new PouchDB(dbName, options);
     }
 
     // Matter operations
     async getMatter(id: string): Promise<Matter | null> {
         try {
-            const doc = await this.db.get(`${PouchDBManager.STORES.MATTERS}_${id}`);
-            return doc as Matter;
+            const doc = await this.db.get<MatterDoc>(`${PouchDBManager.STORES.MATTERS}_${id}`);
+            const { _id, _rev, ...matter } = doc;
+            return matter;
         } catch (err) {
             if ((err as any).status === 404) return null;
             throw err;
@@ -28,28 +40,31 @@ export class PouchDBManager {
     }
 
     async listMatters(): Promise<Matter[]> {
-        const result = await this.db.allDocs({
+        const result = await this.db.allDocs<MatterDoc>({
             include_docs: true,
             startkey: `${PouchDBManager.STORES.MATTERS}_`,
-            endkey: `${PouchDBManager.STORES.MATTERS}_\ufff0`
+            endkey: `${PouchDBManager.STORES.MATTERS}_\ufff0`,
         });
-        return result.rows.map(row => row.doc as Matter);
+        return result.rows
+            .map((row) => row.doc)
+            .filter((doc): doc is MatterDoc => doc !== undefined)
+            .map(({ _id, _rev, ...matter }) => matter);
     }
 
     async createMatter(matter: Matter): Promise<void> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.MATTERS}_${matter.id}`,
-            ...matter
+            ...matter,
         });
     }
 
     async updateMatter(matter: Matter): Promise<void> {
         const existing = await this.getMatter(matter.id);
-        if (!existing) throw new Error('Matter not found');
+        if (!existing) throw new Error("Matter not found");
         await this.db.put({
             _id: `${PouchDBManager.STORES.MATTERS}_${matter.id}`,
             _rev: (existing as any)._rev,
-            ...matter
+            ...matter,
         });
     }
 
@@ -58,20 +73,14 @@ export class PouchDBManager {
         if (doc) {
             await this.db.remove({
                 _id: `${PouchDBManager.STORES.MATTERS}_${id}`,
-                _rev: (doc as any)._rev
+                _rev: (doc as any)._rev,
             });
         }
     }
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
-        const result = await this.db.allDocs({
-            include_docs: true,
-            startkey: `${PouchDBManager.STORES.MATTERS}_`,
-            endkey: `${PouchDBManager.STORES.MATTERS}_\ufff0`
-        });
-        return result.rows
-            .map(row => row.doc as Matter)
-            .filter(matter => matter.date >= start && matter.date <= end);
+        const matters = await this.listMatters();
+        return matters.filter((matter) => matter.start_time >= start && matter.end_time <= end);
     }
 
     // KV operations
@@ -82,13 +91,13 @@ export class PouchDBManager {
             await this.db.put({
                 _id: id,
                 _rev: (doc as any)._rev,
-                value
+                value,
             });
         } catch (err) {
             if ((err as any).status === 404) {
                 await this.db.put({
                     _id: id,
-                    value
+                    value,
                 });
             } else {
                 throw err;
@@ -122,17 +131,20 @@ export class PouchDBManager {
         await this.db.put({
             _id: id,
             name,
-            lastUsedAt: now
+            lastUsedAt: now,
         });
     }
 
     async getAllTags(): Promise<Tag[]> {
-        const result = await this.db.allDocs({
+        const result = await this.db.allDocs<TagDoc>({
             include_docs: true,
             startkey: `${PouchDBManager.STORES.TAGS}_`,
-            endkey: `${PouchDBManager.STORES.TAGS}_\ufff0`
+            endkey: `${PouchDBManager.STORES.TAGS}_\ufff0`,
         });
-        return result.rows.map(row => row.doc as Tag);
+        return result.rows
+            .map((row) => row.doc)
+            .filter((doc): doc is TagDoc => doc !== undefined)
+            .map(({ _id, _rev, ...tag }) => tag);
     }
 
     async deleteTag(name: string): Promise<void> {
@@ -150,7 +162,7 @@ export class PouchDBManager {
             const doc = await this.db.get(id);
             await this.db.put({
                 ...doc,
-                lastUsedAt: new Date().toISOString()
+                lastUsedAt: new Date().toISOString(),
             });
         } catch (err) {
             if ((err as any).status === 404) {
@@ -165,14 +177,15 @@ export class PouchDBManager {
     async createTodo(todo: Todo): Promise<void> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.TODOS}_${todo.id}`,
-            ...todo
+            ...todo,
         });
     }
 
     async getTodo(id: string): Promise<Todo | null> {
         try {
-            const doc = await this.db.get(`${PouchDBManager.STORES.TODOS}_${id}`);
-            return doc as Todo;
+            const doc = await this.db.get<TodoDoc>(`${PouchDBManager.STORES.TODOS}_${id}`);
+            const { _id, _rev, ...todo } = doc;
+            return todo;
         } catch (err) {
             if ((err as any).status === 404) return null;
             throw err;
@@ -180,21 +193,24 @@ export class PouchDBManager {
     }
 
     async listTodos(): Promise<Todo[]> {
-        const result = await this.db.allDocs({
+        const result = await this.db.allDocs<TodoDoc>({
             include_docs: true,
             startkey: `${PouchDBManager.STORES.TODOS}_`,
-            endkey: `${PouchDBManager.STORES.TODOS}_\ufff0`
+            endkey: `${PouchDBManager.STORES.TODOS}_\ufff0`,
         });
-        return result.rows.map(row => row.doc as Todo);
+        return result.rows
+            .map((row) => row.doc)
+            .filter((doc): doc is TodoDoc => doc !== undefined)
+            .map(({ _id, _rev, ...todo }) => todo);
     }
 
     async updateTodo(id: string, todo: Todo): Promise<void> {
         const existing = await this.getTodo(id);
-        if (!existing) throw new Error('Todo not found');
+        if (!existing) throw new Error("Todo not found");
         await this.db.put({
             _id: `${PouchDBManager.STORES.TODOS}_${id}`,
             _rev: (existing as any)._rev,
-            ...todo
+            ...todo,
         });
     }
 
@@ -203,7 +219,7 @@ export class PouchDBManager {
         if (doc) {
             await this.db.remove({
                 _id: `${PouchDBManager.STORES.TODOS}_${id}`,
-                _rev: (doc as any)._rev
+                _rev: (doc as any)._rev,
             });
         }
     }
@@ -212,15 +228,16 @@ export class PouchDBManager {
     async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${task.id}`,
-            ...task
+            ...task,
         });
         return task;
     }
 
     async getRepeatTask(id: string): Promise<RepeatTask | null> {
         try {
-            const doc = await this.db.get(`${PouchDBManager.STORES.REPEAT_TASKS}_${id}`);
-            return doc as RepeatTask;
+            const doc = await this.db.get<RepeatTaskDoc>(`${PouchDBManager.STORES.REPEAT_TASKS}_${id}`);
+            const { _id, _rev, ...task } = doc;
+            return task;
         } catch (err) {
             if ((err as any).status === 404) return null;
             throw err;
@@ -228,26 +245,29 @@ export class PouchDBManager {
     }
 
     async listRepeatTasks(): Promise<RepeatTask[]> {
-        const result = await this.db.allDocs({
+        const result = await this.db.allDocs<RepeatTaskDoc>({
             include_docs: true,
             startkey: `${PouchDBManager.STORES.REPEAT_TASKS}_`,
-            endkey: `${PouchDBManager.STORES.REPEAT_TASKS}_\ufff0`
+            endkey: `${PouchDBManager.STORES.REPEAT_TASKS}_\ufff0`,
         });
-        return result.rows.map(row => row.doc as RepeatTask);
+        return result.rows
+            .map((row) => row.doc)
+            .filter((doc): doc is RepeatTaskDoc => doc !== undefined)
+            .map(({ _id, _rev, ...task }) => task);
     }
 
     async getActiveRepeatTasks(): Promise<RepeatTask[]> {
         const tasks = await this.listRepeatTasks();
-        return tasks.filter(task => task.status === 1);
+        return tasks.filter((task) => task.status === 1);
     }
 
     async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
         const existing = await this.getRepeatTask(id);
-        if (!existing) throw new Error('RepeatTask not found');
+        if (!existing) throw new Error("RepeatTask not found");
         await this.db.put({
             _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${id}`,
             _rev: (existing as any)._rev,
-            ...task
+            ...task,
         });
         return task;
     }
@@ -257,7 +277,7 @@ export class PouchDBManager {
         if (doc) {
             await this.db.remove({
                 _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${id}`,
-                _rev: (doc as any)._rev
+                _rev: (doc as any)._rev,
             });
         }
     }
@@ -272,18 +292,21 @@ export class PouchDBManager {
 
     // Notification operations
     async getNotifications(): Promise<NotificationRecord[]> {
-        const result = await this.db.allDocs({
+        const result = await this.db.allDocs<NotificationRecordDoc>({
             include_docs: true,
             startkey: `${PouchDBManager.STORES.NOTIFICATIONS}_`,
-            endkey: `${PouchDBManager.STORES.NOTIFICATIONS}_\ufff0`
+            endkey: `${PouchDBManager.STORES.NOTIFICATIONS}_\ufff0`,
         });
-        return result.rows.map(row => row.doc as NotificationRecord);
+        return result.rows
+            .map((row) => row.doc)
+            .filter((doc): doc is NotificationRecordDoc => doc !== undefined)
+            .map(({ _id, _rev, ...notification }) => notification);
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`,
-            ...notification
+            ...notification,
         });
     }
 
@@ -298,15 +321,15 @@ export class PouchDBManager {
 
     async getUnreadNotifications(): Promise<NotificationRecord[]> {
         const notifications = await this.getNotifications();
-        return notifications.filter(n => !n.read);
+        return notifications.filter((n) => !n.read_at);
     }
 
     async markNotificationAsRead(id: string): Promise<void> {
-        const notification = await this.db.get(`${PouchDBManager.STORES.NOTIFICATIONS}_${id}`);
-        if (notification) {
+        const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${id}`);
+        if (doc) {
             await this.db.put({
-                ...notification,
-                read: true
+                ...doc,
+                read_at: new Date().toISOString(),
             });
         }
     }
@@ -314,10 +337,11 @@ export class PouchDBManager {
     async markNotificationAsReadByType(type_: number): Promise<void> {
         const notifications = await this.getNotifications();
         const updates = notifications
-            .filter(n => n.type === type_ && !n.read)
-            .map(n => ({
+            .filter((n) => n.type_ === type_ && !n.read_at)
+            .map((n) => ({
+                _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${n.id}`,
                 ...n,
-                read: true
+                read_at: new Date().toISOString(),
             }));
 
         for (const update of updates) {
@@ -328,10 +352,11 @@ export class PouchDBManager {
     async markAllNotificationsAsRead(): Promise<void> {
         const notifications = await this.getNotifications();
         const updates = notifications
-            .filter(n => !n.read)
-            .map(n => ({
+            .filter((n) => !n.read_at)
+            .map((n) => ({
+                _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${n.id}`,
                 ...n,
-                read: true
+                read_at: new Date().toISOString(),
             }));
 
         for (const update of updates) {
@@ -344,10 +369,10 @@ export class PouchDBManager {
         await this.db.sync(new PouchDB(remoteUrl));
     }
 
-    async startLiveSync(remoteUrl: string): PouchDB.Replication.Sync<{}> {
+    async startLiveSync(remoteUrl: string): Promise<PouchDB.Replication.SyncResultComplete<{}>> {
         return this.db.sync(new PouchDB(remoteUrl), {
             live: true,
-            retry: true
+            retry: true,
         });
     }
 }
