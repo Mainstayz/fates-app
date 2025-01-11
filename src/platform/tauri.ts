@@ -33,7 +33,7 @@ class TauriStorage {
 
     public async init(): Promise<void> {
         const appDataDirPath = await appDataDir();
-        this.db = new PouchDBManager('fates_db', {
+        this.db = PouchDBManager.getInstance('fates_db', {
             prefix: appDataDirPath
         });
     }

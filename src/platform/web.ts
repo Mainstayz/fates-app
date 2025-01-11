@@ -33,7 +33,7 @@ class WebStorage {
     private db!: PouchDBManager;
 
     constructor() {
-        this.db = new PouchDBManager('fates_db');
+        this.db = PouchDBManager.getInstance('fates_db');
     }
 
     public async init() {

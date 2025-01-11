@@ -13,6 +13,7 @@ type RepeatTaskDoc = RepeatTask & PouchDBDocument;
 type NotificationRecordDoc = NotificationRecord & PouchDBDocument;
 
 export class PouchDBManager {
+    private static instance: PouchDBManager | null = null;
     private db: PouchDB.Database;
     private static readonly STORES = {
         MATTERS: "matters",
@@ -23,8 +24,32 @@ export class PouchDBManager {
         KV: "kv",
     };
 
-    constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
+    private constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
         this.db = new PouchDB(dbName, options);
+    }
+
+    public static getInstance(dbName?: string, options?: PouchDB.Configuration.DatabaseConfiguration): PouchDBManager {
+        if (!PouchDBManager.instance) {
+            PouchDBManager.instance = new PouchDBManager(dbName, options);
+        }
+        return PouchDBManager.instance;
+    }
+
+    private async retryOnConflict<T>(operation: () => Promise<T>, maxRetries: number = 3): Promise<T> {
+        let lastError;
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                return await operation();
+            } catch (err) {
+                lastError = err;
+                if ((err as any).status !== 409) {
+                    // 409 is the conflict error
+                    throw err;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, i))); // Exponential backoff
+            }
+        }
+        throw lastError;
     }
 
     // Matter operations
