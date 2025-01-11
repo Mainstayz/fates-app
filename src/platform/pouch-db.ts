@@ -23,13 +23,16 @@ export class PouchDBManager {
         NOTIFICATIONS: "notifications",
         KV: "kv",
     };
+    // 添加停止同步方法
+    private syncHandler: PouchDB.Replication.Sync<{}> | null = null;
+    private compactionTimer: NodeJS.Timeout | undefined = undefined;
 
     private constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
         // 设置修订版本限制
         const defaultOptions = {
-            revs_limit: 5,  // 限制每个文档保留5个版本
-            auto_compaction: true,  // 自动压缩
-            ...options
+            revs_limit: 5, // 限制每个文档保留5个版本
+            // auto_compaction: true, // 自动压缩，仅会保留一个版本
+            ...options,
         };
 
         this.db = new PouchDB(dbName, defaultOptions);
@@ -39,6 +42,9 @@ export class PouchDBManager {
     public static getInstance(dbName?: string, options?: PouchDB.Configuration.DatabaseConfiguration): PouchDBManager {
         if (!PouchDBManager.instance) {
             PouchDBManager.instance = new PouchDBManager(dbName, options);
+        } else if (dbName || options) {
+            // 如果已经创建实例但传入新的参数，可以根据需要决定是否更新配置
+            console.warn("Instance already exists, new parameters will be ignored.");
         }
         return PouchDBManager.instance;
     }
@@ -399,34 +405,47 @@ export class PouchDBManager {
 
     // Sync methods
     async sync(remoteUrl: string): Promise<void> {
-        await this.db.sync(new PouchDB(remoteUrl));
+        try {
+            await this.db.sync(new PouchDB(remoteUrl));
+        } catch (error) {
+            console.error("Sync failed:", error);
+            throw error;
+        }
     }
 
-    async startLiveSync(remoteUrl: string): Promise<PouchDB.Replication.SyncResultComplete<{}>> {
-        return this.db.sync(new PouchDB(remoteUrl), {
+    async startLiveSync(remoteUrl: string): Promise<void> {
+        this.syncHandler = this.db.sync(new PouchDB(remoteUrl), {
             live: true,
             retry: true,
-            batch_size: 100,  // 控制同步批次大小
-            batches_limit: 5  // 限制并发批次数
+            batch_size: 100,
+            batches_limit: 5,
         });
     }
 
+    async stopSync(): Promise<void> {
+        if (this.syncHandler) {
+            this.syncHandler.cancel();
+            this.syncHandler = null;
+        }
+    }
+
     async scheduleCompaction(intervalHours: number = 24): Promise<void> {
+        if (this.compactionTimer) {
+            clearInterval(this.compactionTimer);
+        }
         const compactDB = async () => {
             try {
                 await this.db.compact();
                 // 可选：也压缩文档的修订历史
                 await this.db.viewCleanup();
             } catch (err) {
-                console.error('Compaction failed:', err);
+                console.error("Compaction failed:", err);
             }
         };
-
         // 首次运行
         await compactDB();
-
         // 设置定期运行
-        setInterval(compactDB, intervalHours * 60 * 60 * 1000);
+        this.compactionTimer = setInterval(compactDB, intervalHours * 60 * 60 * 1000);
     }
 
     // 清理特定文档的历史版本
@@ -434,19 +453,24 @@ export class PouchDBManager {
         try {
             // 获取文档的所有版本信息
             const result = await this.db.get(docId, { revs: true, revs_info: true });
-            const currentRev = result._rev;
 
             // 获取所有版本
-            const revs = await this.db.get(docId, { open_revs: 'all' });
+            const revs = await this.db.get(docId, { open_revs: "all" });
 
-            // 删除旧版本，保留当前版本
-            for (const rev of revs) {
-                if (rev.ok._rev !== currentRev) {
-                    await this.db.remove(docId, rev.ok._rev);
-                }
+            // 按照版本号排序
+            revs.sort((a, b) => {
+                const revA = parseInt(a.ok._rev.split("-")[0]);
+                const revB = parseInt(b.ok._rev.split("-")[0]);
+                return revB - revA;
+            });
+
+            // 保留最新的5个版本，删除其余版本
+            const versionsToKeep = 5;
+            for (let i = versionsToKeep; i < revs.length; i++) {
+                await this.db.remove(docId, revs[i].ok._rev);
             }
         } catch (err) {
-            console.error('Failed to clean document history:', err);
+            console.error("Failed to clean document history:", err);
         }
     }
 
