@@ -52,6 +52,8 @@ export class PouchDBManager {
 
         this.db = new PouchDB(dbName, defaultOptions);
         this.scheduleCompaction(24);
+        // Create index for time range queries
+        this.createTimeRangeIndex();
     }
 
     public static getInstance(dbName?: string, options?: PouchDB.Configuration.DatabaseConfiguration): PouchDBManager {
@@ -131,8 +133,21 @@ export class PouchDBManager {
     }
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
-        const matters = await this.listMatters();
-        return matters.filter((matter) => matter.start_time >= start && matter.end_time <= end);
+        const result = await this.db.find({
+            selector: {
+                _id: {
+                    $regex: `^${PouchDBManager.STORES.MATTERS}_`
+                },
+                start_time: { $gte: start },
+                end_time: { $lte: end }
+            },
+            use_index: 'time_range_idx'
+        });
+
+        return result.docs.map(doc => {
+            const { _id, _rev, ...matter } = doc;
+            return matter as Matter;
+        });
     }
 
     // KV operations
@@ -390,11 +405,13 @@ export class PouchDBManager {
 
     async markNotificationAsReadByType(type_: number): Promise<void> {
         const notifications = await this.getNotifications();
-        const unreadNotifications = notifications.filter(n => n.type_ === type_ && !n.read_at);
+        const unreadNotifications = notifications.filter((n) => n.type_ === type_ && !n.read_at);
 
         for (const notification of unreadNotifications) {
             await this.retryOnConflict(async () => {
-                const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`);
+                const doc = await this.db.get<NotificationRecordDoc>(
+                    `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`
+                );
                 await this.db.put({
                     ...doc,
                     read_at: new Date().toISOString(),
@@ -405,11 +422,13 @@ export class PouchDBManager {
 
     async markAllNotificationsAsRead(): Promise<void> {
         const notifications = await this.getNotifications();
-        const unreadNotifications = notifications.filter(n => !n.read_at);
+        const unreadNotifications = notifications.filter((n) => !n.read_at);
 
         for (const notification of unreadNotifications) {
             await this.retryOnConflict(async () => {
-                const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`);
+                const doc = await this.db.get<NotificationRecordDoc>(
+                    `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`
+                );
                 await this.db.put({
                     ...doc,
                     read_at: new Date().toISOString(),
@@ -459,6 +478,7 @@ export class PouchDBManager {
     stopSync(): void {
         if (this.syncHandler) {
             this.syncHandler.cancel();
+            this.syncHandler.removeAllListeners();
             this.syncHandler = null;
         }
     }
@@ -531,6 +551,19 @@ export class PouchDBManager {
         if (size > threshold) {
             console.warn(`Database size (${size} documents) exceeds threshold`);
             await this.maintenance();
+        }
+    }
+
+    private async createTimeRangeIndex(): Promise<void> {
+        try {
+            await this.db.createIndex({
+                index: {
+                    fields: ['start_time', 'end_time'],
+                    name: 'time_range_idx'
+                }
+            });
+        } catch (err) {
+            console.error('Failed to create time range index:', err);
         }
     }
 }
