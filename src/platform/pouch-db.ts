@@ -152,13 +152,12 @@ export class PouchDBManager {
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
         const result = await this.db.find({
             selector: {
-                _id: {
-                    $regex: `^${PouchDBManager.STORES.MATTERS}_`,
-                },
+                _id: { $regex: `^${PouchDBManager.STORES.MATTERS}_` },
                 start_time: { $gte: start },
-                end_time: { $lte: end },
+                end_time: { $lte: end }
             },
-            use_index: "time_range_idx",
+            sort: ["start_time"],
+            use_index: ["time_range_idx", "time_range_idx"]
         });
 
         return result.docs.map((doc) => {
@@ -607,8 +606,9 @@ export class PouchDBManager {
         try {
             await this.db.createIndex({
                 index: {
-                    fields: ["start_time", "end_time"],
+                    fields: ["_id", "start_time", "end_time"],
                     name: "time_range_idx",
+                    ddoc: "time_range_idx"
                 },
             });
         } catch (err) {
