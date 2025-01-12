@@ -317,6 +317,7 @@ export class NotificationManager {
         const start = dayjs().startOf("day").toISOString();
         const end = dayjs().endOf("day").toISOString();
         let list = await platform.instance.storage.getMattersByRange(start, end);
+        console.log(`[NotificationManager] Found ${list.length} matters in time range`);
         txtResult += "今天的任务:\n";
         if (list.length > 0) {
             txtResult += "```csv\n";

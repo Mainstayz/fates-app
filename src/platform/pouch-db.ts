@@ -148,20 +148,36 @@ export class PouchDBManager {
     }
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
+        const indexes = await this.db.getIndexes();
+        console.log("Available indexes:", indexes);
         const result = await this.db.find({
             selector: {
-                _id: { $regex: `^${PouchDBManager.STORES.MATTERS}_` },
+                _id: { $gt: `${PouchDBManager.STORES.MATTERS}_`, $lt: `${PouchDBManager.STORES.MATTERS}_\uffff` },
                 start_time: { $gte: start },
                 end_time: { $lte: end }
             },
-            sort: ["start_time"],
-            use_index: ["time_range_idx", "time_range_idx"]
+            sort: ["_id", "start_time"],
+            use_index: "time_range_idx"
         });
 
         return result.docs.map((doc) => {
             const { _id, _rev, ...matter } = doc;
             return matter as Matter;
         });
+    }
+
+    private async createTimeRangeIndex(): Promise<void> {
+        try {
+            await this.db.createIndex({
+            index: {
+                fields: ["_id", "start_time", "end_time"],
+                name: "time_range_idx",
+                ddoc: "time_range_idx"
+            },
+        });
+        } catch (err) {
+            console.error("Failed to create time range index:", err);
+        }
     }
 
     // KV operations
@@ -595,20 +611,6 @@ export class PouchDBManager {
         if (size > threshold) {
             console.warn(`Database size (${size} documents) exceeds threshold`);
             await this.maintenance();
-        }
-    }
-
-    private async createTimeRangeIndex(): Promise<void> {
-        try {
-            await this.db.createIndex({
-                index: {
-                    fields: ["_id", "start_time", "end_time"],
-                    name: "time_range_idx",
-                    ddoc: "time_range_idx"
-                },
-            });
-        } catch (err) {
-            console.error("Failed to create time range index:", err);
         }
     }
 }
