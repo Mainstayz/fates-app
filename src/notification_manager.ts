@@ -444,7 +444,7 @@ export class NotificationManager {
             }
 
             const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
-            const created = await appConfig.getStoredValue(storeKey);
+            const created = await appConfig.getStoredValue(storeKey, false);
             if (created === "1") {
                 continue;
             }
@@ -453,7 +453,7 @@ export class NotificationManager {
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createDailyTaskInstance(task, now, timeRange);
                 await platform.instance.storage.createMatter(newMatter);
-                await appConfig.storeValue(storeKey, "1");
+                await appConfig.storeValue(storeKey, "1", true);
                 createdMatters.push(newMatter);
             }
         }
@@ -559,7 +559,7 @@ export class NotificationManager {
         const minutes = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
 
         if (minutes > durationMinutes) {
-            await appConfig.storeValue(key, now.toISOString());
+            await appConfig.storeValue(key, now.toISOString(), false);
             return true;
         }
         console.log(`[NotificationManager] ${key} update time not exceed ${durationMinutes} minutes, skip check`);

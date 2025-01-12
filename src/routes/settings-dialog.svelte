@@ -11,7 +11,7 @@
     import AiSettings from "./settings/ai.svelte";
     import platform, { isTauri } from "$src/platform";
     import { appConfig } from "$src/app-config";
-
+    import SyncSettings from "./settings/sync.svelte";
     let { open = $bindable() } = $props();
     let currentSection = $state("common");
     let updateAvailable = $state(false);
@@ -37,6 +37,7 @@
         { id: "common", title: $t("app.settings.nav.common") },
         { id: "notification", title: $t("app.settings.nav.notification") },
         { id: "ai", title: $t("app.settings.ai.title") },
+        { id: "sync", title: $t("app.settings.sync.title") },
         ...(isTauri ? [{ id: "update", title: $t("app.settings.update.title") }] : []),
     ]);
 
@@ -85,6 +86,8 @@
                             <NotificationSettings />
                         {:else if currentSection === "ai"}
                             <AiSettings />
+                        {:else if currentSection === "sync"}
+                            <SyncSettings />
                         {:else if currentSection === "update" && isTauri && UpdateSettings}
                             <UpdateSettings />
                         {/if}

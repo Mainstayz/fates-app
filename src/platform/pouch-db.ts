@@ -12,6 +12,21 @@ type TagDoc = Tag & PouchDBDocument;
 type RepeatTaskDoc = RepeatTask & PouchDBDocument;
 type NotificationRecordDoc = NotificationRecord & PouchDBDocument;
 
+export function stringToUtf8Hex(str: string): string {
+    // 创建一个 TextEncoder 实例，用于将字符串编码为 UTF-8 格式的 Uint8Array
+    const encoder = new TextEncoder();
+    const uint8Array = encoder.encode(str);
+
+    // 将 Uint8Array 转换为十六进制字符串
+    let hex = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+        // 将每个字节转换为两位的十六进制字符串
+        // toString(16) 转换为十六进制，padStart(2, '0') 确保是两位数
+        hex += uint8Array[i].toString(16).padStart(2, "0");
+    }
+    return hex;
+}
+
 export class PouchDBManager {
     private static instance: PouchDBManager | null = null;
     private db: PouchDB.Database;
@@ -413,20 +428,45 @@ export class PouchDBManager {
         }
     }
 
-    async startLiveSync(remoteUrl: string): Promise<void> {
+    startLiveSync(remoteUrl: string): void {
+        if (this.syncHandler) {
+            this.syncHandler.cancel();
+            this.syncHandler = null;
+        }
+        // 开始同步
+        console.log("Start live sync with remote url: ", remoteUrl);
         this.syncHandler = this.db.sync(new PouchDB(remoteUrl), {
             live: true,
             retry: true,
             batch_size: 100,
             batches_limit: 5,
         });
+        this.syncHandler.on("error", (error) => {
+            console.error("Sync error:", error);
+        });
+        this.syncHandler.on("change", (change) => {
+            console.log("Sync change:", change);
+        });
+        this.syncHandler.on("complete", (info) => {
+            console.log("Sync complete", info);
+        });
+        this.syncHandler.on("paused", (info) => {
+            console.log("Sync paused", info);
+        });
+        this.syncHandler.on("active", () => {
+            console.log("Sync active");
+        });
     }
 
-    async stopSync(): Promise<void> {
+    stopSync(): void {
         if (this.syncHandler) {
             this.syncHandler.cancel();
             this.syncHandler = null;
         }
+    }
+
+    isSyncEnabled(): boolean {
+        return this.syncHandler !== null;
     }
 
     async scheduleCompaction(intervalHours: number = 24): Promise<void> {

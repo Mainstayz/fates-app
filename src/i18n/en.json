@@ -183,6 +183,17 @@
           "default": "Permission not requested",
           "request": "Request Permission"
         }
+      },
+      "sync": {
+        "title": "Synchronous",
+        "configTitle": "Sync configuration",
+        "configDescription": "Except for AI configuration, other data will be synchronized",
+        "enabled": "Turn on sync",
+        "userName": "Username",
+        "password": "Password",
+        "registerOrLogin": "Register/Login",
+        "register": "Register",
+        "login": "Login"
       }
     },
     "statistics": {

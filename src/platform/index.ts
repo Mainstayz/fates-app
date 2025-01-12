@@ -39,6 +39,11 @@ export interface PlatformAPI {
 
     storage: {
         init(): Promise<void>;
+
+        enableSync(): Promise<void>;
+        disableSync(): void;
+        isSyncEnabled(): boolean;
+
         // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;

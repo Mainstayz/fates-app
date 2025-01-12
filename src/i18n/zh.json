@@ -159,6 +159,17 @@
           "default": "未请求权限",
           "request": "请求权限"
         }
+      },
+      "sync": {
+        "title": "同步",
+        "configTitle": "同步配置",
+        "configDescription": "除AI配置外，其他数据均会同步",
+        "enabled": "开启同步",
+        "userName": "用户名",
+        "password": "密码",
+        "registerOrLogin": "注册/登陆",
+        "register": "注册",
+        "login": "登陆"
       }
     },
     "week_report": {

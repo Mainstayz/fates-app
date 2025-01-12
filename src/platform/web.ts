@@ -1,6 +1,6 @@
 import type { PlatformAPI } from "./index";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
-import { PouchDBManager } from "./pouch-db";
+import { PouchDBManager, stringToUtf8Hex } from "./pouch-db";
 
 class WebEvent {
     async emit(event: string, data: any): Promise<void> {
@@ -33,7 +33,7 @@ class WebStorage {
     private db!: PouchDBManager;
 
     constructor() {
-        this.db = PouchDBManager.getInstance('fates_db');
+        this.db = PouchDBManager.getInstance("fates_db");
     }
 
     public async init() {
@@ -41,11 +41,30 @@ class WebStorage {
         await this.migrateFromLocalStorage();
     }
 
+    async enableSync(): Promise<void> {
+        let userName = await this.getKV("userName", true);
+        let password = await this.getKV("password", true);
+        if (!userName || !password) {
+            return;
+        }
+        let userNameHex = stringToUtf8Hex(userName);
+        let url = `http://${userName}:${password}@199.180.116.236:5984/userdb-${userNameHex}`;
+        this.db.startLiveSync(url);
+    }
+
+    disableSync(): void {
+        this.db.stopSync();
+    }
+
+    isSyncEnabled(): boolean {
+        return this.db.isSyncEnabled();
+    }
+
     private async migrateFromLocalStorage() {
         // Migrate Matters
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key?.startsWith('fates_matter_')) {
+            if (key?.startsWith("fates_matter_")) {
                 const data = localStorage.getItem(key);
                 if (data) {
                     const matter = JSON.parse(data);
@@ -56,11 +75,17 @@ class WebStorage {
         }
 
         // Migrate other data types
-        await this.migrateStoreItems('fates_todo_', 'todos', async (item) => await this.createTodo(item));
-        await this.migrateStoreItems('fates_tag_', 'tags', async (item) => await this.createTag(item.name));
-        await this.migrateStoreItems('fates_repeat_task_', 'repeat_tasks', async (item) => { await this.createRepeatTask(item); });
-        await this.migrateStoreItems('fates_notification_', 'notifications', async (item) => await this.saveNotification(item));
-        await this.migrateStoreItems('fates_kv_', 'kv', async (item) => await this.setKV(item.key, item.value));
+        await this.migrateStoreItems("fates_todo_", "todos", async (item) => await this.createTodo(item));
+        await this.migrateStoreItems("fates_tag_", "tags", async (item) => await this.createTag(item.name));
+        await this.migrateStoreItems("fates_repeat_task_", "repeat_tasks", async (item) => {
+            await this.createRepeatTask(item);
+        });
+        await this.migrateStoreItems(
+            "fates_notification_",
+            "notifications",
+            async (item) => await this.saveNotification(item)
+        );
+        await this.migrateStoreItems("fates_kv_", "kv", async (item) => await this.setKV(item.key, item.value, true));
     }
 
     private async migrateStoreItems(prefix: string, storeName: string, saveItem: (item: any) => Promise<void>) {
@@ -103,7 +128,7 @@ class WebStorage {
 
     async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
         const matters = await this.listMatters();
-        return matters.filter(matter => {
+        return matters.filter((matter) => {
             const fieldValue = (matter as any)[field];
             if (exactMatch) {
                 return fieldValue === value;
@@ -112,7 +137,7 @@ class WebStorage {
         });
     }
 
-    async setKV(key: string, value: string, sync: boolean): Promise<void> {
+    async setKV(key: string, value: string, sync: boolean = true): Promise<void> {
         if (sync) {
             await this.db.setKV(key, value);
         } else {
@@ -120,7 +145,7 @@ class WebStorage {
         }
     }
 
-    async getKV(key: string, local: boolean): Promise<string | null> {
+    async getKV(key: string, local: boolean = false): Promise<string | null> {
         if (local) {
             return localStorage.getItem(key);
         }
@@ -288,6 +313,5 @@ export const platform: PlatformAPI = {
     updater: new WebUpdater(),
     getVersion: async () => "web",
     init: async () => {},
-    destroy: async () => {}
+    destroy: async () => {},
 };
-

@@ -7,8 +7,8 @@ export type LanguageType = string;
 
 // KV存储接口
 export interface KVStore {
-    setKV: (key: string, value: string) => Promise<void>;
-    getKV: (key: string) => Promise<string | null>;
+    setKV: (key: string, value: string, sync: boolean) => Promise<void>;
+    getKV: (key: string, local: boolean) => Promise<string | null>;
     deleteKV: (key: string) => Promise<void>;
 }
 
@@ -298,7 +298,7 @@ class AppConfigManager {
     public async init(kvStore: KVStore): Promise<void> {
         this.kvStore = kvStore;
         try {
-            const stored = await kvStore.getKV("app-config");
+            const stored = await kvStore.getKV("app-config", false);
             if (stored) {
                 const storedConfig = JSON.parse(stored);
                 if (typeof storedConfig !== "object" || storedConfig === null) {
@@ -314,12 +314,12 @@ class AppConfigManager {
         }
     }
 
-    public async storeValue(key: string, value: any): Promise<void> {
-        await this.kvStore.setKV(key, value);
+    public async storeValue(key: string, value: any, sync: boolean = true): Promise<void> {
+        await this.kvStore.setKV(key, value, sync);
     }
 
-    public async getStoredValue(key: string): Promise<any> {
-        return await this.kvStore.getKV(key);
+    public async getStoredValue(key: string, local: boolean = false): Promise<any> {
+        return await this.kvStore.getKV(key, local);
     }
 
 
@@ -340,7 +340,7 @@ class AppConfigManager {
             try {
                 const configString = JSON.stringify(this.config);
                 console.log("Saving config to storage:", configString);
-                await this.kvStore.setKV("app-config", configString);
+                await this.kvStore.setKV("app-config", configString, true);
                 return;
             } catch (error) {
                 lastError = error as Error;

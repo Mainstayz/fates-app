@@ -5,10 +5,10 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { check } from "@tauri-apps/plugin-updater";
-import { appDataDir } from '@tauri-apps/api/path';
+import { appDataDir } from "@tauri-apps/api/path";
 import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "$src/types";
 import type { PlatformAPI, UnlistenFn } from "./index";
-import { PouchDBManager } from "./pouch-db";
+import { PouchDBManager, stringToUtf8Hex } from "./pouch-db";
 import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
 import { trayManager } from "$src/tauri/tray-manager.svelte";
 
@@ -33,9 +33,28 @@ class TauriStorage {
 
     public async init(): Promise<void> {
         const appDataDirPath = await appDataDir();
-        this.db = PouchDBManager.getInstance('fates_db', {
-            prefix: appDataDirPath
+        this.db = PouchDBManager.getInstance("fates_db", {
+            prefix: appDataDirPath,
         });
+    }
+
+    async enableSync(): Promise<void> {
+        let userName = await this.getKV("userName", true);
+        let password = await this.getKV("password", true);
+        if (!userName || !password) {
+            return;
+        }
+        let userNameHex = stringToUtf8Hex(userName);
+        let url = `http://${userName}:${password}@199.180.116.236:5984/userdb-${userNameHex}`;
+        this.db.startLiveSync(url);
+    }
+
+    disableSync(): void {
+        this.db.stopSync();
+    }
+
+    isSyncEnabled(): boolean {
+        return this.db.isSyncEnabled();
     }
 
     async getMatter(id: string): Promise<Matter | null> {
@@ -60,7 +79,7 @@ class TauriStorage {
 
     async queryMattersByField(field: string, value: string, exactMatch: boolean): Promise<Matter[]> {
         const matters = await this.listMatters();
-        return matters.filter(matter => {
+        return matters.filter((matter) => {
             const fieldValue = (matter as any)[field];
             if (exactMatch) {
                 return fieldValue === value;
@@ -73,7 +92,7 @@ class TauriStorage {
         return this.db.getMattersByRange(start, end);
     }
 
-    async setKV(key: string, value: string, sync: boolean): Promise<void> {
+    async setKV(key: string, value: string, sync: boolean = true): Promise<void> {
         if (sync) {
             await this.db.setKV(key, value);
         } else {
@@ -81,7 +100,7 @@ class TauriStorage {
         }
     }
 
-    async getKV(key: string, local: boolean): Promise<string | null> {
+    async getKV(key: string, local: boolean = false): Promise<string | null> {
         if (local) {
             return localStorage.getItem(key);
         }
@@ -257,11 +276,11 @@ class TauriUpdater {
             }
             return {
                 hasUpdate: true,
-                version: update.version
+                version: update.version,
             };
         } catch (error) {
             return {
-                hasUpdate: false
+                hasUpdate: false,
             };
         }
     }
@@ -287,5 +306,5 @@ export const platform: PlatformAPI = {
     },
     destroy: async () => {
         TimeProgressBarManager.getInstance().destroy();
-    }
+    },
 };
