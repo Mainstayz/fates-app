@@ -44,6 +44,8 @@ export interface PlatformAPI {
         disableSync(): void;
         isSyncEnabled(): boolean;
 
+        onSync(callback: (event: any) => void): () => void ;
+
         // Matter 模块
         getMatter(id: string): Promise<Matter | null>;
         listMatters(): Promise<Matter[]>;
@@ -54,7 +56,7 @@ export interface PlatformAPI {
         getMattersByRange(start: string, end: string): Promise<Matter[]>;
 
         // KV 模块
-        setKV(key: string, value: string, sync: boolean): Promise<void>;
+        setKV(key: string, value: string, local: boolean): Promise<void>;
         getKV(key: string, local: boolean): Promise<string | null>;
         deleteKV(key: string): Promise<void>;
 

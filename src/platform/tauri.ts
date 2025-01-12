@@ -35,8 +35,7 @@ class TauriStorage {
         this.db = PouchDBManager.getInstance("tauri_fates_db");
     }
 
-    public async init(): Promise<void> {
-    }
+    public async init(): Promise<void> {}
 
     async enableSync(): Promise<void> {
         let userName = await this.getKV("userName", true);
@@ -55,6 +54,10 @@ class TauriStorage {
 
     isSyncEnabled(): boolean {
         return this.db.isSyncEnabled();
+    }
+
+    onSync(callback: (event: any) => void): () => void {
+        return this.db.onSync(callback);
     }
 
     async getMatter(id: string): Promise<Matter | null> {
@@ -92,11 +95,11 @@ class TauriStorage {
         return this.db.getMattersByRange(start, end);
     }
 
-    async setKV(key: string, value: string, sync: boolean = true): Promise<void> {
-        if (sync) {
-            await this.db.setKV(key, value);
-        } else {
+    async setKV(key: string, value: string, local: boolean = false): Promise<void> {
+        if (local) {
             localStorage.setItem(key, value);
+        } else {
+            await this.db.setKV(key, value);
         }
     }
 

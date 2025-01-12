@@ -39,12 +39,19 @@
         });
     }
 
+    let syncListener: () => void;
+
     onMount(() => {
         const initialize = async () => {
             // Initialize platform
             console.log("[Main] Initialize platform ..");
             await initializePlatform();
             await platform.instance.init();
+
+            // sync
+            syncListener = platform.instance.storage.onSync((event) => {
+                console.log("[Main] Sync event: ", event);
+            });
 
             // Initialize app config
             await appConfig.init(platform.instance.storage);
@@ -76,6 +83,7 @@
             unlisten();
             notificationManager.stopNotificationLoop();
             platform.instance.destroy();
+            syncListener();
         };
     });
 </script>

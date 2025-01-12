@@ -91,8 +91,9 @@
         } else {
             platform.instance.storage.disableSync();
         }
-        appConfig.storeValue("userName", userName, false);
-        appConfig.storeValue("password", password, false);
+        // save to local storage
+        appConfig.storeValue("userName", userName, true);
+        appConfig.storeValue("password", password, true);
     }
 
     $effect(() => {

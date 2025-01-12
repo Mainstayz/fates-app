@@ -6,9 +6,7 @@ import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/typ
 PouchDB.plugin(PouchDBFind);
 
 // Define the sync event listener type
-export interface SyncEventListener {
-    clear: () => void;
-}
+export type SyncEventListener = () => void;
 
 // Define the sync event type
 export interface SyncEvent {
@@ -467,10 +465,8 @@ export class PouchDBManager {
     public onSync(callback: (event: SyncEvent) => void): SyncEventListener {
         this.syncListeners.add(callback);
 
-        return {
-            clear: () => {
-                this.syncListeners.delete(callback);
-            },
+        return () => {
+            this.syncListeners.delete(callback);
         };
     }
 

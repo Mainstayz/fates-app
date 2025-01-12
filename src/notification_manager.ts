@@ -200,7 +200,9 @@ export class NotificationManager {
         if (forceCheck) {
             console.log(`[NotificationManager] Checking if in work hours: ${currentDateTime.toLocaleString()}`);
             if (!TimeUtils.isWithinWorkingHours(currentDateTime, workStartTime, workEndTime)) {
-                console.log(`[NotificationManager] SKIPPED!!! Not in work hours, start time: ${workStartTime}, end time: ${workEndTime}`);
+                console.log(
+                    `[NotificationManager] SKIPPED!!! Not in work hours, start time: ${workStartTime}, end time: ${workEndTime}`
+                );
                 return false;
             }
         }
@@ -219,7 +221,10 @@ export class NotificationManager {
             59,
             59
         );
-        const todayMatters = await platform.instance.storage.getMattersByRange(todayStartTime.toISOString(), todayEndTime.toISOString());
+        const todayMatters = await platform.instance.storage.getMattersByRange(
+            todayStartTime.toISOString(),
+            todayEndTime.toISOString()
+        );
 
         // Check repeat tasks
         console.log(`[NotificationManager] Checking repeat tasks at ${currentDateTime.toLocaleString()}`);
@@ -402,7 +407,7 @@ export class NotificationManager {
             const notifyBefore = notifications.checkIntervalMinutes || 15;
             const upcomingNotifications = this.getUpcomingTaskNotifications(now, matters, notifyBefore);
             if (upcomingNotifications.length == 0) {
-                    console.log(`[NotificationManager] No upcoming tasks`);
+                console.log(`[NotificationManager] No upcoming tasks`);
             } else {
                 console.log(`[NotificationManager] Found ${upcomingNotifications.length} upcoming tasks`);
                 let notification = upcomingNotifications[0];
@@ -448,6 +453,7 @@ export class NotificationManager {
             }
 
             const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
+            // need sync
             const created = await appConfig.getStoredValue(storeKey, false);
             if (created === "1") {
                 continue;
@@ -457,7 +463,8 @@ export class NotificationManager {
             if (timeRange) {
                 const newMatter = RepeatTaskHandler.createDailyTaskInstance(task, now, timeRange);
                 await platform.instance.storage.createMatter(newMatter);
-                await appConfig.storeValue(storeKey, "1", true);
+                // need sync
+                await appConfig.storeValue(storeKey, "1", false);
                 createdMatters.push(newMatter);
             }
         }
@@ -557,13 +564,15 @@ export class NotificationManager {
     private async hasIntervalElapsedSinceLastCheck(key: string, durationMinutes: number): Promise<boolean> {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const updateTimeStr = await appConfig.getStoredValue(key) || todayStart.toISOString();
+        // get from local storage
+        const updateTimeStr = (await appConfig.getStoredValue(key, true)) || todayStart.toISOString();
 
         const updateTime = new Date(updateTimeStr);
         const minutes = Math.floor((now.getTime() - updateTime.getTime()) / (1000 * 60));
 
+        // notification check interval, save to local storage
         if (minutes > durationMinutes) {
-            await appConfig.storeValue(key, now.toISOString(), false);
+            await appConfig.storeValue(key, now.toISOString(), true);
             return true;
         }
         console.log(`[NotificationManager] ${key} update time not exceed ${durationMinutes} minutes, skip check`);

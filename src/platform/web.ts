@@ -36,10 +36,7 @@ class WebStorage {
         this.db = PouchDBManager.getInstance("fates_db");
     }
 
-    public async init() {
-        // Migration from localStorage if needed
-        await this.migrateFromLocalStorage();
-    }
+    public async init() {}
 
     async enableSync(): Promise<void> {
         let userName = await this.getKV("userName", true);
@@ -60,46 +57,8 @@ class WebStorage {
         return this.db.isSyncEnabled();
     }
 
-    private async migrateFromLocalStorage() {
-        // Migrate Matters
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith("fates_matter_")) {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    const matter = JSON.parse(data);
-                    await this.createMatter(matter);
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-
-        // Migrate other data types
-        await this.migrateStoreItems("fates_todo_", "todos", async (item) => await this.createTodo(item));
-        await this.migrateStoreItems("fates_tag_", "tags", async (item) => await this.createTag(item.name));
-        await this.migrateStoreItems("fates_repeat_task_", "repeat_tasks", async (item) => {
-            await this.createRepeatTask(item);
-        });
-        await this.migrateStoreItems(
-            "fates_notification_",
-            "notifications",
-            async (item) => await this.saveNotification(item)
-        );
-        await this.migrateStoreItems("fates_kv_", "kv", async (item) => await this.setKV(item.key, item.value, true));
-    }
-
-    private async migrateStoreItems(prefix: string, storeName: string, saveItem: (item: any) => Promise<void>) {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith(prefix)) {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    const item = JSON.parse(data);
-                    await saveItem(item);
-                    localStorage.removeItem(key);
-                }
-            }
-        }
+    onSync(callback: (event: any) => void): () => void {
+        return this.db.onSync(callback);
     }
 
     async getMatter(id: string): Promise<Matter | null> {
@@ -137,11 +96,11 @@ class WebStorage {
         });
     }
 
-    async setKV(key: string, value: string, sync: boolean = true): Promise<void> {
-        if (sync) {
-            await this.db.setKV(key, value);
-        } else {
+    async setKV(key: string, value: string, local: boolean = false): Promise<void> {
+        if (local) {
             localStorage.setItem(key, value);
+        } else {
+            await this.db.setKV(key, value);
         }
     }
 

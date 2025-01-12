@@ -314,8 +314,8 @@ class AppConfigManager {
         }
     }
 
-    public async storeValue(key: string, value: any, sync: boolean = true): Promise<void> {
-        await this.kvStore.setKV(key, value, sync);
+    public async storeValue(key: string, value: any, local: boolean = false): Promise<void> {
+        await this.kvStore.setKV(key, value, local);
     }
 
     public async getStoredValue(key: string, local: boolean = false): Promise<any> {
@@ -340,7 +340,7 @@ class AppConfigManager {
             try {
                 const configString = JSON.stringify(this.config);
                 console.log("Saving config to storage:", configString);
-                await this.kvStore.setKV("app-config", configString, true);
+                await this.kvStore.setKV("app-config", configString, false);
                 return;
             } catch (error) {
                 lastError = error as Error;
