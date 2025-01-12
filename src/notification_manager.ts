@@ -164,7 +164,11 @@ export class NotificationManager {
         console.log("[NotificationManager] Start notification loop ...");
         this.checkInterval = setInterval(async () => {
             console.log(`[NotificationManager] Checking notifications at ${new Date().toLocaleString()}`);
-            await this.processNotificationCycle();
+            try {
+                await this.processNotificationCycle();
+            } catch (error) {
+                console.error(`[NotificationManager] Error in notification loop:`, error);
+            }
         }, 1 * 60 * 1000); // 1 min
     }
 

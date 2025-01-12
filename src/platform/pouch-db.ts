@@ -1,5 +1,21 @@
 import PouchDB from "pouchdb";
+import PouchDBFind from "pouchdb-find";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
+
+// Initialize PouchDB plugins
+PouchDB.plugin(PouchDBFind);
+
+// Define the sync event listener type
+export interface SyncEventListener {
+    clear: () => void;
+}
+
+// Define the sync event type
+export interface SyncEvent {
+    direction: "push" | "pull";
+    change: PouchDB.Replication.SyncResult<{}>;
+    error?: Error;
+}
 
 interface PouchDBDocument {
     _id: string;
@@ -41,6 +57,7 @@ export class PouchDBManager {
     // 添加停止同步方法
     private syncHandler: PouchDB.Replication.Sync<{}> | null = null;
     private compactionTimer: NodeJS.Timeout | undefined = undefined;
+    private syncListeners: Set<(event: SyncEvent) => void> = new Set();
 
     private constructor(dbName: string = "fates_db", options: PouchDB.Configuration.DatabaseConfiguration = {}) {
         // 设置修订版本限制
@@ -136,15 +153,15 @@ export class PouchDBManager {
         const result = await this.db.find({
             selector: {
                 _id: {
-                    $regex: `^${PouchDBManager.STORES.MATTERS}_`
+                    $regex: `^${PouchDBManager.STORES.MATTERS}_`,
                 },
                 start_time: { $gte: start },
-                end_time: { $lte: end }
+                end_time: { $lte: end },
             },
-            use_index: 'time_range_idx'
+            use_index: "time_range_idx",
         });
 
-        return result.docs.map(doc => {
+        return result.docs.map((doc) => {
             const { _id, _rev, ...matter } = doc;
             return matter as Matter;
         });
@@ -447,38 +464,70 @@ export class PouchDBManager {
         }
     }
 
+    // Add sync event listener
+    public onSync(callback: (event: SyncEvent) => void): SyncEventListener {
+        this.syncListeners.add(callback);
+
+        return {
+            clear: () => {
+                this.syncListeners.delete(callback);
+            },
+        };
+    }
+
+    // Notify all listeners
+    private notifySyncListeners(event: SyncEvent): void {
+        this.syncListeners.forEach((listener) => {
+            try {
+                listener(event);
+            } catch (error) {
+                console.error("Error in sync listener:", error);
+            }
+        });
+    }
+
     startLiveSync(remoteUrl: string): void {
         if (this.syncHandler) {
-            this.syncHandler.cancel();
-            this.syncHandler = null;
+            console.warn("Sync is already in progress");
+            return;
         }
-        this.syncHandler = this.db.sync(new PouchDB(remoteUrl), {
-            live: true,
-            retry: true,
-            batch_size: 100,
-            batches_limit: 5,
-        });
-        this.syncHandler.on("error", (error) => {
-            console.error("Sync error:", error);
-        });
-        this.syncHandler.on("change", (change) => {
-            console.log("Sync change:", change);
-        });
-        this.syncHandler.on("complete", (info) => {
-            console.log("Sync complete", info);
-        });
-        this.syncHandler.on("paused", (info) => {
-            console.log("Sync paused", info);
-        });
-        this.syncHandler.on("active", () => {
-            console.log("Sync active");
-        });
+
+        this.syncHandler = this.db
+            .sync(remoteUrl, {
+                live: true,
+                retry: true,
+            })
+            .on("change", (change) => {
+                // Notify listeners about the sync change
+                console.log("Sync change:", change);
+                this.notifySyncListeners({
+                    direction: change.direction === "push" ? "push" : "pull",
+                    change: change,
+                });
+            })
+            .on("error", (error) => {
+                // Notify listeners about the sync error
+                console.log("Sync error:", error);
+                this.notifySyncListeners({
+                    direction: "push",
+                    change: {} as PouchDB.Replication.SyncResult<{}>,
+                    error: error instanceof Error ? error : new Error("Sync error occurred"),
+                });
+            })
+            .on("complete", () => {
+                console.log("Sync complete");
+            })
+            .on("paused", () => {
+                console.log("Sync paused");
+            })
+            .on("active", () => {
+                console.log("Sync active");
+            });
     }
 
     stopSync(): void {
         if (this.syncHandler) {
             this.syncHandler.cancel();
-            this.syncHandler.removeAllListeners();
             this.syncHandler = null;
         }
     }
@@ -558,12 +607,12 @@ export class PouchDBManager {
         try {
             await this.db.createIndex({
                 index: {
-                    fields: ['start_time', 'end_time'],
-                    name: 'time_range_idx'
-                }
+                    fields: ["start_time", "end_time"],
+                    name: "time_range_idx",
+                },
             });
         } catch (err) {
-            console.error('Failed to create time range index:', err);
+            console.error("Failed to create time range index:", err);
         }
     }
 }
