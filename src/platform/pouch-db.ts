@@ -154,11 +154,11 @@ export class PouchDBManager {
         console.log("Available indexes:", indexes);
         const result = await this.db.find({
             selector: {
-                _docType: PouchDBManager.STORES.MATTERS,
+                _id: { $gt: `${PouchDBManager.STORES.MATTERS}_`, $lt: `${PouchDBManager.STORES.MATTERS}_\uffff` },
                 start_time: { $gte: start },
                 end_time: { $lte: end }
             },
-            sort: ["_docType", "start_time"],
+            sort: ["_id", "start_time"],
             use_index: "time_range_idx"
         });
 
@@ -172,7 +172,7 @@ export class PouchDBManager {
         try {
             await this.db.createIndex({
                 index: {
-                    fields: ["_docType", "start_time", "end_time"],
+                    fields: ["_id", "start_time", "end_time"],
                     name: "time_range_idx",
                     ddoc: "time_range_idx"
                 },
