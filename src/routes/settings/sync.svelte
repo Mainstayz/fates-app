@@ -124,11 +124,7 @@
         <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1 font-bold">
             <span>{$t("app.settings.sync.enabled")}</span>
         </Label>
-        <Switch
-            id="sync-enabled"
-            bind:checked={syncEnabled}
-            disabled={userName.length === 0 || password.length === 0}
-        />
+        <Switch id="sync-enabled" bind:checked={syncEnabled} />
     </div>
     <div class="flex flex-col gap-2">
         <Label for="sync-userName">{$t("app.settings.sync.userName")}</Label>

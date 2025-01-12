@@ -31,11 +31,11 @@ class TauriClipboard {
 class TauriStorage {
     private db!: PouchDBManager;
 
+    constructor() {
+        this.db = PouchDBManager.getInstance("tauri_fates_db");
+    }
+
     public async init(): Promise<void> {
-        const appDataDirPath = await appDataDir();
-        this.db = PouchDBManager.getInstance("fates_db", {
-            prefix: appDataDirPath,
-        });
     }
 
     async enableSync(): Promise<void> {
@@ -301,6 +301,7 @@ export const platform: PlatformAPI = {
     updater: new TauriUpdater(),
     getVersion,
     init: async () => {
+        await platform.storage.init();
         await TimeProgressBarManager.getInstance().initialize();
         await trayManager.init();
     },
