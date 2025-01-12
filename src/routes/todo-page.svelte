@@ -69,11 +69,12 @@
         }
 
         async fetchData() {
-            await this.syncTodoStatus();
+            // await this.syncTodoStatus();
             this.data = await platform.instance.storage.listTodos();
         }
 
         async createTodo(todo: Todo) {
+            console.log("createTodo: ", todo);
             await platform.instance.storage.createTodo(todo);
             await this.fetchData();
         }
@@ -83,6 +84,7 @@
             alertContent = $t("app.other.confirmDeleteDescription");
             alertShowCancel = true;
             alertConfirm = async () => {
+                console.log("deleteTodo: ", id);
                 await platform.instance.storage.deleteTodo(id);
                 await this.fetchData();
             };
@@ -113,6 +115,7 @@
     });
 
     const handleDelete = async (rowId: string) => {
+        console.log("handleDelete: ", rowId);
         await todoAPI.deleteTodo(rowId);
     };
 
@@ -124,7 +127,7 @@
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };
-
+        console.log("createTodo: ", defaultTodo);
         await todoAPI.createTodo(defaultTodo);
     };
 
@@ -134,6 +137,7 @@
             console.error("todo not found", rowId);
             return;
         }
+        console.log("onUpdateValue: ", todo);
         if (columnId === "title") {
             await todoAPI.updateTodo({ ...todo, title: value });
         }

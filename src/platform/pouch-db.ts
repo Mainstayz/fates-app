@@ -113,23 +113,21 @@ export class PouchDBManager {
     }
 
     async updateMatter(matter: Matter): Promise<void> {
-        const existing = await this.getMatter(matter.id);
-        if (!existing) throw new Error("Matter not found");
-        await this.db.put({
-            _id: `${PouchDBManager.STORES.MATTERS}_${matter.id}`,
-            _rev: (existing as any)._rev,
-            ...matter,
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.MATTERS}_${matter.id}`);
+            await this.db.put({
+                _id: doc._id,
+                _rev: doc._rev,
+                ...matter,
+            });
         });
     }
 
     async deleteMatter(id: string): Promise<void> {
-        const doc = await this.getMatter(id);
-        if (doc) {
-            await this.db.remove({
-                _id: `${PouchDBManager.STORES.MATTERS}_${id}`,
-                _rev: (doc as any)._rev,
-            });
-        }
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.MATTERS}_${id}`);
+            await this.db.remove(doc);
+        });
     }
 
     async getMattersByRange(start: string, end: string): Promise<Matter[]> {
@@ -140,23 +138,25 @@ export class PouchDBManager {
     // KV operations
     async setKV(key: string, value: string): Promise<void> {
         const id = `${PouchDBManager.STORES.KV}_${key}`;
-        try {
-            const doc = await this.db.get(id);
-            await this.db.put({
-                _id: id,
-                _rev: (doc as any)._rev,
-                value,
-            });
-        } catch (err) {
-            if ((err as any).status === 404) {
+        await this.retryOnConflict(async () => {
+            try {
+                const doc = await this.db.get(id);
                 await this.db.put({
                     _id: id,
+                    _rev: (doc as any)._rev,
                     value,
                 });
-            } else {
-                throw err;
+            } catch (err) {
+                if ((err as any).status === 404) {
+                    await this.db.put({
+                        _id: id,
+                        value,
+                    });
+                } else {
+                    throw err;
+                }
             }
-        }
+        });
     }
 
     async getKV(key: string): Promise<string | null> {
@@ -212,19 +212,21 @@ export class PouchDBManager {
 
     async updateTagLastUsedAt(name: string): Promise<void> {
         const id = `${PouchDBManager.STORES.TAGS}_${name}`;
-        try {
-            const doc = await this.db.get(id);
-            await this.db.put({
-                ...doc,
-                lastUsedAt: new Date().toISOString(),
-            });
-        } catch (err) {
-            if ((err as any).status === 404) {
-                await this.createTag(name);
-            } else {
-                throw err;
+        await this.retryOnConflict(async () => {
+            try {
+                const doc = await this.db.get(id);
+                await this.db.put({
+                    ...doc,
+                    lastUsedAt: new Date().toISOString(),
+                });
+            } catch (err) {
+                if ((err as any).status === 404) {
+                    await this.createTag(name);
+                } else {
+                    throw err;
+                }
             }
-        }
+        });
     }
 
     // Todo operations
@@ -259,23 +261,21 @@ export class PouchDBManager {
     }
 
     async updateTodo(id: string, todo: Todo): Promise<void> {
-        const existing = await this.getTodo(id);
-        if (!existing) throw new Error("Todo not found");
-        await this.db.put({
-            _id: `${PouchDBManager.STORES.TODOS}_${id}`,
-            _rev: (existing as any)._rev,
-            ...todo,
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.TODOS}_${id}`);
+            await this.db.put({
+                _id: doc._id,
+                _rev: doc._rev,
+                ...todo,
+            });
         });
     }
 
     async deleteTodo(id: string): Promise<void> {
-        const doc = await this.getTodo(id);
-        if (doc) {
-            await this.db.remove({
-                _id: `${PouchDBManager.STORES.TODOS}_${id}`,
-                _rev: (doc as any)._rev,
-            });
-        }
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.TODOS}_${id}`);
+            await this.db.remove(doc);
+        });
     }
 
     // RepeatTask operations
@@ -316,24 +316,22 @@ export class PouchDBManager {
     }
 
     async updateRepeatTask(id: string, task: RepeatTask): Promise<RepeatTask> {
-        const existing = await this.getRepeatTask(id);
-        if (!existing) throw new Error("RepeatTask not found");
-        await this.db.put({
-            _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${id}`,
-            _rev: (existing as any)._rev,
-            ...task,
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.REPEAT_TASKS}_${id}`);
+            await this.db.put({
+                _id: doc._id,
+                _rev: doc._rev,
+                ...task,
+            });
         });
         return task;
     }
 
     async deleteRepeatTask(id: string): Promise<void> {
-        const doc = await this.getRepeatTask(id);
-        if (doc) {
-            await this.db.remove({
-                _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${id}`,
-                _rev: (doc as any)._rev,
-            });
-        }
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get(`${PouchDBManager.STORES.REPEAT_TASKS}_${id}`);
+            await this.db.remove(doc);
+        });
     }
 
     async updateRepeatTaskStatus(id: string, status: number): Promise<void> {
@@ -358,9 +356,11 @@ export class PouchDBManager {
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
-        await this.db.put({
-            _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`,
-            ...notification,
+        await this.retryOnConflict(async () => {
+            await this.db.put({
+                _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`,
+                ...notification,
+            });
         });
     }
 
@@ -379,42 +379,42 @@ export class PouchDBManager {
     }
 
     async markNotificationAsRead(id: string): Promise<void> {
-        const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${id}`);
-        if (doc) {
+        await this.retryOnConflict(async () => {
+            const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${id}`);
             await this.db.put({
                 ...doc,
                 read_at: new Date().toISOString(),
             });
-        }
+        });
     }
 
     async markNotificationAsReadByType(type_: number): Promise<void> {
         const notifications = await this.getNotifications();
-        const updates = notifications
-            .filter((n) => n.type_ === type_ && !n.read_at)
-            .map((n) => ({
-                _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${n.id}`,
-                ...n,
-                read_at: new Date().toISOString(),
-            }));
+        const unreadNotifications = notifications.filter(n => n.type_ === type_ && !n.read_at);
 
-        for (const update of updates) {
-            await this.db.put(update);
+        for (const notification of unreadNotifications) {
+            await this.retryOnConflict(async () => {
+                const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`);
+                await this.db.put({
+                    ...doc,
+                    read_at: new Date().toISOString(),
+                });
+            });
         }
     }
 
     async markAllNotificationsAsRead(): Promise<void> {
         const notifications = await this.getNotifications();
-        const updates = notifications
-            .filter((n) => !n.read_at)
-            .map((n) => ({
-                _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${n.id}`,
-                ...n,
-                read_at: new Date().toISOString(),
-            }));
+        const unreadNotifications = notifications.filter(n => !n.read_at);
 
-        for (const update of updates) {
-            await this.db.put(update);
+        for (const notification of unreadNotifications) {
+            await this.retryOnConflict(async () => {
+                const doc = await this.db.get<NotificationRecordDoc>(`${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`);
+                await this.db.put({
+                    ...doc,
+                    read_at: new Date().toISOString(),
+                });
+            });
         }
     }
 
