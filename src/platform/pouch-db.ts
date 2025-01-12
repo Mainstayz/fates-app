@@ -433,8 +433,6 @@ export class PouchDBManager {
             this.syncHandler.cancel();
             this.syncHandler = null;
         }
-        // 开始同步
-        console.log("Start live sync with remote url: ", remoteUrl);
         this.syncHandler = this.db.sync(new PouchDB(remoteUrl), {
             live: true,
             retry: true,

@@ -162,14 +162,15 @@
       },
       "sync": {
         "title": "同步",
-        "configTitle": "同步配置",
-        "configDescription": "除AI配置外，其他数据均会同步",
+        "configTitle": "用户数据隐私声明",
+        "configDescription": "1. 您的个人数据将存储在我们的服务器上，且仅用于同步功能的目的。我们承诺，您的数据不会被用于任何其他用途，包括但不限于商业推广、数据分析或第三方共享。",
         "enabled": "开启同步",
         "userName": "用户名",
         "password": "密码",
         "registerOrLogin": "注册/登陆",
         "register": "注册",
-        "login": "登陆"
+        "login": "登陆",
+        "configDescription1": "2. 当您选择使用同步功能时，即表示您已阅读、理解并同意本隐私声明的内容。如果您不希望您的数据被存储或用于同步功能，请勿启用该功能。"
       }
     },
     "week_report": {

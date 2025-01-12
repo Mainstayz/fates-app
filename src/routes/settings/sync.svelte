@@ -17,17 +17,6 @@
     let password = $state<string>("");
     let initialized = $state<boolean>(false);
 
-    // 上一次的配置状态
-    let prevConfig = $state<{
-        syncEnabled: boolean;
-        userName: string;
-        password: string;
-    }>({
-        syncEnabled: false,
-        userName: "",
-        password: "",
-    });
-
     let testSuccess = $state<boolean>(false);
     let registerLoading = $state<boolean>(false);
 
@@ -35,7 +24,6 @@
     let testResult = $state<string>("");
 
     async function registerSuccess() {}
-
     async function loginSuccess() {}
 
     async function register() {
@@ -97,31 +85,25 @@
     }
 
     function updateConfig() {
-        if (prevConfig.syncEnabled !== syncEnabled) {
-            if (syncEnabled) {
-                platform.instance.storage.enableSync();
-            } else {
-                platform.instance.storage.disableSync();
-            }
-            // 更新上一次的配置状态
-            prevConfig.syncEnabled = syncEnabled;
+        if (!initialized) return;
+        if (syncEnabled) {
+            platform.instance.storage.enableSync();
+        } else {
+            platform.instance.storage.disableSync();
         }
-        prevConfig.userName = userName;
         appConfig.storeValue("userName", userName, false);
-        prevConfig.password = password;
         appConfig.storeValue("password", password, false);
     }
 
     $effect(() => {
-        if (!initialized) return;
         updateConfig();
     });
 
     onMount(async () => {
+        // 从配置中获取用户名和密码
         userName = await appConfig.getStoredValue("userName", true);
         password = await appConfig.getStoredValue("password", true);
-        prevConfig.userName = userName;
-        prevConfig.password = password;
+        // 获取同步状态
         syncEnabled = platform.instance.storage.isSyncEnabled();
         initialized = true;
     });
@@ -130,16 +112,23 @@
 <div class="flex flex-col gap-4">
     <div class="flex flex-col gap-2">
         <Label class="text-lg font-medium">{$t("app.settings.sync.configTitle")}</Label>
-        <p class="text-muted-foreground text-sm">
+        <p class="text-muted-foreground text-xs">
             {$t("app.settings.sync.configDescription")}
+        </p>
+        <p class="text-muted-foreground text-xs">
+            {$t("app.settings.sync.configDescription1")}
         </p>
     </div>
     <Separator />
-    <div class="flex items-center justify-between space-x-2">
-        <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1">
+    <div class="flex items-center justify-between space-x-2 my-4">
+        <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1 font-bold">
             <span>{$t("app.settings.sync.enabled")}</span>
         </Label>
-        <Switch id="sync-enabled" bind:checked={syncEnabled} />
+        <Switch
+            id="sync-enabled"
+            bind:checked={syncEnabled}
+            disabled={userName.length === 0 || password.length === 0}
+        />
     </div>
     <div class="flex flex-col gap-2">
         <Label for="sync-userName">{$t("app.settings.sync.userName")}</Label>
@@ -156,13 +145,6 @@
                     <LoaderCircle class="w-4 h-4 animate-spin" />
                 {:else}
                     {$t("app.settings.sync.register")}
-                {/if}
-            </Button>
-            <Button size="sm" onclick={login} disabled={loginLoading}>
-                {#if loginLoading}
-                    <LoaderCircle class="w-4 h-4 animate-spin" />
-                {:else}
-                    {$t("app.settings.sync.login")}
                 {/if}
             </Button>
             {#if testResult.length > 0}

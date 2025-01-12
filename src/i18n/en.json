@@ -186,14 +186,15 @@
       },
       "sync": {
         "title": "Synchronous",
-        "configTitle": "Sync configuration",
-        "configDescription": "Except for AI configuration, other data will be synchronized",
+        "configTitle": "User Data Privacy Statement",
+        "configDescription": "1. Your personal data will be stored on our servers and used only for the purpose of synchronization functionality. \nWe promise that your data will not be used for any other purpose, including but not limited to commercial promotion, data analysis or third-party sharing.",
         "enabled": "Turn on sync",
         "userName": "Username",
         "password": "Password",
         "registerOrLogin": "Register/Login",
         "register": "Register",
-        "login": "Login"
+        "login": "Login",
+        "configDescription1": "2. When you choose to use the synchronization function, it means that you have read, understood and agreed to the contents of this privacy statement. \nIf you do not want your data to be stored or used for the sync feature, do not enable this feature."
       }
     },
     "statistics": {
