@@ -6,15 +6,17 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: vitePreprocess({
-    script: true  // enable script preprocess
-  }),
-  kit: {
-    adapter: adapter(),
-    alias: {
-      $src: './src'
-    }
-  },
+    preprocess: vitePreprocess({
+        script: true, // enable script preprocess
+    }),
+    kit: {
+        adapter: adapter({
+            fallback: "index.html",
+        }),
+        alias: {
+            $src: "./src",
+        },
+    },
 };
 
 export default config;
