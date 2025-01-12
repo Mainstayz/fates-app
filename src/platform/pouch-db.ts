@@ -18,6 +18,7 @@ export interface SyncEvent {
 interface PouchDBDocument {
     _id: string;
     _rev: string;
+    _docType: string;
 }
 
 type MatterDoc = Matter & PouchDBDocument;
@@ -119,12 +120,13 @@ export class PouchDBManager {
         return result.rows
             .map((row) => row.doc)
             .filter((doc): doc is MatterDoc => doc !== undefined)
-            .map(({ _id, _rev, ...matter }) => matter);
+            .map(({ _id, _rev, _docType, ...matter }) => matter);
     }
 
     async createMatter(matter: Matter): Promise<void> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.MATTERS}_${matter.id}`,
+            _docType: PouchDBManager.STORES.MATTERS,
             ...matter,
         });
     }
@@ -152,29 +154,29 @@ export class PouchDBManager {
         console.log("Available indexes:", indexes);
         const result = await this.db.find({
             selector: {
-                _id: { $gt: `${PouchDBManager.STORES.MATTERS}_`, $lt: `${PouchDBManager.STORES.MATTERS}_\uffff` },
+                _docType: PouchDBManager.STORES.MATTERS,
                 start_time: { $gte: start },
                 end_time: { $lte: end }
             },
-            sort: ["_id", "start_time"],
+            sort: ["_docType", "start_time"],
             use_index: "time_range_idx"
         });
 
         return result.docs.map((doc) => {
-            const { _id, _rev, ...matter } = doc;
-            return matter as Matter;
+            const { _id, _rev, _docType, ...matter } = doc as MatterDoc;
+            return matter;
         });
     }
 
     private async createTimeRangeIndex(): Promise<void> {
         try {
             await this.db.createIndex({
-            index: {
-                fields: ["_id", "start_time", "end_time"],
-                name: "time_range_idx",
-                ddoc: "time_range_idx"
-            },
-        });
+                index: {
+                    fields: ["_docType", "start_time", "end_time"],
+                    name: "time_range_idx",
+                    ddoc: "time_range_idx"
+                },
+            });
         } catch (err) {
             console.error("Failed to create time range index:", err);
         }
@@ -188,6 +190,7 @@ export class PouchDBManager {
                 const doc = await this.db.get(id);
                 await this.db.put({
                     _id: id,
+                    _docType: PouchDBManager.STORES.KV,
                     _rev: (doc as any)._rev,
                     value,
                 });
@@ -195,6 +198,7 @@ export class PouchDBManager {
                 if ((err as any).status === 404) {
                     await this.db.put({
                         _id: id,
+                        _docType: PouchDBManager.STORES.KV,
                         value,
                     });
                 } else {
@@ -229,6 +233,7 @@ export class PouchDBManager {
         const now = new Date().toISOString();
         await this.db.put({
             _id: id,
+            _docType: PouchDBManager.STORES.TAGS,
             name,
             lastUsedAt: now,
         });
@@ -243,7 +248,7 @@ export class PouchDBManager {
         return result.rows
             .map((row) => row.doc)
             .filter((doc): doc is TagDoc => doc !== undefined)
-            .map(({ _id, _rev, ...tag }) => tag);
+            .map(({ _id, _rev, _docType, ...tag }) => tag);
     }
 
     async deleteTag(name: string): Promise<void> {
@@ -278,6 +283,7 @@ export class PouchDBManager {
     async createTodo(todo: Todo): Promise<void> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.TODOS}_${todo.id}`,
+            _docType: PouchDBManager.STORES.TODOS,
             ...todo,
         });
     }
@@ -302,7 +308,7 @@ export class PouchDBManager {
         return result.rows
             .map((row) => row.doc)
             .filter((doc): doc is TodoDoc => doc !== undefined)
-            .map(({ _id, _rev, ...todo }) => todo);
+            .map(({ _id, _rev, _docType, ...todo }) => todo);
     }
 
     async updateTodo(id: string, todo: Todo): Promise<void> {
@@ -327,6 +333,7 @@ export class PouchDBManager {
     async createRepeatTask(task: RepeatTask): Promise<RepeatTask> {
         await this.db.put({
             _id: `${PouchDBManager.STORES.REPEAT_TASKS}_${task.id}`,
+            _docType: PouchDBManager.STORES.REPEAT_TASKS,
             ...task,
         });
         return task;
@@ -397,13 +404,14 @@ export class PouchDBManager {
         return result.rows
             .map((row) => row.doc)
             .filter((doc): doc is NotificationRecordDoc => doc !== undefined)
-            .map(({ _id, _rev, ...notification }) => notification);
+            .map(({ _id, _rev, _docType, ...notification }) => notification);
     }
 
     async saveNotification(notification: NotificationRecord): Promise<void> {
         await this.retryOnConflict(async () => {
             await this.db.put({
                 _id: `${PouchDBManager.STORES.NOTIFICATIONS}_${notification.id}`,
+                _docType: PouchDBManager.STORES.NOTIFICATIONS,
                 ...notification,
             });
         });
