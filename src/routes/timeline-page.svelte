@@ -321,7 +321,6 @@
 
     let aiLoading = $state(false);
     let aiEnabled = $state(false);
-    let inputRef: HTMLInputElement | null = null;
 
     async function handleGenerateTitle() {
         if (!aiEnabled) {
@@ -486,7 +485,6 @@
                 <div class="flex gap-2">
                     {#if switchAddTaskInput}
                         <Input
-                            bind:ref={inputRef}
                             placeholder={$t("app.timeline.addTaskPlaceholder")}
                             class="bg-background w-[320px]"
                             bind:value={newTaskTitle}
@@ -564,6 +562,8 @@
                     callback={(item: TimelineItem) => {
                         console.log("[TimelinePage] Edit finish, will update matter:", item);
                         timelineComponent.updateItem(item);
+                        // save timeline item
+                        saveTimelineItem(item);
                         editingItem = null;
                     }}
                 />

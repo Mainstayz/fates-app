@@ -1,13 +1,31 @@
-import type { PlatformAPI } from "./index";
+import type { PlatformAPI, UnlistenFn, Event } from "./index";
 import type { Matter, NotificationRecord, Todo, Tag, RepeatTask } from "$src/types";
 import { PouchDBManager, stringToUtf8Hex } from "./pouch-db";
 
 class WebEvent {
+    private eventTarget = new EventTarget();
+    private idCounter = 0;
+
     async emit(event: string, data: any): Promise<void> {
-        return;
+        const customEvent = new CustomEvent(event, {
+            detail: {
+                event,
+                id: this.idCounter++,
+                payload: data,
+            },
+        });
+        this.eventTarget.dispatchEvent(customEvent);
     }
-    async listen(event: string): Promise<() => void> {
-        return () => {};
+
+    async listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn> {
+        const listener = (e: globalThis.Event) => {
+            const customEvent = e as CustomEvent;
+            handler(customEvent.detail);
+        };
+        this.eventTarget.addEventListener(event, listener);
+        return () => {
+            this.eventTarget.removeEventListener(event, listener);
+        };
     }
 }
 

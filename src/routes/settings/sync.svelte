@@ -87,11 +87,13 @@
     function updateConfig() {
         if (!initialized) return;
         if (syncEnabled) {
+            console.log("[Settings] Sync enabled, enabling sync ..");
             platform.instance.storage.enableSync();
         } else {
+            console.log("[Settings] Sync disabled, disabling sync ..");
             platform.instance.storage.disableSync();
         }
-        // save to local storage
+        appConfig.storeValue("syncEnabled", syncEnabled.toString(), true);
         appConfig.storeValue("userName", userName, true);
         appConfig.storeValue("password", password, true);
     }
@@ -104,8 +106,14 @@
         // 从配置中获取用户名和密码
         userName = await appConfig.getStoredValue("userName", true);
         password = await appConfig.getStoredValue("password", true);
-        // 获取同步状态
-        syncEnabled = platform.instance.storage.isSyncEnabled();
+
+        let syncEnabledStr = await appConfig.getStoredValue("syncEnabled", true);
+        console.log("[Settings] Sync enabled: ", syncEnabledStr);
+        if (syncEnabledStr === "true") {
+            syncEnabled = true;
+        } else {
+            syncEnabled = false;
+        }
         initialized = true;
     });
 </script>

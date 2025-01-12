@@ -9,7 +9,7 @@
     import { onMount } from "svelte";
     import { locale } from "svelte-i18n";
     import App from "./app.svelte";
-
+    import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "$src/config";
     let appConfigInitialized = $state(false);
     $inspect("appConfigInitialized: ", appConfigInitialized);
 
@@ -48,11 +48,6 @@
             await initializePlatform();
             await platform.instance.init();
 
-            // sync
-            syncListener = platform.instance.storage.onSync((event) => {
-                console.log("[Main] Sync event: ", event);
-            });
-
             // Initialize app config
             await appConfig.init(platform.instance.storage);
             console.log("[Main] AppConfig initialized");
@@ -65,6 +60,39 @@
             appConfigInitialized = true;
             console.log("[Main] platform initialized successfully");
 
+            // sync
+            console.log("[Main] Setting up sync listener ..");
+            syncListener = platform.instance.storage.onSync((event) => {
+                console.log("[Main] Sync event: ", event);
+                if (event.direction === "pull") {
+                    let change = event.change.change;
+                    let docs = change.docs;
+                    let hasNewMatter = false;
+                    for (let doc of docs) {
+                        console.log("[Main] Sync doc: ", doc);
+                        let docId = doc._id;
+                        if (docId && docId.startsWith("matters_")) {
+                            hasNewMatter = true;
+                        }
+                    }
+                    if (hasNewMatter) {
+                        // notify time progress bar to refresh
+                        console.log("[Main] Sync has new matter, refreshing timeline ..");
+                        platform.instance.event.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
+                    }
+                }
+            });
+
+            // 获取配置
+            let syncEnabledStr = await appConfig.getStoredValue("syncEnabled", true);
+            console.log("[Main] Sync enabled: ", syncEnabledStr);
+            if (syncEnabledStr === "true") {
+                platform.instance.storage.enableSync();
+            } else {
+                platform.instance.storage.disableSync();
+            }
+
+            // 获取所有标签
             // 获取所有标签
             console.log("[Main] Fetching all tags ..");
             await tagManager.fetchAllTags();

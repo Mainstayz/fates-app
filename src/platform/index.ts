@@ -3,7 +3,7 @@ export const REFRESH_TIME_PROGRESS = "refresh-time-progress";
 
 export type UnlistenFn = () => void;
 
-interface Event<T> {
+export interface Event<T> {
     event: string;
     id: number;
     payload: T;
