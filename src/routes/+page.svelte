@@ -10,8 +10,12 @@
     import { locale } from "svelte-i18n";
     import App from "./app.svelte";
     import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "$src/config";
+    import SyncIndicator from "$src/components/sync-Indicator.svelte";
+
     let appConfigInitialized = $state(false);
     $inspect("appConfigInitialized: ", appConfigInitialized);
+
+    let syncIndicator: SyncIndicator;
 
     async function sendSystemNotification(title: string, message: string) {
         let permissionGranted = await platform.instance.notification.isPermissionGranted();
@@ -62,26 +66,43 @@
 
             // sync
             console.log("[Main] Setting up sync listener ..");
-            syncListener = platform.instance.storage.onSync((event) => {
-                console.log("[Main] Sync event: ", event);
-                if (event.direction === "pull") {
-                    let change = event.change.change;
-                    let docs = change.docs;
-                    let hasNewMatter = false;
-                    for (let doc of docs) {
-                        console.log("[Main] Sync doc: ", doc);
-                        let docId = doc._id;
-                        if (docId && docId.startsWith("matters_")) {
-                            hasNewMatter = true;
+            syncListener = platform.instance.storage.onSync(
+                (event: { status: string; direction: string; change: any }) => {
+                    console.log("[Main] Sync event: ", event);
+                    if (syncIndicator) {
+                        if (event.status === "change") {
+                            syncIndicator.show();
+                        } else {
+                            syncIndicator.hide();
+                        }
+
+                        if (event.direction === "pull") {
+                            syncIndicator.toggleDownloadBlinking(true);
+                            syncIndicator.toggleUploadBlinking(false);
+                        } else if (event.direction === "push") {
+                            syncIndicator.toggleDownloadBlinking(false);
+                            syncIndicator.toggleUploadBlinking(true);
                         }
                     }
-                    if (hasNewMatter) {
-                        // notify time progress bar to refresh
-                        console.log("[Main] Sync has new matter, refreshing timeline ..");
-                        platform.instance.event.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
+                    if (event.direction === "pull") {
+                        let change = event.change.change;
+                        let docs = change.docs;
+                        let hasNewMatter = false;
+                        for (let doc of docs) {
+                            console.log("[Main] Sync doc: ", doc);
+                            let docId = doc._id;
+                            if (docId && docId.startsWith("matters_")) {
+                                hasNewMatter = true;
+                            }
+                        }
+                        if (hasNewMatter) {
+                            // notify time progress bar to refresh
+                            console.log("[Main] Sync has new matter, refreshing timeline ..");
+                            platform.instance.event.emit(NOTIFICATION_RELOAD_TIMELINE_DATA, {});
+                        }
                     }
                 }
-            });
+            );
 
             // 获取配置
             let syncEnabledStr = await appConfig.getStoredValue("syncEnabled", true);
@@ -123,6 +144,8 @@
         <App />
     </main>
 {/if}
+
+<SyncIndicator bind:this={syncIndicator} position="top-right" />
 
 <style>
     .noSelect {

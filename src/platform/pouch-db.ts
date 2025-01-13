@@ -10,6 +10,7 @@ export type SyncEventListener = () => void;
 
 // Define the sync event type
 export interface SyncEvent {
+    status: "change" | "error" | "complete" | "paused" | "active";
     direction: "push" | "pull";
     change: PouchDB.Replication.SyncResult<{}>;
     error?: Error;
@@ -514,6 +515,7 @@ export class PouchDBManager {
                 this.notifySyncListeners({
                     direction: change.direction === "push" ? "push" : "pull",
                     change: change,
+                    status: "change",
                 });
             })
             .on("error", (error) => {
@@ -523,16 +525,32 @@ export class PouchDBManager {
                     direction: "push",
                     change: {} as PouchDB.Replication.SyncResult<{}>,
                     error: error instanceof Error ? error : new Error("Sync error occurred"),
+                    status: "error",
                 });
             })
             .on("complete", (info) => {
                 console.log("Sync complete", info);
+                this.notifySyncListeners({
+                    direction: "push",
+                    change: {} as PouchDB.Replication.SyncResult<{}>,
+                    status: "complete",
+                });
             })
             .on("paused", (info) => {
                 console.log("Sync paused", info);
+                this.notifySyncListeners({
+                    direction: "push",
+                    change: {} as PouchDB.Replication.SyncResult<{}>,
+                    status: "paused",
+                });
             })
             .on("active", () => {
                 console.log("Sync active");
+                this.notifySyncListeners({
+                    direction: "push",
+                    change: {} as PouchDB.Replication.SyncResult<{}>,
+                    status: "active",
+                });
             });
     }
 
