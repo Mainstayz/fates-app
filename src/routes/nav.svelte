@@ -4,6 +4,7 @@
     import { t } from "svelte-i18n";
     import type { Route } from "../config";
     import { appConfig } from "$src/app-config";
+    import { default as Github } from "lucide-svelte/icons/github";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;
@@ -28,6 +29,10 @@
         if (settingsRoute) {
             onSettingsClick();
         }
+    }
+
+    function gotoGithub() {
+        window.open("https://github.com/Mainstayz/fates-app", "_blank");
     }
 </script>
 
@@ -55,6 +60,9 @@
 
     {#if settingsRoute}
         <nav class="grid gap-2 mt-auto pb-4 justify-center">
+            <Button size="icon" variant="secondary" onclick={gotoGithub}>
+                <Github />
+            </Button>
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={0}>
                     <Tooltip.Trigger>
