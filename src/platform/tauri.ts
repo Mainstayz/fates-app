@@ -44,7 +44,7 @@ class TauriStorage {
             return;
         }
         let userNameHex = stringToUtf8Hex(userName);
-        let url = `http://${userName}:${password}@199.180.116.236:5984/userdb-${userNameHex}`;
+        let url = `https://${userName}:${password}@fates-app.com/couchdb/userdb-${userNameHex}`;
         this.db.startLiveSync(url);
     }
 
