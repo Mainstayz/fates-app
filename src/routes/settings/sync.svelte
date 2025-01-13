@@ -30,7 +30,7 @@
         registerLoading = true;
         testResult = "";
         try {
-            const url = `http://199.180.116.236:4152/api/register`;
+            const url = `https://fates-app.com/api/register`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -58,7 +58,7 @@
         loginLoading = true;
         testResult = "";
         try {
-            const url = `http://199.180.116.236:4152/api/login`;
+            const url = `https://fates-app.com/api/login`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
