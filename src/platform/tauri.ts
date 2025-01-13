@@ -12,6 +12,8 @@ import { PouchDBManager, stringToUtf8Hex } from "./pouch-db";
 import { TimeProgressBarManager } from "$src/tauri/time-progress-bar-manager";
 import { trayManager } from "$src/tauri/tray-manager.svelte";
 
+import { open } from '@tauri-apps/plugin-shell';
+
 class TauriEvent {
     async emit(event: string, data: any): Promise<void> {
         await emit(event, data);
@@ -294,8 +296,13 @@ class TauriUpdater {
     }
 }
 
+
+
 export const platform: PlatformAPI = {
     event: new TauriEvent(),
+    openUrl: async (url: string) => {
+        return open(url);
+    },
     clipboard: new TauriClipboard(),
     storage: new TauriStorage(),
     notification: new TauriNotification(),

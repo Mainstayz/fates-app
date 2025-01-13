@@ -5,6 +5,7 @@
     import type { Route } from "../config";
     import { appConfig } from "$src/app-config";
     import { default as Github } from "lucide-svelte/icons/github";
+    import platform from "$src/platform";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;
@@ -32,7 +33,11 @@
     }
 
     function gotoGithub() {
-        window.open("https://github.com/Mainstayz/fates-app", "_blank");
+        try {
+            platform.instance.openUrl("https://github.com/Mainstayz/fates-app");
+        } catch (error) {
+            console.error("Failed to open url: ", error);
+        }
     }
 </script>
 

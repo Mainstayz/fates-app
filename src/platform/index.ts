@@ -13,6 +13,8 @@ export interface PlatformAPI {
     init(): Promise<void>;
     destroy(): Promise<void>;
 
+    openUrl(url: string): Promise<void>;
+
     event: {
         emit(event: string, payload?: unknown): Promise<void>;
         listen<T>(event: string, handler: (event: Event<T>) => void, options?: any): Promise<UnlistenFn>;

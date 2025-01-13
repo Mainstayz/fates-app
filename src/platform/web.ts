@@ -282,6 +282,9 @@ class WebUpdater {
 
 export const platform: PlatformAPI = {
     event: new WebEvent(),
+    openUrl: async (url: string) => {
+        window.open(url, "_blank");
+    },
     clipboard: new WebClipboard(),
     storage: new WebStorage(),
     notification: new WebNotification(),
