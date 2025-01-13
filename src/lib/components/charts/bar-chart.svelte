@@ -98,4 +98,4 @@
     });
 </script>
 
-<div bind:this={chartElement} style="width: 100%; height: 400px;"></div>
+<div bind:this={chartElement}></div>

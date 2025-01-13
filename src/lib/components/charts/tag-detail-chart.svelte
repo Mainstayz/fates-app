@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import * as echarts from "echarts";
     import type { ECharts } from "echarts";
+    import { t } from "svelte-i18n";
 
     interface DetailData {
         content: string;
@@ -14,10 +15,12 @@
     let chartElement: HTMLElement;
     let chart: ECharts;
 
+    $: TopTtitle = $t("app.statistics.tagDetailChartTitle");
+
     $: if (chart && data) {
         const option = {
             title: {
-                text: selectedTag,
+                text: `${selectedTag} ${TopTtitle}`,
                 left: "center",
                 top: 10,
             },
@@ -41,11 +44,13 @@
             },
             xAxis: {
                 type: "value",
-                name: "时长 (小时)",
                 nameLocation: "middle",
                 nameGap: 30,
                 axisLabel: {
                     formatter: "{value}h",
+                },
+                splitLine: {
+                    show: false,
                 },
             },
             yAxis: {
@@ -100,4 +105,4 @@
     });
 </script>
 
-<div bind:this={chartElement} style="width: 100%; height: 400px;"></div>
+<div bind:this={chartElement} style="width: 100%; height: 100%"></div>

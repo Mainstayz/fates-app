@@ -214,7 +214,8 @@
       "noChartData": "无法生成图表数据",
       "durationHours": "时长（小时）",
       "unclassifiedTag": "未分类",
-      "otherTag": "其他"
+      "otherTag": "其他",
+      "tagDetailChartTitle": "前 10"
     },
     "messages": {
       "newRepeatTasks": "新重复任务",

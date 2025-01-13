@@ -115,7 +115,7 @@
                     };
                 })
                 // sort by duration in descending order and only take top 10
-                .sort((a, b) => b.duration - a.duration)
+                .sort((a, b) => a.duration - b.duration)
                 .slice(0, 10);
 
             console.log('Final result for "other":', result);
@@ -135,7 +135,7 @@
                         (1000 * 60 * 60)
                     ).toFixed(2),
                 }))
-                .sort((a, b) => b.duration - a.duration)
+                .sort((a, b) => a.duration - b.duration)
                 .slice(0, 10);
 
             console.log('Final result for "unclassified":', result);
@@ -159,7 +159,7 @@
                     (1000 * 60 * 60)
                 ).toFixed(2),
             }))
-            .sort((a, b) => b.duration - a.duration)
+            .sort((a, b) => a.duration - b.duration)
             .slice(0, 10);
 
         console.log("Final result for regular tag:", result);
@@ -254,48 +254,24 @@
             </Select.Root>
         </div>
 
-        <div class="flex-1 flex flex-col pt-2 gap-2">
-            <div class="flex flex-row w-full flex-none h-2/4 border rounded-lg">
-                <div class="w-1/3 flex items-center justify-center">
-                    {#if items?.length > 0}
-                        {@const chartData = getChartData()}
-                        {#if chartData}
-                            <PieChart
-                                data={{
-                                    tags: chartData.tags,
-                                    durations: chartData.durations,
-                                    totalDuration: chartData.totalDuration,
-                                }}
-                                onTagSelect={handleTagSelect}
-                            />
-                        {:else}
-                            <div class="flex items-center justify-center h-full text-gray-500">
-                                <p>{$t("app.statistics.noChartData")}</p>
-                            </div>
-                        {/if}
+        <div class="flex flex-row border rounded-lg mt-2 h-[300px]">
+            <div class="w-2/3 flex items-center justify-center">
+                <!-- {#if items?.length > 0}
+                    {@const chartData = getChartData()}
+                    {#if chartData}
+                        <BarChart
+                            data={{
+                                tags: chartData.tags,
+                                durationHours: chartData.durationHours,
+                            }}
+                            onTagSelect={handleTagSelect}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center h-full text-gray-500">
+                            <p>{$t("app.statistics.noChartData")}</p>
+                        </div>
                     {/if}
-                </div>
-                <div class="w-2/3 flex items-center justify-center">
-                    {#if items?.length > 0}
-                        {@const chartData = getChartData()}
-                        {#if chartData}
-                            <BarChart
-                                data={{
-                                    tags: chartData.tags,
-                                    durationHours: chartData.durationHours,
-                                }}
-                                onTagSelect={handleTagSelect}
-                            />
-                        {:else}
-                            <div class="flex items-center justify-center h-full text-gray-500">
-                                <p>{$t("app.statistics.noChartData")}</p>
-                            </div>
-                        {/if}
-                    {/if}
-                </div>
-            </div>
-
-            <div class="w-full flex-1 border rounded-lg">
+                {/if} -->
                 {#if selectedTag}
                     {@const detailData = getTagDetailData()}
                     {#if detailData.length > 0}
@@ -307,7 +283,33 @@
                     {/if}
                 {/if}
             </div>
+
+            <div class="w-1/3 flex items-center justify-center">
+                {#if items?.length > 0}
+                    {@const chartData = getChartData()}
+                    {#if chartData}
+                        <PieChart
+                            data={{
+                                tags: chartData.tags,
+                                durations: chartData.durations,
+                                totalDuration: chartData.totalDuration,
+                            }}
+                            onTagSelect={handleTagSelect}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center h-full text-gray-500">
+                            <p>{$t("app.statistics.noChartData")}</p>
+                        </div>
+                    {/if}
+                {/if}
+            </div>
         </div>
+
+        <!-- <div class="flex-1 flex flex-col pt-2 gap-2"> -->
+
+        <!-- <div class="w-full flex-1 border rounded-lg">
+            </div> -->
+        <!-- </div> -->
     {:else}
         <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
             <h3 class="text-lg font-medium mb-2">{$t("app.statistics.noData")}</h3>

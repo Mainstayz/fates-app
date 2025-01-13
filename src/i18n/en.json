@@ -214,7 +214,8 @@
       "noChartData": "No Chart Data",
       "durationHours": "Duration (hours)",
       "unclassifiedTag": "Unclassified",
-      "otherTag": "Other"
+      "otherTag": "Other",
+      "tagDetailChartTitle": "Top 10"
     },
     "messages": {
       "newRepeatTasks": "New Repeat Tasks",

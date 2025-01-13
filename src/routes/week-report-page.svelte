@@ -138,7 +138,7 @@
 </script>
 
 <div class="flex flex-col h-full">
-    <div class="px-6 pt-6">
+    <div class="flex flex-col px-6 pt-6 gap-4">
         <h2 class="text-2xl font-bold tracking-tight">{$_("app.week_report.title")}</h2>
         <p class="text-muted-foreground">{$_("app.week_report.description")}</p>
     </div>
