@@ -1,105 +1,103 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import { t } from "svelte-i18n";
-    import ApexCharts from "apexcharts";
+    import { onMount } from "svelte";
+    import * as echarts from "echarts";
+    import type { ECharts } from "echarts";
 
-    export let data: Array<{ content: string; duration: number }>;
+    interface DetailData {
+        content: string;
+        duration: number;
+    }
+
+    export let data: DetailData[];
     export let selectedTag: string;
 
     let chartElement: HTMLElement;
-    let chart: ApexCharts | null = null;
+    let chart: ECharts;
 
-    function getChartOptions() {
-        return {
-            series: [
-                {
-                    name: $t("app.statistics.durationHours"),
-                    data: data.map((d) => d.duration),
-                },
-            ],
-            chart: {
-                type: "bar",
-                height: "100%",
-                animations: {
-                    enabled: true,
-                    easing: "easeinout",
-                    speed: 800,
-                },
-                toolbar: {
-                    show: false,
-                },
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    borderRadius: 4,
-                },
-            },
+    $: if (chart && data) {
+        const option = {
             title: {
-                text: $t("app.statistics.tagDetailChart.topTen", {
-                    values: { tag: selectedTag },
-                }),
-                align: "center",
+                text: selectedTag,
+                left: "center",
+                top: 10,
             },
-            xaxis: {
-                categories: data.map((d) => d.content),
-                labels: {
-                    show: false,
+            tooltip: {
+                trigger: "axis",
+                axisPointer: {
+                    type: "shadow",
                 },
-                axisBorder: {
-                    show: false,
-                },
-                axisTicks: {
-                    show: false,
-                },
-            },
-            yaxis: {
-                labels: {
-                    show: true,
+                formatter: (params: any) => {
+                    const data = params[0];
+                    return `${data.name}<br/>
+                            ${data.value}h`;
                 },
             },
             grid: {
-                show: false,
-                xaxis: {
-                    lines: {
-                        show: false,
-                    },
-                },
-                yaxis: {
-                    lines: {
-                        show: false,
-                    },
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                top: "15%",
+                containLabel: true,
+            },
+            xAxis: {
+                type: "value",
+                name: "时长 (小时)",
+                nameLocation: "middle",
+                nameGap: 30,
+                axisLabel: {
+                    formatter: "{value}h",
                 },
             },
-            theme: { palette: "palette8" },
+            yAxis: {
+                type: "category",
+                data: data.map((item) => item.content),
+                axisLabel: {
+                    width: 200,
+                    overflow: "break",
+                    interval: 0,
+                },
+            },
+            series: [
+                {
+                    type: "bar",
+                    data: data.map((item) => ({
+                        value: item.duration,
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                                { offset: 0, color: "#83bff6" },
+                                { offset: 0.5, color: "#188df0" },
+                                { offset: 1, color: "#188df0" },
+                            ]),
+                        },
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                                { offset: 0, color: "#66a6e5" },
+                                { offset: 0.7, color: "#1677d9" },
+                                { offset: 1, color: "#1677d9" },
+                            ]),
+                        },
+                    },
+                },
+            ],
         };
-    }
-
-    function updateChart() {
-        if (chart && data) {
-            chart.updateOptions(getChartOptions());
-        }
-    }
-
-    $: {
-        data;
-        selectedTag;
-        updateChart();
+        chart.setOption(option);
     }
 
     onMount(() => {
-        if (chartElement) {
-            chart = new ApexCharts(chartElement, getChartOptions());
-            chart.render();
-        }
-    });
+        chart = echarts.init(chartElement);
 
-    onDestroy(() => {
-        if (chart) {
-            chart.destroy();
-            chart = null;
-        }
+        const resizeHandler = () => {
+            chart?.resize();
+        };
+        window.addEventListener("resize", resizeHandler);
+
+        return () => {
+            chart?.dispose();
+            window.removeEventListener("resize", resizeHandler);
+        };
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full"></div>
+<div bind:this={chartElement} style="width: 100%; height: 400px;"></div>

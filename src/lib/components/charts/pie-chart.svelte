@@ -1,69 +1,92 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import ApexCharts from "apexcharts";
+    import { onMount } from "svelte";
+    import * as echarts from "echarts";
+    import type { ECharts } from "echarts";
 
-    export let data: { tags: string[]; durations: number[]; totalDuration: number };
+    interface ChartData {
+        tags: string[];
+        durations: number[];
+        totalDuration: number;
+    }
+
+    export let data: ChartData;
     export let onTagSelect: (tag: string) => void;
 
     let chartElement: HTMLElement;
-    let chart: ApexCharts | null = null;
-
-    function getChartOptions() {
-        return {
-            series: data.durations.map((d) => +((d / data.totalDuration) * 100).toFixed(1)),
-            chart: {
-                type: "donut",
-                height: "100%",
-                width: "100%",
-                animations: {
-                    enabled: true,
-                    easing: "easeinout",
-                    speed: 800,
-                },
-                events: {
-                    dataPointSelection: (event: any, chartContext: any, config: any) => {
-                        const tagIndex = config.dataPointIndex;
-                        if (tagIndex !== -1) {
-                            onTagSelect(data.tags[tagIndex]);
-                        }
-                    },
-                },
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: "70%",
-                    },
-                },
-            },
-            yaxis: {
-                labels: {
-                    show: false,
-                },
-            },
-            labels: data.tags,
-            legend: { position: "bottom" },
-            theme: { palette: "palette8" },
-        };
-    }
+    let chart: ECharts;
 
     $: if (chart && data) {
-        chart.updateOptions(getChartOptions());
+        const option = {
+            tooltip: {
+                trigger: "item",
+                formatter: (params: any) => {
+                    const minutes = +params.value.toFixed(1);
+                    const hours = +(minutes / 60).toFixed(1);
+                    return `${params.name}<br/>
+                            ${hours}h (${params.percent}%)`;
+                },
+            },
+            legend: {
+                orient: "vertical",
+                right: "5%",
+                top: "center",
+                type: "scroll",
+            },
+            series: [
+                {
+                    type: "pie",
+                    radius: ["40%", "70%"], // 设置成环形图
+                    center: ["40%", "50%"], // 调整位置以适应图例
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderRadius: 4,
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                    },
+                    label: {
+                        show: false,
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 14,
+                            fontWeight: "bold",
+                        },
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: "rgba(0, 0, 0, 0.5)",
+                        },
+                    },
+                    data: data.tags.map((tag, index) => ({
+                        value: +(data.durations[index] / (1000 * 60)).toFixed(1), // 转换为分钟
+                        name: tag,
+                    })),
+                },
+            ],
+        };
+        chart.setOption(option);
     }
 
     onMount(() => {
-        if (chartElement) {
-            chart = new ApexCharts(chartElement, getChartOptions());
-            chart.render();
-        }
-    });
+        chart = echarts.init(chartElement);
 
-    onDestroy(() => {
-        if (chart) {
-            chart.destroy();
-            chart = null;
-        }
+        chart.on("click", (params) => {
+            if (params.name) {
+                onTagSelect(params.name);
+            }
+        });
+
+        const resizeHandler = () => {
+            chart?.resize();
+        };
+        window.addEventListener("resize", resizeHandler);
+
+        return () => {
+            chart?.dispose();
+            window.removeEventListener("resize", resizeHandler);
+        };
     });
 </script>
 
-<div bind:this={chartElement} class="w-full h-full"></div>
+<div bind:this={chartElement} style="width: 100%; height: 300px;"></div>
