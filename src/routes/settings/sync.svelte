@@ -6,26 +6,51 @@
     import { Switch } from "$lib/components/ui/switch";
     import { appConfig } from "$src/app-config";
     import platform from "$src/platform";
-    import { LoaderCircle } from "lucide-svelte";
+    import { LoaderCircle, CheckCircle2, XCircle } from "lucide-svelte";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
 
-    // 当前配置状态
+    // 状态管理
     let syncEnabled = $state<boolean>(false);
     let userName = $state<string>("");
     let password = $state<string>("");
     let initialized = $state<boolean>(false);
-
     let testSuccess = $state<boolean>(false);
     let registerLoading = $state<boolean>(false);
-
     let loginLoading = $state<boolean>(false);
     let testResult = $state<string>("");
+    let originalUserName = $state<string>("");
+    let originalPassword = $state<string>("");
 
-    async function registerSuccess() {}
-    async function loginSuccess() {}
+    // 监听输入变化
+    $effect(() => {
+        if (initialized && (userName !== originalUserName || password !== originalPassword)) {
+            testSuccess = false;
+            syncEnabled = false;
+        }
+    });
+
+    async function registerSuccess() {
+        originalUserName = userName;
+        originalPassword = password;
+        testSuccess = true;
+        syncEnabled = true;
+        updateConfig();
+    }
+
+    async function loginSuccess() {
+        originalUserName = userName;
+        originalPassword = password;
+        testSuccess = true;
+        updateConfig();
+    }
 
     async function register() {
+        if (!userName || !password) {
+            testResult = "请输入用户名和密码";
+            return;
+        }
+
         registerLoading = true;
         testResult = "";
         try {
@@ -39,21 +64,25 @@
                 body: JSON.stringify({ username: userName, password: password }),
             });
             const data = await response.json();
-            console.log("Register response:", data);
             if (response.ok) {
-                testResult = "Register success";
-                registerSuccess();
+                testResult = "注册成功";
+                await registerSuccess();
             } else {
-                testResult = "Register failed";
+                testResult = "注册失败: " + (data.message || "未知错误");
             }
         } catch (error) {
-            testResult = "Error: " + error;
+            testResult = "错误: " + error;
         } finally {
             registerLoading = false;
         }
     }
 
     async function login() {
+        if (!userName || !password) {
+            testResult = "请输入用户名和密码";
+            return;
+        }
+
         loginLoading = true;
         testResult = "";
         try {
@@ -67,17 +96,16 @@
                 body: JSON.stringify({ username: userName, password: password }),
             });
             const data = await response.json();
-            console.log("Login response:", data);
             if (response.ok) {
-                testResult = "Login success";
-                testSuccess = true;
-                loginSuccess();
+                testResult = "登录成功";
+                await loginSuccess();
             } else {
-                testResult = "Login failed";
+                testResult = "登录失败: " + (data.message || "未知错误");
                 testSuccess = false;
             }
         } catch (error) {
-            testResult = "Error: " + error;
+            testResult = "错误: " + error;
+            testSuccess = false;
         } finally {
             loginLoading = false;
         }
@@ -85,9 +113,8 @@
 
     function updateConfig() {
         if (!initialized) return;
-        if (syncEnabled) {
+        if (syncEnabled && testSuccess) {
             console.log("[Settings] Sync enabled, enabling sync ..");
-            testSuccess = true;
             platform.instance.storage.enableSync();
         } else {
             console.log("[Settings] Sync disabled, disabling sync ..");
@@ -103,69 +130,115 @@
     });
 
     onMount(async () => {
-        // 从配置中获取用户名和密码
         userName = await appConfig.getStoredValue("userName", true);
         password = await appConfig.getStoredValue("password", true);
+        originalUserName = userName;
+        originalPassword = password;
 
         let syncEnabledStr = await appConfig.getStoredValue("syncEnabled", true);
-        console.log("[Settings] Sync enabled: ", syncEnabledStr);
-        if (syncEnabledStr === "true") {
-            syncEnabled = true;
-        } else {
-            syncEnabled = false;
+        syncEnabled = syncEnabledStr === "true";
+
+        if (userName && password && syncEnabled) {
+            await login();
         }
+
         initialized = true;
     });
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-6 max-w-md">
     <div class="flex flex-col gap-2">
         <Label class="text-lg font-medium">{$t("app.settings.sync.configTitle")}</Label>
-        <p class="text-muted-foreground text-xs">
+        <p class="text-muted-foreground text-sm">
             {$t("app.settings.sync.configDescription")}
         </p>
-        <p class="text-muted-foreground text-xs">
+        <p class="text-muted-foreground text-sm">
             {$t("app.settings.sync.configDescription1")}
         </p>
     </div>
+
     <Separator />
 
-    <div class="flex flex-col gap-2">
-        <Label for="sync-userName">{$t("app.settings.sync.userName")}</Label>
-        <Input bind:value={userName} class="bg-background" type="text" id="sync-userName" />
-    </div>
-    <div class="flex flex-col gap-2">
-        <Label for="sync-password">{$t("app.settings.sync.password")}</Label>
-        <Input bind:value={password} type="password" class="bg-background" id="sync-password" />
-    </div>
-    <div class="flex flex-row gap-2">
-        <div class="flex flex-1 space-x-2 items-center">
-            <Button size="sm" onclick={register} disabled={registerLoading}>
-                {#if registerLoading}
-                    <LoaderCircle class="w-4 h-4 animate-spin" />
-                {:else}
-                    {$t("app.settings.sync.register")}
+    <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+            <Label for="sync-userName" class="flex items-center gap-2">
+                {$t("app.settings.sync.userName")}
+                {#if testSuccess}
+                    <CheckCircle2 class="w-4 h-4 text-green-500" />
                 {/if}
-            </Button>
-            <Button size="sm" onclick={login} disabled={loginLoading}>
-                {#if loginLoading}
-                    <LoaderCircle class="w-4 h-4 animate-spin" />
-                {:else}
-                    {$t("app.settings.sync.login")}
-                {/if}
-            </Button>
+            </Label>
+            <Input
+                bind:value={userName}
+                class="bg-background"
+                type="text"
+                id="sync-userName"
+                placeholder="请输入用户名"
+            />
+        </div>
 
-            <div class="flex items-center justify-between space-x-2 my-4">
+        <div class="flex flex-col gap-2">
+            <Label for="sync-password" class="flex items-center gap-2">
+                {$t("app.settings.sync.password")}
+                {#if testSuccess}
+                    <CheckCircle2 class="w-4 h-4 text-green-500" />
+                {/if}
+            </Label>
+            <Input
+                bind:value={password}
+                type="password"
+                class="bg-background"
+                id="sync-password"
+                placeholder="请输入密码"
+            />
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="flex gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onclick={register}
+                    disabled={registerLoading || loginLoading}
+                    class="flex-1"
+                >
+                    {#if registerLoading}
+                        <LoaderCircle class="w-4 h-4 animate-spin mr-2" />
+                    {/if}
+                    {$t("app.settings.sync.register")}
+                </Button>
+
+                <Button size="sm" onclick={login} disabled={loginLoading || registerLoading} class="flex-1">
+                    {#if loginLoading}
+                        <LoaderCircle class="w-4 h-4 animate-spin mr-2" />
+                    {/if}
+                    {$t("app.settings.sync.login")}
+                </Button>
+            </div>
+
+            <div class="flex items-center space-x-2 bg-muted p-3 rounded-lg">
                 <Switch id="sync-enabled" bind:checked={syncEnabled} disabled={!testSuccess} />
-                <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1 font-bold">
-                    <span>{$t("app.settings.sync.enabled")}</span>
+                <Label for="sync-enabled" class="flex flex-col gap-1 cursor-pointer">
+                    <span class="font-medium">{$t("app.settings.sync.title")}</span>
+                    <span class="text-xs text-muted-foreground">
+                        {testSuccess ? $t("app.settings.sync.ready") : $t("app.settings.sync.loginToEnable")}
+                    </span>
                 </Label>
             </div>
         </div>
     </div>
-    {#if testResult.length > 0}
-        <Label class="flex-1 text-xs font-normal leading-snug">
+
+    <!-- {#if testResult}
+        <div
+            class="flex items-center gap-2 text-sm p-3 rounded-lg {testSuccess
+                ? 'bg-green-500/10 text-green-500'
+                : 'bg-destructive/10 text-destructive'}"
+        >
+            {#if testSuccess}
+                <CheckCircle2 class="w-4 h-4" />
+            {:else}
+                <XCircle class="w-4 h-4" />
+            {/if}
             {testResult}
-        </Label>
-    {/if}
+        </div>
+    {/if} -->
 </div>
