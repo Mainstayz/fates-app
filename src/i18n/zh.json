@@ -167,12 +167,21 @@
         "enabled": "开启同步",
         "userName": "用户名",
         "password": "密码",
-        "registerOrLogin": "注册/登陆",
+        "registerOrLogin": "注册/登录",
         "register": "注册",
-        "login": "登陆",
+        "login": "登录",
         "configDescription1": "2. 当您选择使用同步功能时，即表示您已阅读、理解并同意本隐私声明的内容。如果您不希望您的数据被存储或用于同步功能，请勿启用该功能。",
         "ready": "数据已就绪",
-        "loginToEnable": "请先登录以启用数据同步"
+        "loginToEnable": "请先登录以启用数据同步",
+        "enterCredentials": "请输入用户名和密码",
+        "registerSuccess": "注册成功",
+        "registerFailed": "注册失败",
+        "loginSuccess": "登录成功",
+        "loginFailed": "登录失败",
+        "error": "错误",
+        "unknownError": "未知错误",
+        "userNamePlaceholder": "请输入用户名",
+        "passwordPlaceholder": "请输入密码"
       }
     },
     "week_report": {

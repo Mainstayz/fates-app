@@ -187,16 +187,25 @@
       "sync": {
         "title": "Synchronous",
         "configTitle": "User Data Privacy Statement",
-        "configDescription": "1. Your personal data will be stored on our servers and used only for the purpose of synchronization functionality. \nWe promise that your data will not be used for any other purpose, including but not limited to commercial promotion, data analysis or third-party sharing.",
-        "enabled": "Turn on sync",
+        "configDescription": "1. Your personal data will be stored on our servers and used only for the purpose of synchronization functionality. We promise that your data will not be used for any other purpose, including but not limited to commercial promotion, data analysis or third-party sharing.",
+        "enabled": "Enable sync",
         "userName": "Username",
         "password": "Password",
         "registerOrLogin": "Register/Login",
         "register": "Register",
         "login": "Login",
-        "configDescription1": "2. When you choose to use the synchronization function, it means that you have read, understood and agreed to the contents of this privacy statement. \nIf you do not want your data to be stored or used for the sync feature, do not enable this feature.",
+        "configDescription1": "2. When you choose to use the synchronization function, it means that you have read, understood and agreed to the contents of this privacy statement. If you do not want your data to be stored or used for the sync feature, do not enable this feature.",
         "ready": "Data is ready",
-        "loginToEnable": "Please log in first to enable data sync"
+        "loginToEnable": "Please login first to enable data sync",
+        "enterCredentials": "Please enter username and password",
+        "registerSuccess": "Registration successful",
+        "registerFailed": "Registration failed",
+        "loginSuccess": "Login successful",
+        "loginFailed": "Login failed",
+        "error": "Error",
+        "unknownError": "Unknown error",
+        "userNamePlaceholder": "Enter your username",
+        "passwordPlaceholder": "Enter your password"
       }
     },
     "statistics": {

@@ -15,17 +15,18 @@
     let userName = $state<string>("");
     let password = $state<string>("");
     let initialized = $state<boolean>(false);
-    let testSuccess = $state<boolean>(false);
     let registerLoading = $state<boolean>(false);
     let loginLoading = $state<boolean>(false);
-    let testResult = $state<string>("");
+    let requestStatus = $state<number>(-1); // -1: init State, 0: login success, 1: login failed, 2: register success, 3: register failed
+    let responseStr = $state<string>("");
     let originalUserName = $state<string>("");
     let originalPassword = $state<string>("");
 
     // 监听输入变化
     $effect(() => {
         if (initialized && (userName !== originalUserName || password !== originalPassword)) {
-            testSuccess = false;
+            requestStatus = -1;
+            responseStr = "";
             syncEnabled = false;
         }
     });
@@ -33,7 +34,7 @@
     async function registerSuccess() {
         originalUserName = userName;
         originalPassword = password;
-        testSuccess = true;
+        requestStatus = 2;
         syncEnabled = true;
         updateConfig();
     }
@@ -41,18 +42,20 @@
     async function loginSuccess() {
         originalUserName = userName;
         originalPassword = password;
-        testSuccess = true;
+        requestStatus = 0;
         updateConfig();
     }
 
     async function register() {
+        requestStatus = -1;
         if (!userName || !password) {
-            testResult = "请输入用户名和密码";
+            requestStatus = 3;
+            responseStr = $t("app.settings.sync.enterCredentials");
             return;
         }
 
         registerLoading = true;
-        testResult = "";
+        responseStr = "";
         try {
             const url = `https://fates-app.com/api/register`;
             const response = await fetch(url, {
@@ -65,26 +68,37 @@
             });
             const data = await response.json();
             if (response.ok) {
-                testResult = "注册成功";
+                responseStr = $t("app.settings.sync.registerSuccess");
                 await registerSuccess();
             } else {
-                testResult = "注册失败: " + (data.message || "未知错误");
+                responseStr =
+                    $t("app.settings.sync.registerFailed") +
+                    ": " +
+                    (data.message || $t("app.settings.sync.unknownError"));
+                requestStatus = 3;
             }
         } catch (error) {
-            testResult = "错误: " + error;
+            responseStr = $t("app.settings.sync.error") + ": " + error;
+            requestStatus = 3;
         } finally {
             registerLoading = false;
         }
     }
 
     async function login() {
+        if (requestStatus === 0) {
+            return;
+        }
+
+        requestStatus = -1;
         if (!userName || !password) {
-            testResult = "请输入用户名和密码";
+            requestStatus = 1;
+            responseStr = $t("app.settings.sync.enterCredentials");
             return;
         }
 
         loginLoading = true;
-        testResult = "";
+        responseStr = "";
         try {
             const url = `https://fates-app.com/api/login`;
             const response = await fetch(url, {
@@ -97,15 +111,16 @@
             });
             const data = await response.json();
             if (response.ok) {
-                testResult = "登录成功";
+                responseStr = $t("app.settings.sync.loginSuccess");
                 await loginSuccess();
             } else {
-                testResult = "登录失败: " + (data.message || "未知错误");
-                testSuccess = false;
+                responseStr =
+                    $t("app.settings.sync.loginFailed") + ": " + (data.message || $t("app.settings.sync.unknownError"));
+                requestStatus = 1;
             }
         } catch (error) {
-            testResult = "错误: " + error;
-            testSuccess = false;
+            responseStr = $t("app.settings.sync.error") + ": " + error;
+            requestStatus = 1;
         } finally {
             loginLoading = false;
         }
@@ -113,7 +128,7 @@
 
     function updateConfig() {
         if (!initialized) return;
-        if (syncEnabled && testSuccess) {
+        if (syncEnabled && (requestStatus === 0 || requestStatus === 2 || requestStatus === -1)) {
             console.log("[Settings] Sync enabled, enabling sync ..");
             platform.instance.storage.enableSync();
         } else {
@@ -146,7 +161,7 @@
     });
 </script>
 
-<div class="flex flex-col gap-6 max-w-md">
+<div class="flex flex-col gap-4 max-w-md">
     <div class="flex flex-col gap-2">
         <Label class="text-lg font-medium">{$t("app.settings.sync.configTitle")}</Label>
         <p class="text-muted-foreground text-sm">
@@ -163,7 +178,7 @@
         <div class="flex flex-col gap-2">
             <Label for="sync-userName" class="flex items-center gap-2">
                 {$t("app.settings.sync.userName")}
-                {#if testSuccess}
+                {#if requestStatus === 0 || requestStatus === 2}
                     <CheckCircle2 class="w-4 h-4 text-green-500" />
                 {/if}
             </Label>
@@ -172,14 +187,14 @@
                 class="bg-background"
                 type="text"
                 id="sync-userName"
-                placeholder="请输入用户名"
+                placeholder={$t("app.settings.sync.userNamePlaceholder")}
             />
         </div>
 
         <div class="flex flex-col gap-2">
             <Label for="sync-password" class="flex items-center gap-2">
                 {$t("app.settings.sync.password")}
-                {#if testSuccess}
+                {#if requestStatus === 0 || requestStatus === 2}
                     <CheckCircle2 class="w-4 h-4 text-green-500" />
                 {/if}
             </Label>
@@ -188,7 +203,7 @@
                 type="password"
                 class="bg-background"
                 id="sync-password"
-                placeholder="请输入密码"
+                placeholder={$t("app.settings.sync.passwordPlaceholder")}
             />
         </div>
 
@@ -207,7 +222,12 @@
                     {$t("app.settings.sync.register")}
                 </Button>
 
-                <Button size="sm" onclick={login} disabled={loginLoading || registerLoading} class="flex-1">
+                <Button
+                    size="sm"
+                    onclick={login}
+                    disabled={loginLoading || registerLoading || requestStatus == 0}
+                    class="flex-1"
+                >
                     {#if loginLoading}
                         <LoaderCircle class="w-4 h-4 animate-spin mr-2" />
                     {/if}
@@ -215,30 +235,30 @@
                 </Button>
             </div>
 
-            <div class="flex items-center space-x-2 bg-muted p-3 rounded-lg">
-                <Switch id="sync-enabled" bind:checked={syncEnabled} disabled={!testSuccess} />
-                <Label for="sync-enabled" class="flex flex-col gap-1 cursor-pointer">
-                    <span class="font-medium">{$t("app.settings.sync.title")}</span>
-                    <span class="text-xs text-muted-foreground">
-                        {testSuccess ? $t("app.settings.sync.ready") : $t("app.settings.sync.loginToEnable")}
-                    </span>
-                </Label>
-            </div>
+            {#if requestStatus === 0 || requestStatus === 2}
+                <div class="flex items-center space-x-2 bg-muted p-3 rounded-lg">
+                    <Switch
+                        id="sync-enabled"
+                        bind:checked={syncEnabled}
+                        disabled={!(requestStatus === 0 || requestStatus === 2)}
+                    />
+                    <Label for="sync-enabled" class="flex flex-col gap-1 cursor-pointer">
+                        <span class="font-medium">{$t("app.settings.sync.title")}</span>
+                        <span class="text-xs text-muted-foreground">
+                            {#if requestStatus === 0 || requestStatus === 2}
+                                {$t("app.settings.sync.ready")}
+                            {:else}
+                                {$t("app.settings.sync.loginToEnable")}
+                            {/if}
+                        </span>
+                    </Label>
+                </div>
+            {:else if responseStr}
+                <div class="flex items-center gap-2 text-sm p-3 rounded-lg bg-destructive/10 text-destructive">
+                    <XCircle class="w-4 h-4" />
+                    {responseStr}
+                </div>
+            {/if}
         </div>
     </div>
-
-    <!-- {#if testResult}
-        <div
-            class="flex items-center gap-2 text-sm p-3 rounded-lg {testSuccess
-                ? 'bg-green-500/10 text-green-500'
-                : 'bg-destructive/10 text-destructive'}"
-        >
-            {#if testSuccess}
-                <CheckCircle2 class="w-4 h-4" />
-            {:else}
-                <XCircle class="w-4 h-4" />
-            {/if}
-            {testResult}
-        </div>
-    {/if} -->
 </div>
