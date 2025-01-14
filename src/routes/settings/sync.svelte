@@ -5,11 +5,10 @@
     import { Separator } from "$lib/components/ui/separator";
     import { Switch } from "$lib/components/ui/switch";
     import { appConfig } from "$src/app-config";
-    import { OpenAIClient } from "$src/openai";
-    import { LoaderCircle, Check, X, AlertCircle } from "lucide-svelte";
-    import { t } from "svelte-i18n";
-    import { onMount } from "svelte";
     import platform from "$src/platform";
+    import { LoaderCircle } from "lucide-svelte";
+    import { onMount } from "svelte";
+    import { t } from "svelte-i18n";
 
     // 当前配置状态
     let syncEnabled = $state<boolean>(false);
@@ -88,6 +87,7 @@
         if (!initialized) return;
         if (syncEnabled) {
             console.log("[Settings] Sync enabled, enabling sync ..");
+            testSuccess = true;
             platform.instance.storage.enableSync();
         } else {
             console.log("[Settings] Sync disabled, disabling sync ..");
@@ -129,12 +129,7 @@
         </p>
     </div>
     <Separator />
-    <div class="flex items-center justify-between space-x-2 my-4">
-        <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1 font-bold">
-            <span>{$t("app.settings.sync.enabled")}</span>
-        </Label>
-        <Switch id="sync-enabled" bind:checked={syncEnabled} />
-    </div>
+
     <div class="flex flex-col gap-2">
         <Label for="sync-userName">{$t("app.settings.sync.userName")}</Label>
         <Input bind:value={userName} class="bg-background" type="text" id="sync-userName" />
@@ -152,11 +147,25 @@
                     {$t("app.settings.sync.register")}
                 {/if}
             </Button>
-            {#if testResult.length > 0}
-                <Label class="flex-1 text-xs font-normal leading-snug">
-                    {testResult}
+            <Button size="sm" onclick={login} disabled={loginLoading}>
+                {#if loginLoading}
+                    <LoaderCircle class="w-4 h-4 animate-spin" />
+                {:else}
+                    {$t("app.settings.sync.login")}
+                {/if}
+            </Button>
+
+            <div class="flex items-center justify-between space-x-2 my-4">
+                <Switch id="sync-enabled" bind:checked={syncEnabled} disabled={!testSuccess} />
+                <Label for="sync-enabled" class="flex flex-col flex-1 space-y-1 font-bold">
+                    <span>{$t("app.settings.sync.enabled")}</span>
                 </Label>
-            {/if}
+            </div>
         </div>
     </div>
+    {#if testResult.length > 0}
+        <Label class="flex-1 text-xs font-normal leading-snug">
+            {testResult}
+        </Label>
+    {/if}
 </div>
