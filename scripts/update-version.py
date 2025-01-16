@@ -46,3 +46,5 @@ if __name__ == "__main__":
     update_version(new_version)
     # pnpm run version
     os.system("pnpm run version")
+    version_tags = "v" + new_version
+    os.system(f"git tag {version_tags}")
