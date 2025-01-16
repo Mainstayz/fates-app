@@ -139,7 +139,16 @@
         myChart = echarts.init(chartDom);
         updateChart($locale ?? "en");
 
+        // Add resize handler
+        const handleResize = () => {
+            myChart?.resize();
+        };
+
+        // Add resize event listener
+        window.addEventListener("resize", handleResize);
+
         return () => {
+            window.removeEventListener("resize", handleResize);
             myChart?.dispose();
         };
     });

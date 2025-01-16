@@ -13,9 +13,7 @@
     "windows": [
       {
         "width": 1200,
-        "height": 800,
-        "maximizable": false,
-        "resizable": false
+        "height": 800
       }
     ],
     "security": {
