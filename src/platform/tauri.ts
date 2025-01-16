@@ -317,5 +317,6 @@ export const platform: PlatformAPI = {
     },
     destroy: async () => {
         TimeProgressBarManager.getInstance().destroy();
+        trayManager.destroy();
     },
 };

@@ -1,18 +1,26 @@
 // https://github.com/eythaann/Seelen-UI/blob/master/src/background/tray.rs
-use serde::{ Deserialize, Serialize };
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
-use std::{ thread::sleep, time::Duration };
+use std::{thread::sleep, time::Duration};
+use tauri::utils::platform;
+use tauri::image;
 use tauri::{
-    async_runtime,
-    menu::{ MenuBuilder, MenuEvent, MenuItemBuilder },
-    tray::{ MouseButton, TrayIconBuilder, TrayIconEvent },
-    App,
-    AppHandle,
-    Emitter,
-    Manager,
-    Wry,
+    image::Image,
+    menu::{MenuBuilder, MenuEvent, MenuItemBuilder},
+    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+    App, AppHandle, Manager, Wry,
 };
+// platform
+
+
+#[cfg(target_os = "windows")]
 use tokio::time::interval;
+
+#[cfg(target_os = "windows")]
+use tauri::async_runtime;
+
+// tray-id
+const TRAY_ID: &str = "app-tray";
 
 #[derive(Default)]
 struct TrayState {
@@ -45,21 +53,40 @@ pub fn try_register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
-/// 注册系统托盘图标及其菜单
 fn register_tray_icon(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    // 创建托盘菜单项
-    let menu = create_tray_menu(app)?;
+    // let menu = create_tray_menu(app)?;
+    // let icon = app.default_window_icon().unwrap().clone();
 
-    // 设置托盘图标
-    let icon = app.default_window_icon().unwrap().clone();
     let handle = app.handle();
 
-    app.manage(Mutex::new(TrayState::default()));
+    let resource_dir = app.path().resource_dir().unwrap();
 
-    // 构建托盘图标
-    TrayIconBuilder::with_id("app-tray")
-        // .icon(icon) // implementation on js side
-        // .tooltip("Fates") // implementation on js side
+    #[cfg(target_os = "macos")]
+    let icon_path = app.path().resolve(
+        "resources/icon-mac.ico",
+        tauri::path::BaseDirectory::Resource,
+    )?;
+
+
+    #[cfg(target_os = "windows")]
+    let icon_path = app.path().resolve(
+        "resources/icon.ico",
+        tauri::path::BaseDirectory::Resource,
+    )?;
+
+    log::info!("iconPath:{:?}", icon_path);
+    log::info!("resource_dir:{:?}", resource_dir);
+
+    let image = Image::from_path(icon_path)?;
+
+    app.manage(Mutex::new(TrayState::default()));
+    let is_mac = platform::Target::current() == platform::Target::MacOS;
+
+
+    TrayIconBuilder::with_id(TRAY_ID)
+        .icon(image)
+        .icon_as_template(is_mac)
+        .menu_on_left_click(false)
         // .menu(&menu) // implementation on js side
         // .on_menu_event(create_menu_handler(handle.clone())) // implementation on js side
         .on_tray_icon_event(create_tray_handler(handle.clone()))
@@ -84,18 +111,16 @@ fn create_tray_menu(app: &mut App) -> Result<tauri::menu::Menu<Wry>, Box<dyn std
 }
 
 fn create_menu_handler(_handle: AppHandle) -> impl Fn(&AppHandle, MenuEvent) {
-    move |app: &AppHandle, event: MenuEvent| {
-        match event.id().as_ref() {
-            "quit" => std::process::exit(0),
-            "show" => show_main_window(app.clone()),
-            "flash" => {
-                let _ = flash_tray_icon(app.clone(), true);
-            }
-            "flash_off" => {
-                let _ = flash_tray_icon(app.clone(), false);
-            }
-            _ => (),
+    move |app: &AppHandle, event: MenuEvent| match event.id().as_ref() {
+        "quit" => std::process::exit(0),
+        "show" => show_main_window(app.clone()),
+        "flash" => {
+            let _ = flash_tray_icon(app.clone(), true);
         }
+        "flash_off" => {
+            let _ = flash_tray_icon(app.clone(), false);
+        }
+        _ => (),
     }
 }
 
@@ -109,7 +134,6 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
             }
             // TrayIconEvent::Enter { id: _, position, rect } => {
             //     if get_tray_flash_state(handle.clone()) {
-            //         log::info!("托盘图标进入：{:?} {:?}", position, rect);
             //         let physical_position = rect.position.to_physical::<i32>(1.0);
             //         let physical_size = rect.size.to_physical::<i32>(1.0);
             //         let info = TrayIconEventInfo {
@@ -126,7 +150,6 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
             // }
             // TrayIconEvent::Leave { id: _, position, rect } => {
             //     if get_tray_flash_state(handle.clone()) {
-            //         log::info!("托盘图标离开：{:?} {:?}", position, rect);
             //         let physical_position = rect.position.to_physical::<i32>(1.0);
             //         let physical_size = rect.size.to_physical::<i32>(1.0);
             //         let info = TrayIconEventInfo {
@@ -142,7 +165,7 @@ fn create_tray_handler(handle: AppHandle) -> impl Fn(&tauri::tray::TrayIcon, Tra
             //     }
             // }
             _ => (),
-        } //    右键点击会自动显示菜单，无需额外处理
+        }
     }
 }
 
@@ -155,7 +178,7 @@ fn show_main_window(app: AppHandle) {
         log::warn!("Main window not found");
     }
 }
-// 获取托盘图标状态
+
 #[tauri::command]
 pub fn get_tray_flash_state(app: AppHandle) -> bool {
     let state = app.state::<Mutex<TrayState>>();
@@ -163,7 +186,6 @@ pub fn get_tray_flash_state(app: AppHandle) -> bool {
     state.is_running
 }
 
-/// 闪烁托盘图标
 #[tauri::command]
 #[cfg(target_os = "windows")]
 pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
@@ -182,36 +204,31 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
         timer.abort();
     }
 
-    let tray_icon = app
-        .tray_by_id("tray")
-        .ok_or_else(|| false)
-        .unwrap();
+    let tray_icon = app.tray_by_id(TRAY_ID).ok_or_else(|| false).unwrap();
     let app_handle = app.clone();
 
     if flash {
         log::info!("开始闪烁");
         state.is_running = true;
         let is_running = state.is_running;
-        state.timer = Some(
-            async_runtime::spawn(async move {
-                let mut flag = true;
-                let mut interval = interval(Duration::from_millis(500));
-                while is_running {
-                    if flag {
-                        if let Err(e) = tray_icon.set_icon(None) {
-                            println!("设置托盘图标失败：{}", e);
-                        }
-                    } else {
-                        let icon = app_handle.default_window_icon().unwrap().clone();
-                        if let Err(e) = tray_icon.set_icon(Some(icon)) {
-                            println!("设置托盘图标失败：{}", e);
-                        }
+        state.timer = Some(async_runtime::spawn(async move {
+            let mut flag = true;
+            let mut interval = interval(Duration::from_millis(500));
+            while is_running {
+                if flag {
+                    if let Err(e) = tray_icon.set_icon(None) {
+                        println!("设置托盘图标失败：{}", e);
                     }
-                    flag = !flag;
-                    interval.tick().await;
+                } else {
+                    let icon = app_handle.default_window_icon().unwrap().clone();
+                    if let Err(e) = tray_icon.set_icon(Some(icon)) {
+                        println!("设置托盘图标失败：{}", e);
+                    }
                 }
-            })
-        );
+                flag = !flag;
+                interval.tick().await;
+            }
+        }));
     } else {
         state.is_running = false;
         let icon = app_handle.default_window_icon().unwrap().clone();
@@ -226,17 +243,12 @@ pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
 #[cfg(not(target_os = "windows"))]
 pub fn flash_tray_icon(app: AppHandle, flash: bool) -> bool {
     let state = app.state::<Mutex<TrayState>>();
-
     let mut state = state.lock().unwrap();
-
     if flash == state.is_running {
         return true;
     }
 
-    let tray_icon = app
-        .tray_by_id("tray")
-        .ok_or_else(|| false)
-        .unwrap();
+    let tray_icon = app.tray_by_id(TRAY_ID).ok_or_else(|| false).unwrap();
 
     if flash {
         state.is_running = true;

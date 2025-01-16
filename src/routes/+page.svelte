@@ -42,7 +42,7 @@
         });
     }
 
-    let syncListener: () => void;
+    let syncListener: () => void | undefined;
 
     onMount(() => {
         const initialize = async () => {
@@ -65,6 +65,7 @@
 
             // sync
             console.log("[Main] Setting up sync listener ..");
+
             syncListener = platform.instance.storage.onSync(
                 (event: { status: string; direction: string; change: any }) => {
                     console.log("[Main] Sync event: ", event);
@@ -131,7 +132,10 @@
             unlisten();
             notificationManager.stopNotificationLoop();
             platform.instance.destroy();
-            syncListener();
+            if (syncListener) {
+                syncListener();
+            }
+
         };
     });
 </script>
