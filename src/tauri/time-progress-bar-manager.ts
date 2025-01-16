@@ -1,5 +1,6 @@
 import { Window } from "@tauri-apps/api/window";
 import { createWindow } from "$src/tauri/windows";
+import { listen } from "@tauri-apps/api/event";
 
 export class TimeProgressBarManager {
     private static instance: TimeProgressBarManager;
@@ -16,6 +17,14 @@ export class TimeProgressBarManager {
 
     public async initialize() {
         if (!this.window) {
+            // add event listener
+            listen("toggle-time-progress", (event) => {
+                if (event.payload === true) {
+                    this.show();
+                } else {
+                    this.hide();
+                }
+            });
             this.window = await this.createTimeProgressBarWindow();
         }
     }

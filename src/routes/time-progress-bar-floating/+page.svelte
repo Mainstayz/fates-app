@@ -1,6 +1,7 @@
 <script lang="ts">
     import TimeProgressBar from "$lib/components/time-progress-bar.svelte";
-    import platform, { initializePlatform, type UnlistenFn, REFRESH_TIME_PROGRESS } from "$src/platform";
+    import platform, { initializePlatform, type UnlistenFn } from "$src/platform";
+    import { NOTIFICATION_TOGGLE_MAIN_WINDOW, REFRESH_TIME_PROGRESS } from "$src/config";
     import dayjs from "dayjs";
     import { onMount } from "svelte";
     import type { Matter } from "$src/types";
@@ -105,29 +106,12 @@
 
     async function handleDoubleClick() {
         console.log("RootElement double clicked");
-        // let mainWindow = await Window.getByLabel("main");
-        // if (mainWindow) {
-        //     await mainWindow.unminimize();
-        //     await mainWindow.show();
-        //     await mainWindow.setFocus();
-        // }
+        platform.instance.event.emit(NOTIFICATION_TOGGLE_MAIN_WINDOW, true);
     }
 
     async function setupListeners() {
         console.log("Setup Listeners");
         await initializePlatform();
-        const unlistenVisibility = await platform.instance.event.listen("toggle-time-progress", async (event) => {
-            // const win = await getCurrentWindow();
-            const shouldShow = event.payload as boolean;
-            if (shouldShow) {
-                // await win.show();
-                await refreshTimeProgress();
-            } else {
-                // await win.hide();
-            }
-        });
-        unlistens.push(unlistenVisibility);
-
         const unlistenRefresh = await platform.instance.event.listen(REFRESH_TIME_PROGRESS, async () => {
             console.log("REFRESH_TIME_PROGRESS event received");
             await refreshTimeProgress();

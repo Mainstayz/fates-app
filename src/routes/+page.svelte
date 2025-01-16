@@ -1,15 +1,14 @@
 <script lang="ts">
     import "../i18n/i18n";
     import { appConfig } from "$src/app-config";
-    import platform, { initializePlatform, REFRESH_TIME_PROGRESS } from "$src/platform";
-
+    import platform, { initializePlatform } from "$src/platform";
     import notificationManager, { type Notification, NotificationType } from "$src/notification_manager";
     import tagManager from "$src/tag-manager.svelte";
 
     import { onMount } from "svelte";
     import { locale } from "svelte-i18n";
     import App from "./app.svelte";
-    import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "$src/config";
+    import { NOTIFICATION_RELOAD_TIMELINE_DATA, REFRESH_TIME_PROGRESS } from "$src/config";
     import SyncIndicator from "$src/components/sync-Indicator.svelte";
 
     let appConfigInitialized = $state(false);

@@ -1,6 +1,6 @@
 <script lang="ts">
     // 导入必要的依赖
-    import platform, { REFRESH_TIME_PROGRESS } from "$src/platform";
+    import platform from "$src/platform";
     import type { Matter } from "$src/types";
     import { onMount } from "svelte";
     import { t } from "svelte-i18n";
@@ -26,7 +26,7 @@
 
     import dayjs from "dayjs";
 
-    import { NOTIFICATION_RELOAD_TIMELINE_DATA } from "../config";
+    import { NOTIFICATION_RELOAD_TIMELINE_DATA, REFRESH_TIME_PROGRESS } from "$src/config";
 
     let timelineComponent: Timeline;
     let groups: TimelineGroup[] = $state([]);

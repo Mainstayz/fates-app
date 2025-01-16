@@ -1,12 +1,14 @@
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
-import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from "@tauri-apps/api/tray";
+import { TrayIcon } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
+import { NOTIFICATION_TOGGLE_MAIN_WINDOW } from "$src/config";
+
 
 class Tray {
     private static instance: Tray | null = null;
@@ -16,6 +18,7 @@ class Tray {
     private showOrHideProgress = true;
     private flashInterval: NodeJS.Timeout | null = null;
     private hasTray = false;
+    private unlisten: UnlistenFn | null = null;
 
     private constructor() {}
 
@@ -28,14 +31,36 @@ class Tray {
 
     public async init() {
         if (!this.hasTray) {
-            await this.createTrayIcon();
+             // add event listener
+            this.unlisten = await listen(NOTIFICATION_TOGGLE_MAIN_WINDOW, (event) => {
+                if (event.payload === true) {
+                    this.showMainWindow();
+                } else {
+                    this.hideMainWindow();
+                }
+            });
+            await this.setupTrayIcon();
         }
         this.hasTray = true;
     }
 
     public destroy() {
         this.hasTray = false;
-        TrayIcon.removeById(this.TRAY_ID);
+    }
+
+    public async showMainWindow() {
+        const win = getCurrentWindow();
+        if (win) {
+            await win.unminimize();
+            await win.show();
+            await win.setFocus();
+        }
+    }
+    public async hideMainWindow() {
+        const win = getCurrentWindow();
+        if (win) {
+            await win.hide();
+        }
     }
 
     public async exit(code: number) {
@@ -46,6 +71,7 @@ class Tray {
         await relaunch();
     }
 
+    // not used
     public async flash(state: boolean) {
         if (this.flashState === state) {
             return;
@@ -96,47 +122,23 @@ class Tray {
     }
 
     async getTrayById() {
-        const tray = await TrayIcon.getById(this.TRAY_ID);
-        return tray;
+        return await TrayIcon.getById(this.TRAY_ID);
     }
-    async createTrayIcon() {
+    async setupTrayIcon() {
         let tray = await this.getTrayById();
-        if (tray) {
-            return tray;
+        if (!tray) {
+            console.error("[tray-manager] GetTrayById not found!!");
+            return;
         }
-        console.log("createTrayIcon ... ");
+        console.log("[tray-manager] Will reset tray properties ... ");
         const iconPath = await this.getIconPath();
-        console.log("iconPath:", iconPath);
-        const options: TrayIconOptions = {
-            id: this.TRAY_ID,
-            icon: iconPath,
-            menu: await this.createMenu(),
-            iconAsTemplate: this.isMacos(),
-            menuOnLeftClick: false,
-            action: async (event: TrayIconEvent) => {
-                switch (event.type) {
-                    case "Click":
-                        console.log(`mouse ${event.button} button pressed, state: ${event.buttonState}`);
-                        if (event.button === "Left") {
-                            const window = getCurrentWindow();
-                            if (window) {
-                                await window.unminimize();
-                                await window.show();
-                                await window.setFocus();
-                            } else {
-                                console.log("main window not found");
-                            }
-                        }
-                        if (event.button === "Right") {
-                            console.log("right button pressed");
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            },
-        };
-        tray = await TrayIcon.new(options);
+        console.log("[tray-manager] IconPath:", iconPath);
+        await tray.setIcon(iconPath);
+        await tray.setTooltip("Tauri App");
+        await tray.setIconAsTemplate(this.isMacos());
+        await tray.setMenuOnLeftClick(false);
+        let menu = await this.createMenu();
+        await tray.setMenu(menu);
         return tray;
     }
 
@@ -146,6 +148,7 @@ class Tray {
                 id: "show_or_hide_progress",
                 text: get(_)("app.tray.showOrHideProgress"),
                 action: async (id: string) => {
+                    console.log("[tray-manager] onClick showOrHideProgress ... ");
                     this.showOrHideProgress = !this.showOrHideProgress;
                     await emit("toggle-time-progress", this.showOrHideProgress);
                 },
@@ -154,7 +157,7 @@ class Tray {
                 id: "exit",
                 text: get(_)("app.tray.exit"),
                 action: async (id: string) => {
-                    console.log("onClick exit(1) ... ");
+                    console.log("[tray-manager] onClick exit(1) ... ");
                     await exit(1);
                 },
             }),

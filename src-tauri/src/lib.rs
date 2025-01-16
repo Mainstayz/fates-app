@@ -5,12 +5,15 @@ mod database;
 mod http_server;
 mod models;
 mod utils;
+mod tray;
 
 use crate::http_server::start_http_server;
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
+use tray::try_register_tray_icon;
+
 
 #[tauri::command]
 async fn auto_launch(app: tauri::AppHandle, enable: bool) {
@@ -75,8 +78,8 @@ pub fn run() {
         .plugin(logger_builder.build())
         .invoke_handler(tauri::generate_handler![auto_launch, show_main_window])
         .setup(|app| {
+            try_register_tray_icon(app).unwrap();
             let db = database::initialize_database(&app.handle()).unwrap();
-
             if let Err(e) = start_http_server(8523, db.clone()) {
                 log::error!("Failed to start HTTP server: {}", e);
             }

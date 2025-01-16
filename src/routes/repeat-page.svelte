@@ -16,11 +16,11 @@
     import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
 
     import { Priority } from "$lib/types";
-    import platform, { REFRESH_TIME_PROGRESS } from "$src/platform";
+    import platform from "$src/platform";
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { onMount } from "svelte";
     import { repeatTaskAPI } from "$src/repeat-task.svelte";
-
+    import { REFRESH_TIME_PROGRESS } from "$src/config";
     let table = new TableHandler(repeatTaskAPI.data, { rowsPerPage: 10 });
     const search = table.createSearch();
 

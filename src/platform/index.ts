@@ -1,5 +1,5 @@
 import type { Matter, NotificationRecord, RepeatTask, Todo, Tag } from "$src/types";
-export const REFRESH_TIME_PROGRESS = "refresh-time-progress";
+
 
 export type UnlistenFn = () => void;
 
