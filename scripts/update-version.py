@@ -44,3 +44,5 @@ def update_version(new_version=None):
 if __name__ == "__main__":
     new_version = sys.argv[1] if len(sys.argv) > 1 else None
     update_version(new_version)
+    # pnpm run version
+    os.system("pnpm run version")

@@ -1,3 +1,14 @@
+## [0.8.1](https://github.com/Mainstayz/fates-app/compare/v0.8.0...v0.8.1) (2025-01-16)
+
+
+### Features
+
+* enhance sync settings localization and user feedback ([69a3114](https://github.com/Mainstayz/fates-app/commit/69a3114a299fd0aeed4859071ec3e4b04806a8d9))
+* enhance sync settings UI and functionality ([abb7db7](https://github.com/Mainstayz/fates-app/commit/abb7db72d7af556eb832f7c0817d4dc69041bf03))
+* enhance synchronization settings with improved localization and user feedback ([a06f617](https://github.com/Mainstayz/fates-app/commit/a06f6170e8b54b4a56d2bbaa8b5aa5e90a5b1036))
+
+
+
 ## [0.7.1](https://github.com/Mainstayz/fates-app/compare/v0.7.0...v0.7.1) (2025-01-12)
 
 
