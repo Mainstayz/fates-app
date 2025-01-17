@@ -177,7 +177,7 @@
         <Label class={aiEnabled ? "" : "text-muted-foreground"} for="prompt"
             >{$t("app.settings.aiReminder.title")}</Label
         >
-        <Textarea disabled={!aiEnabled} bind:value={aiReminderPrompt} id="prompt" class="bg-background" />
+        <Textarea disabled={!aiEnabled} bind:value={aiReminderPrompt} id="prompt" class="bg-background h-[208px]" />
         <Button size="sm" onclick={notificationTest}>
             {#if notificationTestLoading}
                 <Loader2 class="w-4 h-4 animate-spin" />

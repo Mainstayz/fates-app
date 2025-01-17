@@ -10,7 +10,7 @@ export interface Matter {
     created_at: string;
     updated_at: string;
     reserved_1?: string; // for className
-    reserved_2?: string;
+    reserved_2?: string; // assigned repeat task id  or  todo item id
     reserved_3?: string;
     reserved_4?: string;
     reserved_5?: string;
@@ -34,6 +34,7 @@ export interface Todo {
     status: string; // "todo", "in_progress", "completed"
     created_at: string;
     updated_at: string;
+    execution_time?: string; //
 }
 
 export interface NotificationRecord {

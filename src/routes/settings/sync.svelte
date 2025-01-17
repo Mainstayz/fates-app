@@ -231,7 +231,12 @@
                     {#if loginLoading}
                         <LoaderCircle class="w-4 h-4 animate-spin mr-2" />
                     {/if}
-                    {$t("app.settings.sync.login")}
+                    {#if requestStatus === 0}
+                        <CheckCircle2 class="w-4 h-4 text-green-500 mr-2" />
+                        {$t("app.settings.sync.loginSuccess")}
+                    {:else}
+                        {$t("app.settings.sync.login")}
+                    {/if}
                 </Button>
             </div>
 
