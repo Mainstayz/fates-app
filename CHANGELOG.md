@@ -1,3 +1,23 @@
+## [0.8.2](https://github.com/Mainstayz/fates-app/compare/v0.8.1...v0.8.2) (2025-01-17)
+
+
+### Bug Fixes
+
+* correct Chinese localization for delete confirmation message ([b16f0cb](https://github.com/Mainstayz/fates-app/commit/b16f0cb7971361e3c2c90f69f826ff95c632a49e))
+* update time picker styles and comment out validation logic ([87fd812](https://github.com/Mainstayz/fates-app/commit/87fd8124ae9740b825def77a84e39e28dff2ff5a))
+
+
+### Features
+
+* add Fates App Roadmap link to README ([bf519d7](https://github.com/Mainstayz/fates-app/commit/bf519d79a8a097ba289a639c35547714dee035ee))
+* add resize handling to daily heat map component ([9b446d2](https://github.com/Mainstayz/fates-app/commit/9b446d274f52d58c40ce05ede5b8e360e067389d))
+* enhance platform and tray management functionality ([6e049a8](https://github.com/Mainstayz/fates-app/commit/6e049a81c944550ae124ecf3b5150b0f1a2ec40d))
+* enhance Todo and Matter interfaces, improve notification settings UI ([a3ae371](https://github.com/Mainstayz/fates-app/commit/a3ae371922b2e2eaef8eb7b2882a5fb36c06d102))
+* implement TodoScheduler for daily task management and enhance notification handling ([c23eae2](https://github.com/Mainstayz/fates-app/commit/c23eae2e3f57fd6a3d3d376a0bb52f3b3546c68d))
+* update Todo interface and enhance date handling in components ([3351772](https://github.com/Mainstayz/fates-app/commit/3351772d4b4623833dbb3a447eca54b6a0a55dbb))
+
+
+
 ## [0.8.1](https://github.com/Mainstayz/fates-app/compare/v0.8.0...v0.8.1) (2025-01-16)
 
 

@@ -39,12 +39,12 @@ def update_version(new_version=None):
         json.dump(tauri_conf, f, indent=2)
 
     print(f"版本号已更新为：{next_version}")
-
+    return next_version
 
 if __name__ == "__main__":
     new_version = sys.argv[1] if len(sys.argv) > 1 else None
-    update_version(new_version)
+    next_version = update_version(new_version)
     # pnpm run version
     os.system("pnpm run version")
-    version_tags = "v" + new_version
+    version_tags = "v" + next_version
     os.system(f"git tag {version_tags}")
