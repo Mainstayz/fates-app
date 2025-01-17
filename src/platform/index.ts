@@ -61,6 +61,7 @@ export interface PlatformAPI {
         setKV(key: string, value: string, local: boolean): Promise<void>;
         getKV(key: string, local: boolean): Promise<string | null>;
         deleteKV(key: string): Promise<void>;
+        getKVByRegex(pattern: string, local: boolean): Promise<Record<string, string>>;
 
         // Tag 模块
         createTag(names: string): Promise<void>;

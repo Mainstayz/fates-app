@@ -12,10 +12,12 @@
     let {
         rowId,
         selectedTime,
+        disabled,
         onUpdateValue,
     }: {
         rowId: string;
         selectedTime: string;
+        disabled: boolean;
         onUpdateValue: (rowId: string, newValue: string) => void;
     } = $props();
 
@@ -86,6 +88,7 @@
                 class="bg-background h-[32px] w-[152px]"
                 min={Min}
                 max={Max}
+                {disabled}
                 onchange={handleChange}
                 onfocusout={handleConfirm}
             />
@@ -94,7 +97,7 @@
             </Button>
         </div>
     {:else}
-        <Button variant="ghost" class="h-8 w-[192px] justify-start" onclick={toggleEdit}>
+        <Button variant="ghost" class="h-8 w-[192px] justify-start" onclick={toggleEdit} {disabled}>
             <!--  左对齐 -->
             <div class="flex">
                 {formatDateTime(selectedTime)}

@@ -116,6 +116,25 @@ class TauriStorage {
         await this.db.deleteKV(key);
     }
 
+    async getKVByRegex(pattern: string, local: boolean = false): Promise<Record<string, string>> {
+        if (local) {
+            const result: Record<string, string> = {};
+            const regex = new RegExp(pattern);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && regex.test(key)) {
+                    const value = localStorage.getItem(key);
+                    if (value !== null) {
+                        result[key] = value;
+                    }
+                }
+            }
+            return result;
+        } else {
+            return this.db.getKVByRegex(pattern);
+        }
+    }
+
     async createTag(name: string): Promise<void> {
         await this.db.createTag(name);
     }

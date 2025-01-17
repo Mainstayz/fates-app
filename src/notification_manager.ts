@@ -452,8 +452,9 @@ export class NotificationManager {
             if (taskExists) {
                 continue;
             }
-
-            const storeKey = `repeat_task_${task.id}_${now.toISOString().split("T")[0]}`;
+            // YYYYMMDD_repeat_task_id
+            let prefix = dayjs(now).format("YYYYMMDD");
+            const storeKey = `${prefix}_repeat_task_${task.id}`;
             // need sync
             const created = await appConfig.getStoredValue(storeKey, false);
             if (created === "1") {

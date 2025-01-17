@@ -4,6 +4,7 @@
     import platform, { initializePlatform } from "$src/platform";
     import notificationManager, { type Notification, NotificationType } from "$src/notification_manager";
     import tagManager from "$src/tag-manager.svelte";
+    import { todoScheduler } from "$src/scheduler";
 
     import { onMount } from "svelte";
     import { locale } from "svelte-i18n";
@@ -121,6 +122,10 @@
             // 启动通知循环
             console.log("[Main] Starting notification loop ..");
             await notificationManager.startNotificationLoop();
+
+            // 启动定时任务
+            console.log("[Main] Starting todo scheduler ..");
+            todoScheduler.start();
         };
 
         // 立即执行初始化
@@ -135,7 +140,8 @@
             if (syncListener) {
                 syncListener();
             }
-
+            // 停止定时任务
+            todoScheduler.stop();
         };
     });
 </script>

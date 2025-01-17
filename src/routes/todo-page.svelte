@@ -5,6 +5,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Table from "$lib/components/ui/table/index";
     import { v4 as uuidv4 } from "uuid";
+    import dayjs from "dayjs";
 
     import AlertDialog from "$lib/components/alert-dialog.svelte";
     import platform from "$src/platform";
@@ -28,7 +29,10 @@
 
         async syncTodoStatus() {
             console.log("[TodoPage] Sync todo status ...");
-            const matters = await platform.instance.storage.queryMattersByField("type", "2", true);
+            const matters = await platform.instance.storage.queryMattersByField("type_", "2", false);
+
+            console.log("[TodoPage] Matters: ", matters);
+
             this.matters = matters;
             const now = new Date();
 
@@ -37,6 +41,7 @@
 
             for (const todo of todos) {
                 if (!this.matters.some((matter) => matter.reserved_2 === todo.id)) {
+                    console.log("[TodoPage] Update todo status: [", todo.id, "] to [todo]");
                     await platform.instance.storage.updateTodo(todo.id, { ...todo, status: "todo" });
                 }
             }
@@ -44,11 +49,13 @@
             for (const matter of matters) {
                 const todoId = matter.reserved_2;
                 if (!todoId) {
+                    console.log("[TodoPage] Matter [", matter.id, "] has no todoId");
                     continue;
                 }
 
                 const todo = getTodoById(todoId);
                 if (!todo) {
+                    console.log("[TodoPage] Matter [", matter.id, "] has no todo");
                     continue;
                 }
 
@@ -64,14 +71,18 @@
                     newStatus = "completed";
                 }
 
-                if (newStatus !== todo.status) {
-                    await platform.instance.storage.updateTodo(todoId, { ...todo, status: newStatus });
-                }
+                console.log("[TodoPage] Update todo status: [", todo.id, "] to [", newStatus, "]");
+                await platform.instance.storage.updateTodo(todoId, {
+                    ...todo,
+                    status: newStatus,
+                    start_time: dayjs(startTime).format("YYYY-MM-DDTHH:mm"),
+                    updated_at: now.toISOString(),
+                });
             }
         }
 
         async fetchData() {
-            // await this.syncTodoStatus();
+            await this.syncTodoStatus();
             this.data = await platform.instance.storage.listTodos();
         }
 
@@ -244,6 +255,7 @@
                                     <DataTableSelectedTimeCell
                                         rowId={row.id}
                                         selectedTime={row.start_time || ""}
+                                        disabled={todoAPI.isTodoInProgress(row.id) || row.status === "completed"}
                                         onUpdateValue={(rowId, newValue) => {
                                             onUpdateValue(rowId, "start_time", newValue);
                                         }}

@@ -224,6 +224,26 @@ export class PouchDBManager {
         }
     }
 
+    async getKVByRegex(pattern: string): Promise<Record<string, string>> {
+        const result: Record<string, string> = {};
+        const regex = new RegExp(pattern);
+
+        const response = await this.db.allDocs({
+            include_docs: true,
+            startkey: `${PouchDBManager.STORES.KV}_`,
+            endkey: `${PouchDBManager.STORES.KV}_\ufff0`,
+        });
+
+        for (const row of response.rows) {
+            const key = row.id.replace(`${PouchDBManager.STORES.KV}_`, '');
+            if (regex.test(key) && row.doc) {
+                result[key] = (row.doc as any).value;
+            }
+        }
+
+        return result;
+    }
+
     // Tag operations
     async createTag(name: string): Promise<void> {
         const id = `${PouchDBManager.STORES.TAGS}_${name}`;
