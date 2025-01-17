@@ -97,15 +97,15 @@
     }
 
     function validateAndUpdateTime() {
-        if (startTime && endTime) {
-            if (!isValidTimeRange(startTime, endTime)) {
-                const startDate = new Date(`2000-01-01T${startTime}`);
-                startDate.setHours(startDate.getHours() + 1);
-                const newEndTime = startDate.toTimeString().slice(0, 5);
-                endTime = newEndTime;
-            }
-            updateValue();
-        }
+        // if (startTime && endTime) {
+        //     if (!isValidTimeRange(startTime, endTime)) {
+        //         const startDate = new Date(`2000-01-01T${startTime}`);
+        //         startDate.setHours(startDate.getHours() + 1);
+        //         const newEndTime = startDate.toTimeString().slice(0, 5);
+        //         endTime = newEndTime;
+        //     }
+        //     updateValue();
+        // }
     }
 </script>
 
