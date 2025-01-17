@@ -145,7 +145,7 @@
     <div class="flex flex-col flex-1 p-6 gap-4">
         <div class="flex flex-row justify-between">
             <div class="flex flex-row gap-2">
-                <Button onclick={handleGenerate}>
+                <Button onclick={handleGenerate} class="text-foreground">
                     {#if aiLoading}
                         <LoaderCircle class="animate-spin" />
                     {:else}
@@ -153,7 +153,7 @@
                     {/if}
                     {$_("app.week_report.generate_button")}
                 </Button>
-                <Button onclick={handleCopy}>
+                <Button onclick={handleCopy} class="text-foreground">
                     {#if copyLoading}
                         <LoaderCircle class="animate-spin" />
                     {:else}

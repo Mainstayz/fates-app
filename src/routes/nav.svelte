@@ -3,8 +3,9 @@
     import * as Tooltip from "$lib/components/ui/tooltip/index";
     import { t } from "svelte-i18n";
     import type { Route } from "../config";
-    import { appConfig } from "$src/app-config";
-    import { default as Github } from "lucide-svelte/icons/github";
+    import { appConfig, type ThemeType } from "$src/app-config";
+    import { Sun, Moon, Github } from "lucide-svelte";
+    import { setMode } from "mode-watcher";
     import platform from "$src/platform";
 
     export let routes: Route[];
@@ -24,6 +25,13 @@
             selectedRoute = route;
             onRouteSelect(route.label);
         }
+    }
+
+    function toggleTheme() {
+        let theme = appConfig.getConfig().theme === "dark" ? "light" : "dark";
+        setMode(theme as "light" | "dark");
+        appConfig.setTheme(theme as ThemeType);
+        console.log("[Nav] Toggle theme: ", theme);
     }
 
     function handleSettingsClick() {
@@ -67,6 +75,12 @@
         <nav class="grid gap-2 mt-auto pb-4 justify-center">
             <Button size="icon" variant="secondary" onclick={gotoGithub}>
                 <Github />
+            </Button>
+            <Button size="icon" variant="secondary" onclick={toggleTheme}>
+                <Sun class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon
+                    class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                />
             </Button>
             <Tooltip.Provider>
                 <Tooltip.Root delayDuration={0}>

@@ -248,10 +248,20 @@
                         disabled={!(requestStatus === 0 || requestStatus === 2)}
                     />
                     <Label for="sync-enabled" class="flex flex-col gap-1 cursor-pointer">
-                        <span class="font-medium">{$t("app.settings.sync.title")}</span>
+                        <span class="font-medium">
+                            {#if syncEnabled}
+                                {$t("app.settings.sync.synced")}
+                            {:else}
+                                {$t("app.settings.sync.clickToEnable")}
+                            {/if}
+                        </span>
                         <span class="text-xs text-muted-foreground">
                             {#if requestStatus === 0 || requestStatus === 2}
-                                {$t("app.settings.sync.ready")}
+                                {#if syncEnabled}
+                                    {$t("app.settings.sync.synchronizing")}
+                                {:else}
+                                    {$t("app.settings.sync.ready")}
+                                {/if}
                             {:else}
                                 {$t("app.settings.sync.loginToEnable")}
                             {/if}

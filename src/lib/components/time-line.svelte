@@ -447,19 +447,27 @@
     }
 
     :global(.vis-timeline .vis-item.vis-item.blue) {
-        @apply bg-blue-300 text-foreground border-blue-300;
+        background-color: var(--blue-bg) !important;
+        border-color: var(--blue-border) !important;
+        color: var(--foreground) !important;
     }
 
     :global(.vis-timeline .vis-item.vis-item.yellow) {
-        @apply bg-yellow-300 text-foreground border-yellow-300;
+        background-color: var(--yellow-bg) !important;
+        border-color: var(--yellow-border) !important;
+        color: var(--foreground) !important;
     }
 
     :global(.vis-timeline .vis-item.vis-item.red) {
-        @apply bg-red-300 text-foreground border-red-300;
+        background-color: var(--red-bg) !important;
+        border-color: var(--red-border) !important;
+        color: var(--foreground) !important;
     }
 
     :global(.vis-timeline .vis-item.vis-item.green) {
-        @apply bg-green-300 text-foreground border-green-300;
+        background-color: var(--green-bg) !important;
+        border-color: var(--green-border) !important;
+        color: var(--foreground) !important;
     }
 
     /* timeline item content style */

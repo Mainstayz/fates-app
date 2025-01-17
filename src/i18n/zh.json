@@ -182,7 +182,10 @@
         "error": "错误",
         "unknownError": "未知错误",
         "userNamePlaceholder": "请输入用户名",
-        "passwordPlaceholder": "请输入密码"
+        "passwordPlaceholder": "请输入密码",
+        "clickToEnable": "打开同步",
+        "synced": "已开启",
+        "synchronizing": "正在同步"
       }
     },
     "week_report": {

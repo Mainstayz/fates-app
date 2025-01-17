@@ -206,7 +206,10 @@
         "error": "Error",
         "unknownError": "Unknown error",
         "userNamePlaceholder": "Enter your username",
-        "passwordPlaceholder": "Enter your password"
+        "passwordPlaceholder": "Enter your password",
+        "clickToEnable": "Turn on sync",
+        "synced": "Turned on",
+        "synchronizing": "Synchronizing"
       }
     },
     "statistics": {

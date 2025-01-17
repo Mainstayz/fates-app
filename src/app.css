@@ -30,6 +30,7 @@
         --chart-5: #f4a462;
 
         --radius: 0.5rem;
+
         --sidebar-background: #fafafa;
         --sidebar-foreground: #3f3f46;
         --sidebar-primary: #18181b;
@@ -38,28 +39,38 @@
         --sidebar-accent-foreground: #18181b;
         --sidebar-border: #e4e4e7;
         --sidebar-ring: #3b82f6;
+
+        --red-bg: #fca5a5;
+        --red-border: #fca5a5;
+        --green-bg: #86efac;
+        --green-border: #86efac;
+        --blue-bg: #93c5fd;
+        --blue-border: #93c5fd;
+        --yellow-bg: #fde047;
+        --yellow-border: #fde047;
     }
 
     .dark {
-        --background: #ffffff;
-        --foreground: #020817;
-        --card: #ffffff;
-        --card-foreground: #020817;
-        --primary: #0f172a;
-        --primary-foreground: #f8fafc;
-        --secondary: #f1f5f9;
-        --secondary-foreground: #0f172a;
-        --muted: #f1f5f9;
-        --muted-foreground: #64748b;
-        --accent: #f1f5f9;
-        --accent-foreground: #0f172a;
-        --popover: #ffffff;
-        --popover-foreground: #020817;
-        --destructive: #ef4444;
-        --destructive-foreground: #f8fafc;
-        --border: #e2e8f0;
-        --input: #e2e8f0;
-        --ring: #9f9fa8;
+        --background: #1c1816;
+        --foreground: #fffddd;
+        --card: #1c1816;
+        --card-foreground: #e6e5e4;
+        --popover: #0e0c0b;
+        --popover-foreground: #e6e5e4;
+        --primary: #1b1917;
+        --primary-foreground: #ffffff;
+        --secondary: #1f1b18;
+        --secondary-foreground: #ffffff;
+        --muted: #2b2123;
+        --muted-foreground: #9e9793;
+        --accent: #2b2123;
+        --accent-foreground: #e6e5e4;
+        --destructive: #722626;
+        --destructive-foreground: #e6e5e4;
+        --border: #372c24;
+        --input: #372c24;
+        --ring: #1b1917;
+
         --chart-1: #e76e50;
         --chart-2: #2a9d90;
         --chart-3: #274754;
@@ -74,6 +85,15 @@
         --sidebar-accent-foreground: #f4f4f5;
         --sidebar-border: #27272a;
         --sidebar-ring: #3b82f6;
+
+        --red-bg: #491511;
+        --red-border: #5a1a14;
+        --green-bg: #3f6c49;
+        --green-border: #427244;
+        --blue-bg: #213850;
+        --blue-border: #27415d;
+        --yellow-bg: #7c6b2c;
+        --yellow-border: #a08b3a;
     }
 }
 

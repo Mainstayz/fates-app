@@ -5,7 +5,7 @@
     import notificationManager, { type Notification, NotificationType } from "$src/notification_manager";
     import tagManager from "$src/tag-manager.svelte";
     import { todoScheduler } from "$src/scheduler";
-
+    import { setMode } from "mode-watcher";
     import { onMount } from "svelte";
     import { locale } from "svelte-i18n";
     import App from "./app.svelte";
@@ -55,6 +55,13 @@
             // Initialize app config
             await appConfig.init(platform.instance.storage);
             console.log("[Main] AppConfig initialized");
+
+            let theme = appConfig.getConfig().theme;
+            if (theme === "dark") {
+                setMode("dark");
+            } else {
+                setMode("light");
+            }
 
             // Set language
             let language = appConfig.getConfig().language;
