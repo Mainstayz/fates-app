@@ -199,7 +199,7 @@
       "ai_enable_description": "需要启用 AI 功能，请先前往设置中启用 AI 功能"
     },
     "other": {
-      "confirmDelete": "定删除吗？",
+      "confirmDelete": "确定删除吗？",
       "confirmDeleteDescription": "删除后将无法恢复，请谨慎操作！",
       "cancel": "取消",
       "confirm": "确定",
