@@ -6,7 +6,7 @@
     import * as Table from "$lib/components/ui/table/index";
     import { t } from "svelte-i18n";
     import { v4 as uuidv4 } from "uuid";
-
+    import dayjs from "dayjs";
     import { TableHandler } from "@vincjo/datatables";
 
     import DataTablePriorityCell from "./data-table-priority-cell.svelte";
@@ -45,13 +45,7 @@
     };
 
     const handleCreate = async () => {
-        const timestamp = new Date()
-            .toLocaleString("zh-CN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-            })
-            .replace(/[\/\s:]/g, ""); // 格式如: 03151423 (3月15日14:23)
+        const timestamp = dayjs().format("HHmmss"); // 格式如: 03151423 (3月15日14:23)
 
         const defaultTask = {
             id: uuidv4(),

@@ -34,7 +34,7 @@ export interface Todo {
     status: string; // "todo", "in_progress", "completed"
     created_at: string;
     updated_at: string;
-    execution_time?: string; //
+    start_time?: string;
 }
 
 export interface NotificationRecord {

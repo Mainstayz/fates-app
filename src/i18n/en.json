@@ -55,7 +55,8 @@
       "createTodo": "Create Todo",
       "noTodo": "No todo items",
       "totalTodo": "Total",
-      "searchPlaceholder": "Search todo title..."
+      "searchPlaceholder": "Search todo title...",
+      "start_time": "StartTime"
     },
     "repeat": {
       "title": "Repeat Tasks",

@@ -2,6 +2,7 @@
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
     import { Calendar, Clock, Check } from "lucide-svelte";
+    import dayjs from "dayjs";
 
     let { startDate = $bindable(), endDate = $bindable() } = $props();
 
@@ -15,20 +16,12 @@
 
     function formatDisplayDate(dateStr: string) {
         const date = new Date(dateStr);
-        return date.toLocaleString("zh-CN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        });
+        return dayjs(date).format("YYYY-MM-DD");
     }
 
     function formatDisplayTime(dateStr: string) {
         const date = new Date(dateStr);
-        return date.toLocaleString("zh-CN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return dayjs(date).format("HH:mm");
     }
 
     let isEditing = $state(false);

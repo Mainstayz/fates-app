@@ -5,7 +5,7 @@
     import "vis-timeline/styles/vis-timeline-graph2d.css";
     import type { TimelineItem, TimelineItemInternal } from "$lib/types";
     import { t } from "svelte-i18n";
-
+    import dayjs from "dayjs";
     type TimelineCallback<T> = (item: T | null) => void;
     type TimelineHandler = (item: TimelineItem, callback: TimelineCallback<TimelineItem>) => void;
 
@@ -68,12 +68,7 @@
     `);
 
     Handlebars.registerHelper("formatDate", function (date) {
-        return new Date(date).toLocaleString("zh-CN", {
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
+        return dayjs(date).format("YYYY-MM-DD HH:mm");
     });
 
     Handlebars.registerHelper("formatDateRange", function (start: string, end: string) {

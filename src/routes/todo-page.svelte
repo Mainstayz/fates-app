@@ -15,6 +15,7 @@
     import type { Matter, Todo } from "$src/types";
     import DataTableTextInputCell from "./data-table-text-input-cell.svelte";
     import { REFRESH_TIME_PROGRESS } from "$src/config";
+    import DataTableSelectedTimeCell from "./data-table-selected-time-cell.svelte";
 
     let alertOpen = $state(false);
     let alertTitle = $state("");
@@ -141,6 +142,8 @@
         console.log("onUpdateValue: ", todo);
         if (columnId === "title") {
             await todoAPI.updateTodo({ ...todo, title: value });
+        } else if (columnId === "start_time") {
+            await todoAPI.updateTodo({ ...todo, start_time: value });
         }
     }
 
@@ -217,6 +220,7 @@
                 <Table.Header>
                     <Table.Row>
                         <Table.Head>{$t("app.todo.name")}</Table.Head>
+                        <Table.Head>{$t("app.todo.start_time")}</Table.Head>
                         <Table.Head>{$t("app.todo.status")}</Table.Head>
                         <Table.Head>{$t("app.todo.action")}</Table.Head>
                     </Table.Row>
@@ -235,6 +239,17 @@
                                         }}
                                     />
                                 </Table.Cell>
+
+                                <Table.Cell class="w-[208px]">
+                                    <DataTableSelectedTimeCell
+                                        rowId={row.id}
+                                        selectedTime={row.start_time || ""}
+                                        onUpdateValue={(rowId, newValue) => {
+                                            onUpdateValue(rowId, "start_time", newValue);
+                                        }}
+                                    />
+                                </Table.Cell>
+
                                 <Table.Cell class="w-[96px]">
                                     <Badge
                                         variant={row.status === "completed"
@@ -250,6 +265,7 @@
                                               : $t("app.todo.statusOptions.completed")}
                                     </Badge>
                                 </Table.Cell>
+
                                 <Table.Cell class="w-[208px]">
                                     <div class="flex gap-2">
                                         <Button variant="destructive" size="sm" onclick={() => handleDelete(row.id)}>
