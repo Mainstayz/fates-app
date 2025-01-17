@@ -311,7 +311,7 @@
             </div> -->
         <!-- </div> -->
     {:else}
-        <div class="flex flex-col items-center justify-center p-8 text-gray-500 bg-gray-50 rounded-lg">
+        <div class="flex flex-col items-center justify-center p-8">
             <h3 class="text-lg font-medium mb-2">{$t("app.statistics.noData")}</h3>
             <p class="text-sm text-center">{$t("app.statistics.noDataDescription")}</p>
         </div>

@@ -8,6 +8,8 @@
     import localizedFormat from "dayjs/plugin/localizedFormat";
     import "dayjs/locale/zh";
     import "dayjs/locale/en";
+    import { appConfig } from "$src/app-config";
+    import type { AppConfig } from "$src/app-config";
 
     dayjs.extend(localeData);
     dayjs.extend(localizedFormat);
@@ -23,8 +25,19 @@
 
     let chartDom: HTMLDivElement;
     let myChart: echarts.ECharts;
+    let isDarkMode = appConfig.getConfig().theme === "dark";
 
     function getVisualPieces() {
+        // !!! Dark Mode
+        if (isDarkMode) {
+            return [
+                { min: 5, max: 100, color: "#39d353" },
+                { min: 3, max: 4, color: "#26a641" },
+                { min: 2, max: 2, color: "#006d32" },
+                { min: 1, max: 1, color: "#0e4429" },
+                { min: 0, max: 0, color: "#161b22" },
+            ];
+        }
         return [
             { min: 5, max: 100, color: "#216e39" },
             { min: 3, max: 4, color: "#30a14e" },
@@ -67,6 +80,7 @@
 
         console.log(`[DailyHeatMap] Locale: ${locale}`);
         const option: EChartsOption = {
+            backgroundColor: isDarkMode ? "#1c1816" : "#fff",
             tooltip: {
                 formatter: function (params: any) {
                     const value = params.value[1] || $t("app.timeline.noValue");
@@ -85,6 +99,11 @@
                 text: ["More", "Less"],
                 pieces: getVisualPieces(),
                 dimension: 1,
+                textStyle: {
+                    // less more text color
+                    // --muted-foreground
+                    color: isDarkMode ? "#9e9793" : "#64748b",
+                },
             },
             calendar: {
                 top: 30,
@@ -92,31 +111,36 @@
                 right: 30,
                 range: dayjs().format("YYYY"),
                 itemStyle: {
-                    borderColor: "#fff",
+                    // !!! Dark Mode
+                    color: isDarkMode ? "#1c1816" : "#fff",
+                    borderColor: isDarkMode ? "#1c1816" : "#fff",
                 },
                 splitLine: {
-                    show: false, // 隐藏分隔线
+                    show: false,
                 },
                 yearLabel: { show: false },
                 dayLabel: {
                     firstDay: 0,
                     nameMap: locale.toUpperCase(),
+                    color: isDarkMode ? "#9e9793" : "#000",
                 },
                 monthLabel: {
                     nameMap: locale.toUpperCase(),
+                    color: isDarkMode ? "#9e9793" : "#000",
                 },
             },
             series: {
                 type: "heatmap",
                 coordinateSystem: "calendar",
                 data: formatData(data),
+                color: isDarkMode ? "#1c1816" : "#fff",
                 itemStyle: {
                     borderWidth: 4,
-                    borderColor: "#fff",
+                    borderColor: isDarkMode ? "#1c1816" : "#fff",
                     borderRadius: 4,
                 },
                 emphasis: {
-                    disabled: true, // 禁用鼠标悬浮高亮效果
+                    disabled: true,
                 },
             },
         };
@@ -136,7 +160,7 @@
     });
 
     onMount(() => {
-        myChart = echarts.init(chartDom);
+        myChart = echarts.init(chartDom, isDarkMode ? "dark" : undefined);
         updateChart($locale ?? "en");
 
         // Add resize handler
@@ -144,11 +168,22 @@
             myChart?.resize();
         };
 
+        // Add theme change handler
+        const unsubscribe = appConfig.subscribe((config: AppConfig) => {
+            isDarkMode = config.theme === "dark";
+            if (myChart) {
+                myChart.dispose();
+                myChart = echarts.init(chartDom, isDarkMode ? "dark" : undefined);
+                updateChart($locale ?? "en");
+            }
+        });
+
         // Add resize event listener
         window.addEventListener("resize", handleResize);
 
         return () => {
             window.removeEventListener("resize", handleResize);
+            unsubscribe();
             myChart?.dispose();
         };
     });

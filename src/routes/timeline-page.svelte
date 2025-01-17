@@ -520,7 +520,11 @@
                             <Label class="text-muted-foreground text-default">AI</Label>
                         </Button> -->
                     {:else}
-                        <Button variant="default" onclick={() => (switchAddTaskInput = true)} class="w-[320px]">
+                        <Button
+                            variant="default"
+                            onclick={() => (switchAddTaskInput = true)}
+                            class="w-[320px] text-primary-foreground"
+                        >
                             <Plus />
                             {$t("app.timeline.addTask")}
                         </Button>

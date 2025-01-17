@@ -221,6 +221,7 @@
                     onclick={() => {
                         handleCreate();
                     }}
+                    class="text-primary-foreground"
                 >
                     {$t("app.todo.createTodo")}
                 </Button>
@@ -269,6 +270,7 @@
                                             : row.status === "in_progress"
                                               ? "secondary"
                                               : "outline"}
+                                        class="text-primary-foreground"
                                     >
                                         {row.status === "todo"
                                             ? $t("app.todo.statusOptions.todo")

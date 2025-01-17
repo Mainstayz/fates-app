@@ -142,8 +142,11 @@
                 <Button
                     onclick={() => {
                         handleCreate();
-                    }}>{$t("app.repeat.createTask")}</Button
+                    }}
+                    class="text-primary-foreground"
                 >
+                    {$t("app.repeat.createTask")}
+                </Button>
             </div>
         </div>
         <div class="rounded-md border">
