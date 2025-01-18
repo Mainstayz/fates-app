@@ -110,7 +110,7 @@
         }
     }
 
-    async function createTimelineItem(title: string, inputItem?: TimelineItem) {
+    async function createTimelineItem(title: string, inputItem?: TimelineItem, type: number = 0) {
         if (!timelineComponent) return;
 
         let item: TimelineItem;
@@ -130,6 +130,8 @@
             };
         }
 
+        item.matter_type = type;
+
         let createTime = nowDate.toISOString();
         let newMatter: Matter = {
             id: item.id,
@@ -139,7 +141,7 @@
             start_time: item.start.toISOString(),
             end_time: item.end!.toISOString(),
             priority: 0,
-            type_: 0,
+            type_: type,
             created_at: createTime,
             updated_at: createTime,
             reserved_1: item.className,
@@ -179,6 +181,16 @@
                 for (const matter of matters) {
                     const newTags = matter.tags?.trim() ? matter.tags.split(",") : [];
 
+                    let startTime = new Date(matter.start_time);
+                    let endTime: Date | undefined;
+
+                    if (matter.end_time.length > 0) {
+                        endTime = new Date(matter.end_time);
+                    }
+                    if (matter.end_time === "" && matter.type_ != 3) {
+                        endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+                    }
+
                     this.timelineComponent.addItem({
                         id: matter.id,
                         group: "",
@@ -186,8 +198,8 @@
                         description: matter.description,
                         priority: matter.priority,
                         matter_type: matter.type_,
-                        start: new Date(matter.start_time),
-                        end: matter.end_time ? new Date(matter.end_time) : undefined,
+                        start: startTime,
+                        end: endTime,
                         className: matter.reserved_1,
                         tags: newTags,
                         created_at: new Date(matter.created_at),
@@ -483,6 +495,15 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <Button
+                        variant="default"
+                        onclick={() => createTimelineItem("Todo 任务", undefined, 3)}
+                        class="w-[320px] text-primary-foreground"
+                    >
+                        <Plus />
+                        添加 Todo 任务
+                    </Button>
+
                     {#if switchAddTaskInput}
                         <Input
                             placeholder={$t("app.timeline.addTaskPlaceholder")}

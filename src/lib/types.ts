@@ -11,6 +11,7 @@ export interface TimelineItem {
     matter_type?: number;
     description?: string;
     tags?: string[];
+    type?: string;
 }
 
 export interface TimelineItemInternal extends TimelineItem {

@@ -40,7 +40,9 @@
             <div class="gantt-item-content">
                     <div class="flex items-center gap-1">
                         <div class="gantt-item-title">{{content}}</div>
-                        <div class="gantt-item-date">({{formatDateRange start end}})</div>
+                        {{#if end}}
+                            <div class="gantt-item-date">({{formatDateRange start end}})</div>
+                        {{/if}}
                     </div>
                     {{#if tags}}
                         <div class="gantt-item-tags flex  gap-1">
@@ -60,10 +62,12 @@
                 <span class="pl-1 text-gray-400 mr-2 text-xs">开始时间：</span>
                 <span class="text-sm">{{formatDate start}}</span>
             </div>
-            <div class="flex items-center">
-                <span class="pl-1 text-gray-400 mr-2 text-xs">结束时间：</span>
-                <span class="text-sm">{{formatDate end}}</span>
-            </div>
+            {{#if end}}
+                <div class="flex items-center">
+                    <span class="pl-1 text-gray-400 mr-2 text-xs">结束时间：</span>
+                    <span class="text-sm">{{formatDate end}}</span>
+                </div>
+            {{/if}}
         </div>
     `);
 
@@ -84,17 +88,24 @@
 
     function convertToInternalItem(item: TimelineItem): TimelineItemInternal {
         // console.log(">>>>> item", item);
+
+        let end = item.end;
+        if (item.matter_type === 3) {
+            end = undefined;
+        }
         const renderedContent = template({
             id: item.id,
             content: item.content,
             tags: item.tags?.length ? item.tags : null,
             className: item.className,
             start: item.start,
-            end: item.end,
+            end: end,
         });
 
         return {
             ...item,
+            type: item.matter_type === 3 ? "box" : "range",
+            end: end,
             content: renderedContent,
             _raw: {
                 content: item.content,
