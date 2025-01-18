@@ -56,7 +56,9 @@
       "noTodo": "没有待办事项",
       "totalTodo": "总数",
       "searchPlaceholder": "搜索待办标题...",
-      "start_time": "开始时间"
+      "start_time": "开始时间",
+      "added": "已添加",
+      "todoCompleted": "立即完成"
     },
     "repeat": {
       "title": "重复任务",

@@ -90,7 +90,10 @@
         // console.log(">>>>> item", item);
 
         let end = item.end;
-        if (item.matter_type === 3) {
+        // if todo item, and sub_type is 1, set end to undefined
+        let isPointItem = false;
+        if (item.matter_type === 2 && item.matter_sub_type === 1) {
+            isPointItem = true;
             end = undefined;
         }
         const renderedContent = template({
@@ -104,7 +107,7 @@
 
         return {
             ...item,
-            type: item.matter_type === 3 ? "box" : "range",
+            type: isPointItem ? "box" : "range",
             end: end,
             content: renderedContent,
             _raw: {

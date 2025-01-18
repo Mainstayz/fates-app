@@ -9,8 +9,10 @@ export interface TimelineItem {
     created_at?: Date;
     priority?: number;
     matter_type?: number;
+    matter_sub_type?: number;
     description?: string;
     tags?: string[];
+    // type use vis-timeline type
     type?: string;
 }
 

@@ -29,13 +29,15 @@
 
         async syncTodoStatus() {
             console.log("[TodoPage] Sync todo status ...");
-            const matters = await platform.instance.storage.queryMattersByField("type_", "2", false);
+            //  get matters with type_ 2
 
+            const matters = await platform.instance.storage.queryMattersByField("type_", "2", false);
             console.log("[TodoPage] Matters: ", matters);
 
             this.matters = matters;
             const now = new Date();
 
+            // get all todos
             const todos = await platform.instance.storage.listTodos();
             const getTodoById = (id: string) => todos.find((item) => item.id === id);
 
@@ -63,11 +65,15 @@
                 const endTime = new Date(matter.end_time);
 
                 let newStatus = todo.status;
-                if (now < startTime) {
-                    newStatus = "todo";
-                } else if (now >= startTime && now <= endTime) {
-                    newStatus = "in_progress";
-                } else if (now > endTime) {
+                if (!matter.sub_type || matter.sub_type === 0) {
+                    if (now < startTime) {
+                        newStatus = "todo";
+                    } else if (now >= startTime && now <= endTime) {
+                        newStatus = "in_progress";
+                    } else if (now > endTime) {
+                        newStatus = "completed";
+                    }
+                } else if (matter.sub_type === 1) {
                     newStatus = "completed";
                 }
 
@@ -133,9 +139,10 @@
     };
 
     const handleCreate = async () => {
+        let now = dayjs().format("HHmmss");
         const defaultTodo = {
             id: uuidv4(),
-            title: `${$t("app.todo.defaultTodoTitle")}`,
+            title: `#${$t("app.todo.defaultTodoTitle")}${now}`,
             status: "todo",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -158,7 +165,8 @@
         }
     }
 
-    const handleExecute = async (row: Todo) => {
+    // matterType: 2 = todo range item, 3 = todo item
+    const handleExecute = async (row: Todo, isPointItem: boolean) => {
         let start_time = new Date();
         const end_time = new Date(start_time.getTime() + 2 * 60 * 60 * 1000);
 
@@ -166,6 +174,7 @@
             id: uuidv4(),
             title: row.title,
             type_: 2,
+            sub_type: isPointItem ? 1 : 0,
             start_time: start_time.toISOString(),
             end_time: end_time.toISOString(),
             priority: 0,
@@ -178,11 +187,14 @@
         await platform.instance.storage.createMatter(matter);
         await todoAPI.updateTodo({ ...row, status: "in_progress" });
         await platform.instance.event.emit(REFRESH_TIME_PROGRESS, {});
-        alertTitle = $t("app.other.tip");
-        alertContent = $t("app.todo.todoInProgressDescription");
-        alertConfirm = async () => {};
-        alertShowCancel = false;
-        alertOpen = true;
+
+        if (!isPointItem) {
+            alertTitle = $t("app.other.tip");
+            alertContent = $t("app.todo.todoInProgressDescription");
+            alertConfirm = async () => {};
+            alertShowCancel = false;
+            alertOpen = true;
+        }
     };
 
     onMount(() => {
@@ -270,7 +282,6 @@
                                             : row.status === "in_progress"
                                               ? "secondary"
                                               : "outline"}
-                                        class="text-primary-foreground"
                                     >
                                         {row.status === "todo"
                                             ? $t("app.todo.statusOptions.todo")
@@ -282,15 +293,29 @@
 
                                 <Table.Cell class="w-[208px]">
                                     <div class="flex gap-2">
-                                        <Button variant="destructive" size="sm" onclick={() => handleDelete(row.id)}>
+                                        <Button variant="outline" size="sm" onclick={() => handleDelete(row.id)}>
                                             <Trash2 />
                                         </Button>
                                         {#if row.status === "todo"}
                                             {#if todoAPI.isTodoInProgress(row.id)}
-                                                <Button disabled variant="outline" size="sm">已添加</Button>
+                                                <Button disabled variant="outline" size="sm">
+                                                    <!-- 已添加 -->
+                                                    {$t("app.todo.added")}
+                                                </Button>
                                             {:else}
-                                                <Button variant="outline" size="sm" onclick={() => handleExecute(row)}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onclick={() => handleExecute(row, false)}
+                                                >
                                                     {$t("app.todo.todoInProgress")}
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onclick={() => handleExecute(row, true)}
+                                                >
+                                                    {$t("app.todo.todoCompleted")}
                                                 </Button>
                                             {/if}
                                         {/if}

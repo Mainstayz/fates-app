@@ -56,7 +56,9 @@
       "noTodo": "No todo items",
       "totalTodo": "Total",
       "searchPlaceholder": "Search todo title...",
-      "start_time": "StartTime"
+      "start_time": "StartTime",
+      "added": "Added",
+      "todoCompleted": "Complete now"
     },
     "repeat": {
       "title": "Repeat Tasks",

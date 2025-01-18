@@ -12,7 +12,6 @@
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import { Button } from "$lib/components/ui/button";
     import * as Dialog from "$lib/components/ui/dialog/index";
-    import * as Tooltip from "$lib/components/ui/tooltip";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import { v4 as uuidv4 } from "uuid";
@@ -110,7 +109,7 @@
         }
     }
 
-    async function createTimelineItem(title: string, inputItem?: TimelineItem, type: number = 0) {
+    async function createTimelineItem(title: string, inputItem?: TimelineItem, isPointItem: boolean = false) {
         if (!timelineComponent) return;
 
         let item: TimelineItem;
@@ -129,8 +128,10 @@
                 className: "blue",
             };
         }
-
-        item.matter_type = type;
+        // matter_type 为 todo
+        item.matter_type = 2;
+        // matter_sub_type 为 0: normal, 1: completed
+        item.matter_sub_type = isPointItem ? 1 : 0;
 
         let createTime = nowDate.toISOString();
         let newMatter: Matter = {
@@ -141,7 +142,8 @@
             start_time: item.start.toISOString(),
             end_time: item.end!.toISOString(),
             priority: 0,
-            type_: type,
+            type_: 2,
+            sub_type: isPointItem ? 1 : 0,
             created_at: createTime,
             updated_at: createTime,
             reserved_1: item.className,
@@ -187,7 +189,8 @@
                     if (matter.end_time.length > 0) {
                         endTime = new Date(matter.end_time);
                     }
-                    if (matter.end_time === "" && matter.type_ != 3) {
+
+                    if (matter.end_time === "" && matter.type_ != 2 && matter.sub_type != 1) {
                         endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
                     }
 
@@ -198,6 +201,7 @@
                         description: matter.description,
                         priority: matter.priority,
                         matter_type: matter.type_,
+                        matter_sub_type: matter.sub_type,
                         start: startTime,
                         end: endTime,
                         className: matter.reserved_1,
@@ -497,7 +501,7 @@
                 <div class="flex gap-2">
                     <Button
                         variant="default"
-                        onclick={() => createTimelineItem("Todo 任务", undefined, 3)}
+                        onclick={() => createTimelineItem("Todo 任务", undefined, true)}
                         class="w-[320px] text-primary-foreground"
                     >
                         <Plus />
