@@ -18,12 +18,17 @@
 
 </div>
 
-
-<div align="center">
+<div align="left">
 <a href= "https://trello.com/invite/b/67891852b0f91cdf1ec465d9/ATTIbb1f18dd5357cbef5efa6de3dbfe274f6875B7E7/fates-app-roadmap">
 <span style="font-weight: bold; font-size: 1.5em;">Fates App Roadmap</span>
 </a>
 </div>
+
+## 注意事项
+
+> [!CAUTION]
+> 本项目目前处于早期开发阶段，可能会存在很多问题和不足
+> 如发现 Bug 请反馈，我会在 1，2 天内修复。
 
 ## 特性
 
