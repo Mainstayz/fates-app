@@ -89,7 +89,9 @@
 
         async fetchData() {
             await this.syncTodoStatus();
-            this.data = await platform.instance.storage.listTodos();
+            let allTodos = await platform.instance.storage.listTodos();
+            // sort by created_at
+            this.data = allTodos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         }
 
         async createTodo(todo: Todo) {
@@ -161,36 +163,76 @@
         if (columnId === "title") {
             await todoAPI.updateTodo({ ...todo, title: value });
         } else if (columnId === "start_time") {
+            console.log("[TodoPage] Update start_time: ", value);
             await todoAPI.updateTodo({ ...todo, start_time: value });
         }
     }
 
     // matterType: 2 = todo range item, 3 = todo item
     const handleExecute = async (row: Todo, isPointItem: boolean) => {
-        let start_time = new Date();
-        const end_time = new Date(start_time.getTime() + 2 * 60 * 60 * 1000);
+        let start_time = row.start_time;
+
+        if (!start_time) {
+            start_time = dayjs().format("YYYY-MM-DDTHH:mm");
+        }
+
+        let start_time_date = dayjs(start_time);
+
+        if (!start_time_date.isValid()) {
+            start_time_date = dayjs();
+        }
+
+        let end_time_data = undefined;
+
+        if (!isPointItem) {
+            end_time_data = start_time_date.add(2, "hour");
+        }
 
         const matter: Matter = {
             id: uuidv4(),
             title: row.title,
             type_: 2,
             sub_type: isPointItem ? 1 : 0,
-            start_time: start_time.toISOString(),
-            end_time: end_time.toISOString(),
+            start_time: start_time_date.toISOString(),
+            end_time: end_time_data?.toISOString() || "",
             priority: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+            tags: "Todo",
             reserved_1: "blue",
             reserved_2: row.id,
         };
 
         await platform.instance.storage.createMatter(matter);
-        await todoAPI.updateTodo({ ...row, status: "in_progress" });
+
+        if (!isPointItem) {
+            let now = new Date();
+            const startTime = new Date(matter.start_time);
+            const endTime = new Date(matter.end_time);
+
+            let newStatus = "todo";
+            if (!matter.sub_type || matter.sub_type === 0) {
+                if (now < startTime) {
+                    newStatus = "todo";
+                } else if (now >= startTime && now <= endTime) {
+                    newStatus = "in_progress";
+                } else if (now > endTime) {
+                    newStatus = "completed";
+                }
+            } else if (matter.sub_type === 1) {
+                newStatus = "completed";
+            }
+            console.log("[TodoPage] Update todo status: [", row.id, "] to [", newStatus, "]");
+            await todoAPI.updateTodo({ ...row, status: newStatus });
+        } else {
+            await todoAPI.updateTodo({ ...row, status: "completed" });
+        }
+
         await platform.instance.event.emit(REFRESH_TIME_PROGRESS, {});
 
         if (!isPointItem) {
             alertTitle = $t("app.other.tip");
-            alertContent = $t("app.todo.todoInProgressDescription");
+            alertContent = `「${row.title}」${$t("app.todo.todoInProgressDescription")}`;
             alertConfirm = async () => {};
             alertShowCancel = false;
             alertOpen = true;
@@ -259,6 +301,7 @@
                                         value={row.title}
                                         disabled={todoAPI.isTodoInProgress(row.id) || row.status === "completed"}
                                         onUpdateValue={(rowId, newValue) => {
+                                            console.log("[TodoPage] Update title: ", rowId, newValue);
                                             onUpdateValue(rowId, "title", newValue);
                                         }}
                                     />

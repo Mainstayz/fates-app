@@ -22,11 +22,10 @@
     } = $props();
 
     let isEditing = $state(false);
-    console.log("Input Time", selectedTime);
 
     let tempTime = $state(selectedTime);
 
-    $inspect("Current Time", tempTime);
+    $inspect("[DataTableSelectedTimeCell] Time change:", tempTime);
 
     function formatDateTime(dateStr: string | null) {
         if (!dateStr) return "-";
@@ -65,6 +64,7 @@
 
         tempTime = value;
     }
+
     function checkValidTime(value: string) {
         if (!dayjs(value).isValid()) {
             console.warn("Invalid date format");
@@ -89,6 +89,11 @@
                 min={Min}
                 max={Max}
                 {disabled}
+                onkeydown={(e: KeyboardEvent) => {
+                    if (e.key === "Enter") {
+                        (e.target as HTMLInputElement).blur();
+                    }
+                }}
                 onchange={handleChange}
                 onfocusout={handleConfirm}
             />
