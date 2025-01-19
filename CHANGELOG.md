@@ -1,3 +1,15 @@
+## [0.8.3](https://github.com/Mainstayz/fates-app/compare/v0.8.2...v0.8.3) (2025-01-19)
+
+
+### Features
+
+* enhance Matter and TimelineItem interfaces, improve todo handling and localization ([306e873](https://github.com/Mainstayz/fates-app/commit/306e8731ed19a3acbda9b61838d91210acec32f8))
+* enhance theme management and localization updates ([55e0e42](https://github.com/Mainstayz/fates-app/commit/55e0e42c79d7ddb8c2362b11827b8cc93258542a))
+* implement dark mode support and improve button styling ([001cb0f](https://github.com/Mainstayz/fates-app/commit/001cb0f37c1c07579708113f9eab8b271fd3d65f))
+* update Matter and TimelineItem interfaces, enhance timeline rendering ([9bd8785](https://github.com/Mainstayz/fates-app/commit/9bd87858d2c2f88b9c2f04159c48c3d04e3abe93))
+
+
+
 ## [0.8.2](https://github.com/Mainstayz/fates-app/compare/v0.8.1...v0.8.2) (2025-01-17)
 
 
@@ -23,9 +35,30 @@
 
 ### Features
 
+* automate version tagging and pushing in update-version script ([ce853b6](https://github.com/Mainstayz/fates-app/commit/ce853b674eca8548ecfcc545b331acff37b0acaf))
 * enhance sync settings localization and user feedback ([69a3114](https://github.com/Mainstayz/fates-app/commit/69a3114a299fd0aeed4859071ec3e4b04806a8d9))
 * enhance sync settings UI and functionality ([abb7db7](https://github.com/Mainstayz/fates-app/commit/abb7db72d7af556eb832f7c0817d4dc69041bf03))
 * enhance synchronization settings with improved localization and user feedback ([a06f617](https://github.com/Mainstayz/fates-app/commit/a06f6170e8b54b4a56d2bbaa8b5aa5e90a5b1036))
+
+
+
+# [0.8.0](https://github.com/Mainstayz/fates-app/compare/v0.7.1...v0.8.0) (2025-01-13)
+
+
+### Bug Fixes
+
+* update API endpoints to use secure HTTPS URLs ([139fefb](https://github.com/Mainstayz/fates-app/commit/139fefbb7174ed9b28ba8114e214afbabf5359f4))
+* update API endpoints to use secure HTTPS URLs in Tauri and Web storage classes ([c0df0c9](https://github.com/Mainstayz/fates-app/commit/c0df0c94afd28ed8a8fa8a6f09cb3f11e6637fbb))
+
+
+### Features
+
+* add build script and enhance Svelte configuration ([a1975a7](https://github.com/Mainstayz/fates-app/commit/a1975a757aee2eaa108188219c836056b50ddc87))
+* add GitHub button to navigation for easy access ([9ce2ba0](https://github.com/Mainstayz/fates-app/commit/9ce2ba04fe527510be1e1fc47000f6f7ed7196ba))
+* add openUrl method to platform API for URL handling ([600d525](https://github.com/Mainstayz/fates-app/commit/600d525d87800210592ad5a0c27709155d8c5185))
+* add sync indicator component and enhance sync event handling ([0cd662f](https://github.com/Mainstayz/fates-app/commit/0cd662fad7ea983b312574d364f1364adf1de9e5))
+* migrate chart components to ECharts for improved performance and customization ([6e8d52b](https://github.com/Mainstayz/fates-app/commit/6e8d52b289d7a22fbb3b822e2c899ff28b867e9d))
+* update app title and enhance chart components ([1f40d51](https://github.com/Mainstayz/fates-app/commit/1f40d512d0dbb4ddcb239a291e3cd6f3da5e89f9))
 
 
 
