@@ -100,12 +100,12 @@
 
 **待办事项**
 
-![todo-list](./snapshots/todo-list.png)
+<img src="./snapshots/todo-list.png" width="500px">
 
 <details>
 <summary>重复任务</summary>
 
-![repeat-task](./snapshots/repeat-task.png)
+<img src="./snapshots/repeat-task.png" width="500px">
 
 </details>
 
