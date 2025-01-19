@@ -1,3 +1,7 @@
+# [0.9.0](https://github.com/Mainstayz/fates-app/compare/v0.8.5...v0.9.0) (2025-01-19)
+
+
+
 ## [0.8.5](https://github.com/Mainstayz/fates-app/compare/v0.8.4...v0.8.5) (2025-01-19)
 
 
