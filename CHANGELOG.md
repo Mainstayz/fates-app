@@ -1,3 +1,12 @@
+## [0.9.1](https://github.com/Mainstayz/fates-app/compare/v0.9.0...v0.9.1) (2025-01-19)
+
+
+### Features
+
+* enhance tray functionality with pinning and localization updates ([3f207c8](https://github.com/Mainstayz/fates-app/commit/3f207c81c520d83d1b12dd2db8b0ec7664d05f14))
+
+
+
 # [0.9.0](https://github.com/Mainstayz/fates-app/compare/v0.8.5...v0.9.0) (2025-01-19)
 
 
