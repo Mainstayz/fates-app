@@ -272,7 +272,11 @@
     },
     "tray": {
       "showOrHideProgress": "显示/隐藏时间进度",
-      "exit": "退出"
+      "exit": "退出",
+      "pinMain": "置顶主窗口",
+      "unpinMain": "取消置顶主窗口",
+      "hideProgress": "隐藏时间进度",
+      "showProgress": "显示时间进度"
     }
   }
 }

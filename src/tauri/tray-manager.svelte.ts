@@ -3,6 +3,7 @@ import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getVersion } from "@tauri-apps/api/app";
 import { platform } from "@tauri-apps/plugin-os";
 import { exit, relaunch } from "@tauri-apps/plugin-process";
 import { _ } from "svelte-i18n";
@@ -16,10 +17,11 @@ class Tray {
     private flashState = false;
     private flashFlag = false;
     private showOrHideProgress = true;
+    private pinMainWindow = false;
     private flashInterval: NodeJS.Timeout | null = null;
     private hasTray = false;
     private unlisten: UnlistenFn | null = null;
-
+    private version: string | null = null;
     private constructor() {}
 
     public static getInstance(): Tray {
@@ -44,6 +46,8 @@ class Tray {
                     this.hideMainWindow();
                 }
             });
+            this.version = await getVersion();
+            console.log("[TrayManager] Version: ", this.version);
             await this.setupTrayIcon();
         }
         this.hasTray = true;
@@ -69,6 +73,23 @@ class Tray {
         const win = getCurrentWindow();
         if (win) {
             await win.hide();
+        }
+    }
+
+    public async pinTheMainWindow() {
+        const win = getCurrentWindow();
+        if (win) {
+            await win.unminimize();
+            await win.show();
+            await win.setFocus();
+            await win.setAlwaysOnTop(true);
+        }
+    }
+
+    public async unpinMainWindow() {
+        const win = getCurrentWindow();
+        if (win) {
+            await win.setAlwaysOnTop(false);
         }
     }
 
@@ -153,9 +174,32 @@ class Tray {
 
     async createMenu() {
         const items = await Promise.all([
+            // show version
+            MenuItem.new({
+                id: "show_version",
+                enabled: false,
+                text: `Fates ${this.version}`,
+                action: async (id: string) => {
+                },
+            }),
+            // pin main window
+            MenuItem.new({
+                id: "pinMain",
+                text: this.pinMainWindow ? get(_)("app.tray.unpinMain") : get(_)("app.tray.pinMain"),
+                action: async (id: string) => {
+                    this.pinMainWindow = !this.pinMainWindow;
+                    if (this.pinMainWindow) {
+                        await this.pinTheMainWindow();
+                    } else {
+                        await this.unpinMainWindow();
+                    }
+                    console.log("[TrayManager] onClick pinMain ... ");
+                    this.updateMenu();
+                },
+            }),
             MenuItem.new({
                 id: "show_or_hide_progress",
-                text: get(_)("app.tray.showOrHideProgress"),
+                text: this.showOrHideProgress ? get(_)("app.tray.hideProgress") : get(_)("app.tray.showProgress"),
                 action: async (id: string) => {
                     this.showOrHideProgress = !this.showOrHideProgress;
                     console.log("[TrayManager] Emit NOTIFICATION_TOGGLE_TIME_PROGRESS ... ", this.showOrHideProgress);
@@ -170,6 +214,7 @@ class Tray {
                     await exit(1);
                 },
             }),
+
         ]);
         return Menu.new({ items });
     }

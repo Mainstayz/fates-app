@@ -272,7 +272,11 @@
     },
     "tray": {
       "showOrHideProgress": "Show/Hide Time Progress",
-      "exit": "Exit"
+      "exit": "Exit",
+      "pinMain": "Pin main window",
+      "unpinMain": "Unpin the main window",
+      "hideProgress": "Hide time progress",
+      "showProgress": "Show time progress"
     }
   }
 }
