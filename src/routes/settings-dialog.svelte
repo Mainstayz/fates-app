@@ -14,24 +14,17 @@
     import SyncSettings from "./settings/sync.svelte";
     let { open = $bindable() } = $props();
     let currentSection = $state("common");
+
     let updateAvailable = $state(false);
     let UpdateSettings = $state<any>(null);
 
     onMount(async () => {
         if (isTauri) {
             UpdateSettings = (await import("./settings/update.svelte")).default;
-            platform.instance.updater?.checkForUpdates().then((result) => {
-                if (result.hasUpdate) {
-                    console.log(`[Settings] Update available!!! NEW VERSION: ${result.version}`);
-                    updateAvailable = true;
-                    appConfig.setUpdateAvailable(true);
-                } else {
-                    console.log("[Settings] No update available");
-                    updateAvailable = false;
-                }
-            });
         }
     });
+
+    $inspect("Update Available", updateAvailable);
 
     const navItems = $derived([
         { id: "common", title: $t("app.settings.nav.common") },

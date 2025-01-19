@@ -7,6 +7,7 @@
     import { Sun, Moon, Github } from "lucide-svelte";
     import { setMode } from "mode-watcher";
     import platform from "$src/platform";
+    import { onMount } from "svelte";
 
     export let routes: Route[];
     export let onRouteSelect: (route: string) => void;
@@ -18,7 +19,29 @@
 
     $: mainRoutes = routes.filter((route) => route.label !== "settings");
     $: settingsRoute = routes.find((route) => route.label === "settings");
-    $: updateAvailable = $appConfig.updateAvailable;
+    $: updateAvailable = false;
+
+    function checkForUpdates() {
+        if (platform.instance.updater) {
+            platform.instance.updater?.checkForUpdates().then((result) => {
+                if (result.hasUpdate) {
+                    console.log(`[Nav] Update available!!! NEW VERSION: ${result.version}`);
+                    appConfig.setUpdateAvailable(true);
+                    updateAvailable = true;
+                } else {
+                    console.log("[Nav] No update available");
+                    appConfig.setUpdateAvailable(false);
+                    updateAvailable = false;
+                }
+            });
+        } else {
+            console.log("[Nav] Invalid Updater module");
+        }
+    }
+
+    onMount(() => {
+        checkForUpdates();
+    });
 
     function handleRouteClick(route: Route) {
         if (selectedRoute?.label !== route.label) {
