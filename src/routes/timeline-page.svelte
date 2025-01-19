@@ -499,15 +499,6 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <Button
-                        variant="default"
-                        onclick={() => createTimelineItem("Todo 任务", undefined, true)}
-                        class="w-[320px] text-primary-foreground"
-                    >
-                        <Plus />
-                        添加 Todo 任务
-                    </Button>
-
                     {#if switchAddTaskInput}
                         <Input
                             placeholder={$t("app.timeline.addTaskPlaceholder")}
