@@ -1,3 +1,12 @@
+## [0.8.5](https://github.com/Mainstayz/fates-app/compare/v0.8.4...v0.8.5) (2025-01-19)
+
+
+### Features
+
+* implement update checking in navigation and settings dialog ([c650aef](https://github.com/Mainstayz/fates-app/commit/c650aef717c423ef56ba5ae87cdaf890c96160eb))
+
+
+
 ## [0.8.4](https://github.com/Mainstayz/fates-app/compare/v0.8.3...v0.8.4) (2025-01-19)
 
 
