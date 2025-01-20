@@ -6,6 +6,7 @@ mod http_server;
 mod models;
 mod utils;
 mod tray;
+mod calendar;
 
 use crate::http_server::start_http_server;
 use tauri::Manager;
@@ -70,13 +71,17 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
-            Some(vec!["--flag1", "--flag2"]),
+            Some(vec!["--hide"]),
         ))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(logger_builder.build())
-        .invoke_handler(tauri::generate_handler![auto_launch, show_main_window])
+        .invoke_handler(tauri::generate_handler![
+            auto_launch,
+            show_main_window,
+            calendar::get_calendar_events,
+        ])
         .setup(|app| {
             try_register_tray_icon(app).unwrap();
             let db = database::initialize_database(&app.handle()).unwrap();
