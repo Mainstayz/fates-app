@@ -1,4 +1,5 @@
 import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { resolveResource } from "@tauri-apps/api/path";
 import { TrayIcon } from "@tauri-apps/api/tray";
@@ -180,6 +181,25 @@ class Tray {
                 enabled: false,
                 text: `Fates ${this.version}`,
                 action: async (id: string) => {
+                },
+            }),
+
+            MenuItem.new({
+                id: "get_calendar_permission_status",
+                enabled: true,
+                text: `获取权限状态`,
+                action: async (id: string) => {
+                    const status = await invoke("get_calendar_permission_status");
+                    console.log("[TrayManager] Calendar permission status: ", status);
+                },
+            }),
+
+            MenuItem.new({
+                id: "request_calendar_access",
+                enabled: true,
+                text: `请求权限`,
+                action: async (id: string) => {
+                    await invoke("request_calendar_access");
                 },
             }),
             // pin main window
