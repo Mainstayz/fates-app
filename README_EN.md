@@ -14,7 +14,7 @@
 
 A modern personal time management and task tracking application
 
-<a href="./README_EN.md">English</a> | 简体中文
+English | <a href="./README.md">简体中文</a>
 
 </div>
 

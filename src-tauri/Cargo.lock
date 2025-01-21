@@ -1371,6 +1371,7 @@ dependencies = [
  "chrono",
  "cocoa",
  "dirs 5.0.1",
+ "dispatch",
  "log",
  "objc2",
  "objc2-event-kit",

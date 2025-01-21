@@ -24,6 +24,9 @@
   },
   "bundle": {
     "active": true,
+    "macOS": {
+      "entitlements": "./Entitlements.plist"
+    },
     "targets": [
       "msi",
       "dmg",

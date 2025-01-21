@@ -1,3 +1,4 @@
+use objc2::runtime::NSObjectProtocol;
 use objc2::{ rc::Retained, runtime::Bool };
 use objc2_foundation::{ NSArray, NSDate, NSError, NSString, NSURL, NSObject };
 use objc2_event_kit::{
@@ -11,6 +12,7 @@ use objc2_event_kit::{
     EKCalendarType,
     EKAuthorizationStatus,
 };
+use dispatch::{ Queue };
 use block2::{ Block, RcBlock };
 
 use chrono::{ DateTime, Utc };
@@ -63,12 +65,15 @@ pub struct CalendarMatter {
 // }
 // }
 
-
 #[command]
 pub async fn get_calendar_permission_status() -> bool {
     unsafe {
         let status = EKEventStore::authorizationStatusForEntityType(EKEntityType::Event);
-        if status == EKAuthorizationStatus::Authorized || status == EKAuthorizationStatus::FullAccess {
+        log::info!("Calendar permission status: {:?}", status);
+        if
+            status == EKAuthorizationStatus::Authorized ||
+            status == EKAuthorizationStatus::FullAccess
+        {
             true
         } else {
             false
@@ -79,35 +84,35 @@ pub async fn get_calendar_permission_status() -> bool {
 #[command]
 pub async fn request_calendar_access() -> Result<(), String> {
     unsafe {
-        let store = EKEventStore::new();
-        let completion_handler = RcBlock::new(move |granted: Bool, error: *mut NSError| {
-            if granted.as_bool() {
-                log::info!("Calendar access granted");
-            } else {
-                // let error_ref = unsafe { &*error };
-                // log::error!("Calendar access denied: {}", error_ref.localizedDescription());
-                log::error!("Calendar access denied");
-            }
+        let queue = Queue::main();
+        queue.exec_async(move || {
+            let store = EKEventStore::new();
+            let completion_handler = RcBlock::new(move |granted: Bool, error: *mut NSError| {
+                log::info!("Calendar access result: {}", granted.as_bool());
+            });
+            let completion_handler_ptr = &*completion_handler as *const Block<_> as *mut Block<
+                dyn Fn(Bool, *mut NSError)
+            >;
+            store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
         });
-        let completion_handler_ptr = &*completion_handler as *const Block<_> as *mut Block<
-            dyn Fn(Bool, *mut NSError)
-        >;
-        store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
         Ok(())
     }
 }
 
-
 #[command]
 pub async fn get_calendar_events() -> Result<String, String> {
     unsafe {
-        let store = EKEventStore::new();
-        let completion_handler = RcBlock::new(move |granted: Bool, error: *mut NSError| {});
-        let completion_handler_ptr = &*completion_handler as *const Block<_> as *mut Block<
-            dyn Fn(Bool, *mut NSError)
-        >;
-        store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
+        //
         // Ok(store.description().unwrap_or_default().to_string())
+        let queue = Queue::main();
+        queue.exec_async(move || {
+            let store = EKEventStore::new();
+            let completion_handler = RcBlock::new(move |granted: Bool, error: *mut NSError| {});
+            let completion_handler_ptr = &*completion_handler as *const Block<_> as *mut Block<
+                dyn Fn(Bool, *mut NSError)
+            >;
+            store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
+        });
         Ok("".to_string())
     }
 
