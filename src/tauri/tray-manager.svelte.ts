@@ -202,6 +202,25 @@ class Tray {
                     await invoke("request_calendar_access");
                 },
             }),
+
+            // open calendar setting
+            MenuItem.new({
+                id: "open_calendar_setting",
+                text: `打开日历设置`,
+                action: async (id: string) => {
+                    await invoke("open_calendar_setting");
+                },
+            }),
+
+            MenuItem.new({
+                id: "get_calendar_events",
+                text: `获取日历事件`,
+                action: async (id: string) => {
+                   var events = await invoke("get_calendar_events");
+                   console.log("[TrayManager] Calendar events: ", events);
+                },
+            }),
+
             // pin main window
             MenuItem.new({
                 id: "pinMain",

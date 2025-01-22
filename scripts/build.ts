@@ -19,8 +19,16 @@ async function build() {
     catch(_) {
         throw new Error('No private key found, private key is used to sign updates, see https://v2.tauri.app/plugin/updater')
     }
+
+    let cmd = 'pnpm tauri build'
+    // if platform is macos, add --target dmg
+    if (process.platform === 'darwin') {
+        cmd += ' --bundles app'
+    }
+    // add --debug
+    cmd += ' --debug'
     // execute build command, pass env to configure environment variables, note that the original environment process.env is not forgotten
-    const build_process = spawn('pnpm tauri build', [], {
+    const build_process = spawn(cmd, [], {
         cwd,
         env: {
             TAURI_SIGNING_PRIVATE_KEY: key,

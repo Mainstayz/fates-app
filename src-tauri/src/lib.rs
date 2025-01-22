@@ -83,6 +83,7 @@ pub fn run() {
             calendar::get_calendar_events,
             calendar::request_calendar_access,
             calendar::get_calendar_permission_status,
+            calendar::open_calendar_setting,
         ])
         .setup(|app| {
             try_register_tray_icon(app).unwrap();

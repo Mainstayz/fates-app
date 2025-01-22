@@ -6,7 +6,7 @@ export interface Matter {
     start_time: string;
     end_time: string;
     priority: number;
-    type_: number; // 0: normal task, 1: repeat task, 2: todo
+    type_: number; // 0: normal task, 1: repeat task, 2: todo, 3: calendar
     sub_type?: number; // 0: normal, 1: completed
     created_at: string;
     updated_at: string;
