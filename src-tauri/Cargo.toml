@@ -52,6 +52,18 @@ tauri-plugin-global-shortcut = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 
+[target."cfg(target_os = \"windows\")".dependencies]
+windows = { version = "0.59", features = [
+    "Foundation",
+    "System",
+    "ApplicationModel_Appointments",
+    "Foundation_Collections",
+    "Storage",
+    "UI",
+    "Data",
+    "Globalization"
+] }
+
 [target."cfg(target_os = \"macos\")".dependencies]
 dispatch = "0.2.0"
 block2 = "0.5.1"
