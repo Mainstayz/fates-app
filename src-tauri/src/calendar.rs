@@ -1,23 +1,27 @@
-use std::ops::DerefMut;
-
-use block2::{Block, RcBlock};
+#[cfg(target_os = "macos")]
+use block2::{ Block, RcBlock };
+#[cfg(target_os = "macos")]
 use dispatch::Queue;
-use objc2::runtime::NSObjectProtocol;
-use objc2::{rc::Retained, runtime::Bool};
+#[cfg(target_os = "macos")]
+use objc2::runtime::Bool;
+#[cfg(target_os = "macos")]
 use objc2_app_kit::NSWorkspace;
-use objc2_event_kit::{
-    EKAlarm, EKAuthorizationStatus, EKCalendar, EKCalendarType, EKEntityType, EKEvent,
-    EKEventStore, EKSourceType, EKSpan,
-};
+#[cfg(target_os = "macos")]
+use objc2_event_kit::{ EKCalendarType, EKEntityType, EKEventStore };
+#[cfg(target_os = "macos")]
 use objc2_foundation::{
-    is_main_thread, ns_string, NSArray, NSCalendar, NSCalendarUnit, NSCopying, NSDate, NSError,
-    NSISO8601DateFormatOptions, NSISO8601DateFormatter, NSMutableArray, NSObject, NSString, NSURL,
+    is_main_thread,
+    ns_string,
+    NSCalendar,
+    NSCalendarUnit,
+    NSDate,
+    NSError,
+    NSISO8601DateFormatOptions,
+    NSISO8601DateFormatter,
+    NSURL,
 };
-
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 use tauri::command;
-use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CalendarMatter {
@@ -31,25 +35,23 @@ pub struct CalendarMatter {
     pub sub_type: i32,
 }
 
+#[cfg(target_os = "macos")]
 impl From<&objc2_event_kit::EKEvent> for CalendarMatter {
     fn from(event: &objc2_event_kit::EKEvent) -> Self {
         unsafe {
             let formatter = NSISO8601DateFormatter::new();
-            let options = NSISO8601DateFormatOptions::NSISO8601DateFormatWithInternetDateTime
-                | NSISO8601DateFormatOptions::NSISO8601DateFormatWithDashSeparatorInDate
-                | NSISO8601DateFormatOptions::NSISO8601DateFormatWithColonSeparatorInTime
-                | NSISO8601DateFormatOptions::NSISO8601DateFormatWithColonSeparatorInTimeZone
-                | NSISO8601DateFormatOptions::NSISO8601DateFormatWithFractionalSeconds;
+            let options =
+                NSISO8601DateFormatOptions::NSISO8601DateFormatWithInternetDateTime |
+                NSISO8601DateFormatOptions::NSISO8601DateFormatWithDashSeparatorInDate |
+                NSISO8601DateFormatOptions::NSISO8601DateFormatWithColonSeparatorInTime |
+                NSISO8601DateFormatOptions::NSISO8601DateFormatWithColonSeparatorInTimeZone |
+                NSISO8601DateFormatOptions::NSISO8601DateFormatWithFractionalSeconds;
             formatter.setFormatOptions(options);
 
             let id = event.eventIdentifier().unwrap().to_string();
             let title = event.title().to_string();
-            let start_date = formatter
-                .stringFromDate(event.startDate().as_ref())
-                .to_string();
-            let end_date = formatter
-                .stringFromDate(event.endDate().as_ref())
-                .to_string();
+            let start_date = formatter.stringFromDate(event.startDate().as_ref()).to_string();
+            let end_date = formatter.stringFromDate(event.endDate().as_ref()).to_string();
 
             let mut description: String = "".to_string();
             if let Some(notes) = event.notes() {
@@ -81,28 +83,41 @@ impl From<&objc2_event_kit::EKEvent> for CalendarMatter {
 
 #[command]
 pub async fn open_calendar_setting() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
     unsafe {
-        let nsstr =
-            ns_string!("x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars");
+        let nsstr = ns_string!(
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars"
+        );
         let url = NSURL::URLWithString(nsstr).unwrap();
         let workspace = NSWorkspace::sharedWorkspace();
         workspace.openURL(&url);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        log::warn!("Calendar settings are only supported on macOS");
     }
     Ok(())
 }
 
 #[command]
 pub async fn get_calendar_permission_status() -> i32 {
+    #[cfg(target_os = "macos")]
     unsafe {
         let status = EKEventStore::authorizationStatusForEntityType(EKEntityType::Event);
         log::info!("Calendar permission status: {:?}", status);
         // 0: NotDetermined, 1: Restricted, 2: Denied, 3: FullAccess, 4: WriteOnly
         status.0 as i32
     }
+    #[cfg(not(target_os = "macos"))]
+    {
+        log::warn!("Calendar permissions are only supported on macOS");
+        0 // NotDetermined
+    }
 }
 
 #[command]
 pub async fn request_calendar_access() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
     unsafe {
         let queue = Queue::main();
         queue.exec_async(move || {
@@ -111,16 +126,22 @@ pub async fn request_calendar_access() -> Result<(), String> {
             let completion_handler = RcBlock::new(move |granted: Bool, error: *mut NSError| {
                 log::info!("Calendar access result: {}", granted.as_bool());
             });
-            let completion_handler_ptr =
-                &*completion_handler as *const Block<_> as *mut Block<dyn Fn(Bool, *mut NSError)>;
+            let completion_handler_ptr = &*completion_handler as *const Block<_> as *mut Block<
+                dyn Fn(Bool, *mut NSError)
+            >;
             store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
         });
-        Ok(())
     }
+    #[cfg(not(target_os = "macos"))]
+    {
+        log::warn!("Calendar access is only supported on macOS");
+    }
+    Ok(())
 }
 
 #[command]
 pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
+    #[cfg(target_os = "macos")]
     unsafe {
         let store = EKEventStore::new();
         let now = NSDate::date();
@@ -138,18 +159,27 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
         let end_date = calendar.dateFromComponents(&start_components).unwrap();
         log::info!("End date: {:?}", end_date);
 
-        let predicate =
-            store.predicateForEventsWithStartDate_endDate_calendars(&start_date, &end_date, None);
+        let predicate = store.predicateForEventsWithStartDate_endDate_calendars(
+            &start_date,
+            &end_date,
+            None
+        );
         let events = store.eventsMatchingPredicate(&predicate);
         log::info!("Events count: {:?}", events.count());
         let mut result = Vec::new();
         for event in events.iter() {
             let calendar = event.calendar().unwrap();
-            if calendar.r#type() == EKCalendarType::Subscription
-                || calendar.r#type() == EKCalendarType::Birthday
+            if
+                calendar.r#type() == EKCalendarType::Subscription ||
+                calendar.r#type() == EKCalendarType::Birthday
             {
                 // 订阅的日历和生日日历不显示
-                log::info!("Skip calendar type: {:?}, title: {:?}, event: {:?}", calendar.r#type(), calendar.title(), event.title());
+                log::info!(
+                    "Skip calendar type: {:?}, title: {:?}, event: {:?}",
+                    calendar.r#type(),
+                    calendar.title(),
+                    event.title()
+                );
                 continue;
             }
             result.push(CalendarMatter::from(event));
@@ -157,5 +187,9 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
         log::info!("Result count: {:?}", result.len());
         Ok(result)
     }
+    #[cfg(not(target_os = "macos"))]
+    {
+        log::warn!("Calendar events are only supported on macOS");
+        Ok(Vec::new())
+    }
 }
-
