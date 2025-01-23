@@ -27,6 +27,7 @@ use windows::{
 
 use serde::{Deserialize, Serialize};
 use tauri::command;
+use chrono::{Datelike, TimeZone, Utc};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CalendarMatter {
@@ -125,70 +126,13 @@ pub async fn get_calendar_permission_status() -> i32 {
         let status = EKEventStore::authorizationStatusForEntityType(EKEntityType::Event);
         log::info!("Calendar permission status: {:?}", status);
         // 0: NotDetermined, 1: Restricted, 2: Denied, 3: FullAccess, 4: WriteOnly
-        status.0 as i32
+        return status.0 as i32;
     }
     #[cfg(target_os = "windows")]
     {
-        log::info!("Requesting calendar access...");
-        let store =
-            AppointmentManager::RequestStoreAsync(AppointmentStoreAccessType::AllCalendarsReadOnly)
-                .unwrap()
-                .await
-                .unwrap();
-        log::info!("Calendar access result: {:?}", store);
-        let calenders = store
-            .FindAppointmentCalendarsAsync()
-            .unwrap()
-            .await
-            .unwrap();
-        let size = calenders.Size().unwrap();
-        if size == 0 {
-            log::info!("No calendars found");
-        } else {
-            log::info!("Found {} calendars", size);
-            for calendar in calenders {
-                // https://learn.microsoft.com/zh-cn/uwp/api/windows.applicationmodel.appointments.appointmentcalendar?view=winrt-26100
-                log::info!("Calendar: {:?}", calendar.DisplayName());
-                let now = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() as i64;
-                let start_time = DateTime {
-                    UniversalTime: (now * 10_000_000) + 116444736000000000,
-                };
-
-                // 24小时后
-                let duration = TimeSpan {
-                    Duration: 365 * 24 * 60 * 60 * 10_000_000i64,
-                };
-
-                let appointments = match calendar.FindAppointmentsAsync(start_time, duration) {
-                    Ok(future) => {
-                        match future.await {
-                            Ok(appointments) => appointments,
-                            Err(e) => {
-                                log::error!("Error awaiting appointments: {}", e);
-                                return 0;
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        log::error!("Error getting appointments: {}", e);
-                        return 0;
-                    }
-                };
-                if appointments.Size().unwrap() == 0 {
-                    log::info!("No appointments found");
-                    return 0;
-                }
-                log::info!("Found {} appointments", appointments.Size().unwrap());
-                for appointment in appointments {
-                    log::info!("Appointment: {:?}", appointment.Subject());
-                }
-            }
-        }
-        0 // NotDetermined
+        return 3;
     }
+    return 0;
 }
 
 #[command]
@@ -207,9 +151,8 @@ pub async fn request_calendar_access() -> Result<(), String> {
             store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
         });
     }
-    #[cfg(not(target_os = "macos"))]
-    {
-        log::warn!("Calendar access is only supported on macOS");
+    #[cfg(target_os = "windows")] {
+        // no need to request access on windows
     }
     Ok(())
 }
@@ -258,9 +201,78 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
         log::info!("Result count: {:?}", result.len());
         Ok(result)
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
     {
-        log::warn!("Calendar events are only supported on macOS");
-        Ok(Vec::new())
+        // no need to get events on windows
+           log::info!("Requesting calendar access...");
+        use chrono::{Datelike, TimeZone, Utc};
+
+        let store = match futures::executor::block_on(async {
+            AppointmentManager::RequestStoreAsync(AppointmentStoreAccessType::AllCalendarsReadOnly)?.await
+        }) {
+            Ok(store) => store,
+            Err(e) => {
+                log::error!("Error getting store: {}", e);
+                return Err(e.to_string());
+            }
+        };
+
+        log::info!("Calendar access result: {:?}", store);
+        let calenders = match futures::executor::block_on(async {
+            store.FindAppointmentCalendarsAsync()?.await
+        }) {
+            Ok(calendars) => calendars,
+            Err(e) => {
+                log::error!("Error getting calendars: {}", e);
+                return Err(e.to_string());
+            }
+        };
+
+        let size = calenders.Size().unwrap();
+        if size == 0 {
+            log::info!("No calendars found");
+            return Err("No calendars found".to_string());
+        }
+
+        log::info!("Found {} calendars", size);
+        let mut result = Vec::new();
+        for calendar in calenders {
+            log::info!("Calendar: {:?}", calendar.DisplayName());
+
+            let now = Utc::now();
+            let year_start = Utc.with_ymd_and_hms(now.year(), 1, 1, 0, 0, 0).unwrap();
+            let unix_timestamp = year_start.timestamp();
+            let windows_ticks = (unix_timestamp * 10_000_000) + 116444736000000000;
+
+            let start_time = DateTime {
+                UniversalTime: windows_ticks,
+            };
+
+            let duration = TimeSpan {
+                Duration: 365 * 24 * 60 * 60 * 10_000_000i64, // 一年的时长（以100纳秒为单位）
+            };
+
+            let appointments = match futures::executor::block_on(async {
+                calendar.FindAppointmentsAsync(start_time, duration)?.await
+            }) {
+                Ok(appointments) => appointments,
+                Err(e) => {
+                    log::error!("Error getting appointments: {}", e);
+                    continue;
+                }
+            };
+
+            if appointments.Size().unwrap() == 0 {
+                log::info!("No appointments found");
+                continue;
+            }
+
+            log::info!("Found {} appointments", appointments.Size().unwrap());
+            for appointment in appointments {
+                log::info!("Appointment: {:?}", appointment.Subject());
+            }
+        }
+        return Ok(result);
     }
+    return Ok(Vec::new());
 }
