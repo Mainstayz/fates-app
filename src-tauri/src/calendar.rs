@@ -204,9 +204,8 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
     #[cfg(target_os = "windows")]
     {
         // no need to get events on windows
-           log::info!("Requesting calendar access...");
-        use chrono::{Datelike, TimeZone, Utc};
-
+        log::info!("Requesting calendar access...");
+        use chrono::{DateTime as ChronoDateTime, NaiveDateTime, Utc};
         let store = match futures::executor::block_on(async {
             AppointmentManager::RequestStoreAsync(AppointmentStoreAccessType::AllCalendarsReadOnly)?.await
         }) {
@@ -231,7 +230,7 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
         let size = calenders.Size().unwrap();
         if size == 0 {
             log::info!("No calendars found");
-            return Err("No calendars found".to_string());
+            return Ok(Vec::new());
         }
 
         log::info!("Found {} calendars", size);
@@ -251,6 +250,8 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
             let duration = TimeSpan {
                 Duration: 365 * 24 * 60 * 60 * 10_000_000i64, // 一年的时长（以100纳秒为单位）
             };
+            log::info!("Start time: {:?}", start_time);
+            log::info!("Duration: {:?}", duration);
 
             let appointments = match futures::executor::block_on(async {
                 calendar.FindAppointmentsAsync(start_time, duration)?.await
@@ -269,7 +270,43 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
 
             log::info!("Found {} appointments", appointments.Size().unwrap());
             for appointment in appointments {
-                log::info!("Appointment: {:?}", appointment.Subject());
+                let start_time = appointment.StartTime().unwrap();
+                let end_time = appointment.Duration()
+                    .map(|duration| DateTime {
+                        UniversalTime: start_time.UniversalTime + duration.Duration,
+                    })
+                    .unwrap_or(start_time);
+
+                // Convert Windows DateTime to ISO8601 string
+                let to_iso8601 = |dt: DateTime| {
+                    let unix_time = (dt.UniversalTime - 116444736000000000) / 10_000_000;
+                    let datetime = ChronoDateTime::<Utc>::from_timestamp(unix_time, 0).unwrap();
+                    datetime.to_rfc3339()
+                };
+
+                let mut id = appointment.RoamingId().unwrap_or_default().to_string();
+                if id.is_empty() {
+                    log::info!("RoamingId is empty, using LocalId");
+                    id = appointment.LocalId().unwrap_or_default().to_string();
+                }
+
+                let title = appointment.Subject().unwrap_or_default().to_string();
+                let description = appointment.Details().unwrap_or_default().to_string();
+                let start_time = to_iso8601(start_time);
+                let end_time = to_iso8601(end_time);
+                log::info!("Appointment id: {}, title: {}, description: {}, start_time: {}, end_time: {}", id, title, description, start_time, end_time);
+                let matter = CalendarMatter {
+                    id,
+                    title,
+                    description,
+                    start_time,
+                    end_time,
+                    priority: 0,
+                    type_: 3,
+                    sub_type: 1,
+                };
+
+                result.push(matter);
             }
         }
         return Ok(result);
