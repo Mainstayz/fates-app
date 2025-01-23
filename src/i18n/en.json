@@ -278,6 +278,48 @@
       "unpinMain": "Unpin the main window",
       "hideProgress": "Hide time progress",
       "showProgress": "Show time progress"
+    },
+    "import": {
+      "title": "Import Data",
+      "selectSource": "Select Import Source",
+      "calendar": {
+        "name": "Local Calendar",
+        "description": "Import todos from system calendar",
+        "guide": "Fates will extract your calendar data for this year and import it into the task list.",
+        "checkPermission": "Check calendar access permission",
+        "permissionGranted": "Calendar access permission granted",
+        "permissionDenied": "User denied calendar access permission",
+        "permissionPending": "Waiting to check permission status",
+        "permissionNotGranted": "Calendar access permission not granted",
+        "fetchData": "Waiting to fetch data",
+        "fetchSuccess": "Successfully fetched {count} calendar events",
+        "fetchNoData": "No data fetched",
+        "openSettings": "Open calendar permission settings",
+        "getCalendarData": "Get Calendar Data"
+      },
+      "outlook": {
+        "name": "Outlook",
+        "description": "Import todos from Outlook calendar",
+        "guide": "Please ensure you are logged into your Outlook account and have granted access."
+      },
+      "preview": {
+        "title": "Data Preview",
+        "columns": {
+          "title": "Title",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "action": "Action"
+        }
+      },
+      "guide": {
+        "title": "Operation Guide"
+      },
+      "actions": {
+        "back": "Back",
+        "next": "Next",
+        "importAll": "Import All"
+      },
+      "noSource": "No data source to import"
     }
   }
 }

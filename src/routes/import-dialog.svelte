@@ -22,22 +22,26 @@
     let ImportCalendarGuide = $state<any>(null);
 
     // 导入源列表
-    const importSources = [
+    let importSources = [
         {
             id: "calendar",
-            name: "本机日历",
+            name: $t("app.import.calendar.name"),
             icon: Calendar,
-            description: "从系统日历导入待办事项",
-            show: isTauri,
+            description: $t("app.import.calendar.description"),
+            show: false,
         },
-        {
-            id: "outlook",
-            name: "Outlook",
-            icon: Mail,
-            description: "从 Outlook 日历导入待办事项",
-            show: true,
-        },
+        // TODO：outlook 导入
+        // {
+        //     id: "outlook",
+        //     name: $t("app.import.outlook.name"),
+        //     icon: Mail,
+        //     description: $t("app.import.outlook.description"),
+        //     show: true,
+        // },
     ];
+
+    importSources = importSources.filter((source) => source.show);
+
     let table = new TableHandler<Matter>([], { rowsPerPage: 10 });
 
     $effect(() => {
@@ -113,24 +117,30 @@
         <div class="h-full flex flex-col">
             {#if currentStep === "select"}
                 <div class="flex flex-col p-4">
-                    <h3 class="text-xl font-semibold mb-6">选择导入源</h3>
+                    <h3 class="text-xl font-semibold mb-6">{$t("app.import.selectSource")}</h3>
                     <div class="flex-1 grid gap-4 overflow-auto">
-                        {#each importSources as source}
-                            {#if source.show}
-                                <Card
-                                    class="p-4 cursor-pointer hover:bg-secondary/50"
-                                    onclick={() => handleSourceSelect(source.id as typeof currentSource)}
-                                >
-                                    <div class="flex items-center gap-4">
-                                        <source.icon class="w-6 h-6" />
-                                        <div>
-                                            <h3 class="text-lg font-semibold">{source.name}</h3>
-                                            <p class="text-muted-foreground">{source.description}</p>
+                        {#if importSources.length > 0}
+                            {#each importSources as source}
+                                {#if source.show}
+                                    <Card
+                                        class="p-4 cursor-pointer hover:bg-secondary/50"
+                                        onclick={() => handleSourceSelect(source.id as typeof currentSource)}
+                                    >
+                                        <div class="flex items-center gap-4">
+                                            <source.icon class="w-6 h-6" />
+                                            <div>
+                                                <h3 class="text-lg font-semibold">{source.name}</h3>
+                                                <p class="text-muted-foreground">{source.description}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            {/if}
-                        {/each}
+                                    </Card>
+                                {/if}
+                            {/each}
+                        {:else}
+                            <div class="flex justify-center items-center h-full">
+                                <p class="text-muted-foreground">{$t("app.import.noSource")}</p>
+                            </div>
+                        {/if}
                     </div>
                 </div>
             {:else}
@@ -139,57 +149,65 @@
                         <!-- 操作指引 -->
                         {#if currentStep === "guide"}
                             <div class="space-y-4">
-                                <h3 class="text-xl font-semibold">操作指引</h3>
+                                <h3 class="text-xl font-semibold">{$t("app.import.guide.title")}</h3>
                                 <p class="text-muted-foreground">
                                     {#if currentSource === "calendar"}
                                         <ImportCalendarGuide callback={handleDataItems} />
                                     {:else if currentSource === "outlook"}
-                                        请确保已登录 Outlook 账号并授权访问。
+                                        {$t("app.import.outlook.guide")}
                                     {/if}
                                 </p>
                             </div>
                         {:else if currentStep === "preview"}
                             <div class="space-y-4">
-                                <h3 class="text-xl font-semibold">数据预览</h3>
-                                <Table.Root>
-                                    <Table.Header>
-                                        <Table.Row>
-                                            <!-- TODO: locale -->
-                                            <Table.Head>标题</Table.Head>
-                                            <Table.Head class="w-[144px]">开始时间</Table.Head>
-                                            <Table.Head class="w-[144px]">结束时间</Table.Head>
-                                            <Table.Head class="w-[96px]">动作</Table.Head>
-                                        </Table.Row>
-                                    </Table.Header>
-                                    <Table.Body>
-                                        {#each table.rows as row (row.id)}
+                                <h3 class="text-xl font-semibold">{$t("app.import.preview.title")}</h3>
+                                <div class="rounded-md border">
+                                    <Table.Root>
+                                        <Table.Header>
                                             <Table.Row>
-                                                <Table.Cell>{row.title}</Table.Cell>
-                                                <Table.Cell
-                                                    >{dayjs(row.start_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                <Table.Head>{$t("app.import.preview.columns.title")}</Table.Head>
+                                                <Table.Head class="w-[144px]"
+                                                    >{$t("app.import.preview.columns.startTime")}</Table.Head
                                                 >
-                                                <Table.Cell>{dayjs(row.end_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                <Table.Head class="w-[144px]"
+                                                    >{$t("app.import.preview.columns.endTime")}</Table.Head
                                                 >
-                                                <Table.Cell>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="icon"
-                                                        onclick={() => createMatter(row)}
-                                                    >
-                                                        <PlusCircle class="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="icon"
-                                                        onclick={() => deleteMatter(row)}
-                                                    >
-                                                        <Trash2 class="w-4 h-4" />
-                                                    </Button>
-                                                </Table.Cell>
+                                                <Table.Head class="w-[96px]"
+                                                    >{$t("app.import.preview.columns.action")}</Table.Head
+                                                >
                                             </Table.Row>
-                                        {/each}
-                                    </Table.Body>
-                                </Table.Root>
+                                        </Table.Header>
+                                        <Table.Body>
+                                            {#each table.rows as row (row.id)}
+                                                <Table.Row>
+                                                    <Table.Cell>{row.title}</Table.Cell>
+                                                    <Table.Cell
+                                                        >{dayjs(row.start_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                    >
+                                                    <Table.Cell
+                                                        >{dayjs(row.end_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                    >
+                                                    <Table.Cell>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onclick={() => createMatter(row)}
+                                                        >
+                                                            <PlusCircle class="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onclick={() => deleteMatter(row)}
+                                                        >
+                                                            <Trash2 class="w-4 h-4" />
+                                                        </Button>
+                                                    </Table.Cell>
+                                                </Table.Row>
+                                            {/each}
+                                        </Table.Body>
+                                    </Table.Root>
+                                </div>
                                 <div class="flex flex-row justify-between">
                                     <div class="flex flex-col">
                                         <!-- total todo count -->
@@ -229,13 +247,13 @@
                         {/if}
                     </div>
                     <div class="flex justify-end gap-2 bg-background">
-                        <Button variant="outline" onclick={handleBack}>返回</Button>
+                        <Button variant="outline" onclick={handleBack}>{$t("app.import.actions.back")}</Button>
                         {#if currentStep === "guide"}
                             <Button variant="outline" onclick={handleNextStep} disabled={dataItems.length === 0}
-                                >下一步</Button
+                                >{$t("app.import.actions.next")}</Button
                             >
                         {:else if currentStep === "preview"}
-                            <Button variant="outline">全部导入</Button>
+                            <Button variant="outline">{$t("app.import.actions.importAll")}</Button>
                         {/if}
                     </div>
                 </div>

@@ -6,7 +6,21 @@
     import { AlertCircle, CheckCircle2, XCircle, Loader2, Play } from "lucide-svelte";
     import { onMount } from "svelte";
     import { fade, fly } from "svelte/transition";
+    import { t } from "svelte-i18n";
 
+    let mockEnable = false;
+    let mockData = [
+        {
+            id: "45678567567",
+            title: "Meeting with John",
+            description: "Meeting with John",
+            start_time: "2024-01-01 10:00",
+            end_time: "2024-01-01 11:00",
+            priority: 0,
+            type_: 3,
+            sub_type: 1,
+        },
+    ];
     // 定义步骤状态类型
     type StepStatus = "pending" | "loading" | "success" | "warning" | "error";
 
@@ -34,7 +48,7 @@
                 if (permissionStatus !== null) return "success";
                 return "pending";
             },
-            getText: () => "检查日历访问权限",
+            getText: () => $t("app.import.calendar.checkPermission"),
             getIcon: (status) => {
                 switch (status) {
                     case "loading":
@@ -55,10 +69,10 @@
                 return "pending";
             },
             getText: ({ permissionStatus }) => {
-                if (permissionStatus === 3) return "已授权日历访问权限";
-                if (permissionStatus === 0) return "未授权日历访问权限";
-                if (permissionStatus !== null) return "用户拒绝日历访问权限";
-                return "等待检查权限状态";
+                if (permissionStatus === 3) return $t("app.import.calendar.permissionGranted");
+                if (permissionStatus === 0) return $t("app.import.calendar.permissionNotGranted");
+                if (permissionStatus !== null) return $t("app.import.calendar.permissionDenied");
+                return $t("app.import.calendar.permissionPending");
             },
             getIcon: (status) => {
                 switch (status) {
@@ -85,10 +99,12 @@
             },
             getText: ({ eventCount, permissionStatus }) => {
                 if (eventCount !== null) {
-                    return eventCount > 0 ? `获取成功，已获取到 ${eventCount} 条日程数据` : "未获取到数据";
+                    return eventCount > 0
+                        ? $t("app.import.calendar.fetchSuccess", { values: { count: eventCount } })
+                        : $t("app.import.calendar.fetchNoData");
                 }
-                if (permissionStatus === 3 || permissionStatus === null) return "等待获取数据";
-                return "未获取到数据";
+                if (permissionStatus === 3 || permissionStatus === null) return $t("app.import.calendar.fetchData");
+                return $t("app.import.calendar.fetchNoData");
             },
             getIcon: (status) => {
                 switch (status) {
@@ -132,6 +148,14 @@
             currentStep = 0;
             setDataItems([]);
             await new Promise((resolve) => setTimeout(resolve, 500));
+
+            if (mockEnable) {
+                permissionStatus = 3;
+                eventCount = mockData.length;
+                setDataItems(mockData);
+                currentStep = 4;
+                return;
+            }
 
             // 检查权限
             permissionStatus = await invoke("get_calendar_permission_status");
@@ -178,8 +202,8 @@
     });
 </script>
 
-<div class="space-y-8 p-4">
-    <h3 class="text-xl font-semibold">Fates 会提取你本年度的日历数据，并导入至任务列表当中。</h3>
+<div class="space-y-4">
+    <h3 class="font-semibold">{$t("app.import.calendar.guide")}</h3>
     <div class="space-y-4">
         <div class="mb-4">
             <Button variant="outline" disabled={isLoading} onclick={() => checkPermissionAndGetEvents()}>
@@ -188,7 +212,7 @@
                 {:else}
                     <Play class="w-4 h-4" />
                 {/if}
-                获取日历数据
+                {$t("app.import.calendar.getCalendarData")}
             </Button>
         </div>
 
@@ -206,7 +230,7 @@
                                   : status === 'error'
                                     ? 'text-red-500'
                                     : ''}
-                                                {status === 'loading' ? 'animate-spin' : ''}"
+                                {status === 'loading' ? 'animate-spin' : ''}"
                         />
                     {:else}
                         <div class="w-4 h-4 rounded-full border"></div>
@@ -218,7 +242,9 @@
 
         {#if permissionStatus !== null && permissionStatus !== 3}
             <div class="mt-4">
-                <Button onclick={() => openSettings()}>打开日历权限设置</Button>
+                <Button variant="outline" onclick={() => openSettings()}
+                    >{$t("app.import.calendar.openSettings")}</Button
+                >
             </div>
         {/if}
     </div>

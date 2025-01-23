@@ -98,6 +98,7 @@ pub async fn open_calendar_setting() -> Result<(), String> {
         let url = NSURL::URLWithString(nsstr).unwrap();
         let workspace = NSWorkspace::sharedWorkspace();
         workspace.openURL(&url);
+        Ok(())
     }
     #[cfg(target_os = "windows")]
     {
@@ -195,7 +196,7 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
             result.push(CalendarMatter::from(event));
         }
         log::info!("Result count: {:?}", result.len());
-        Ok(result)
+        return Ok(result);
     }
     #[cfg(target_os = "windows")]
     {

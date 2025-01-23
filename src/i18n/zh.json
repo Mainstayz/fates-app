@@ -278,6 +278,48 @@
       "unpinMain": "取消置顶主窗口",
       "hideProgress": "隐藏时间进度",
       "showProgress": "显示时间进度"
+    },
+    "import": {
+      "title": "导入数据",
+      "selectSource": "选择导入源",
+      "calendar": {
+        "name": "本机日历",
+        "description": "从系统日历导入待办事项",
+        "guide": "Fates 会提取你本年度的日历数据，并导入至任务列表当中。",
+        "checkPermission": "检查日历访问权限",
+        "permissionGranted": "已授权日历访问权限",
+        "permissionDenied": "用户拒绝日历访问权限",
+        "permissionPending": "等待检查权限状态",
+        "permissionNotGranted": "未授权日历访问权限",
+        "fetchData": "等待获取数据",
+        "fetchSuccess": "获取成功，已获取到 {count} 条日程数据",
+        "fetchNoData": "未获取到数据",
+        "openSettings": "打开日历权限设置",
+        "getCalendarData": "获取日历数据"
+      },
+      "outlook": {
+        "name": "Outlook",
+        "description": "从 Outlook 日历导入待办事项",
+        "guide": "请确保已登录 Outlook 账号并授权访问。"
+      },
+      "preview": {
+        "title": "数据预览",
+        "columns": {
+          "title": "标题",
+          "startTime": "开始时间",
+          "endTime": "结束时间",
+          "action": "动作"
+        }
+      },
+      "guide": {
+        "title": "操作指引"
+      },
+      "actions": {
+        "back": "返回",
+        "next": "下一步",
+        "importAll": "全部导入"
+      },
+      "noSource": "无可导入数据源"
     }
   }
 }

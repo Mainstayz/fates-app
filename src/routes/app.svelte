@@ -18,9 +18,10 @@
     let todoComponent: TodoPage | null = null;
     let openaiComponent: OpenAIChatPage | null = null;
     let weekReportComponent: WeekReportPage | null = null;
-    let settingsOpen = false;
 
+    let settingsOpen = false;
     let importOpen = false;
+
     let selectedRoute: string = "timeline";
 
     const primaryRoutes: Route[] = [
