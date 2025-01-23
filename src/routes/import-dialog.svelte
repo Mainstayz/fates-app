@@ -5,6 +5,10 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { isTauri } from "$src/platform";
     import { onMount } from "svelte";
+    import * as Table from "$lib/components/ui/table/index";
+    import { TableHandler } from "@vincjo/datatables";
+    import type { Matter } from "$src/types";
+    import dayjs from "dayjs";
 
     let currentSource: "calendar" | "outlook" | null = $state(null);
     let currentStep: "select" | "guide" | "preview" = $state("select");
@@ -12,6 +16,25 @@
     let { open = $bindable() } = $props();
 
     let dataItems: any[] = $state([]);
+
+    // let matters = $derived(() => {
+    //     return dataItems.map((item: any) => {
+    //         let now = dayjs().toISOString();
+    //         let newItem: Matter = {
+    //             id: item.id,
+    //             title: item.title,
+    //             description: item.description,
+    //             start_time: item.start_time,
+    //             end_time: item.end_time,
+    //             type_: item.type_,
+    //             sub_type: item.sub_type,
+    //             priority: item.priority,
+    //             created_at: now,
+    //             updated_at: now,
+    //         };
+    //         return newItem;
+    //     });
+    // });
 
     let ImportCalendarGuide = $state<any>(null);
 
@@ -32,6 +55,27 @@
             show: true,
         },
     ];
+    let table = new TableHandler<Matter>([], { rowsPerPage: 10 });
+
+    $effect(() => {
+        let matters = dataItems.map((item: any) => {
+            let now = dayjs().toISOString();
+            let newItem: Matter = {
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                start_time: item.start_time,
+                end_time: item.end_time,
+                type_: item.type_,
+                sub_type: item.sub_type,
+                priority: item.priority,
+                created_at: now,
+                updated_at: now,
+            };
+            return newItem;
+        });
+        table.setRows(matters);
+    });
 
     onMount(async () => {
         if (isTauri) {
@@ -110,7 +154,29 @@
                         {:else if currentStep === "preview"}
                             <div class="space-y-4">
                                 <h3 class="text-xl font-semibold">数据预览</h3>
-                                <!-- 这里将添加数据预览表格 -->
+                                <Table.Root>
+                                    <Table.Header>
+                                        <Table.Row>
+                                            <Table.Head>标题</Table.Head>
+                                            <Table.Head>开始时间</Table.Head>
+                                            <Table.Head>结束时间</Table.Head>
+                                            <Table.Head>动作</Table.Head>
+                                        </Table.Row>
+                                    </Table.Header>
+                                    <Table.Body>
+                                        {#each table.rows as row (row.id)}
+                                            <Table.Row>
+                                                <Table.Cell>{row.title}</Table.Cell>
+                                                <Table.Cell>{row.start_time}</Table.Cell>
+                                                <Table.Cell>{row.end_time}</Table.Cell>
+                                                <Table.Cell>
+                                                    <Button>添加</Button>
+                                                    <Button>删除</Button>
+                                                </Table.Cell>
+                                            </Table.Row>
+                                        {/each}
+                                    </Table.Body>
+                                </Table.Root>
                             </div>
                         {/if}
                     </div>
