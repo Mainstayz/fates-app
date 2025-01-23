@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
+    import { Label } from "$lib/components/ui/label";
     import { Card } from "$lib/components/ui/card";
-    import { Calendar, Mail } from "lucide-svelte";
+    import { Calendar, Mail, PlusCircle, Trash2, ChevronLeft, ChevronRight } from "lucide-svelte";
     import * as Dialog from "$lib/components/ui/dialog";
     import { isTauri } from "$src/platform";
     import { onMount } from "svelte";
@@ -9,6 +10,8 @@
     import { TableHandler } from "@vincjo/datatables";
     import type { Matter } from "$src/types";
     import dayjs from "dayjs";
+    import { t } from "svelte-i18n";
+    import platform from "$src/platform";
 
     let currentSource: "calendar" | "outlook" | null = $state(null);
     let currentStep: "select" | "guide" | "preview" = $state("select");
@@ -16,26 +19,6 @@
     let { open = $bindable() } = $props();
 
     let dataItems: any[] = $state([]);
-
-    // let matters = $derived(() => {
-    //     return dataItems.map((item: any) => {
-    //         let now = dayjs().toISOString();
-    //         let newItem: Matter = {
-    //             id: item.id,
-    //             title: item.title,
-    //             description: item.description,
-    //             start_time: item.start_time,
-    //             end_time: item.end_time,
-    //             type_: item.type_,
-    //             sub_type: item.sub_type,
-    //             priority: item.priority,
-    //             created_at: now,
-    //             updated_at: now,
-    //         };
-    //         return newItem;
-    //     });
-    // });
-
     let ImportCalendarGuide = $state<any>(null);
 
     // 导入源列表
@@ -71,6 +54,7 @@
                 priority: item.priority,
                 created_at: now,
                 updated_at: now,
+                reserved_1: "blue",
             };
             return newItem;
         });
@@ -82,6 +66,19 @@
             ImportCalendarGuide = (await import("$src/lib/components/import-calendar-data.svelte")).default;
         }
     });
+
+    async function createMatter(matter: Matter) {
+        await platform.instance.storage.createMatter(matter);
+    }
+
+    async function deleteMatter(matter: Matter) {
+        let rows = [...table.rows];
+        let index = rows.findIndex((row) => row.id === matter.id);
+        if (index !== -1) {
+            rows.splice(index, 1);
+        }
+        table.setRows(rows);
+    }
 
     // 处理导入源选择
     function handleSourceSelect(source: typeof currentSource) {
@@ -157,26 +154,77 @@
                                 <Table.Root>
                                     <Table.Header>
                                         <Table.Row>
+                                            <!-- TODO: locale -->
                                             <Table.Head>标题</Table.Head>
-                                            <Table.Head>开始时间</Table.Head>
-                                            <Table.Head>结束时间</Table.Head>
-                                            <Table.Head>动作</Table.Head>
+                                            <Table.Head class="w-[144px]">开始时间</Table.Head>
+                                            <Table.Head class="w-[144px]">结束时间</Table.Head>
+                                            <Table.Head class="w-[96px]">动作</Table.Head>
                                         </Table.Row>
                                     </Table.Header>
                                     <Table.Body>
                                         {#each table.rows as row (row.id)}
                                             <Table.Row>
                                                 <Table.Cell>{row.title}</Table.Cell>
-                                                <Table.Cell>{row.start_time}</Table.Cell>
-                                                <Table.Cell>{row.end_time}</Table.Cell>
+                                                <Table.Cell
+                                                    >{dayjs(row.start_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                >
+                                                <Table.Cell>{dayjs(row.end_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
+                                                >
                                                 <Table.Cell>
-                                                    <Button>添加</Button>
-                                                    <Button>删除</Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onclick={() => createMatter(row)}
+                                                    >
+                                                        <PlusCircle class="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onclick={() => deleteMatter(row)}
+                                                    >
+                                                        <Trash2 class="w-4 h-4" />
+                                                    </Button>
                                                 </Table.Cell>
                                             </Table.Row>
                                         {/each}
                                     </Table.Body>
                                 </Table.Root>
+                                <div class="flex flex-row justify-between">
+                                    <div class="flex flex-col">
+                                        <!-- total todo count -->
+                                        <Label class="text-sm text-muted-foreground">
+                                            {$t("app.todo.totalTodo")}: {table.rows.length}
+                                        </Label>
+                                    </div>
+                                    <div class="flex justify-end items-center space-x-2">
+                                        <Label class="text-sm text-muted-foreground">
+                                            {$t("app.other.page0")}
+                                            {table.currentPage}
+                                            {$t("app.other.page1")}
+                                            {Math.max(table.pageCount, 1)}
+                                            {$t("app.other.page2")}
+                                        </Label>
+                                        <Button
+                                            class="w-8 h-8"
+                                            disabled={table.currentPage === 1}
+                                            variant="outline"
+                                            size="icon"
+                                            onclick={() => table.setPage("previous")}
+                                        >
+                                            <ChevronLeft />
+                                        </Button>
+                                        <Button
+                                            class="w-8 h-8"
+                                            disabled={table.currentPage === table.pageCount}
+                                            variant="outline"
+                                            size="icon"
+                                            onclick={() => table.setPage("next")}
+                                        >
+                                            <ChevronRight />
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         {/if}
                     </div>
