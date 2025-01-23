@@ -13,8 +13,7 @@ use objc2_foundation::{
     is_main_thread, ns_string, NSCalendar, NSCalendarUnit, NSDate, NSError,
     NSISO8601DateFormatOptions, NSISO8601DateFormatter, NSURL,
 };
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+
 #[cfg(target_os = "windows")]
 use windows::{
     core::HSTRING,
@@ -25,9 +24,9 @@ use windows::{
     System::Launcher,
 };
 
+use chrono::{Datelike, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use tauri::command;
-use chrono::{Datelike, TimeZone, Utc};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CalendarMatter {
@@ -102,11 +101,7 @@ pub async fn open_calendar_setting() -> Result<(), String> {
     }
     #[cfg(target_os = "windows")]
     {
-        use windows::{Foundation::Uri, System::Launcher};
-
         async fn open_calendar_settings_windows() -> Result<(), String> {
-            // let uri = Uri::CreateUri(&HSTRING::from("ms-settings:privacy-calendar"))?;
-            // Launcher::LaunchUriAsync(&uri)?.await?;
             Ok(())
         }
 
@@ -151,7 +146,8 @@ pub async fn request_calendar_access() -> Result<(), String> {
             store.requestFullAccessToEventsWithCompletion(completion_handler_ptr);
         });
     }
-    #[cfg(target_os = "windows")] {
+    #[cfg(target_os = "windows")]
+    {
         // no need to request access on windows
     }
     Ok(())
@@ -207,7 +203,8 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
         log::info!("Requesting calendar access...");
         use chrono::{DateTime as ChronoDateTime, NaiveDateTime, Utc};
         let store = match futures::executor::block_on(async {
-            AppointmentManager::RequestStoreAsync(AppointmentStoreAccessType::AllCalendarsReadOnly)?.await
+            AppointmentManager::RequestStoreAsync(AppointmentStoreAccessType::AllCalendarsReadOnly)?
+                .await
         }) {
             Ok(store) => store,
             Err(e) => {
@@ -271,7 +268,8 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
             log::info!("Found {} appointments", appointments.Size().unwrap());
             for appointment in appointments {
                 let start_time = appointment.StartTime().unwrap();
-                let end_time = appointment.Duration()
+                let end_time = appointment
+                    .Duration()
                     .map(|duration| DateTime {
                         UniversalTime: start_time.UniversalTime + duration.Duration,
                     })
@@ -294,7 +292,14 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
                 let description = appointment.Details().unwrap_or_default().to_string();
                 let start_time = to_iso8601(start_time);
                 let end_time = to_iso8601(end_time);
-                log::info!("Appointment id: {}, title: {}, description: {}, start_time: {}, end_time: {}", id, title, description, start_time, end_time);
+                log::info!(
+                    "Appointment id: {}, title: {}, description: {}, start_time: {}, end_time: {}",
+                    id,
+                    title,
+                    description,
+                    start_time,
+                    end_time
+                );
                 let matter = CalendarMatter {
                     id,
                     title,
