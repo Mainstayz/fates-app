@@ -19,7 +19,7 @@
     let weekReportComponent: WeekReportPage | null = null;
     let settingsOpen = false;
 
-    const navCollapsedSize = 50;
+    let importOpen = false;
     let selectedRoute: string = "timeline";
 
     const primaryRoutes: Route[] = [
@@ -27,6 +27,7 @@
             icon: Icons.CalendarRange,
             variant: "default",
             label: "timeline",
+            type: "route",
             translationKey: "routes.timeline",
         },
 
@@ -40,12 +41,14 @@
             icon: Icons.ListTodo,
             variant: "default",
             label: "todo",
+            type: "route",
             translationKey: "routes.todo",
         },
         {
             icon: Icons.Repeat,
             variant: "default",
             label: "repeat",
+            type: "route",
             translationKey: "routes.repeat",
         },
 
@@ -53,12 +56,14 @@
             icon: Icons.CharCombined,
             variant: "default",
             label: "statistics",
+            type: "route",
             translationKey: "routes.statistics",
         },
         {
             icon: Icons.PencilLine,
             variant: "default",
             label: "week_report",
+            type: "route",
             translationKey: "routes.week_report",
         },
         // {
@@ -68,15 +73,30 @@
         //     translationKey: "routes.openai",
         // },
         {
+            icon: Icons.Import,
+            variant: "default",
+            label: "import",
+            type: "custom",
+            translationKey: "routes.import",
+        },
+        {
             icon: Icons.Settings,
             variant: "default",
             label: "settings",
+            type: "settings",
             translationKey: "routes.settings",
         },
     ];
 
     function onRouteSelect(route: string) {
         selectedRoute = route;
+    }
+
+    function onConfigClick(route: string) {
+        console.log("onConfigClick", route);
+        if (route === "import") {
+            importOpen = true;
+        }
     }
 
     function onSettingsClick() {
@@ -87,7 +107,7 @@
 <div class="w-full h-full">
     <div class="flex h-full">
         <div class="w-[50px] flex-shrink-0">
-            <Nav routes={primaryRoutes} {onRouteSelect} {onSettingsClick} />
+            <Nav routes={primaryRoutes} {onRouteSelect} {onConfigClick} {onSettingsClick} />
         </div>
         <div class="flex-grow">
             {#if selectedRoute === "timeline" || selectedRoute === ""}

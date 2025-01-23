@@ -16,6 +16,7 @@ export type Route = {
     icon: ComponentType<Icon>;
     variant: "default" | "ghost";
     label: string;
+    type: string,
     translationKey: string;
 };
 

@@ -7,7 +7,8 @@
     "repeat": "Repeat",
     "todo": "Todo",
     "week_report": "Week Report",
-    "openai": "AI Chat"
+    "openai": "AI Chat",
+    "import": "Import"
   },
   "app": {
     "timeline": {
