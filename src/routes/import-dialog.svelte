@@ -3,11 +3,16 @@
     import { Card } from "$lib/components/ui/card";
     import { Calendar, Mail } from "lucide-svelte";
     import * as Dialog from "$lib/components/ui/dialog";
+    import { isTauri } from "$src/platform";
 
     let currentSource: "calendar" | "outlook" | null = $state(null);
     let currentStep: "select" | "guide" | "preview" = $state("select");
     let importProgress = $state(0);
     let { open = $bindable() } = $props();
+
+    const showInTauri = 1;
+    const showInBoth = 3;
+
     // 导入源列表
     const importSources = [
         {
@@ -15,13 +20,15 @@
             name: "本机日历",
             icon: Calendar,
             description: "从系统日历导入待办事项",
+            show: showInTauri,
         },
-        // {
-        //     id: "outlook",
-        //     name: "Outlook",
-        //     icon: Mail,
-        //     description: "从 Outlook 日历导入待办事项",
-        // },
+        {
+            id: "outlook",
+            name: "Outlook",
+            icon: Mail,
+            description: "从 Outlook 日历导入待办事项",
+            show: showInBoth,
+        },
     ];
 
     // 处理导入源选择
@@ -52,18 +59,33 @@
                     <h3 class="text-xl font-semibold mb-6">选择导入源</h3>
                     <div class="flex-1 grid gap-4 overflow-auto">
                         {#each importSources as source}
-                            <Card
-                                class="p-4 cursor-pointer hover:bg-secondary/50"
-                                onclick={() => handleSourceSelect(source.id as typeof currentSource)}
-                            >
-                                <div class="flex items-center gap-4">
-                                    <source.icon class="w-6 h-6" />
-                                    <div>
-                                        <h3 class="text-lg font-semibold">{source.name}</h3>
-                                        <p class="text-muted-foreground">{source.description}</p>
+                            {#if source.show === showInTauri && isTauri}
+                                <Card
+                                    class="p-4 cursor-pointer hover:bg-secondary/50"
+                                    onclick={() => handleSourceSelect(source.id as typeof currentSource)}
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <source.icon class="w-6 h-6" />
+                                        <div>
+                                            <h3 class="text-lg font-semibold">{source.name}</h3>
+                                            <p class="text-muted-foreground">{source.description}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
+                            {:else if source.show === showInBoth}
+                                <Card
+                                    class="p-4 cursor-pointer hover:bg-secondary/50"
+                                    onclick={() => handleSourceSelect(source.id as typeof currentSource)}
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <source.icon class="w-6 h-6" />
+                                        <div>
+                                            <h3 class="text-lg font-semibold">{source.name}</h3>
+                                            <p class="text-muted-foreground">{source.description}</p>
+                                        </div>
+                                    </div>
+                                </Card>
+                            {/if}
                         {/each}
                     </div>
                 </div>
