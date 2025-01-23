@@ -7,20 +7,32 @@
     import { onMount } from "svelte";
     import { fade, fly } from "svelte/transition";
 
-    let permissionStatus: number | null = null;
-    let isLoading = false;
-    let eventCount: number | null = null;
-    let error: string | null = null;
-    let currentStep = 0;
+    let permissionStatus: number | null = $state(null);
+    let isLoading = $state(false);
+    let eventCount: number | null = $state(null);
+    let error: string | null = $state(null);
+    let currentStep = $state(0);
+
     // dataItems
-    let dataItems: any[] = [];
+    let dataItems: any[] = $state([]);
     // callback
-    let callback: (data: any) => void = () => {};
+    let { callback }: { callback: (data: any) => void } = $props();
+    // 设置 dataItems
+    function setDataItems(data: any) {
+        console.log("dataItems:", data);
+        dataItems = data;
+        if (callback) {
+            callback(dataItems);
+        } else {
+            console.log("callback is not set");
+        }
+    }
 
     async function checkPermission() {
         try {
             isLoading = true;
             currentStep = 0;
+            setDataItems([]);
             await new Promise((resolve) => setTimeout(resolve, 500));
             permissionStatus = await invoke("get_calendar_permission_status");
             if (permissionStatus === 3) {
@@ -50,21 +62,18 @@
 
     async function getEvents() {
         try {
-            dataItems = [];
+            setDataItems([]);
             isLoading = true;
             currentStep = 3;
             await new Promise((resolve) => setTimeout(resolve, 500));
             const events: any[] = await invoke("get_calendar_events");
             eventCount = Array.isArray(events) ? events.length : 0;
-            dataItems = events;
+            setDataItems(events);
             currentStep = 4;
         } catch (err: any) {
             error = err.message || "未知错误";
         } finally {
             isLoading = false;
-            if (callback) {
-                callback(dataItems);
-            }
         }
     }
 
@@ -88,6 +97,7 @@
     // 初始化 currentStep
     onMount(() => {
         currentStep = 0;
+        dataItems = [];
     });
 </script>
 

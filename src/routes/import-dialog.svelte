@@ -11,6 +11,8 @@
     let importProgress = $state(0);
     let { open = $bindable() } = $props();
 
+    let dataItems: any[] = $state([]);
+
     let ImportCalendarGuide = $state<any>(null);
 
     // 导入源列表
@@ -41,6 +43,7 @@
     function handleSourceSelect(source: typeof currentSource) {
         currentSource = source;
         currentStep = "guide";
+        dataItems = [];
     }
 
     // 返回选择界面
@@ -48,11 +51,18 @@
         currentSource = null;
         currentStep = "select";
         importProgress = 0;
+        dataItems = [];
     }
 
     // 进入预览步骤
     function handleNextStep() {
         currentStep = "preview";
+    }
+
+    // 处理数据导入
+    function handleDataItems(data: any) {
+        console.log("dataItems", data);
+        dataItems = data;
     }
 </script>
 
@@ -91,7 +101,7 @@
                                 <h3 class="text-xl font-semibold">操作指引</h3>
                                 <p class="text-muted-foreground">
                                     {#if currentSource === "calendar"}
-                                        <ImportCalendarGuide />
+                                        <ImportCalendarGuide callback={handleDataItems} />
                                     {:else if currentSource === "outlook"}
                                         请确保已登录 Outlook 账号并授权访问。
                                     {/if}
@@ -107,9 +117,9 @@
                     <div class="flex justify-end gap-2 bg-background">
                         <Button variant="outline" onclick={handleBack}>返回</Button>
                         {#if currentStep === "guide"}
-                            <Button onclick={handleNextStep}>下一步</Button>
+                            <Button onclick={handleNextStep} disabled={dataItems.length === 0}>开始导入</Button>
                         {:else if currentStep === "preview"}
-                            <Button>开始导入</Button>
+                            <Button>全部导入</Button>
                         {/if}
                     </div>
                 </div>
