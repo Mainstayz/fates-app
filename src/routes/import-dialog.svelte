@@ -231,9 +231,11 @@
                     <div class="flex justify-end gap-2 bg-background">
                         <Button variant="outline" onclick={handleBack}>返回</Button>
                         {#if currentStep === "guide"}
-                            <Button onclick={handleNextStep} disabled={dataItems.length === 0}>开始导入</Button>
+                            <Button variant="outline" onclick={handleNextStep} disabled={dataItems.length === 0}
+                                >下一步</Button
+                            >
                         {:else if currentStep === "preview"}
-                            <Button>全部导入</Button>
+                            <Button variant="outline">全部导入</Button>
                         {/if}
                     </div>
                 </div>

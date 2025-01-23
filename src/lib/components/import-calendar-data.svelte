@@ -7,6 +7,104 @@
     import { onMount } from "svelte";
     import { fade, fly } from "svelte/transition";
 
+    // 定义步骤状态类型
+    type StepStatus = "pending" | "loading" | "success" | "warning" | "error";
+
+    // 定义步骤接口
+    interface Step {
+        id: number;
+        getStatus: (params: {
+            currentStep: number;
+            permissionStatus: number | null;
+            eventCount: number | null;
+            isLoading: boolean;
+        }) => StepStatus;
+        getText: (params: { permissionStatus: number | null; eventCount: number | null }) => string;
+        getIcon: (
+            status: StepStatus
+        ) => typeof CheckCircle2 | typeof AlertCircle | typeof XCircle | typeof Loader2 | null;
+    }
+
+    // 定义步骤配置
+    const steps: Step[] = [
+        {
+            id: 1,
+            getStatus: ({ isLoading, currentStep, permissionStatus }) => {
+                if (isLoading && currentStep === 0) return "loading";
+                if (permissionStatus !== null) return "success";
+                return "pending";
+            },
+            getText: () => "检查日历访问权限",
+            getIcon: (status) => {
+                switch (status) {
+                    case "loading":
+                        return Loader2;
+                    case "success":
+                        return CheckCircle2;
+                    default:
+                        return null;
+                }
+            },
+        },
+        {
+            id: 2,
+            getStatus: ({ permissionStatus }) => {
+                if (permissionStatus === 3) return "success";
+                if (permissionStatus === 0) return "warning";
+                if (permissionStatus !== null) return "error";
+                return "pending";
+            },
+            getText: ({ permissionStatus }) => {
+                if (permissionStatus === 3) return "已授权日历访问权限";
+                if (permissionStatus === 0) return "未授权日历访问权限";
+                if (permissionStatus !== null) return "用户拒绝日历访问权限";
+                return "等待检查权限状态";
+            },
+            getIcon: (status) => {
+                switch (status) {
+                    case "success":
+                        return CheckCircle2;
+                    case "warning":
+                        return AlertCircle;
+                    case "error":
+                        return XCircle;
+                    default:
+                        return null;
+                }
+            },
+        },
+        {
+            id: 3,
+            getStatus: ({ permissionStatus, eventCount }) => {
+                if (eventCount !== null) {
+                    return eventCount > 0 ? "success" : "warning";
+                }
+                if (permissionStatus === 3) return "pending";
+                if (permissionStatus !== null) return "error";
+                return "pending";
+            },
+            getText: ({ eventCount, permissionStatus }) => {
+                if (eventCount !== null) {
+                    return eventCount > 0 ? `获取成功，已获取到 ${eventCount} 条日程数据` : "未获取到数据";
+                }
+                if (permissionStatus === 3 || permissionStatus === null) return "等待获取数据";
+                return "未获取到数据";
+            },
+            getIcon: (status) => {
+                switch (status) {
+                    case "success":
+                        return CheckCircle2;
+                    case "warning":
+                        return AlertCircle;
+                    case "error":
+                        return XCircle;
+                    default:
+                        return null;
+                }
+            },
+        },
+    ];
+
     let permissionStatus: number | null = $state(null);
     let isLoading = $state(false);
     let eventCount: number | null = $state(null);
@@ -37,7 +135,6 @@
 
             // 检查权限
             permissionStatus = await invoke("get_calendar_permission_status");
-            permissionStatus = 1;
             console.log("permissionStatus:", permissionStatus);
 
             if (permissionStatus === 0) {
@@ -82,10 +179,10 @@
 </script>
 
 <div class="space-y-8 p-4">
+    <h3 class="text-xl font-semibold">Fates 会提取你本年度的日历数据，并导入至任务列表当中。</h3>
     <div class="space-y-4">
-        <h3 class="text-xl font-semibold">Fates 会提取你本年度的日历数据，并自动导入至任务列表当中。</h3>
         <div class="mb-4">
-            <Button disabled={isLoading} onclick={() => checkPermissionAndGetEvents()}>
+            <Button variant="outline" disabled={isLoading} onclick={() => checkPermissionAndGetEvents()}>
                 {#if isLoading}
                     <Loader2 class="w-4 h-4 animate-spin" />
                 {:else}
@@ -96,73 +193,32 @@
         </div>
 
         <ul class="space-y-3">
-            <li class="flex items-center gap-2">
-                {#if isLoading && currentStep === 0}
-                    <Loader2 class="w-4 h-4 animate-spin" />
-                {:else if permissionStatus !== null}
-                    <CheckCircle2 class="w-4 h-4 text-green-500" />
-                {:else}
-                    <div class="w-4 h-4 rounded-full border"></div>
-                {/if}
-                <span class:font-bold={currentStep === 0}> 检查日历访问权限 </span>
-            </li>
-
-            <li class="flex items-center gap-2">
-                {#if permissionStatus === 3}
-                    <CheckCircle2 class="w-4 h-4 text-green-500" />
-                {:else if permissionStatus === 0}
-                    <AlertCircle class="w-4 h-4 text-yellow-500" />
-                {:else if permissionStatus !== null}
-                    <XCircle class="w-4 h-4 text-red-500" />
-                {:else}
-                    <div class="w-4 h-4 rounded-full border"></div>
-                {/if}
-                <span class:font-bold={currentStep === 1}>
-                    {#if permissionStatus === 3}
-                        已授权日历访问权限
-                    {:else if permissionStatus === 0}
-                        未授权日历访问权限
-                    {:else if permissionStatus !== null}
-                        用户拒绝日历访问权限
+            {#each steps as step}
+                {@const status = step.getStatus({ currentStep, permissionStatus, eventCount, isLoading })}
+                {@const Icon = step.getIcon(status)}
+                <li class="flex items-center gap-2">
+                    {#if Icon}
+                        <Icon
+                            class="w-4 h-4 {status === 'success'
+                                ? 'text-green-500'
+                                : status === 'warning'
+                                  ? 'text-yellow-500'
+                                  : status === 'error'
+                                    ? 'text-red-500'
+                                    : ''}
+                                                {status === 'loading' ? 'animate-spin' : ''}"
+                        />
                     {:else}
-                        等待检查权限状态
+                        <div class="w-4 h-4 rounded-full border"></div>
                     {/if}
-                </span>
-            </li>
-
-            <li class="flex items-center gap-2">
-                {#if eventCount !== null}
-                    {#if eventCount > 0}
-                        <CheckCircle2 class="w-4 h-4 text-green-500" />
-                    {:else}
-                        <AlertCircle class="w-4 h-4 text-yellow-500" />
-                    {/if}
-                {:else if permissionStatus === 3}
-                    <div class="w-4 h-4 rounded-full border"></div>
-                {:else if permissionStatus !== null}
-                    <XCircle class="w-4 h-4 text-red-500" />
-                {:else}
-                    <div class="w-4 h-4 rounded-full border"></div>
-                {/if}
-                <span class:font-bold={currentStep === 4}>
-                    {#if eventCount !== null}
-                        {#if eventCount > 0}
-                            获取成功，已获取到 {eventCount} 条日程数据
-                        {:else}
-                            未获取到日程数据
-                        {/if}
-                    {:else if permissionStatus === 3}
-                        等待获取数据
-                    {:else}
-                        无法访问日历
-                    {/if}
-                </span>
-            </li>
+                    <span>{step.getText({ permissionStatus, eventCount })}</span>
+                </li>
+            {/each}
         </ul>
 
         {#if permissionStatus !== null && permissionStatus !== 3}
             <div class="mt-4">
-                <Button onclick={() => openSettings()}>打开系统设置</Button>
+                <Button onclick={() => openSettings()}>打开日历权限设置</Button>
             </div>
         {/if}
     </div>
