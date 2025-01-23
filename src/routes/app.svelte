@@ -10,6 +10,7 @@
     import TimelinePage from "./timeline-page.svelte";
     import TodoPage from "./todo-page.svelte";
     import WeekReportPage from "./week-report-page.svelte";
+    import ImportDialog from "./import-dialog.svelte";
 
     let timelineComponent: TimelinePage | null = null;
     let statisticsComponent: StatisticsPage | null = null;
@@ -133,3 +134,4 @@
 </div>
 
 <SettingsDialog bind:open={settingsOpen} />
+<ImportDialog bind:open={importOpen} />
