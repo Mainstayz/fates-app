@@ -12,13 +12,17 @@
     import dayjs from "dayjs";
     import { t } from "svelte-i18n";
     import platform from "$src/platform";
+    import { toast } from "svelte-sonner";
 
-    let currentSource: "calendar" | "outlook" | null = $state(null);
-    let currentStep: "select" | "guide" | "preview" = $state("select");
-    let importProgress = $state(0);
     let { open = $bindable() } = $props();
 
+    let currentSource: "calendar" | "outlook" | null = $state(null);
+    let currentStep: "select" | "guide" | "preview" | "complete" = $state("select");
     let dataItems: any[] = $state([]);
+    let repeatMatterCount = $state(0);
+    let createMatterCount = $state(0);
+
+    // svelte
     let ImportCalendarGuide = $state<any>(null);
 
     // 导入源列表
@@ -45,6 +49,11 @@
     let table = new TableHandler<Matter>([], { rowsPerPage: 10 });
 
     $effect(() => {
+        let matters = mapToMatter(dataItems);
+        table.setRows(matters);
+    });
+
+    function mapToMatter(dataItems: any[]) {
         let matters = dataItems.map((item: any) => {
             let now = dayjs().toISOString();
             let newItem: Matter = {
@@ -62,8 +71,8 @@
             };
             return newItem;
         });
-        table.setRows(matters);
-    });
+        return matters;
+    }
 
     onMount(async () => {
         if (isTauri) {
@@ -71,8 +80,21 @@
         }
     });
 
-    async function createMatter(matter: Matter) {
+    async function createMatter(matter: Matter, forceToast = false) {
+        let id = matter.id;
+        let oldMatter = await platform.instance.storage.getMatter(id);
+        if (oldMatter) {
+            console.log("matter already exists, title:", oldMatter.title);
+            if (forceToast) {
+                // 日程 "XXX" 已经存在，跳过
+                toast.info($t("app.import.matterAlreadyExists", { values: { title: oldMatter.title } }));
+            }
+            repeatMatterCount++;
+            return;
+        }
+
         await platform.instance.storage.createMatter(matter);
+        createMatterCount++;
     }
 
     async function deleteMatter(matter: Matter) {
@@ -82,6 +104,20 @@
             rows.splice(index, 1);
         }
         table.setRows(rows);
+    }
+
+    async function handleImportAll() {
+        let matters = mapToMatter(dataItems);
+        for (let matter of matters) {
+            await createMatter(matter);
+        }
+        // 导入完成
+        currentStep = "complete";
+    }
+
+    function closeDialog() {
+        open = false;
+        handleBack();
     }
 
     // 处理导入源选择
@@ -94,9 +130,10 @@
     // 返回选择界面
     function handleBack() {
         currentSource = null;
-        currentStep = "select";
-        importProgress = 0;
+        repeatMatterCount = 0;
+        createMatterCount = 0;
         dataItems = [];
+        currentStep = "select";
     }
 
     // 进入预览步骤
@@ -194,7 +231,7 @@
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onclick={() => createMatter(row)}
+                                                            onclick={() => createMatter(row, true)}
                                                         >
                                                             <PlusCircle class="w-4 h-4" />
                                                             {$t("app.import.preview.actions.import")}
@@ -249,6 +286,15 @@
                                     </div>
                                 </div>
                             </div>
+                        {:else if currentStep === "complete"}
+                            <div class="space-y-4">
+                                <h3 class="text-xl font-semibold">{$t("app.import.complete.title")}</h3>
+                                <p class="text-muted-foreground">
+                                    {$t("app.import.complete.description", {
+                                        values: { count: repeatMatterCount, count1: createMatterCount },
+                                    })}
+                                </p>
+                            </div>
                         {/if}
                     </div>
                     <div class="flex justify-end gap-2 bg-background">
@@ -258,7 +304,13 @@
                                 >{$t("app.import.actions.next")}</Button
                             >
                         {:else if currentStep === "preview"}
-                            <Button variant="outline">{$t("app.import.actions.importAll")}</Button>
+                            <Button variant="outline" onclick={handleImportAll}
+                                >{$t("app.import.actions.importAll")}</Button
+                            >
+                        {:else if currentStep === "complete"}
+                            <Button variant="outline" onclick={closeDialog}>
+                                {$t("app.import.actions.close")}
+                            </Button>
                         {/if}
                     </div>
                 </div>

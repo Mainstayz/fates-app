@@ -321,9 +321,15 @@
       "actions": {
         "back": "返回",
         "next": "下一步",
-        "importAll": "全部导入"
+        "importAll": "全部导入",
+        "close": "关闭"
       },
-      "noSource": "无可导入数据源"
+      "noSource": "无可导入数据源",
+      "complete": {
+        "title": "导入完成",
+        "description": "跳过 {count} 条重复数据，新增 {count1} 条数据。"
+      },
+      "matterAlreadyExists": "日程\"{title}\"已存在，不需要重复添加"
     }
   }
 }

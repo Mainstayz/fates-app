@@ -323,7 +323,12 @@
         "next": "Next",
         "importAll": "Import All"
       },
-      "noSource": "No data source to import"
+      "noSource": "No data source to import",
+      "complete": {
+        "title": "Import complete",
+        "description": "Skip {count} pieces of duplicate data and add {count1} pieces of data."
+      },
+      "matterAlreadyExists": "The schedule \"{title}\" already exists, no need to add repeatedly"
     }
   }
 }
