@@ -184,42 +184,42 @@ class Tray {
                 },
             }),
 
-            MenuItem.new({
-                id: "get_calendar_permission_status",
-                enabled: true,
-                text: `获取权限状态`,
-                action: async (id: string) => {
-                    const status = await invoke("get_calendar_permission_status");
-                    console.log("[TrayManager] Calendar permission status: ", status);
-                },
-            }),
+            // MenuItem.new({
+            //     id: "get_calendar_permission_status",
+            //     enabled: true,
+            //     text: `获取权限状态`,
+            //     action: async (id: string) => {
+            //         const status = await invoke("get_calendar_permission_status");
+            //         console.log("[TrayManager] Calendar permission status: ", status);
+            //     },
+            // }),
 
-            MenuItem.new({
-                id: "request_calendar_access",
-                enabled: true,
-                text: `请求权限`,
-                action: async (id: string) => {
-                    await invoke("request_calendar_access");
-                },
-            }),
+            // MenuItem.new({
+            //     id: "request_calendar_access",
+            //     enabled: true,
+            //     text: `请求权限`,
+            //     action: async (id: string) => {
+            //         await invoke("request_calendar_access");
+            //     },
+            // }),
 
-            // open calendar setting
-            MenuItem.new({
-                id: "open_calendar_setting",
-                text: `打开日历设置`,
-                action: async (id: string) => {
-                    await invoke("open_calendar_setting");
-                },
-            }),
+            // // open calendar setting
+            // MenuItem.new({
+            //     id: "open_calendar_setting",
+            //     text: `打开日历设置`,
+            //     action: async (id: string) => {
+            //         await invoke("open_calendar_setting");
+            //     },
+            // }),
 
-            MenuItem.new({
-                id: "get_calendar_events",
-                text: `获取日历事件`,
-                action: async (id: string) => {
-                   var events = await invoke("get_calendar_events");
-                   console.log("[TrayManager] Calendar events: ", events);
-                },
-            }),
+            // MenuItem.new({
+            //     id: "get_calendar_events",
+            //     text: `获取日历事件`,
+            //     action: async (id: string) => {
+            //        var events = await invoke("get_calendar_events");
+            //        console.log("[TrayManager] Calendar events: ", events);
+            //     },
+            // }),
 
             // pin main window
             MenuItem.new({
