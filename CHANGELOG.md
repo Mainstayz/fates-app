@@ -1,3 +1,34 @@
+## [0.9.2](https://github.com/Mainstayz/fates-app/compare/v0.9.1...v0.9.2) (2025-01-24)
+
+
+### Features
+
+* add calendar access functionality and update tray menu ([83d6780](https://github.com/Mainstayz/fates-app/commit/83d6780c5864fc8df8be5a74a8a06293f3ae55b1))
+* add import dialog component for calendar integration ([bab9428](https://github.com/Mainstayz/fates-app/commit/bab9428b949e386afa5a8bf1ee8727949e1e97a2))
+* **calendar:** Add support for calendar functionality on Windows platforms ([08f2c25](https://github.com/Mainstayz/fates-app/commit/08f2c25a0525f8ed68faf2a1764957d87e14a542))
+* **calendar:** improve calendar event fetching and logging ([4179dc4](https://github.com/Mainstayz/fates-app/commit/4179dc413845e09e4e949c0ce3872004078bfd64))
+* **calendar:** integrate futures for asynchronous calendar operations ([b76f100](https://github.com/Mainstayz/fates-app/commit/b76f100b72f067f437e30687743f80db44813d1c))
+* enhance calendar integration and build process ([91f74f7](https://github.com/Mainstayz/fates-app/commit/91f74f7f7d38246c4122e714c90adc1cc85fc66f))
+* enhance routing and localization with new import feature ([1a83976](https://github.com/Mainstayz/fates-app/commit/1a8397682e1dfd7b164dfaa9ad5ad1ec281244d6))
+* **import-calendar-data:** enhance calendar permission flow and data fetching UI ([bb6e862](https://github.com/Mainstayz/fates-app/commit/bb6e862e4e0b80be38ec8f496cc63ac91c5ca4b2))
+* **import-calendar-data:** enhance calendar permission handling and streamline event fetching ([bd7caec](https://github.com/Mainstayz/fates-app/commit/bd7caec8527e51cb978a6505b75c6c5b54c7afd5))
+* **import-calendar-data:** implement calendar permission handling and event fetching ([919237a](https://github.com/Mainstayz/fates-app/commit/919237aed048ef37f49f8a411791833e694899b2))
+* **import-calendar-data:** implement step-based UI for calendar permission checks and event fetching ([5870966](https://github.com/Mainstayz/fates-app/commit/587096611ee0a7a3053612d01d61a9f2e95b54db))
+* **import-calendar-data:** refactor state management and enhance data handling ([c135cc9](https://github.com/Mainstayz/fates-app/commit/c135cc94f8c941bd5b27e5352b83c74c2919a869))
+* **import-calendar:** add import calendar data component and integrate with import dialog ([8bb1123](https://github.com/Mainstayz/fates-app/commit/8bb1123debdda7dc5b967ac4448eb4473f62b86a))
+* **import-dialog:** enhance data handling and integrate table for preview ([2b6552d](https://github.com/Mainstayz/fates-app/commit/2b6552d8b0f8fa57dea844502aaa1e2ac213e779))
+* **import-dialog:** enhance import functionality with new actions and pagination ([a78303b](https://github.com/Mainstayz/fates-app/commit/a78303b5a678e05a137f32b5f2ef19ccc5a47046))
+* **import-dialog:** enhance import source selection for Tauri and Outlook integration ([7abc44d](https://github.com/Mainstayz/fates-app/commit/7abc44d1a805388e9de08c097a7d56830cf7ca1d))
+* **import:** add calendar data import functionality with localization support ([65d5012](https://github.com/Mainstayz/fates-app/commit/65d501256ed8c60dc0b9209406c06b2f1c7e7f33))
+* **import:** enhance import dialog and integrate svelte-sonner for notifications ([1d5497a](https://github.com/Mainstayz/fates-app/commit/1d5497a038f5c806bc5ebd1391979f16a2dd233c))
+* integrate calendar functionality with new dependencies ([eda0a3d](https://github.com/Mainstayz/fates-app/commit/eda0a3d96fa5c03a2955818ebf4304789d5cec1f))
+* refine macOS calendar functionality with conditional compilation ([a8bdc25](https://github.com/Mainstayz/fates-app/commit/a8bdc2563e1ca05cf032c31770eba43c32edeb0e))
+* **timeline,import,i18n:** enhance UI and functionality with new features ([1f338f7](https://github.com/Mainstayz/fates-app/commit/1f338f7171202c09f0abe729ffe7e064b6c4dd1a))
+* **tray-manager:** update menu after notification toggle ([d3d6bdb](https://github.com/Mainstayz/fates-app/commit/d3d6bdb9888687f7a8a9b012a97c00fb675be934))
+* update README and enhance calendar functionality ([2faca3c](https://github.com/Mainstayz/fates-app/commit/2faca3cc5f9f46be8e7f804adf7c390ad12da2b9))
+
+
+
 ## [0.9.1](https://github.com/Mainstayz/fates-app/compare/v0.9.0...v0.9.1) (2025-01-19)
 
 
