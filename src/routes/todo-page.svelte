@@ -91,7 +91,15 @@
             await this.syncTodoStatus();
             let allTodos = await platform.instance.storage.listTodos();
             // sort by created_at
-            this.data = allTodos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            // 分组并排序
+            const sortedTodos = ["todo", "in_progress", "completed"]
+                .map((status) =>
+                    allTodos
+                        .filter((todo) => todo.status === status)
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                )
+                .flat();
+            this.data = sortedTodos;
         }
 
         async createTodo(todo: Todo) {
