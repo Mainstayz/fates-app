@@ -243,6 +243,7 @@ class Tray {
                     this.showOrHideProgress = !this.showOrHideProgress;
                     console.log("[TrayManager] Emit NOTIFICATION_TOGGLE_TIME_PROGRESS ... ", this.showOrHideProgress);
                     await emit(NOTIFICATION_TOGGLE_TIME_PROGRESS, this.showOrHideProgress);
+                    this.updateMenu()
                 },
             }),
             MenuItem.new({
