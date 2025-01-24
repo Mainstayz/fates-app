@@ -238,6 +238,8 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
 
             let now = Utc::now();
             let year_start = Utc.with_ymd_and_hms(now.year(), 1, 1, 0, 0, 0).unwrap();
+
+            // 将时间转换为 Windows DateTime 格式
             let unix_timestamp = year_start.timestamp();
             let windows_ticks = (unix_timestamp * 10_000_000) + 116444736000000000;
 
@@ -245,11 +247,20 @@ pub async fn get_calendar_events() -> Result<Vec<CalendarMatter>, String> {
                 UniversalTime: windows_ticks,
             };
 
+            // 设置查询时间范围为一年
             let duration = TimeSpan {
-                Duration: 365 * 24 * 60 * 60 * 10_000_000i64, // 一年的时长（以100纳秒为单位）
+                Duration: 365 * 24 * 60 * 60 * 10_000_000i64, // 一年的时长
             };
-            log::info!("Start time: {:?}", start_time);
-            log::info!("Duration: {:?}", duration);
+
+            log::info!(
+                "查询时间范围: {} 到 {}",
+                year_start.format("%Y-%m-%d %H:%M:%S").to_string(),
+                year_start
+                    .checked_add_days(chrono::Days::new(365))
+                    .unwrap()
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
+            );
 
             let appointments = match futures::executor::block_on(async {
                 calendar.FindAppointmentsAsync(start_time, duration)?.await

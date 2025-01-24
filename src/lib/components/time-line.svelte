@@ -39,6 +39,12 @@
         <div class="gantt-item" tabindex="0" role="button" data-item-id="{{id}}">
             <div class="gantt-item-content">
                     <div class="flex items-center gap-1">
+                        {{#if is_repeat}}
+                            <span class="gantt-item-title">🔁</span>
+                        {{/if}}
+                        {{#if is_todo}}
+                            <span class="gantt-item-title">📝</span>
+                        {{/if}}
                         <div class="gantt-item-title">{{content}}</div>
                         {{#if end}}
                             <div class="gantt-item-date">({{formatDateRange start end}})</div>
@@ -96,6 +102,7 @@
             isPointItem = true;
             end = undefined;
         }
+        console.log(">>>>> item matter_type", item.matter_type);
         const renderedContent = template({
             id: item.id,
             content: item.content,
@@ -103,6 +110,8 @@
             className: item.className,
             start: item.start,
             end: end,
+            is_repeat: item.matter_type == 1,
+            is_todo: item.matter_type == 2,
         });
 
         return {

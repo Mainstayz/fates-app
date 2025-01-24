@@ -28,7 +28,7 @@
             name: $t("app.import.calendar.name"),
             icon: Calendar,
             description: $t("app.import.calendar.description"),
-            show: false,
+            show: true,
         },
         // TODO：outlook 导入
         // {
@@ -161,7 +161,8 @@
                         {:else if currentStep === "preview"}
                             <div class="space-y-4">
                                 <h3 class="text-xl font-semibold">{$t("app.import.preview.title")}</h3>
-                                <div class="rounded-md border">
+
+                                <div class="rounded-md border overflow-auto h-[360px]">
                                     <Table.Root>
                                         <Table.Header>
                                             <Table.Row>
@@ -172,7 +173,7 @@
                                                 <Table.Head class="w-[144px]"
                                                     >{$t("app.import.preview.columns.endTime")}</Table.Head
                                                 >
-                                                <Table.Head class="w-[96px]"
+                                                <Table.Head class="w-[176px]"
                                                     >{$t("app.import.preview.columns.action")}</Table.Head
                                                 >
                                             </Table.Row>
@@ -180,7 +181,9 @@
                                         <Table.Body>
                                             {#each table.rows as row (row.id)}
                                                 <Table.Row>
-                                                    <Table.Cell>{row.title}</Table.Cell>
+                                                    <Table.Cell>
+                                                        <Label class="font-bold">{row.title}</Label>
+                                                    </Table.Cell>
                                                     <Table.Cell
                                                         >{dayjs(row.start_time).format("YYYY-MM-DD HH:mm")}</Table.Cell
                                                     >
@@ -190,17 +193,19 @@
                                                     <Table.Cell>
                                                         <Button
                                                             variant="outline"
-                                                            size="icon"
+                                                            size="sm"
                                                             onclick={() => createMatter(row)}
                                                         >
                                                             <PlusCircle class="w-4 h-4" />
+                                                            {$t("app.import.preview.actions.import")}
                                                         </Button>
                                                         <Button
                                                             variant="outline"
-                                                            size="icon"
+                                                            size="sm"
                                                             onclick={() => deleteMatter(row)}
                                                         >
                                                             <Trash2 class="w-4 h-4" />
+                                                            {$t("app.import.preview.actions.delete")}
                                                         </Button>
                                                     </Table.Cell>
                                                 </Table.Row>
@@ -212,7 +217,7 @@
                                     <div class="flex flex-col">
                                         <!-- total todo count -->
                                         <Label class="text-sm text-muted-foreground">
-                                            {$t("app.todo.totalTodo")}: {table.rows.length}
+                                            {$t("app.todo.totalTodo")}: {dataItems.length}
                                         </Label>
                                     </div>
                                     <div class="flex justify-end items-center space-x-2">

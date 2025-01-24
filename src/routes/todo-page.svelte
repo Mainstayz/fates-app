@@ -198,7 +198,6 @@
             priority: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            tags: "Todo",
             reserved_1: "blue",
             reserved_2: row.id,
         };

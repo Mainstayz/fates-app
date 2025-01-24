@@ -309,6 +309,10 @@
           "startTime": "Start Time",
           "endTime": "End Time",
           "action": "Action"
+        },
+        "actions": {
+          "import": "Import",
+          "delete": "Delete"
         }
       },
       "guide": {

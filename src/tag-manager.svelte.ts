@@ -13,7 +13,7 @@ class TagManager {
             const dateA = new Date(a.last_used_at).getTime();
             const dateB = new Date(b.last_used_at).getTime();
             if (isNaN(dateA) || isNaN(dateB)) {
-                console.warn("Invalid date format in last_used_at");
+                console.warn(`Invalid date format in last_used_at: a: ${a.last_used_at} b: ${b.last_used_at}`);
                 return 0;
             }
             return dateB - dateA;
