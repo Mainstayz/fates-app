@@ -1,3 +1,12 @@
+## [0.9.3](https://github.com/Mainstayz/fates-app/compare/v0.9.2...v0.9.3) (2025-02-18)
+
+
+### Features
+
+* **todo-page:** group and sort todos by status and creation date ([f038107](https://github.com/Mainstayz/fates-app/commit/f038107a34f02b749c73a8d48ebff2dbb115d6cc))
+
+
+
 ## [0.9.2](https://github.com/Mainstayz/fates-app/compare/v0.9.1...v0.9.2) (2025-01-24)
 
 
